@@ -42,6 +42,7 @@ import AvatarCropper from "./avatar_cropper_hook.js";
 import BannerCropper from "./banner_cropper_hook.js";
 import VideoPlaybackHook from "./video_playback_hook.js";
 import DismissibleHintHook from "./dismissible_hint_hook.js";
+import { syncGraphAppearanceStorage } from "./appearance_preferences.js";
 
 let hooks = {};
 
@@ -226,78 +227,18 @@ hooks.GraphLayout = {
       this._redirectMobileGraphToReader();
       this._syncOutlineDetailForPanel(this.activePanelId);
     };
-    const graphId = this.el.dataset.graphId || "global";
-    const validReadingDensities = ["compact", "comfortable", "large"];
-    const validReadingFonts = ["sans", "serif"];
-    const defaultReadingFont = validReadingFonts.includes(
-      this.el.dataset.readingFont,
-    )
-      ? this.el.dataset.readingFont
-      : "serif";
-    this._readingDensityStorageKey = `rg:reading-density:${graphId}`;
-    this._readingFontStorageKey = `rg:reading-font:${graphId}`;
-
-    const readStoredBool = (key) => {
-      try {
-        const raw = localStorage.getItem(key);
-        if (raw === "true") return true;
-        if (raw === "false") return false;
-      } catch (_e) {}
-      return null;
-    };
-
-    const storedReadingDensity = (() => {
-      try {
-        return localStorage.getItem(this._readingDensityStorageKey);
-      } catch (_e) {
-        return null;
-      }
-    })();
-    const storedReadingFont = (() => {
-      try {
-        return localStorage.getItem(this._readingFontStorageKey);
-      } catch (_e) {
-        return null;
-      }
-    })();
+    const graphId = this.el.dataset.graphId;
+    const appearance = syncGraphAppearanceStorage(this.el.dataset);
 
     this.sideDrawerOpen = true;
-    this.readingDensity = validReadingDensities.includes(storedReadingDensity)
-      ? storedReadingDensity
-      : "comfortable";
-    this.readingFont = validReadingFonts.includes(storedReadingFont)
-      ? storedReadingFont
-      : defaultReadingFont;
+    this.readingDensity = appearance.readingDensity;
+    this.readingFont = appearance.readingFont;
     this._redirectMobileGraphToReader();
     this._applyReadingDensity(this.readingDensity);
     this._applyReadingFont(this.readingFont);
     this._closeAllPanels();
     this._syncOutlineDetailForPanel(null);
     window.addEventListener("resize", this._handleMobileGraphResize);
-
-    this.el.addEventListener("set-reading-density", (e) => {
-      const nextDensity = e?.detail?.value;
-      if (!validReadingDensities.includes(nextDensity)) return;
-
-      this.readingDensity = nextDensity;
-      this._applyReadingDensity(this.readingDensity);
-
-      try {
-        localStorage.setItem(this._readingDensityStorageKey, nextDensity);
-      } catch (_e) {}
-    });
-
-    this.el.addEventListener("set-reading-font", (e) => {
-      const nextFont = e?.detail?.value;
-      if (!validReadingFonts.includes(nextFont)) return;
-
-      this.readingFont = nextFont;
-      this._applyReadingFont(this.readingFont);
-
-      try {
-        localStorage.setItem(this._readingFontStorageKey, nextFont);
-      } catch (_e) {}
-    });
 
     this.el.addEventListener("toggle-panel", (e) => {
       const { id } = e.detail;

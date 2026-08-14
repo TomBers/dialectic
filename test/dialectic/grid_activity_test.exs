@@ -40,6 +40,7 @@ defmodule Dialectic.GridActivityTest do
       assert log.actor_name == User.display_name(user)
       assert log.action == Actions.graph_created()
       assert log.metadata == %{"graph_title" => title}
+      assert GridActivity.action_label(log) == "created this grid"
       assert GridActivity.display_message(log) == "#{User.display_name(user)} created this grid."
     end
   end

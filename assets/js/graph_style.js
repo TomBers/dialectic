@@ -208,8 +208,11 @@ const mixWithWhite = (hexColor, whiteRatio) => {
   return `rgb(${mixedChannels.join(", ")})`;
 };
 
-export function graphStyle(viewMode = "spaced", mainGroupTitle = "") {
+export function graphStyle(viewMode = "spaced", mainGroupTitle = "", options = {}) {
   const isCompact = viewMode === "compact";
+  const highContrast = options.highContrast === true;
+  const reduceMotion = options.reduceMotion === true;
+  const transitionDuration = (duration) => (reduceMotion ? "0ms" : duration);
   const compoundLabel = (n) =>
     n.id() === "Main" && mainGroupTitle ? mainGroupTitle : n.data("id");
 
@@ -312,11 +315,17 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "") {
         /* aesthetics ------------------------------------------------------ */
         shape: "roundrectangle",
         "corner-radius": isCompact ? 9 : 14,
-        "border-width": isCompact ? 1 : 1.5,
-        "border-color": "#cbd5e1",
-        "background-color": "#fffdf8",
+        "border-width": highContrast
+          ? isCompact
+            ? 1.5
+            : 2
+          : isCompact
+            ? 1
+            : 1.5,
+        "border-color": highContrast ? "#64748b" : "#cbd5e1",
+        "background-color": highContrast ? "#ffffff" : "#fffdf8",
         "background-opacity": 0.98,
-        color: "#1f2937",
+        color: highContrast ? "#111827" : "#1f2937",
         "text-outline-width": 0,
         "text-outline-opacity": 0,
 
@@ -334,7 +343,7 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "") {
         /* smooth transitions for hover / select state changes */
         "transition-property":
           "background-color border-color border-width opacity underlay-opacity underlay-padding shadow-blur shadow-opacity shadow-offset-y",
-        "transition-duration": "170ms",
+        "transition-duration": transitionDuration("170ms"),
         "transition-timing-function": "ease-in-out-sine",
       },
     },
@@ -482,19 +491,19 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "") {
     {
       selector: "edge",
       style: {
-        width: isCompact ? 1 : 1.4,
-        "line-color": "#64748b",
+        width: highContrast ? (isCompact ? 1.3 : 1.8) : isCompact ? 1 : 1.4,
+        "line-color": highContrast ? "#334155" : "#64748b",
         "edge-distances": "node-position",
         "curve-style": "bezier",
         "target-arrow-shape": "triangle",
-        "target-arrow-color": "#64748b",
+        "target-arrow-color": highContrast ? "#334155" : "#64748b",
         "arrow-scale": isCompact ? 0.58 : 0.76,
         "control-point-step-size": isCompact ? 28 : 46,
         "control-point-weight": 0.5,
-        opacity: 0.5,
+        opacity: highContrast ? 0.76 : 0.5,
         /* smooth transition so hover fade-in feels polished */
         "transition-property": "line-color target-arrow-color width opacity",
-        "transition-duration": "150ms",
+        "transition-duration": transitionDuration("150ms"),
         "transition-timing-function": "ease-in-out-sine",
       },
     },
@@ -566,11 +575,22 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "") {
     base_style.push({
       selector: `node.${nodeType}`, // ← has the class
       style: {
-        "border-color": cols[nodeType].border,
-        "background-color": mixWithWhite(cols[nodeType].background, 0.72),
-        "border-width": isCompact ? 1.5 : 2,
+        "border-color": highContrast
+          ? cols[nodeType].hoverBorder || cols[nodeType].border
+          : cols[nodeType].border,
+        "background-color": mixWithWhite(
+          cols[nodeType].background,
+          highContrast ? 0.48 : 0.72,
+        ),
+        "border-width": highContrast
+          ? isCompact
+            ? 2
+            : 2.5
+          : isCompact
+            ? 1.5
+            : 2,
         "border-opacity": 1,
-        color: defaultNodeStyle.text,
+        color: highContrast ? cols[nodeType].text : defaultNodeStyle.text,
       },
     });
 
@@ -659,7 +679,7 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "") {
     style: {
       opacity: 0.15,
       "transition-property": "opacity",
-      "transition-duration": "200ms",
+      "transition-duration": transitionDuration("200ms"),
       "transition-timing-function": "ease-in-out-quad",
     },
   });
@@ -670,7 +690,7 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "") {
     style: {
       opacity: 0.08,
       "transition-property": "opacity",
-      "transition-duration": "200ms",
+      "transition-duration": transitionDuration("200ms"),
       "transition-timing-function": "ease-in-out-quad",
     },
   });
@@ -686,7 +706,7 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "") {
       "underlay-shape": "roundrectangle",
       "border-width": isCompact ? 3 : 4,
       "transition-property": "opacity, underlay-opacity, border-width",
-      "transition-duration": "200ms",
+      "transition-duration": transitionDuration("200ms"),
       "transition-timing-function": "ease-in-out-quad",
     },
   });
@@ -697,7 +717,7 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "") {
     style: {
       opacity: 0.7,
       "transition-property": "opacity",
-      "transition-duration": "200ms",
+      "transition-duration": transitionDuration("200ms"),
       "transition-timing-function": "ease-in-out-quad",
     },
   });
@@ -721,7 +741,7 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "") {
       "ghost-opacity": 0.12,
       "transition-property":
         "underlay-opacity, underlay-padding, border-width, border-color, background-color, font-size",
-      "transition-duration": "200ms",
+      "transition-duration": transitionDuration("200ms"),
       "transition-timing-function": "ease-in-out-quad",
     },
   });
@@ -747,7 +767,7 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "") {
       "arrow-scale": isCompact ? 0.52 : 0.7,
       opacity: 0.26,
       "transition-property": "line-color target-arrow-color width opacity",
-      "transition-duration": "180ms",
+      "transition-duration": transitionDuration("180ms"),
       "transition-timing-function": "ease-in-out-quad",
     },
   });
@@ -775,7 +795,7 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "") {
       "border-color": "#8b5cf6",
       "border-style": "solid",
       "transition-property": "underlay-opacity, border-width, border-color",
-      "transition-duration": "200ms",
+      "transition-duration": transitionDuration("200ms"),
       "transition-timing-function": "ease-in-out-quad",
     },
   });

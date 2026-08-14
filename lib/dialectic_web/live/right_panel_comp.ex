@@ -59,9 +59,16 @@ defmodule DialecticWeb.RightPanelComp do
       |> assign_new(:activity_logs, fn -> load_activity_logs(graph_id) end)
       |> assign_new(:editing_highlight_id, fn -> nil end)
       |> assign_new(:open_sections, fn -> MapSet.new() end)
+      |> maybe_open_configure(Map.get(assigns, :open_section))
 
     {:ok, socket}
   end
+
+  defp maybe_open_configure(socket, "configure") do
+    update(socket, :open_sections, &MapSet.put(&1, "configure"))
+  end
+
+  defp maybe_open_configure(socket, _section), do: socket
 
   @valid_sections ~w(configure workspace activity export utilities)
 
@@ -174,10 +181,13 @@ defmodule DialecticWeb.RightPanelComp do
   defp activity_timestamp(nil), do: ""
 
   defp activity_timestamp(%DateTime{} = inserted_at) do
-    Calendar.strftime(inserted_at, "%b %d, %H:%M")
+    "#{inserted_at.day} #{Calendar.strftime(inserted_at, "%b")} · #{Calendar.strftime(inserted_at, "%H:%M")}"
   end
 
   defp activity_timestamp(inserted_at), do: to_string(inserted_at)
+
+  defp activity_datetime(%DateTime{} = inserted_at), do: DateTime.to_iso8601(inserted_at)
+  defp activity_datetime(_inserted_at), do: nil
 
   defp activity_node_ref(%{node_id: node_id} = log, graph_id)
        when is_binary(node_id) and node_id != "" do
@@ -267,9 +277,9 @@ defmodule DialecticWeb.RightPanelComp do
                 <.icon name="hero-adjustments-horizontal" class="w-4 h-4" />
               </div>
               <div>
-                <div class="text-xs font-semibold text-gray-800">AI Responses</div>
+                <div class="text-xs font-semibold text-gray-800">Answer level</div>
                 <p class="text-[10px] text-gray-500 leading-tight">
-                  Complexity and tone
+                  Plain to Expert
                 </p>
               </div>
             </div>
@@ -279,32 +289,45 @@ defmodule DialecticWeb.RightPanelComp do
             />
           </div>
         </summary>
-        <div class="border-t border-gray-100 px-3 py-2.5">
-          <div class="space-y-2">
-            <div class="text-[11px] font-medium text-gray-600 uppercase tracking-wide">
-              Explanation Level
+        <div class="border-t border-stone-200 bg-[#f4f1e9] px-3 py-3">
+          <div class="space-y-2.5">
+            <div class="text-[11px] font-semibold uppercase tracking-[0.14em] text-teal-800">
+              Explanation level
             </div>
-            <div class="flex flex-wrap gap-1.5">
-              <%= for {mode, label} <- [{"simple", "Simple"}, {"high_school", "High School"}, {"university", "University"}, {"expert", "Expert"}] do %>
+            <div class="grid grid-cols-2 border border-stone-300 bg-white p-0.5 shadow-inner">
+              <%= for {mode, label, description} <- [
+                {"simple", "Plain", "Everyday language and examples."},
+                {"high_school", "Standard", "Clear ideas with some key terms."},
+                {"university", "Detailed", "Precise terms and wider context."},
+                {"expert", "Expert", "Technical detail and primary material."}
+              ] do %>
                 <button
                   type="button"
+                  id={"answer-level-#{mode}"}
                   phx-click="set_prompt_mode"
                   phx-value-prompt_mode={mode}
+                  aria-pressed={if(@prompt_mode == mode, do: "true", else: "false")}
                   class={[
-                    "px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 border",
+                    "group flex min-h-16 flex-col items-start px-3 py-2 text-left transition-colors duration-150",
                     if @prompt_mode == mode do
-                      "bg-indigo-600 text-white border-indigo-600 shadow-sm"
+                      "border border-slate-900 bg-slate-900 text-white shadow-sm"
                     else
-                      "bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                      "border border-transparent text-slate-600 hover:bg-stone-50 hover:text-slate-900"
                     end
                   ]}
                 >
-                  {label}
+                  <span class="text-xs font-semibold">{label}</span>
+                  <span class={[
+                    "mt-0.5 text-[10px] leading-4",
+                    if(@prompt_mode == mode, do: "text-slate-300", else: "text-slate-500")
+                  ]}>
+                    {description}
+                  </span>
                 </button>
               <% end %>
             </div>
-            <p class="text-[10px] text-gray-500">
-              Adjusts the complexity and tone of AI responses.
+            <p class="text-[10px] leading-4 text-slate-600">
+              Sets the language and depth of new AI answers.
             </p>
           </div>
         </div>
@@ -328,9 +351,9 @@ defmodule DialecticWeb.RightPanelComp do
                 <.icon name="hero-folder" class="w-4 h-4" />
               </div>
               <div>
-                <div class="text-xs font-semibold text-gray-800">Collaboration</div>
+                <div class="text-xs font-semibold text-gray-800">Access & collaboration</div>
                 <p class="text-[10px] text-gray-500 leading-tight">
-                  Groups, privacy, and sharing
+                  Groups, editing, and visibility
                 </p>
               </div>
             </div>
@@ -418,7 +441,7 @@ defmodule DialecticWeb.RightPanelComp do
               >
                 <%= if @graph_struct.is_public do %>
                   <.icon name="hero-share" class="w-3.5 h-3.5" />
-                  <span>Share Map</span>
+                  <span>Share Grid</span>
                 <% else %>
                   <.icon name="hero-user-plus" class="w-3.5 h-3.5" />
                   <span>Manage Collaborators</span>
@@ -449,7 +472,7 @@ defmodule DialecticWeb.RightPanelComp do
               <div>
                 <div class="text-xs font-semibold text-gray-800">Activity</div>
                 <p class="text-[10px] text-gray-500 leading-tight">
-                  Recent grid edits
+                  Questions, additions, and edits
                 </p>
               </div>
             </div>
@@ -459,39 +482,62 @@ defmodule DialecticWeb.RightPanelComp do
             />
           </div>
         </summary>
-        <div class="border-t border-gray-100 px-3 py-2.5">
+        <div class="border-t border-stone-200 bg-[#f4f1e9] px-3 py-3">
           <%= if @activity_logs && length(@activity_logs) > 0 do %>
-            <ol id="grid-activity-log" class="space-y-2 max-h-56 overflow-y-auto pr-1">
+            <ol
+              id="grid-activity-log"
+              class="max-h-72 divide-y divide-stone-200 overflow-y-auto border-y border-stone-200 bg-white px-3"
+            >
               <li
                 :for={log <- @activity_logs}
                 id={"grid-activity-log-#{log.id}"}
-                class="rounded-lg border border-gray-100 bg-gray-50 px-2.5 py-2"
+                class="grid grid-cols-[0.75rem_minmax(0,1fr)] gap-2.5 py-3"
               >
                 <% node_ref = activity_node_ref(log, @graph_id) %>
-                <p class="text-xs text-gray-700 leading-snug">{GridActivity.display_message(log)}</p>
-                <%= if node_ref && node_ref.deleted do %>
-                  <span
-                    class="mt-1 inline-flex max-w-full items-center gap-1 text-[11px] font-medium text-gray-500"
-                    title={node_ref.title}
+                <span class="mt-1.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-amber-500 ring-1 ring-amber-200">
+                </span>
+                <div class="min-w-0">
+                  <p class="text-xs leading-5 text-slate-700">
+                    <span id={"grid-activity-actor-#{log.id}"} class="font-semibold text-slate-950">
+                      {GridActivity.actor_name(log.actor_name)}
+                    </span>
+                    <span>{GridActivity.action_label(log)}</span>
+                  </p>
+                  <time
+                    id={"grid-activity-time-#{log.id}"}
+                    datetime={activity_datetime(log.inserted_at)}
+                    class="block text-[10px] font-medium uppercase tracking-[0.08em] text-slate-500"
                   >
-                    <.icon name="hero-trash" class="h-3 w-3 shrink-0" />
-                    <span class="truncate">{node_ref.title}</span>
-                  </span>
-                <% else %>
-                  <%= if node_ref do %>
-                    <button
-                      type="button"
-                      phx-click="navigate_to_node"
-                      phx-value-node_id={node_ref.id}
-                      class="mt-1 inline-flex max-w-full items-center gap-1 text-[11px] font-medium text-indigo-600 hover:text-indigo-800"
+                    {activity_timestamp(log.inserted_at)}
+                  </time>
+                  <%= if node_ref && node_ref.deleted do %>
+                    <span
+                      id={"grid-activity-node-#{log.id}"}
+                      class="mt-2 flex max-w-full items-start gap-2 border border-stone-200 bg-stone-50 px-2.5 py-2 text-[11px] font-medium leading-4 text-slate-500"
                       title={node_ref.title}
                     >
-                      <.icon name="hero-arrow-top-right-on-square" class="h-3 w-3 shrink-0" />
-                      <span class="truncate">{node_ref.title}</span>
-                    </button>
+                      <.icon name="hero-trash" class="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                      <span class="line-clamp-2">{node_ref.title}</span>
+                    </span>
+                  <% else %>
+                    <%= if node_ref do %>
+                      <button
+                        type="button"
+                        id={"grid-activity-node-#{log.id}"}
+                        phx-click="navigate_to_node"
+                        phx-value-node_id={node_ref.id}
+                        class="mt-2 flex w-full items-start gap-2 border border-stone-200 bg-stone-50 px-2.5 py-2 text-left text-[11px] font-medium leading-4 text-slate-700 transition-colors hover:border-teal-600 hover:bg-white hover:text-slate-950"
+                        title={node_ref.title}
+                      >
+                        <.icon
+                          name="hero-arrow-top-right-on-square"
+                          class="mt-0.5 h-3.5 w-3.5 shrink-0 text-teal-700"
+                        />
+                        <span class="line-clamp-2">{node_ref.title}</span>
+                      </button>
+                    <% end %>
                   <% end %>
-                <% end %>
-                <p class="mt-1 text-[10px] text-gray-400">{activity_timestamp(log.inserted_at)}</p>
+                </div>
               </li>
             </ol>
           <% else %>
@@ -522,7 +568,7 @@ defmodule DialecticWeb.RightPanelComp do
               <div>
                 <div class="text-xs font-semibold text-gray-800">Export</div>
                 <p class="text-[10px] text-gray-500 leading-tight">
-                  Download your graph
+                  Download your grid
                 </p>
               </div>
             </div>

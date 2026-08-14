@@ -813,6 +813,51 @@ defmodule Dialectic.AccountsTest do
     end
   end
 
+  describe "update_user_appearance/2" do
+    test "stores validated preferences for every grid" do
+      user = user_fixture()
+
+      assert {:ok, updated} =
+               Accounts.update_user_appearance(user, %{
+                 reading_density: "large",
+                 reading_font: "serif",
+                 graph_view_mode: "compact",
+                 graph_direction: "LR",
+                 reduce_motion: true,
+                 high_contrast: true
+               })
+
+      assert User.appearance_preferences(updated) == %{
+               reading_density: "large",
+               reading_font: "serif",
+               graph_view_mode: "compact",
+               graph_direction: "LR",
+               reduce_motion: true,
+               high_contrast: true
+             }
+    end
+
+    test "rejects unsupported appearance values" do
+      user = user_fixture()
+
+      assert {:error, changeset} =
+               Accounts.update_user_appearance(user, %{graph_direction: "diagonal"})
+
+      assert "is invalid" in errors_on(changeset).graph_direction
+    end
+
+    test "uses defaults when there is no signed-in user" do
+      assert User.appearance_preferences(nil) == %{
+               reading_density: "comfortable",
+               reading_font: "sans",
+               graph_view_mode: "spaced",
+               graph_direction: "TB",
+               reduce_motion: false,
+               high_contrast: false
+             }
+    end
+  end
+
   describe "update_user_profile_links/2" do
     test "stores arbitrary URL and email profile links" do
       user = user_fixture()

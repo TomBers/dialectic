@@ -50,7 +50,7 @@ defmodule DialecticWeb.AboutLiveTest do
       assert has_element?(view, "#about-tools", "Explore freely. Keep what matters.")
       assert has_element?(view, "#about-tools", "Philosophy for All and Peter Worley")
       assert has_element?(view, "#about-explore-question", "Question any part")
-      assert has_element?(view, "#about-explore-level", "Simple, High School, University")
+      assert has_element?(view, "#about-explore-level", "Plain, Standard, Detailed")
       assert has_element?(view, "#about-explore-branches", "separate branches")
 
       assert has_element?(
@@ -62,7 +62,7 @@ defmodule DialecticWeb.AboutLiveTest do
       assert has_element?(view, "#about-explore-views", "compare their evidence")
       assert has_element?(view, "#about-explore-sources", "primary research")
       assert has_element?(view, "#about-recall-highlights", "shareable link")
-      assert has_element?(view, "#about-recall-stars", "find again")
+      assert has_element?(view, "#about-recall-bookmarks", "find again")
       assert has_element?(view, "#about-recall-export", "other tools")
       assert has_element?(view, "#about-recall-shared", "see who added what")
       assert has_element?(view, "#about-recall-profile", "others can follow and challenge")

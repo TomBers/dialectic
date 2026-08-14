@@ -222,7 +222,7 @@ defmodule DialecticWeb.ActionToolbarComp do
         <div class="flex flex-col gap-4">
           <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div class="min-w-0">
-              <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-teal-700">
+              <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-teal-800">
                 Keep exploring
               </p>
               <h3
@@ -405,7 +405,7 @@ defmodule DialecticWeb.ActionToolbarComp do
 
       <div class="flex flex-col gap-3 px-1 py-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div class="max-w-xl">
-          <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+          <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
             Node settings
           </p>
           <p class="mt-1 text-xs leading-5 text-slate-500">

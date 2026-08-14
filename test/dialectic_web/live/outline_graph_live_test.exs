@@ -1,6 +1,7 @@
 defmodule DialecticWeb.OutlineGraphLiveTest do
   use DialecticWeb.ConnCase, async: false
 
+  alias Dialectic.DbActions.Notes
   alias Dialectic.Follows
   alias Dialectic.Highlights
 
@@ -406,7 +407,12 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert assigns.reading_terminal.id == "2"
     assert Enum.map(assigns.next_choices, & &1.id) == ["3", "4"]
     assert is_nil(assigns.compare_context)
-    assert has_element?(view, "#outline-layout")
+
+    assert has_element?(
+             view,
+             "#outline-layout[data-reading-density='comfortable'][data-reading-font='sans'][data-graph-view-mode='spaced'][data-graph-direction='TB'][data-reduce-motion='false']"
+           )
+
     assert has_element?(view, "#outline-scroll-shell[phx-hook='ScrollReset']")
     assert has_element?(view, "#outline-tree[phx-hook='OutlineNav']")
     assert has_element?(view, "#outline-mobile-nav")
@@ -650,6 +656,46 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
 
     refute Follows.following_graph?(user, graph)
     assert has_element?(view, "#reader-follow-grid-button", "Follow")
+  end
+
+  test "reader can bookmark and remove a bookmark from a node", %{conn: conn} do
+    user = user_fixture()
+    graph = create_graph()
+
+    {:ok, view, _html} =
+      conn
+      |> log_in_user(user)
+      |> live(~p"/g/#{graph.slug}?node=2")
+
+    assert has_element?(view, "#reader-bookmark-node-2[aria-pressed='false']")
+    assert has_element?(view, "#reader-bookmark-node-2 .hero-bookmark")
+
+    view
+    |> element("#reader-bookmark-node-2")
+    |> render_click()
+
+    assert Notes.list_noted_node_ids(graph.title, user) == ["2"]
+    assert has_element?(view, "#reader-bookmark-node-2[aria-pressed='true']")
+    assert has_element?(view, "#reader-bookmark-node-2 .hero-bookmark-solid")
+
+    view
+    |> element("#reader-bookmark-node-2")
+    |> render_click()
+
+    assert Notes.list_noted_node_ids(graph.title, user) == []
+    assert has_element?(view, "#reader-bookmark-node-2[aria-pressed='false']")
+  end
+
+  test "reader bookmark prompts logged-out readers to sign in", %{conn: conn} do
+    graph = create_graph()
+    {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=2")
+
+    view
+    |> element("#reader-bookmark-node-2")
+    |> render_click()
+
+    assert has_element?(view, "#reader-login-modal")
+    assert render(view) =~ "Login Required"
   end
 
   test "crafted unauthenticated reader unfollow event opens the login modal", %{conn: conn} do

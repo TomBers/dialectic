@@ -174,9 +174,9 @@ defmodule DialecticWeb.NewIdeaFormComp do
             <div class="mt-3 w-full sm:w-auto">
               <div class="mx-auto flex w-full border border-stone-300 bg-white p-0.5 shadow-inner sm:inline-flex sm:w-auto">
                 <%= for {mode, label, description} <- [
-                  {"simple", "Simple", "Plain language, everyday examples, and metaphors."},
-                  {"high_school", "High School", "Clear concepts with a little subject vocabulary."},
-                  {"university", "University", "More precise terminology and broader context."},
+                  {"simple", "Plain", "Plain language, everyday examples, and metaphors."},
+                  {"high_school", "Standard", "Clear concepts with a little subject vocabulary."},
+                  {"university", "Detailed", "More precise terminology and broader context."},
                   {"expert", "Expert", "Technical terms, nuance, and more primary material."}
                 ] do %>
                   <button

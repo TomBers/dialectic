@@ -1,6 +1,8 @@
 defmodule DialecticWeb.OutlineGraphLive do
   use DialecticWeb, :live_view
 
+  alias Dialectic.Accounts.User
+  alias Dialectic.DbActions.Notes
   alias Dialectic.Graph.GraphActions
   alias Dialectic.Follows
   alias Dialectic.Highlights
@@ -10,6 +12,7 @@ defmodule DialecticWeb.OutlineGraphLive do
   alias DialecticWeb.HighlightShare
   alias DialecticWeb.NodeSearch
   alias DialecticWeb.Utils.NodeTitleHelper
+  alias DialecticWeb.Utils.UserUtils
   alias Phoenix.PubSub
 
   require Logger
@@ -174,6 +177,16 @@ defmodule DialecticWeb.OutlineGraphLive do
   @impl true
   def handle_event("node_clicked", %{"id" => node_id}, socket) do
     {:noreply, navigate_to_node(socket, node_id)}
+  end
+
+  @impl true
+  def handle_event("note", %{"node" => node_id}, socket) do
+    update_reader_bookmark(socket, node_id, :note)
+  end
+
+  @impl true
+  def handle_event("unnote", %{"node" => node_id}, socket) do
+    update_reader_bookmark(socket, node_id, :unnote)
   end
 
   @impl true
@@ -348,6 +361,12 @@ defmodule DialecticWeb.OutlineGraphLive do
       graph_id: graph_db.title,
       graph_struct: graph_db,
       graph_topic: graph_topic,
+      user: UserUtils.current_identity(socket.assigns),
+      bookmarked_node_ids:
+        graph_db.title
+        |> Notes.list_noted_node_ids(socket.assigns[:current_user])
+        |> MapSet.new(),
+      appearance_preferences: User.appearance_preferences(socket.assigns[:current_user]),
       token: token_param,
       nav_params: token_params(token_param),
       can_edit: !graph_db.is_locked,
@@ -379,6 +398,24 @@ defmodule DialecticWeb.OutlineGraphLive do
       json_ld: json_ld,
       noindex: !indexable_graph?(graph_db)
     )
+  end
+
+  defp update_reader_bookmark(socket, node_id, action) do
+    case GraphHelpers.handle_note(socket, node_id, action) do
+      {:noreply, updated_socket} ->
+        {:noreply, updated_socket}
+
+      {:ok, _graph_result, _operation} ->
+        GraphManager.save_graph(socket.assigns.graph_id)
+
+        bookmarked_node_ids =
+          case action do
+            :note -> MapSet.put(socket.assigns.bookmarked_node_ids, node_id)
+            :unnote -> MapSet.delete(socket.assigns.bookmarked_node_ids, node_id)
+          end
+
+        {:noreply, assign(socket, :bookmarked_node_ids, bookmarked_node_ids)}
+    end
   end
 
   defp canonical_graph_url(%{slug: slug}) when is_binary(slug) and slug != "" do

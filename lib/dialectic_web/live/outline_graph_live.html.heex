@@ -4,8 +4,11 @@
   class="flex w-full flex-col overflow-hidden bg-slate-50"
   style="height: calc(100vh - 2.5rem); height: calc(100dvh - 2.5rem);"
   data-graph-id={@graph_id}
-  data-reading-density="comfortable"
-  data-reading-font="sans"
+  data-reading-density={@appearance_preferences.reading_density}
+  data-reading-font={@appearance_preferences.reading_font}
+  data-graph-view-mode={@appearance_preferences.graph_view_mode}
+  data-graph-direction={@appearance_preferences.graph_direction}
+  data-reduce-motion={if(@appearance_preferences.reduce_motion, do: "true", else: "false")}
 >
   <.login_required_modal id="reader-login-modal" show={@show_login_modal} />
 
@@ -315,15 +318,42 @@
                       {DialecticWeb.ColUtils.node_type_label(reading_node.class)}
                     </span>
                   </div>
-                  <h2 class={[
-                    "mt-3 text-balance font-serif font-semibold leading-[1.15] tracking-tight text-slate-950",
-                    if(index == 0,
-                      do: "text-[1.65rem] sm:text-[1.95rem]",
-                      else: "text-[1.28rem] sm:text-[1.6rem]"
-                    )
-                  ]}>
-                    {reading_node.full_title || reading_node.title}
-                  </h2>
+                  <% bookmarked? = MapSet.member?(@bookmarked_node_ids, reading_node.id) %>
+                  <div class="mt-3 flex items-start gap-3">
+                    <h2 class={[
+                      "min-w-0 flex-1 text-balance font-serif font-semibold leading-[1.15] tracking-tight text-slate-950",
+                      if(index == 0,
+                        do: "text-[1.65rem] sm:text-[1.95rem]",
+                        else: "text-[1.28rem] sm:text-[1.6rem]"
+                      )
+                    ]}>
+                      {reading_node.full_title || reading_node.title}
+                    </h2>
+                    <button
+                      id={"reader-bookmark-node-#{reading_node.id}"}
+                      type="button"
+                      phx-click={if(bookmarked?, do: "unnote", else: "note")}
+                      phx-value-node={reading_node.id}
+                      aria-label={
+                        if(bookmarked?, do: "Remove bookmark", else: "Bookmark this node")
+                      }
+                      aria-pressed={to_string(bookmarked?)}
+                      title={if(bookmarked?, do: "Remove bookmark", else: "Bookmark this node")}
+                      class={[
+                        "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-600",
+                        if(bookmarked?,
+                          do: "border-amber-300 bg-amber-100 text-amber-800 hover:bg-amber-200",
+                          else:
+                            "border-slate-200 bg-white text-slate-500 hover:border-amber-300 hover:bg-amber-50 hover:text-amber-800"
+                        )
+                      ]}
+                    >
+                      <.icon
+                        name={if(bookmarked?, do: "hero-bookmark-solid", else: "hero-bookmark")}
+                        class="h-4 w-4"
+                      />
+                    </button>
+                  </div>
                 </div>
 
                 <%= if String.trim(reading_node.content || "") == "" do %>

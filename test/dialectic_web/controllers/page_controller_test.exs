@@ -40,12 +40,15 @@ defmodule DialecticWeb.PageControllerTest do
     assert html =~ ~s(id="guide-flow-step-ask")
     assert html =~ ~s(id="guide-flow-step-share")
     assert html =~ ~s(id="guide-shared-paths")
-    assert html =~ ~s(id="guide-star-nodes")
+    assert html =~ ~s(id="guide-bookmark-nodes")
     assert html =~ ~s(id="guide-save-highlights")
     assert html =~ ~s(id="guide-live-editing")
     assert html =~ ~s(id="guide-grid-visibility")
     assert html =~ ~s(id="guide-public-profile")
     assert html =~ ~s(id="guide-explanation-level")
+    assert html =~ "Plain"
+    assert html =~ "Standard"
+    assert html =~ "Detailed"
     assert html =~ ~s(id="guide-translate-node")
     assert html =~ ~s(id="guide-search-grid")
     assert html =~ ~s(id="guide-group-grid")
@@ -58,7 +61,7 @@ defmodule DialecticWeb.PageControllerTest do
     assert html =~ ~s(id="guide-contribution-history")
     assert html =~ ~s(id="guide-follow-updates")
     assert html =~ ~s(id="guide-focused-sharing")
-    assert html =~ "Bookmarked ideas"
+    assert html =~ "Bookmark an idea"
     assert html =~ "Save as a highlight"
     assert html =~ "Edit and talk together live"
     assert html =~ ~s(id="guide-start-grid-link")
@@ -75,6 +78,7 @@ defmodule DialecticWeb.PageControllerTest do
     assert html =~ "deserves your confidence"
     assert html =~ "basic or awkward to raise"
     assert html =~ ~s(id="ai-exploration-benefits")
+    assert html =~ "Choose Plain, Standard, Detailed, or Expert"
     assert html =~ ~s(id="ai-benefit-evidence")
     assert html =~ "primary sources, original research, official records"
     assert html =~ ~s(id="ai-exploration-chat-comparison")

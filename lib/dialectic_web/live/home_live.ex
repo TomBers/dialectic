@@ -350,7 +350,7 @@ defmodule DialecticWeb.HomeLive do
                 minimal={true}
               />
               <p id="home-public-grid-note" class="mt-3 text-xs leading-5 text-slate-500">
-                New grids are public by default. Leave out personal or sensitive information; you can change visibility later under Settings.
+                New grids are public and editable by default. Anyone can read them and, while editing is on, add to them. Sign in first if you want to control access in Settings; never include sensitive information.
               </p>
             </div>
           </div>

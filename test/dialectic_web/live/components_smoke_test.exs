@@ -22,7 +22,7 @@ defmodule DialecticWeb.ComponentsSmokeTest do
       assert Code.ensure_loaded?(@document_menu_mod)
     end
 
-    test "renders direct help, present, and settings actions" do
+    test "renders direct help, present, and grid tools actions" do
       html =
         render_component(@document_menu_mod,
           id: "document-menu",
@@ -32,12 +32,15 @@ defmodule DialecticWeb.ComponentsSmokeTest do
           layout_target: "#graph-layout"
         )
 
-      assert html =~ ~s(id="document-menu-help-document-menu")
-      assert html =~ ~s(id="document-menu-present-document-menu")
-      assert html =~ ~s(id="document-menu-settings-document-menu")
-      assert html =~ "How to use"
-      assert html =~ "Present"
-      assert html =~ "Settings"
+      {:ok, document} = Floki.parse_fragment(html)
+
+      assert Floki.find(document, "#document-menu-help-document-menu") != []
+      assert Floki.find(document, "#document-menu-present-document-menu") != []
+
+      assert Floki.find(
+               document,
+               ~s(#document-menu-settings-document-menu[aria-label="Open grid tools"])
+             ) != []
     end
   end
 

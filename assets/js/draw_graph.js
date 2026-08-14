@@ -191,6 +191,9 @@ export function draw_graph(
   graphId = null,
   options = {},
 ) {
+  const reduceMotion = options.reduceMotion === true;
+  const highContrast = options.highContrast === true;
+
   // Check if we have a small graph (2 nodes)
 
   const edgeCount = elements.filter((ele) =>
@@ -222,12 +225,13 @@ export function draw_graph(
           rankDir: graphDirection,
           fit: false,
           padding: initialFitPadding,
+          ...(reduceMotion ? { animate: false, animationDuration: 0 } : {}),
         };
 
   const cy = cytoscape({
     container: graph, // container to render in
     elements: elements,
-    style: graphStyle(viewMode, graphId),
+    style: graphStyle(viewMode, graphId, { highContrast, reduceMotion }),
     layout: {
       name: "preset",
       fit: false,
@@ -242,6 +246,8 @@ export function draw_graph(
 
   // Store graphId on the cy instance so persistence helpers can find it
   cy._graphId = graphId || null;
+  cy._reduceMotion = reduceMotion;
+  cy._highContrast = highContrast;
 
   // ── Restore only explicit user depth-collapse state before first layout ──
   const savedState = _loadDepthStateFromStorage(graphId);
@@ -744,7 +750,7 @@ export function draw_graph(
             if (dx !== 0 || dy !== 0) {
               cy.animate({
                 pan: { x: pan.x + dx, y: pan.y + dy },
-                duration: 150,
+                duration: cy._reduceMotion ? 0 : 150,
                 easing: "ease-in-out-quad",
               });
             }
@@ -1063,7 +1069,7 @@ export function draw_graph(
     if (!layoutRunning && (dx !== 0 || dy !== 0)) {
       cy.animate({
         pan: { x: pan.x + dx, y: pan.y + dy },
-        duration: 150,
+        duration: cy._reduceMotion ? 0 : 150,
         easing: "ease-in-out-quad",
       });
     }
@@ -1095,7 +1101,7 @@ export function draw_graph(
       if (group && group.isParent()) {
         cy.animate({
           center: { eles: group },
-          duration: 150,
+          duration: cy._reduceMotion ? 0 : 150,
           easing: "ease-in-out-quad",
         });
       }
@@ -1807,8 +1813,8 @@ function _relayoutAfterDepthChange(cy) {
     cy.layout({
       ...baseLayout,
       rankDir: graphDirection,
-      animate: true,
-      animationDuration: 250,
+      animate: cy._reduceMotion ? false : true,
+      animationDuration: cy._reduceMotion ? 0 : 250,
     }).run();
   } catch (_e) {}
 }

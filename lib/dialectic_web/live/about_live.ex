@@ -240,7 +240,7 @@ defmodule DialecticWeb.AboutLive do
               <ul class="mt-5 divide-y divide-stone-200 border-y border-stone-200">
                 <%= for {id, icon, title, copy} <- [
                   {"question", "hero-cursor-arrow-rays", "Question any part", "Ask about a word, passage, person, book, or whole idea."},
-                  {"level", "hero-adjustments-horizontal", "Match the explanation level", "Choose Simple, High School, University, or Expert."},
+                  {"level", "hero-adjustments-horizontal", "Match the explanation level", "Choose Plain, Standard, Detailed, or Expert."},
                   {"branches", "hero-squares-2x2", "Explore in any direction", "Keep definitions, arguments, and examples in separate branches."},
                   {"critical-thinking", "hero-light-bulb", "Use critical-thinking tools", "Clarify terms, test assumptions, strengthen arguments, and uncover blind spots."},
                   {"views", "hero-arrows-right-left", "Compare other views", "Find missing interpretations, then compare their evidence."},
@@ -268,7 +268,7 @@ defmodule DialecticWeb.AboutLive do
               <ul class="mt-5 divide-y divide-stone-200 border-y border-stone-200">
                 <%= for {id, icon, title, copy} <- [
                   {"highlights", "hero-bookmark", "Highlight passages", "Save exact text with its source and shareable link."},
-                  {"stars", "hero-star", "Star useful ideas", "Mark the parts you want to find again."},
+                  {"bookmarks", "hero-bookmark", "Bookmark useful ideas", "Keep the parts you want to find again."},
                   {"export", "hero-arrow-down-tray", "Export the grid", "Download it for notes, sharing, or other tools."},
                   {"shared", "hero-user-group", "Keep a shared record", "Publish, follow changes, and see who added what."},
                   {"profile", "hero-identification", "Show your thinking", "Collect public grids in a profile others can follow and challenge."}

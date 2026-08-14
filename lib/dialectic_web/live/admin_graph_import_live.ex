@@ -282,9 +282,9 @@ defmodule DialecticWeb.AdminGraphImportLive do
                 label="Prompt mode"
                 options={[
                   {"Expert", "expert"},
-                  {"University", "university"},
-                  {"High school", "high_school"},
-                  {"Simple", "simple"}
+                  {"Detailed", "university"},
+                  {"Standard", "high_school"},
+                  {"Plain", "simple"}
                 ]}
               />
               <.input

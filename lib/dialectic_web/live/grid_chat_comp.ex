@@ -140,6 +140,9 @@ defmodule DialecticWeb.GridChatComp do
               <div
                 id="grid-chat-viewers"
                 phx-update="stream"
+                tabindex="0"
+                role="region"
+                aria-label="People viewing this grid"
                 class="flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto"
               >
                 <span
@@ -184,6 +187,9 @@ defmodule DialecticWeb.GridChatComp do
           id="grid-chat-messages"
           phx-update="stream"
           phx-hook="ChatScroll"
+          tabindex="0"
+          role="region"
+          aria-label="Grid chat messages"
           class="min-h-0 flex-1 space-y-0.5 overflow-y-auto bg-[linear-gradient(180deg,_rgba(248,250,252,0.45)_0%,_rgba(255,255,255,0.25)_18%,_rgba(248,250,252,0.72)_100%)] px-2.5 py-3"
         >
           <div

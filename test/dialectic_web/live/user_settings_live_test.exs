@@ -164,6 +164,53 @@ defmodule DialecticWeb.UserSettingsLiveTest do
     end
   end
 
+  describe "update appearance form" do
+    setup %{conn: conn} do
+      user = user_fixture()
+      %{conn: log_in_user(conn, user), user: user}
+    end
+
+    test "renders account-wide appearance controls", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/users/settings")
+
+      assert has_element?(view, "#user-settings-appearance-section")
+      assert has_element?(view, "#appearance-form")
+      assert has_element?(view, "#user_reading_density")
+      assert has_element?(view, "#user_reading_font")
+      assert has_element?(view, "#user_graph_view_mode")
+      assert has_element?(view, "#user_graph_direction")
+      assert has_element?(view, "#user_reduce_motion")
+      assert has_element?(view, "#user_high_contrast")
+      assert has_element?(view, "details", "Advanced grid layout")
+    end
+
+    test "saves appearance preferences", %{conn: conn, user: user} do
+      {:ok, view, _html} = live(conn, ~p"/users/settings")
+
+      view
+      |> form("#appearance-form", %{
+        "user" => %{
+          "reading_density" => "large",
+          "reading_font" => "serif",
+          "graph_view_mode" => "compact",
+          "graph_direction" => "RL",
+          "reduce_motion" => "true",
+          "high_contrast" => "true"
+        }
+      })
+      |> render_submit()
+
+      updated = Accounts.get_user!(user.id)
+      assert updated.reading_density == "large"
+      assert updated.reading_font == "serif"
+      assert updated.graph_view_mode == "compact"
+      assert updated.graph_direction == "RL"
+      assert updated.reduce_motion
+      assert updated.high_contrast
+      assert has_element?(view, "#appearance-form")
+    end
+  end
+
   describe "confirm email" do
     setup %{conn: conn} do
       user = user_fixture()

@@ -19,6 +19,7 @@ defmodule DialecticWeb.DocumentMenuComp do
         type="button"
         phx-click="open_help_modal"
         class={action_button_classes(@compact)}
+        aria-label="Open how-to guide for this page"
         title="Open how-to guide for this page"
       >
         <.icon name="hero-academic-cap" class="h-4 w-4" />
@@ -63,11 +64,11 @@ defmodule DialecticWeb.DocumentMenuComp do
         }
         class={action_button_classes(@compact)}
         data-panel-toggle="right-panel"
-        aria-label="Open workspace settings"
-        title="Open workspace settings"
+        aria-label="Open grid tools"
+        title="Open grid tools"
       >
         <.icon name="hero-adjustments-horizontal" class="h-4 w-4" />
-        <span class={action_label_classes(@compact)}>Settings</span>
+        <span class={action_label_classes(@compact)}>Tools</span>
       </button>
 
       <%= if @can_edit == false do %>
@@ -93,7 +94,7 @@ defmodule DialecticWeb.DocumentMenuComp do
 
   defp action_button_classes(true) do
     [
-      "inline-flex h-8 w-8 shrink-0 items-center justify-center gap-1 rounded-lg border border-transparent bg-slate-50 text-xs font-semibold text-slate-600 transition duration-150 sm:h-7 sm:w-auto sm:justify-start sm:bg-transparent sm:px-2.5",
+      "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-transparent bg-slate-50 text-xs font-semibold text-slate-600 transition duration-150 sm:h-7 sm:w-7 sm:bg-transparent",
       "hover:bg-slate-100 hover:text-slate-950"
     ]
   end
@@ -105,6 +106,6 @@ defmodule DialecticWeb.DocumentMenuComp do
     ]
   end
 
-  defp action_label_classes(true), do: "hidden xl:inline"
+  defp action_label_classes(true), do: "hidden"
   defp action_label_classes(false), do: "hidden sm:inline"
 end

@@ -149,7 +149,7 @@ defmodule DialecticWeb.HomeLiveTest do
            )
 
     assert has_element?(view, "#home-ai-scepticism-link", "where it can go wrong")
-    assert has_element?(view, "#home-public-grid-note", "public by default")
+    assert has_element?(view, "#home-public-grid-note", "public and editable by default")
     refute has_element?(view, "#home-value-summary")
   end
 
@@ -181,8 +181,11 @@ defmodule DialecticWeb.HomeLiveTest do
     |> render_submit()
 
     assert has_element?(view, "#new-idea-mode-simple", "Plain language, everyday examples")
+    assert has_element?(view, "#new-idea-mode-simple", "Plain")
     assert has_element?(view, "#new-idea-mode-high_school", "Clear concepts")
+    assert has_element?(view, "#new-idea-mode-high_school", "Standard")
     assert has_element?(view, "#new-idea-mode-university", "More precise terminology")
+    assert has_element?(view, "#new-idea-mode-university", "Detailed")
     assert has_element?(view, "#new-idea-mode-expert", "Technical terms")
   end
 
