@@ -446,7 +446,15 @@ function renderMdInto(el, askQuestion) {
       "|ENHANCE_FOLLOW_UPS|" +
       enhanceFollowUpQuestionsEnabled,
   );
-  if (el.__markdownHash === currentHash && el.innerHTML.trim() !== "") {
+  const serverFallbackPresent = el.querySelector(
+    '[data-role="server-markdown-fallback"]',
+  );
+
+  if (
+    el.__markdownHash === currentHash &&
+    el.innerHTML.trim() !== "" &&
+    !serverFallbackPresent
+  ) {
     return; // No change since last render
   }
 
