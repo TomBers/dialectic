@@ -1110,13 +1110,6 @@ defmodule DialecticWeb.UserProfileLive do
                                     else: "highlights"
                                   )}
                                 </span>
-                                <span>·</span>
-                                <span>
-                                  {group.node_count} {if(group.node_count == 1,
-                                    do: "node",
-                                    else: "nodes"
-                                  )}
-                                </span>
                               </span>
                             </span>
                             <.icon

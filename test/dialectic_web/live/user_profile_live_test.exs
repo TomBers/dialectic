@@ -394,6 +394,7 @@ defmodule DialecticWeb.UserProfileLiveTest do
       assert has_element?(lv, "#profile-saved-graph-quote-grid > summary", graph.title)
       assert has_element?(lv, "#profile-saved-graph-quote-grid > summary", "1 bookmark")
       assert has_element?(lv, "#profile-saved-graph-quote-grid > summary", "1 highlight")
+      refute has_element?(lv, "#profile-saved-graph-quote-grid > summary", "node")
 
       assert has_element?(
                lv,
