@@ -386,7 +386,7 @@ defmodule Dialectic.Responses.PromptsTest do
           ] do
         assert prompt =~ "Do not produce ASCII art, box-drawing diagrams"
         assert prompt =~ "Explain relationships with concise prose or an ordinary list instead"
-        assert prompt =~ "Fenced code blocks are only for literal code, data, or syntax"
+        assert prompt =~ "Never use fenced code blocks"
       end
     end
   end
