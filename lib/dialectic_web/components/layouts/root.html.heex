@@ -125,6 +125,22 @@
             <span class="hidden sm:inline">About</span>
           </.link>
           <.link
+            id="global-search-nav-link"
+            href={~p"/search"}
+            aria-label="Search"
+            title="Search"
+            class={[
+              "inline-flex h-full items-center gap-1 border-b-2 px-1.5 font-medium transition sm:px-2",
+              if(active_path == "/search",
+                do: "border-teal-300 text-white",
+                else: "border-transparent hover:border-slate-500 hover:text-white"
+              )
+            ]}
+          >
+            <.icon name="hero-magnifying-glass" class="h-3.5 w-3.5" />
+            <span class="hidden md:inline">Search</span>
+          </.link>
+          <.link
             href={~p"/community"}
             aria-label="Community"
             title="Community"
