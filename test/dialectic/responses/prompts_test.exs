@@ -374,5 +374,20 @@ defmodule Dialectic.Responses.PromptsTest do
       assert what_if =~ "Label every counterfactual as hypothetical"
       assert what_if =~ "do not imply that a scenario or outcome is documented evidence"
     end
+
+    test "repeats the diagram restriction in every task family" do
+      for prompt <- [
+            Prompts.initial_explainer("Context", "Topic"),
+            Prompts.explain("Context", "Topic"),
+            Prompts.selection("Context", "Selection"),
+            Prompts.synthesis("First", "Second", "Position one", "Position two"),
+            Prompts.clarify("Context", "Claim"),
+            Prompts.what_if_selection("Context", "Selection")
+          ] do
+        assert prompt =~ "Do not produce ASCII art, box-drawing diagrams"
+        assert prompt =~ "Explain relationships with concise prose or an ordinary list instead"
+        assert prompt =~ "Fenced code blocks are only for literal code, data, or syntax"
+      end
+    end
   end
 end
