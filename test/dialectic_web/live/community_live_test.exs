@@ -72,6 +72,32 @@ defmodule DialecticWeb.CommunityLiveTest do
       end
     end
 
+    test "partner cards show the creation month after later metadata changes", %{conn: conn} do
+      graph =
+        Dialectic.GraphFixtures.insert_graph(%{
+          title: "Dated partner grid #{System.unique_integer([:positive])}",
+          slug: "dated-partner-grid-#{System.unique_integer([:positive])}"
+        })
+        |> Ecto.Changeset.change(%{
+          inserted_at: ~U[2024-01-15 12:00:00Z],
+          updated_at: ~U[2026-08-15 12:00:00Z]
+        })
+        |> Repo.update!()
+
+      {:ok, _curated_grid} =
+        Graphs.add_curated_grid(%{
+          graph_title: graph.title,
+          section: "featured",
+          position: 0
+        })
+
+      {:ok, view, _html} = live(conn, ~p"/community")
+      selector = "#community-featured-#{graph.slug}"
+
+      assert has_element?(view, selector <> ~s( [aria-label="Created Jan 2024"]))
+      refute has_element?(view, selector, "Aug 2026")
+    end
+
     test "mounts and filters by category and search", %{conn: conn} do
       {:ok, view, _html} = live(conn, ~p"/community")
 
@@ -151,6 +177,29 @@ defmodule DialecticWeb.CommunityLiveTest do
       {:ok, view, _html} = live(conn, ~p"/community?search=#{graph.title}")
 
       assert has_element?(view, "#community-grid-#{graph.slug}", "Tell me about gorillas")
+    end
+
+    test "shows the creation month rather than a later metadata update", %{conn: conn} do
+      graph =
+        Dialectic.GraphFixtures.insert_graph(%{
+          title: "Creation dated grid #{System.unique_integer([:positive])}",
+          slug: "creation-dated-grid-#{System.unique_integer([:positive])}"
+        })
+
+      graph =
+        graph
+        |> Ecto.Changeset.change(%{
+          inserted_at: ~U[2024-01-15 12:00:00Z],
+          updated_at: ~U[2026-08-15 12:00:00Z]
+        })
+        |> Repo.update!()
+
+      {:ok, view, _html} = live(conn, ~p"/community?search=#{graph.title}")
+      meta_selector = "#community-grid-#{graph.slug} [data-role=community-grid-meta]"
+
+      assert has_element?(view, meta_selector, "Jan 2024")
+      assert has_element?(view, meta_selector <> ~s( [aria-label="Created Jan 2024"]))
+      refute has_element?(view, meta_selector, "Aug 2026")
     end
 
     test "finds a small grid by title when it is also browsable by topic", %{conn: conn} do

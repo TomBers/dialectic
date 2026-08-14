@@ -218,6 +218,7 @@ defmodule DialecticWeb.GridCardComp do
       |> assign(:primary_tag, primary_tag)
       |> assign(:border_style, card_border_style(tags))
       |> assign(:title, graph_title(assigns.graph))
+      |> assign(:created_label, graph_created_label(assigns.graph))
 
     if assigns.variant in [:compact, :community, :community_compact] do
       standard_grid_card(assigns)
@@ -246,7 +247,9 @@ defmodule DialecticWeb.GridCardComp do
               {grid_visibility_label(@graph)}
             </span>
           <% else %>
-            <span class="shrink-0">{graph_updated_label(@graph)}</span>
+            <span class="shrink-0" aria-label={"Created " <> @created_label}>
+              {@created_label}
+            </span>
           <% end %>
         </div>
 
@@ -340,8 +343,11 @@ defmodule DialecticWeb.GridCardComp do
                 {grid_visibility_label(@graph)}
               </span>
             <% else %>
-              <span class="shrink-0 text-[11px] font-medium text-slate-500">
-                {graph_updated_label(@graph)}
+              <span
+                class="shrink-0 text-[11px] font-medium text-slate-500"
+                aria-label={"Created " <> @created_label}
+              >
+                {@created_label}
               </span>
             <% end %>
           </div>
@@ -429,7 +435,7 @@ defmodule DialecticWeb.GridCardComp do
 
   def tag_pill_classes(tag), do: tag_pill_class(tag)
   def tag_color_hex(tag), do: tag_color(tag)
-  def updated_label(graph), do: graph_updated_label(graph)
+  def created_label(graph), do: graph_created_label(graph)
 
   defp editorial_card_class(:featured, 0) do
     [editorial_card_base_class(), "lg:col-span-6"]
@@ -578,10 +584,10 @@ defmodule DialecticWeb.GridCardComp do
     end
   end
 
-  defp graph_updated_label(graph) do
-    case Map.get(graph, :updated_at) || Map.get(graph, :inserted_at) do
-      %DateTime{} = updated_at -> Calendar.strftime(updated_at, "%b %Y")
-      %NaiveDateTime{} = updated_at -> Calendar.strftime(updated_at, "%b %Y")
+  defp graph_created_label(graph) do
+    case Map.get(graph, :inserted_at) do
+      %DateTime{} = inserted_at -> Calendar.strftime(inserted_at, "%b %Y")
+      %NaiveDateTime{} = inserted_at -> Calendar.strftime(inserted_at, "%b %Y")
       _other -> "Recently"
     end
   end

@@ -358,6 +358,7 @@ defmodule DialecticWeb.CommunityLive do
       |> assign(:title, display_title(assigns.graph))
       |> assign(:tags, tags)
       |> assign(:node_count, graph_node_count(assigns.graph))
+      |> assign(:created_label, created_label(assigns.graph))
       |> assign(:accent_style, row_accent_style(tags))
       |> assign(:generating_tags?, MapSet.member?(assigns.generating_tags, assigns.graph.title))
 
@@ -389,7 +390,7 @@ defmodule DialecticWeb.CommunityLive do
             </.link>
             <span aria-hidden="true">·</span>
           <% end %>
-          <span>{updated_label(@graph)}</span>
+          <span aria-label={"Created " <> @created_label}>{@created_label}</span>
           <span aria-hidden="true">·</span>
           <span>{idea_count_label(@node_count)}</span>
         </div>

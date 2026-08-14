@@ -494,6 +494,7 @@ defmodule DialecticWeb.UserProfileLive do
       |> assign(:title, profile_grid_title(assigns.graph))
       |> assign(:tags, tags)
       |> assign(:node_count, graph_node_count(assigns.graph))
+      |> assign(:created_label, created_label(assigns.graph))
       |> assign(:accent_style, profile_grid_row_accent(tags))
 
     ~H"""
@@ -515,7 +516,7 @@ defmodule DialecticWeb.UserProfileLive do
           data-role="profile-public-grid-meta"
           class="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500"
         >
-          <span>{updated_label(@graph)}</span>
+          <span aria-label={"Created " <> @created_label}>{@created_label}</span>
           <span aria-hidden="true">·</span>
           <span>{profile_idea_count_label(@node_count)}</span>
         </div>
