@@ -109,7 +109,7 @@ defmodule Dialectic.Responses.Prompts do
 
   defp diagram_output_constraint do
     """
-    **Output constraint:** Do not produce ASCII art, box-drawing diagrams, plain-text arrow diagrams, or conceptual diagrams inside fenced code blocks. Explain relationships with concise prose or an ordinary list instead. Fenced code blocks are only for literal code, data, or syntax.
+    **Output constraint:** Do not produce ASCII art, box-drawing diagrams, plain-text arrow diagrams, or conceptual diagrams inside fenced code blocks. Explain relationships with concise prose or an ordinary list instead. Never use fenced code blocks.
     """
   end
 
