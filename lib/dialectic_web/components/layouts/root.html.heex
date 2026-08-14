@@ -145,7 +145,7 @@
             aria-label="Community"
             title="Community"
             class={[
-              "inline-flex h-full items-center gap-1 border-b-2 px-1.5 font-medium transition sm:px-2",
+              "hidden h-full items-center gap-1 border-b-2 px-1.5 font-medium transition sm:px-2 md:inline-flex",
               if(active_path == "/community",
                 do: "border-teal-300 text-white",
                 else: "border-transparent hover:border-slate-500 hover:text-white"
@@ -171,8 +171,17 @@
             <span class="hidden sm:inline">Gallery</span>
           </.link>
           <.link
+            id="mobile-community-nav-cta"
+            href={~p"/community"}
+            aria-label="Browse community grids"
+            class="ml-1 inline-flex h-8 shrink-0 items-center rounded-md bg-teal-300 px-2.5 font-semibold text-slate-950 transition hover:bg-teal-200 md:hidden"
+          >
+            <span>Browse</span>
+          </.link>
+          <.link
+            id="desktop-new-grid-nav-link"
             href={~p"/?focus=grid#start-here"}
-            class="ml-1 inline-flex h-7 items-center gap-1 rounded-md bg-teal-300 px-2.5 font-semibold text-slate-950 transition hover:bg-teal-200"
+            class="ml-1 hidden h-7 items-center gap-1 rounded-md bg-teal-300 px-2.5 font-semibold text-slate-950 transition hover:bg-teal-200 md:inline-flex"
           >
             <span>+ New Grid</span>
           </.link>
