@@ -139,6 +139,13 @@ html.mode-switch-enter #outline-layout {
 #cy.graph-territory-surface #cy-inner {
     position: relative;
     z-index: 1;
+    opacity: 1;
+    transition: opacity 200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+#cy.graph-territory-surface #cy-inner[data-graph-ready="false"] {
+    opacity: 0;
+    pointer-events: none;
 }
 
 /* Make graph nodes feel clickable */
@@ -146,6 +153,13 @@ html.mode-switch-enter #outline-layout {
 #cy-inner canvas {
     cursor: pointer;
 }
+
+@media (prefers-reduced-motion: reduce) {
+    #cy.graph-territory-surface #cy-inner {
+        transition: none;
+    }
+}
+
 .top-right {
     position: absolute;
     top: 0;
@@ -1142,7 +1156,7 @@ button[type="submit"]:active {
 
 .message-wrapper.user .message-bubble .prose .link-domain {
     background: rgba(255, 255, 255, 0.18);
-    color: rgba(255, 255, 255, 0.7);
+    color: rgba(255, 255, 255, 0.92);
     border: 1px solid rgba(255, 255, 255, 0.25);
     text-decoration: none;
 }
@@ -1198,8 +1212,9 @@ button[type="submit"]:active {
     color: rgba(255, 255, 255, 0.8);
 }
 
-/* Reading density controls for graph side-panel content */
-#graph-layout {
+/* Shared reading preferences for graph and outline content. */
+#graph-layout,
+#outline-layout {
     --rg-read-font-family-sans:
         InterVariable, Inter, ui-sans-serif, system-ui, -apple-system,
         "Segoe UI", sans-serif;
@@ -1208,38 +1223,55 @@ button[type="submit"]:active {
         Georgia, "Times New Roman", serif;
     --rg-read-font-family: var(--rg-read-font-family-sans);
     --rg-read-heading-font-family: var(--rg-read-font-family-sans);
-    --rg-read-font-size: 1.02rem;
-    --rg-read-line-height: 1.7;
+    --rg-read-font-size: 1.0625rem;
+    --rg-read-line-height: 1.68;
     --rg-read-max-width: 62ch;
-    --rg-read-para-margin: 0.88em;
-    --rg-read-lead-size: 1em;
-    --rg-read-lead-line-height: 1.7;
+    --rg-read-para-margin: 0.9em;
+    --rg-read-lead-size: 1.06em;
+    --rg-read-lead-line-height: 1.62;
     --rg-read-letter-spacing: -0.0025em;
     --rg-read-word-spacing: 0.02em;
 }
 
-#graph-layout[data-reading-density="compact"] {
-    --rg-read-font-size: 0.94rem;
-    --rg-read-line-height: 1.6;
-    --rg-read-max-width: 58ch;
-    --rg-read-para-margin: 0.66em;
-    --rg-read-lead-size: 1em;
-    --rg-read-lead-line-height: 1.6;
-}
-
-#graph-layout[data-reading-density="large"] {
-    --rg-read-font-size: 1.14rem;
-    --rg-read-line-height: 1.84;
+#graph-layout[data-reading-density="compact"],
+#outline-layout[data-reading-density="compact"] {
+    --rg-read-font-size: 1rem;
+    --rg-read-line-height: 1.58;
     --rg-read-max-width: 66ch;
-    --rg-read-para-margin: 1em;
-    --rg-read-lead-size: 1.04em;
-    --rg-read-lead-line-height: 1.74;
+    --rg-read-para-margin: 0.72em;
+    --rg-read-lead-size: 1em;
+    --rg-read-lead-line-height: 1.58;
 }
 
-#graph-layout[data-reading-font="serif"] {
+#graph-layout[data-reading-density="large"],
+#outline-layout[data-reading-density="large"] {
+    --rg-read-font-size: 1.1875rem;
+    --rg-read-line-height: 1.72;
+    --rg-read-max-width: 58ch;
+    --rg-read-para-margin: 1em;
+    --rg-read-lead-size: 1.06em;
+    --rg-read-lead-line-height: 1.62;
+}
+
+#graph-layout[data-reading-font="serif"],
+#outline-layout[data-reading-font="serif"] {
     --rg-read-font-family: var(--rg-read-font-family-serif);
     --rg-read-letter-spacing: -0.001em;
     --rg-read-word-spacing: 0.01em;
+}
+
+#graph-layout[data-reduce-motion="true"],
+#outline-layout[data-reduce-motion="true"],
+#graph-layout[data-reduce-motion="true"] *,
+#outline-layout[data-reduce-motion="true"] *,
+#graph-layout[data-reduce-motion="true"] *::before,
+#outline-layout[data-reduce-motion="true"] *::before,
+#graph-layout[data-reduce-motion="true"] *::after,
+#outline-layout[data-reduce-motion="true"] *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
 }
 
 #graph-layout .reading-density-btn {
@@ -1288,7 +1320,134 @@ button[type="submit"]:active {
     box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.2);
 }
 
+/* Editorial reading measure and hierarchy for the outline reader. */
+#outline-layout .outline-reader-prose {
+    width: min(100%, var(--rg-read-max-width, 62ch));
+    max-width: var(--rg-read-max-width, 62ch);
+    color: #1e293b;
+    font-family: var(--rg-read-font-family);
+    font-size: var(--rg-read-font-size, 1.02rem);
+    font-variant-numeric: lining-nums;
+    letter-spacing: var(--rg-read-letter-spacing, -0.0025em);
+    line-height: var(--rg-read-line-height, 1.7);
+    text-rendering: optimizeLegibility;
+    word-spacing: var(--rg-read-word-spacing, 0.02em);
+}
+
+#outline-layout .outline-reader-prose :where(p),
+#graph-layout
+    .selection-content
+    [phx-hook="Markdown"][data-body-only="true"]
+    :where(p) {
+    margin-block: var(--rg-read-para-margin, 0.88em);
+    color: #334155;
+    line-height: inherit;
+}
+
+#outline-layout
+    .outline-reader-prose
+    [phx-hook="Markdown"][data-body-only="true"]
+    > p:first-of-type {
+    margin-top: 0;
+    color: #0f172a;
+    font-size: 1.06em;
+    font-weight: 450;
+    line-height: 1.62;
+}
+
+#outline-layout .outline-reader-prose :where(h2),
+#graph-layout
+    .selection-content
+    [phx-hook="Markdown"][data-body-only="true"]
+    :where(h2) {
+    margin-top: 1.9em;
+    margin-bottom: 0.65em;
+    color: #0f172a;
+    font-family: var(--rg-read-font-family-serif);
+    font-size: 1.35em;
+    font-weight: 650;
+    line-height: 1.25;
+    border-left: 0;
+    padding-left: 0;
+}
+
+#outline-layout .outline-reader-prose :where(h3),
+#graph-layout
+    .selection-content
+    [phx-hook="Markdown"][data-body-only="true"]
+    :where(h3) {
+    margin-top: 1.65em;
+    margin-bottom: 0.55em;
+    color: #0f172a;
+    font-family: var(--rg-read-font-family-serif);
+    font-size: 1.15em;
+    font-weight: 650;
+    line-height: 1.3;
+}
+
+#outline-layout .outline-reader-prose :where(ul, ol),
+#graph-layout
+    .selection-content
+    [phx-hook="Markdown"][data-body-only="true"]
+    :where(ul, ol) {
+    margin-block: 1em;
+}
+
+#outline-layout .outline-reader-prose :where(li),
+#graph-layout
+    .selection-content
+    [phx-hook="Markdown"][data-body-only="true"]
+    :where(li) {
+    margin-block: 0.48em;
+    color: #334155;
+    line-height: 1.62;
+}
+
+#outline-layout .outline-reader-prose :where(li)::marker,
+#graph-layout
+    .selection-content
+    [phx-hook="Markdown"][data-body-only="true"]
+    :where(li)::marker {
+    color: #64748b;
+    font-weight: 600;
+}
+
+#outline-layout .outline-reader-prose :where(strong),
+#graph-layout
+    .selection-content
+    [phx-hook="Markdown"][data-body-only="true"]
+    :where(strong) {
+    color: #0f172a;
+    font-weight: 700;
+}
+
+#outline-layout .outline-reader-prose :where(a),
+#graph-layout
+    .selection-content
+    [phx-hook="Markdown"][data-body-only="true"]
+    :where(a) {
+    color: #0f766e;
+    font-weight: 550;
+    text-decoration-color: #5eead4;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.2em;
+}
+
+#outline-layout .outline-reader-prose :where(blockquote),
+#graph-layout
+    .selection-content
+    [phx-hook="Markdown"][data-body-only="true"]
+    :where(blockquote) {
+    border-color: #cbd5e1;
+    color: #475569;
+}
+
 /* Node content readability inside selection-content */
+#graph-layout [data-role="node-content"] > h3 {
+    font-family: var(--rg-read-font-family-serif);
+    line-height: 1.15;
+}
+
 .selection-content {
     font-family: var(--rg-read-font-family);
     font-size: var(--rg-read-font-size, 1.05rem);
@@ -1325,73 +1484,76 @@ button[type="submit"]:active {
 }
 
 /* First rendered markdown paragraph acts as the graph drawer's Essence block. */
-.selection-content
+#graph-layout
+    .selection-content
     [phx-hook="Markdown"][data-body-only="true"]
     > p:first-of-type {
     margin: 0 0 1.05rem;
-    border: 1px solid rgba(148, 163, 184, 0.28);
-    border-radius: 0.75rem;
-    background:
-        linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.96)),
-        #0f172a;
-    padding: 0.95rem 1rem;
-    color: #f8fafc; /* slate-50 */
-    font-size: 0.94em;
-    font-weight: 400;
-    line-height: 1.65;
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.12),
-        0 16px 34px rgba(15, 23, 42, 0.14);
+    border: 1px solid rgba(203, 213, 225, 0.72);
+    border-radius: 0.625rem;
+    background: rgba(248, 250, 252, 0.82);
+    padding: 0.8rem 0.9rem;
+    color: #475569;
+    font-size: var(--rg-read-lead-size, 1.06em);
+    font-weight: 450;
+    line-height: var(--rg-read-lead-line-height, 1.62);
+    box-shadow: inset 3px 0 0 rgba(20, 184, 166, 0.42);
 }
 
-.selection-content
+#graph-layout
+    .selection-content
     [phx-hook="Markdown"][data-body-only="true"]
     > p:first-of-type::before {
     content: "Essence";
     display: block;
     margin-bottom: 0.35rem;
-    color: #fbbf24; /* amber-400 */
+    color: #64748b;
     font-family: var(--rg-read-heading-font-family);
     font-size: 0.625rem;
-    font-weight: 700;
-    letter-spacing: 0.16em;
+    font-weight: 650;
+    letter-spacing: 0.12em;
     line-height: 1;
     text-transform: uppercase;
 }
 
-.selection-content
+#graph-layout
+    .selection-content
     [phx-hook="Markdown"][data-body-only="true"]
     > p:first-of-type
     + h2 {
     margin-top: 0.65em;
 }
 
-.selection-content
+#graph-layout
+    .selection-content
     [phx-hook="Markdown"][data-body-only="true"]
     > p:first-of-type
     strong {
-    color: #ffffff;
+    color: #0f172a;
     font-weight: 700;
 }
 
-.selection-content
+#graph-layout
+    .selection-content
     [phx-hook="Markdown"][data-body-only="true"]
     > p:first-of-type
     a[href] {
-    color: #fde68a; /* amber-200 */
-    text-decoration-color: rgba(253, 230, 138, 0.62);
+    color: #0f766e;
+    text-decoration-color: rgba(45, 212, 191, 0.65);
 }
 
-.selection-content
+#graph-layout
+    .selection-content
     [phx-hook="Markdown"][data-body-only="true"]
     > p:first-of-type
     a[href]:hover {
-    color: #fef3c7; /* amber-100 */
-    background-color: rgba(251, 191, 36, 0.12);
-    text-decoration-color: rgba(253, 230, 138, 0.9);
+    color: #115e59;
+    background-color: rgba(204, 251, 241, 0.5);
+    text-decoration-color: rgba(20, 184, 166, 0.8);
 }
 
-.selection-content
+#graph-layout
+    .selection-content
     [phx-hook="Markdown"][data-body-only="true"]
     > p:first-of-type
     code {
@@ -1679,13 +1841,13 @@ button[type="submit"]:active {
 
 /* Domain badges inside selection-content — quiet by default, visible on hover */
 .selection-content .link-domain {
-    color: #94a3b8; /* slate-400 */
+    color: #475569; /* slate-600 */
     background: #f8fafc; /* slate-50 */
     border-color: #e2e8f0; /* slate-200 */
 }
 
 .selection-content a[href]:hover .link-domain {
-    color: #6366f1; /* indigo-500 */
+    color: #4338ca; /* indigo-700 */
     background: #eef2ff; /* indigo-50 */
     border-color: #c7d2fe; /* indigo-200 */
 }

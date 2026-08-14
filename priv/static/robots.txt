@@ -13,16 +13,13 @@ Disallow: /socket/
 Disallow: /phoenix/
 Disallow: /live/
 
-# Reader/editor duplicates — the reader is the canonical public URL
-Disallow: /g/*/graph
-Disallow: /g/*/linear
-Disallow: /g/*/outline
+# Reader/editor variants expose their canonical or noindex rules in the response.
+# Crawlers must be able to fetch them for those rules to take effect.
 
-# Query-parameterized variants create duplicate content and waste crawl budget
+# Filter and presentation variants do not add indexable topic content.
 Disallow: /*?search=
 Disallow: /*?tag=
 Disallow: /*?category=
-Disallow: /*?node=
 Disallow: /*?present=
 Disallow: /*?slides=
 Disallow: /*?token=

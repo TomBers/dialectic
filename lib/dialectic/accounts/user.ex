@@ -20,6 +20,12 @@ defmodule Dialectic.Accounts.User do
     field :profile_banner, :string
     field :profile_links, :map, default: %{"links" => []}
     field :is_admin, :boolean, default: false
+    field :reading_density, :string, default: "comfortable"
+    field :reading_font, :string, default: "sans"
+    field :graph_view_mode, :string, default: "spaced"
+    field :graph_direction, :string, default: "TB"
+    field :reduce_motion, :boolean, default: false
+    field :high_contrast, :boolean, default: false
 
     has_many :graphs, Dialectic.Accounts.Graph, on_delete: :delete_all
     has_many :notes, Dialectic.Accounts.Note, on_delete: :delete_all
@@ -260,6 +266,50 @@ defmodule Dialectic.Accounts.User do
     |> validate_inclusion(:profile_banner, [nil | Dialectic.Accounts.ProfileBanner.ids()])
     |> unsafe_validate_unique(:username, Dialectic.Repo)
     |> unique_constraint(:username)
+  end
+
+  def appearance_changeset(user, attrs) do
+    user
+    |> cast(attrs, [
+      :reading_density,
+      :reading_font,
+      :graph_view_mode,
+      :graph_direction,
+      :reduce_motion,
+      :high_contrast
+    ])
+    |> validate_required([:reading_density, :reading_font, :graph_view_mode, :graph_direction])
+    |> validate_inclusion(:reading_density, ~w(compact comfortable large))
+    |> validate_inclusion(:reading_font, ~w(sans serif))
+    |> validate_inclusion(:graph_view_mode, ~w(spaced compact))
+    |> validate_inclusion(:graph_direction, ~w(TB BT LR RL))
+  end
+
+  def appearance_preferences(%__MODULE__{} = user) do
+    %{
+      reading_density:
+        valid_or_default(user.reading_density, ~w(compact comfortable large), "comfortable"),
+      reading_font: valid_or_default(user.reading_font, ~w(sans serif), "sans"),
+      graph_view_mode: valid_or_default(user.graph_view_mode, ~w(spaced compact), "spaced"),
+      graph_direction: valid_or_default(user.graph_direction, ~w(TB BT LR RL), "TB"),
+      reduce_motion: user.reduce_motion == true,
+      high_contrast: user.high_contrast == true
+    }
+  end
+
+  def appearance_preferences(_user) do
+    %{
+      reading_density: "comfortable",
+      reading_font: "sans",
+      graph_view_mode: "spaced",
+      graph_direction: "TB",
+      reduce_motion: false,
+      high_contrast: false
+    }
+  end
+
+  defp valid_or_default(value, valid_values, default) do
+    if value in valid_values, do: value, else: default
   end
 
   def banner_changeset(user, attrs) do

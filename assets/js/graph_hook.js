@@ -1,7 +1,9 @@
 import { draw_graph } from "./draw_graph";
 import { layoutConfig } from "./layout_config.js";
 import { extractListItems } from "./list_detection_hook.js";
+import { syncSelectedNodeUrl } from "./selected_node_url.js";
 import { showToast, copyToClipboard } from "./toast.js";
+import { syncGraphAppearanceStorage } from "./appearance_preferences.js";
 
 const RIGHT_DRAWER_SELECTOR = "[data-right-drawer]";
 
@@ -73,6 +75,11 @@ const layoutGraph = (cy, opts, onDone) => {
     padding: isSmallGraph ? 200 : baseLayout.padding,
     ...(opts || {}),
   };
+
+  if (cy?._reduceMotion) {
+    layoutOptions.animate = false;
+    layoutOptions.animationDuration = 0;
+  }
 
   const layout = cy.layout(layoutOptions);
 
@@ -270,7 +277,7 @@ const ensureVisible = (cy, container, nodeId) => {
       cy.stop();
       cy.animate({
         pan: { x: pan.x + dx, y: pan.y + dy },
-        duration: 150,
+        duration: cy._reduceMotion ? 0 : 150,
         easing: "ease-in-out-quad",
       });
     }
@@ -280,15 +287,32 @@ const ensureVisible = (cy, container, nodeId) => {
 const graphHook = {
   mounted() {
     const { graph, node, div, graphId } = this.el.dataset;
+    const appearance = syncGraphAppearanceStorage(this.el.dataset);
+    this._reduceMotion = appearance.reduceMotion;
+    this._highContrast = appearance.highContrast;
+    syncSelectedNodeUrl(node);
     const { mode: initialPresentationMode, ids: initialPresentationIds } =
       this._readPresentationState();
 
     const container =
       this.el.querySelector(`#${div}`) || document.getElementById(div);
 
-    // Get view mode from localStorage or default to "spaced"
-    const viewMode = localStorage.getItem("graph_view_mode") || "spaced";
-    const graphDirection = localStorage.getItem("graph_direction") || "TB";
+    container.dataset.graphReady = "false";
+    container.setAttribute("aria-busy", "true");
+
+    const markInitialGraphReady = () => {
+      if (this._graphReadyFallbackTimer) {
+        clearTimeout(this._graphReadyFallbackTimer);
+        this._graphReadyFallbackTimer = null;
+      }
+
+      if (!container.isConnected) return;
+      container.dataset.graphReady = "true";
+      container.removeAttribute("aria-busy");
+    };
+
+    const viewMode = appearance.graphViewMode;
+    const graphDirection = appearance.graphDirection;
 
     const initialElements =
       initialPresentationMode === "presenting" && initialPresentationIds.length > 0
@@ -296,8 +320,17 @@ const graphHook = {
         : this._parseGraphElements(graph);
     const initialDrawOptions =
       initialPresentationMode === "presenting" && initialPresentationIds.length > 0
-        ? { skipInitialLayout: true }
-        : {};
+        ? {
+            skipInitialLayout: true,
+            onInitialLayoutReady: markInitialGraphReady,
+            reduceMotion: this._reduceMotion,
+            highContrast: this._highContrast,
+          }
+        : {
+            onInitialLayoutReady: markInitialGraphReady,
+            reduceMotion: this._reduceMotion,
+            highContrast: this._highContrast,
+          };
 
     this.cy = draw_graph(
       container,
@@ -308,6 +341,8 @@ const graphHook = {
       graphId,
       initialDrawOptions,
     );
+
+    this._graphReadyFallbackTimer = setTimeout(markInitialGraphReady, 1600);
 
     // Track view mode and direction for detecting changes
     this._lastViewMode = viewMode;
@@ -1713,7 +1748,7 @@ const graphHook = {
     if (!fitViewport || !fitViewport.pan || !Number.isFinite(fitViewport.zoom)) {
       this.cy.animate({
         fit: { eles: visibleNodes, padding: fitPadding },
-        duration: 400,
+        duration: this._reduceMotion ? 0 : 400,
         easing: "ease-in-out-quad",
         complete: () => {
           this._forceGraphRedraw();
@@ -1731,7 +1766,7 @@ const graphHook = {
         x: fitViewport.pan.x + dx,
         y: fitViewport.pan.y + dy,
       },
-      duration: 400,
+      duration: this._reduceMotion ? 0 : 400,
       easing: "ease-in-out-quad",
       complete: () => {
         this._forceGraphRedraw();
@@ -1817,7 +1852,11 @@ const graphHook = {
       currentNode,
       viewMode,
       graphId,
-      options,
+      {
+        ...options,
+        reduceMotion: this._reduceMotion,
+        highContrast: this._highContrast,
+      },
     );
 
     try {
@@ -1900,14 +1939,14 @@ const graphHook = {
         if (this.cy.nodes().length > 0) {
           this.cy.animate({
             fit: { eles: this.cy.nodes(), padding: 40 },
-            duration: 400,
+            duration: this._reduceMotion ? 0 : 400,
             easing: "ease-in-out-quad",
             complete: () => {
               const { dx, dy } = this._getOverlayOffsets();
               if (dx !== 0 || dy !== 0) {
                 this.cy.animate({
                   panBy: { x: dx, y: dy },
-                  duration: 200,
+                  duration: this._reduceMotion ? 0 : 200,
                   easing: "ease-in-out-quad",
                 });
               }
@@ -1995,6 +2034,10 @@ const graphHook = {
       currentNode,
       currentViewMode,
       graphId,
+      {
+        reduceMotion: this._reduceMotion,
+        highContrast: this._highContrast,
+      },
     );
 
     // Restore zoom and pan
@@ -2069,6 +2112,7 @@ const graphHook = {
 
   updated() {
     const { graph, node, operation } = this.el.dataset;
+    syncSelectedNodeUrl(node);
     const { mode: presentationMode, ids: presentationIds } =
       this._readPresentationState();
 
@@ -2367,6 +2411,10 @@ const graphHook = {
     if (this._zoomToastTimer) {
       clearTimeout(this._zoomToastTimer);
       this._zoomToastTimer = null;
+    }
+    if (this._graphReadyFallbackTimer) {
+      clearTimeout(this._graphReadyFallbackTimer);
+      this._graphReadyFallbackTimer = null;
     }
     if (this._zoomToast && this._zoomToast.parentNode) {
       this._zoomToast.parentNode.removeChild(this._zoomToast);

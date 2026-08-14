@@ -1,87 +1,123 @@
-<div class="min-h-screen bg-slate-50 text-slate-900">
-  <section class="border-b border-slate-900 bg-gradient-to-br from-slate-950 via-slate-900 to-teal-950 text-white">
-    <div class="mx-auto max-w-5xl px-4 py-16 sm:px-6 sm:py-24">
-      <p class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-teal-100 ring-1 ring-white/20">
-        <.icon name="hero-book-open" class="h-3.5 w-3.5" /> How RationalGrid works
+<div class="min-h-screen bg-[#f4f1e9] text-slate-950">
+  <section id="guide-hero" class="border-b border-stone-300 bg-white">
+    <div class="mx-auto max-w-6xl px-5 py-14 sm:px-8 sm:py-20">
+      <p class="border-l-2 border-teal-700 pl-3 text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
+        How RationalGrid works
       </p>
-      <h1 class="mt-5 max-w-4xl text-4xl font-semibold tracking-tight text-white sm:text-6xl">
-        From one question to a map you can keep testing.
+      <h1 class="mt-5 max-w-4xl font-serif text-5xl font-semibold leading-[1.02] tracking-tight sm:text-7xl">
+        Turn one question into a map of ideas you can explore and share.
       </h1>
-      <p class="mt-5 max-w-2xl text-lg leading-8 text-slate-300">
-        RationalGrid turns an AI answer into a visual trail: read the response, choose a branch, test the reasoning, add your perspective, and save what matters.
+      <p class="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
+        Use it when the first answer is not quite enough. Compare views, keep the useful bits, and work out what you think.
       </p>
       <div class="mt-8 flex flex-wrap gap-3">
         <a
+          id="guide-start-grid-link"
           href="/?focus=grid#start-here"
-          class="inline-flex items-center gap-2 rounded-xl bg-teal-300 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-teal-200"
+          class="inline-flex items-center gap-2 rounded-md bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
         >
-          <.icon name="hero-sparkles" class="h-4 w-4" /> Start a grid
+          Start a grid <.icon name="hero-arrow-right" class="h-4 w-4" />
         </a>
         <a
           href="#guide-flow"
-          class="inline-flex items-center gap-2 rounded-xl bg-white/10 px-5 py-3 text-sm font-semibold text-white ring-1 ring-white/25 transition hover:bg-white/20"
+          class="inline-flex items-center gap-2 border-b border-slate-500 px-1 py-2 text-sm font-semibold text-slate-900 transition hover:border-teal-700 hover:text-teal-800"
         >
-          <.icon name="hero-arrow-down" class="h-4 w-4" /> Follow the flow
+          Follow the flow <.icon name="hero-arrow-down" class="h-4 w-4" />
         </a>
       </div>
     </div>
   </section>
 
-  <main class="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-14">
-    <section id="guide-flow" aria-labelledby="guide-flow-heading">
-      <div class="max-w-3xl">
-        <p class="text-xs font-semibold uppercase tracking-wide text-teal-700">The core loop</p>
-        <h2 id="guide-flow-heading" class="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
-          What happens inside a grid?
-        </h2>
-        <p class="mt-3 leading-7 text-slate-600">
-          Every grid follows the same simple loop. You stay in control of what to explore next.
-        </p>
-        <p class="mt-3 max-w-3xl leading-7 text-slate-600">
-          A grid is a collection of questions and answers. Each new question branches from an existing idea and keeps its context, so you can explore many directions without losing the thread.
+  <main class="mx-auto max-w-6xl px-5 py-10 sm:px-8 sm:py-14">
+    <section
+      id="guide-flow"
+      class="relative isolate overflow-hidden border border-slate-700 bg-slate-950 px-5 py-7 text-white shadow-[0_24px_60px_-42px_rgba(15,23,42,0.9)] sm:px-8 sm:py-9"
+      aria-labelledby="guide-flow-heading"
+    >
+      <div
+        aria-hidden="true"
+        class="absolute -right-24 -top-28 -z-10 h-72 w-72 rounded-full bg-indigo-500/15 blur-3xl"
+      >
+      </div>
+      <div
+        aria-hidden="true"
+        class="absolute -bottom-28 -left-20 -z-10 h-64 w-64 rounded-full bg-teal-400/10 blur-3xl"
+      >
+      </div>
+
+      <div class="grid gap-5 lg:grid-cols-[minmax(0,0.85fr)_minmax(18rem,1.15fr)] lg:items-end">
+        <div>
+          <p class="border-l-2 border-teal-300 pl-3 text-xs font-semibold uppercase tracking-[0.18em] text-teal-200">
+            The core loop
+          </p>
+          <h2
+            id="guide-flow-heading"
+            class="mt-3 font-serif text-4xl font-semibold tracking-tight sm:text-5xl"
+          >
+            What happens inside a grid?
+          </h2>
+        </div>
+        <p class="max-w-xl leading-7 text-slate-300 lg:justify-self-end">
+          Each question starts from an idea already in the grid, so the link stays clear. You choose what to explore next.
         </p>
       </div>
-      <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-        <%= for {number, title, copy} <- [
-          {"1", "Ask", "Name the question or topic."},
-          {"2", "See", "Read the generated response."},
-          {"3", "Branch", "Choose a node and go deeper."},
-          {"4", "Test", "Challenge claims and assumptions."},
-          {"5", "Keep", "Save, share, and return later."}
+
+      <ol class="mt-8 grid overflow-hidden border border-white/15 bg-white/10 sm:grid-cols-2 lg:grid-cols-6">
+        <%= for {number, slug, title, copy, tone} <- [
+          {"1", "ask", "Ask", "Name the question or topic.", "border-sky-300/40 bg-sky-300/10 text-sky-200"},
+          {"2", "read", "Read", "See the answer and what led to it.", "border-cyan-300/40 bg-cyan-300/10 text-cyan-200"},
+          {"3", "branch", "Branch", "Ask AI or add your own idea.", "border-violet-300/40 bg-violet-300/10 text-violet-200"},
+          {"4", "examine", "Examine", "Check the idea from more than one side.", "border-rose-300/40 bg-rose-300/10 text-rose-200"},
+          {"5", "keep", "Keep", "Star ideas and save passages.", "border-amber-300/40 bg-amber-300/10 text-amber-200"},
+          {"6", "share", "Share", "Edit together or publish.", "border-emerald-300/40 bg-emerald-300/10 text-emerald-200"}
         ] do %>
-          <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-teal-100 text-sm font-bold text-teal-800">
-              {number}
-            </span>
-            <h3 class="mt-3 text-base font-semibold text-slate-950">{title}</h3>
-            <p class="mt-1 text-sm leading-5 text-slate-600">{copy}</p>
-          </div>
+          <li
+            id={"guide-flow-step-#{slug}"}
+            class="relative min-h-36 border-b border-white/10 bg-slate-950/70 p-4 last:border-b-0 sm:[&:nth-child(odd)]:border-r lg:border-b-0 lg:border-r lg:last:border-r-0"
+          >
+            <div class="flex items-center gap-3">
+              <span class={[
+                "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border font-mono text-xs font-bold",
+                tone
+              ]}>
+                {number}
+              </span>
+              <span
+                :if={number != "6"}
+                aria-hidden="true"
+                class="hidden h-px flex-1 bg-gradient-to-r from-white/30 to-white/5 lg:block"
+              >
+              </span>
+            </div>
+            <h3 class="mt-5 text-base font-semibold text-white">{title}</h3>
+            <p class="mt-1 text-sm leading-5 text-slate-400">{copy}</p>
+          </li>
         <% end %>
-      </div>
+      </ol>
     </section>
 
     <section class="mt-12" aria-labelledby="guide-ask-heading">
       <div class="max-w-3xl">
         <p class="text-xs font-semibold uppercase tracking-wide text-teal-700">Step 1 · Ask</p>
-        <h2 id="guide-ask-heading" class="mt-2 text-3xl font-semibold tracking-tight">
+        <h2 id="guide-ask-heading" class="mt-2 font-serif text-4xl font-semibold tracking-tight">
           What would you like to explore?
         </h2>
         <p class="mt-3 leading-7 text-slate-600">
-          Pick a question to open in the real new-grid form, or use the blank form to start with your own idea.
+          Choose a prompt or start with your own. Questions can be practical, philosophical, or simply awkward to ask aloud.
         </p>
       </div>
       <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <%= for {label, category, prompt} <- [
-          {"Should cities expand digital surveillance in public spaces?", "Trade-offs", "Should cities expand digital surveillance in public spaces, and what are the trade-offs?"},
-          {"How do recommendation algorithms shape what people see?", "Systems", "How do recommendation algorithms shape what people see online?"},
-          {"What makes a good team decision?", "Organisations", "What makes a good team decision, and which biases get in the way?"},
-          {"What are the strongest arguments for universal basic income?", "Policy", "What are the strongest arguments for and against universal basic income?"},
-          {"Is eating meat ethically defensible?", "Ethics", "Is eating meat ethically defensible, and what are the strongest arguments on each side?"},
-          {"Which concerns about AI adoption hold up?", "Technology", "What are the strongest objections to AI adoption, and which concerns matter most?"}
+          {"Should cities use more cameras in public spaces?", "Choices", "Should cities use more cameras in public spaces, and what are the benefits and risks?"},
+          {"How do websites decide what people see?", "Technology", "How do websites decide what people see online?"},
+          {"What makes a life feel meaningful?", "Meaning", "What makes a life feel meaningful, and how have different traditions answered the question?"},
+          {"Would a basic income help everyone?", "Government", "What are the strongest reasons for and against giving everyone a basic income?"},
+          {"Is it wrong to eat meat?", "Ethics", "Is it wrong to eat meat, and what are the strongest reasons on each side?"},
+          {"What should concern us as AI becomes more common?", "Technology", "What should concern us most as AI becomes more common?"}
         ] do %>
           <a
             href={"/?#{URI.encode_query(%{"initial_prompt" => prompt, "focus" => "grid"})}#start-here"}
-            class="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-teal-300 hover:shadow-md"
+            class="group border border-stone-300 border-l-4 border-l-teal-700 bg-white p-5 shadow-sm transition hover:border-slate-500"
           >
             <p class="text-xs font-semibold uppercase tracking-wide text-teal-700">{category}</p>
             <p class="mt-2 text-sm font-semibold leading-6 text-slate-950 group-hover:text-teal-800">
@@ -93,19 +129,35 @@
           </a>
         <% end %>
       </div>
-      <div class="mt-5 rounded-2xl border border-teal-200 bg-teal-50 p-5 sm:flex sm:items-center sm:justify-between sm:gap-5">
+      <p id="guide-new-grid-privacy" class="mt-4 text-xs leading-5 text-slate-500">
+        New grids are public and editable by default. Anyone can read them and, while editing is on, contribute. Sign in before creating one if you want to control access in Settings, and never include sensitive details.
+      </p>
+      <div class="mt-5 border border-stone-300 bg-white p-5 sm:flex sm:items-center sm:justify-between sm:gap-5">
         <div>
           <p class="text-sm font-semibold text-teal-950">Have your own question?</p>
           <p class="mt-1 text-sm text-teal-900">
-            Open the actual form and start with a blank grid.
+            Start with it now.
           </p>
         </div>
         <a
+          id="guide-own-question-link"
           href="/?focus=grid#start-here"
-          class="mt-4 inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 sm:mt-0"
+          class="mt-4 inline-flex shrink-0 items-center justify-center gap-2 rounded-md bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 sm:mt-0"
         >
-          <.icon name="hero-plus" class="h-4 w-4" /> Open new question form
+          <.icon name="hero-plus" class="h-4 w-4" /> Ask your own question
         </a>
+      </div>
+      <div
+        id="guide-explanation-level"
+        class="mt-3 flex gap-3 border border-stone-300 bg-[#f8f6f0] p-5"
+      >
+        <.icon name="hero-adjustments-horizontal" class="mt-0.5 h-5 w-5 shrink-0 text-indigo-700" />
+        <div>
+          <h3 class="text-sm font-semibold text-slate-950">Choose the explanation level</h3>
+          <p class="mt-1 text-sm leading-6 text-slate-600">
+            Set the grid to <strong>Plain</strong>, <strong>Standard</strong>, <strong>Detailed</strong>, or <strong>Expert</strong>. New AI answers use that language and depth. Change it later under <strong>Grid tools → Answer level</strong>.
+          </p>
+        </div>
       </div>
     </section>
 
@@ -113,42 +165,64 @@
       class="mt-12 grid gap-6 lg:grid-cols-[1.1fr,0.9fr] lg:items-center"
       aria-labelledby="guide-response-heading"
     >
-      <figure class="order-2 overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 p-3 shadow-sm lg:order-1">
+      <figure class="order-2 overflow-hidden border border-slate-300 bg-slate-950 p-3 shadow-sm lg:order-1">
         <img
           src="/images/guide/grid-workspace.webp"
           alt="RationalGrid workspace showing a connected response map"
-          class="w-full rounded-xl"
+          class="w-full"
           loading="lazy"
         />
         <figcaption class="px-2 pt-3 text-xs text-slate-300">
-          A response becomes a set of connected nodes you can read and revisit.
+          An answer becomes a set of connected ideas you can read and revisit.
         </figcaption>
       </figure>
       <div class="order-1 lg:order-2">
-        <p class="text-xs font-semibold uppercase tracking-wide text-teal-700">Step 2 · See</p>
-        <h2 id="guide-response-heading" class="mt-2 text-3xl font-semibold tracking-tight">
-          Read the response as a map, not a wall of text.
+        <p class="text-xs font-semibold uppercase tracking-wide text-teal-700">Step 2 · Read</p>
+        <h2
+          id="guide-response-heading"
+          class="mt-2 font-serif text-4xl font-semibold tracking-tight"
+        >
+          Read each answer beside what led to it.
         </h2>
         <p class="mt-3 leading-7 text-slate-600">
-          Your first answer is broken into connected ideas. Select a node to open it in the reading panel, follow its links, and decide which part deserves attention.
+          Choose an idea to read it, follow its links, or open a new branch from that point.
         </p>
         <ul class="mt-5 space-y-3 text-sm leading-6 text-slate-700">
           <li class="flex gap-3">
             <.icon name="hero-cursor-arrow-rays" class="mt-1 h-4 w-4 shrink-0 text-teal-700" />
             <span>
-              <strong>Click a node</strong> to focus the reading panel.
+              <strong>Select an idea</strong> to read it.
             </span>
           </li>
           <li class="flex gap-3">
             <.icon name="hero-document-text" class="mt-1 h-4 w-4 shrink-0 text-teal-700" />
             <span>
-              <strong>Read the context</strong> before choosing a new direction.
+              <strong>Check what came before</strong> before opening a new branch.
             </span>
           </li>
           <li class="flex gap-3">
             <.icon name="hero-magnifying-glass" class="mt-1 h-4 w-4 shrink-0 text-teal-700" />
             <span>
-              <strong>Switch to reader view</strong> when you want a more linear pass.
+              <strong>Switch to Read</strong> to follow one clear path.
+            </span>
+          </li>
+          <li id="guide-translate-node" class="flex gap-3">
+            <.icon name="hero-language" class="mt-1 h-4 w-4 shrink-0 text-teal-700" />
+            <span>
+              <strong>Translate the current idea</strong> under Settings → Translate.
+            </span>
+          </li>
+          <li id="guide-search-grid" class="flex gap-3">
+            <.icon name="hero-magnifying-glass" class="mt-1 h-4 w-4 shrink-0 text-teal-700" />
+            <span>
+              <strong>Search the whole grid</strong> from the top bar or press <kbd>⌘K</kbd>.
+            </span>
+          </li>
+          <li id="guide-group-grid" class="flex gap-3">
+            <.icon name="hero-folder" class="mt-1 h-4 w-4 shrink-0 text-teal-700" />
+            <span>
+              <strong>Group large branches</strong>
+              under Settings → Collaboration, then focus on one group at a time.
             </span>
           </li>
         </ul>
@@ -158,144 +232,378 @@
     <section class="mt-12" aria-labelledby="guide-branch-heading">
       <div class="max-w-3xl">
         <p class="text-xs font-semibold uppercase tracking-wide text-teal-700">Step 3 · Branch</p>
-        <h2 id="guide-branch-heading" class="mt-2 text-3xl font-semibold tracking-tight">
+        <h2
+          id="guide-branch-heading"
+          class="mt-2 font-serif text-4xl font-semibold tracking-tight"
+        >
           Choose how to go deeper.
         </h2>
         <p class="mt-3 leading-7 text-slate-600">
-          A branch is a deliberate next move from the idea you are reading. You can ask the AI to continue, or make the next contribution yourself.
+          Start from the idea you are reading. Ask AI or add the next step yourself.
         </p>
       </div>
       <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <.icon name="hero-question-mark-circle" class="h-5 w-5 text-sky-600" />
-          <h3 class="mt-3 text-base font-semibold">Ask AI</h3>
+        <article class="border-t-4 border-sky-600 bg-white p-5 shadow-sm">
+          <div class="flex items-center gap-2">
+            <.icon name="hero-question-mark-circle" class="h-5 w-5 shrink-0 text-sky-600" />
+            <h3 class="text-base font-semibold">Ask AI</h3>
+          </div>
           <p class="mt-2 text-sm leading-6 text-slate-600">
-            Generate a new answer from the selected node.
+            Create an answer connected to the idea you selected.
           </p>
         </article>
-        <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <.icon name="hero-chat-bubble-bottom-center-text" class="h-5 w-5 text-teal-600" />
-          <h3 class="mt-3 text-base font-semibold">Comment</h3>
+        <article class="border-t-4 border-teal-600 bg-white p-5 shadow-sm">
+          <div class="flex items-center gap-2">
+            <.icon
+              name="hero-chat-bubble-bottom-center-text"
+              class="h-5 w-5 shrink-0 text-teal-600"
+            />
+            <h3 class="text-base font-semibold">Comment</h3>
+          </div>
           <p class="mt-2 text-sm leading-6 text-slate-600">
-            Add your claim, objection, example, or question.
+            Add your own point, concern, example, or question.
           </p>
         </article>
-        <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <.icon name="hero-cursor-arrow-rays" class="h-5 w-5 text-amber-600" />
-          <h3 class="mt-3 text-base font-semibold">Select a phrase</h3>
+        <article class="border-t-4 border-amber-600 bg-white p-5 shadow-sm">
+          <div class="flex items-center gap-2">
+            <.icon name="hero-cursor-arrow-rays" class="h-5 w-5 shrink-0 text-amber-600" />
+            <h3 class="text-base font-semibold">Select a phrase</h3>
+          </div>
           <p class="mt-2 text-sm leading-6 text-slate-600">
             Open focused actions for one sentence or idea.
           </p>
         </article>
-        <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <.icon name="hero-squares-plus" class="h-5 w-5 text-indigo-600" />
-          <h3 class="mt-3 text-base font-semibold">Related ideas</h3>
+        <article class="border-t-4 border-indigo-600 bg-white p-5 shadow-sm">
+          <div class="flex items-center gap-2">
+            <.icon name="hero-squares-plus" class="h-5 w-5 shrink-0 text-indigo-600" />
+            <h3 class="text-base font-semibold">Find related ideas</h3>
+          </div>
           <p class="mt-2 text-sm leading-6 text-slate-600">
-            Explore nearby concepts and adjacent directions.
+            Explore nearby topics and new directions.
           </p>
         </article>
       </div>
     </section>
 
     <section
-      class="mt-12 rounded-2xl bg-slate-950 p-6 text-white shadow-sm sm:p-8"
-      aria-labelledby="guide-test-heading"
+      id="guide-critical-thinking-tools"
+      class="mt-12 scroll-mt-20 border border-slate-700 bg-slate-950 p-6 text-white shadow-sm sm:p-8"
+      aria-labelledby="guide-examine-heading"
     >
       <div class="max-w-3xl">
-        <p class="text-xs font-semibold uppercase tracking-wide text-teal-300">Step 4 · Test</p>
-        <h2 id="guide-test-heading" class="mt-2 text-3xl font-semibold tracking-tight">
-          Use critical-thinking tools to interrogate the response.
+        <p class="text-xs font-semibold uppercase tracking-wide text-teal-300">
+          Step 4 · Examine
+        </p>
+        <h2
+          id="guide-examine-heading"
+          class="mt-2 font-serif text-4xl font-semibold tracking-tight"
+        >
+          Use the critical-thinking tools.
         </h2>
         <p class="mt-3 leading-7 text-slate-300">
-          Select a node or passage, then choose a tool based on the kind of challenge you want to make.
+          Select an idea or passage, then choose how you want to check it.
         </p>
       </div>
+
+      <div
+        id="guide-critical-thinking-collaboration"
+        class="mt-6 grid gap-5 border border-teal-300/30 bg-teal-300/[0.08] p-5 sm:p-6 lg:grid-cols-[minmax(15rem,0.7fr)_minmax(0,1.3fr)] lg:items-center"
+      >
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-teal-300">
+            Built for critical thinking
+          </p>
+          <h3 class="mt-2 font-serif text-2xl font-semibold text-white sm:text-3xl">
+            More than a list of AI prompts.
+          </h3>
+        </div>
+        <div class="space-y-3 text-sm leading-6 text-slate-300">
+          <p>
+            RationalGrid’s Examine tools were developed as a practical critical-thinking framework in collaboration with Philosophy for All and philosopher and educator Peter Worley.
+          </p>
+          <p>
+            They help you define terms, expose assumptions, test claims, strengthen opposing arguments, and look for what is missing. Each result becomes a connected branch, so the reasoning stays visible and the final judgement remains yours.
+          </p>
+        </div>
+      </div>
+
       <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <%= for {icon, title, question, copy} <- [
-          {"hero-light-bulb", "Clarify terms", "What do we mean?", "Expose ambiguity and boundaries."},
-          {"hero-cube-transparent", "Assumptions", "What has to be true?", "Reveal hidden premises."},
-          {"hero-user", "Source check", "Says who?", "Question authority and evidence."},
-          {"hero-star", "Steel man", "What is the strongest version?", "Build the fairest argument."},
-          {"hero-x-mark", "Counterexample", "Is that always true?", "Find cases that challenge the claim."},
-          {"hero-users", "Other perspectives", "Who disagrees?", "Explore opposing viewpoints."},
-          {"hero-arrow-trending-up", "Implications", "If true, then what?", "Trace likely consequences."},
-          {"hero-eye-slash", "Blind spots", "What are we missing?", "Find overlooked constraints."},
-          {"hero-question-mark-circle", "What if", "What could change?", "Explore alternative scenarios."}
+          {"hero-light-bulb", "Clarify terms", "What do we mean?", "Spot words that could mean different things."},
+          {"hero-cube-transparent", "Assumptions", "What has to be true?", "Find what the idea takes for granted."},
+          {"hero-user", "Source check", "Says who?", "Check the source, evidence, methods, funding, and uncertainty."},
+          {"hero-star", "Steel man", "What is the strongest version?", "Build the fairest case for the idea."},
+          {"hero-x-mark", "Test", "Is that always true?", "Look for examples that do not fit."},
+          {"hero-users", "Other perspectives", "Who disagrees?", "Find views the current source, community, or AI answer may leave out."},
+          {"hero-arrow-trending-up", "Implications", "If true, then what?", "See what might happen if it is true."},
+          {"hero-eye-slash", "Blind spots", "What are we missing?", "Find facts or limits that were missed."},
+          {"hero-question-mark-circle", "What if", "What could change?", "Try the idea in a different situation."}
         ] do %>
-          <article class="rounded-xl border border-white/10 bg-white/[0.06] p-4">
-            <.icon name={icon} class="h-5 w-5 text-teal-300" />
-            <h3 class="mt-3 text-sm font-semibold">{title}</h3>
+          <article class="border-l-2 border-teal-300 bg-white/[0.06] p-4">
+            <div class="flex items-center gap-2">
+              <.icon name={icon} class="h-5 w-5 shrink-0 text-teal-300" />
+              <h3 class="text-sm font-semibold">{title}</h3>
+            </div>
             <p class="mt-0.5 text-xs font-medium text-teal-200">{question}</p>
             <p class="mt-1 text-xs leading-5 text-slate-300">{copy}</p>
           </article>
         <% end %>
       </div>
+
+      <p
+        id="guide-evidence-grounding"
+        class="mt-5 border-l-2 border-sky-300 pl-4 text-sm leading-6 text-slate-300"
+      >
+        Match the source to the claim. Look for primary material and original research for direct findings, and strong reviews or consensus reports for the wider picture. RationalGrid asks AI to keep documented fact, interpretation, and speculation separate, but important claims still need checking.
+      </p>
+
+      <p
+        id="guide-echo-chambers"
+        class="mt-5 border-l-2 border-amber-300 pl-4 text-sm leading-6 text-slate-300"
+      >
+        No source is neutral or complete. Make room for dissenting voices and other interpretations, then compare their evidence. Being overlooked does not automatically make a view correct.
+      </p>
+
+      <div
+        id="guide-create-synthesis"
+        class="mt-6 grid gap-4 border-t border-slate-700 pt-6 sm:grid-cols-[2.5rem_minmax(0,1fr)]"
+      >
+        <span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-violet-400/15 text-violet-200 ring-1 ring-violet-300/30">
+          <.icon name="hero-arrows-pointing-in" class="h-5 w-5" />
+        </span>
+        <div>
+          <h3 class="font-serif text-xl font-semibold">Bring two ideas together.</h3>
+          <p class="mt-1 max-w-3xl text-sm leading-6 text-slate-300">
+            Choose <strong class="text-white">Connect another idea</strong>, then select a second node. RationalGrid creates a synthesis while keeping both original paths attached.
+          </p>
+        </div>
+      </div>
     </section>
 
     <section
+      id="guide-saved-thinking"
       class="mt-12 grid gap-6 lg:grid-cols-[0.9fr,1.1fr] lg:items-center"
       aria-labelledby="guide-keep-heading"
     >
       <div>
         <p class="text-xs font-semibold uppercase tracking-wide text-teal-700">
-          Step 5 · Keep and share
+          Step 5 · Keep
         </p>
-        <h2 id="guide-keep-heading" class="mt-2 text-3xl font-semibold tracking-tight">
-          Turn good thinking into something reusable.
+        <h2 id="guide-keep-heading" class="mt-2 font-serif text-4xl font-semibold tracking-tight">
+          Build a trail back to useful ideas.
         </h2>
         <p class="mt-3 leading-7 text-slate-600">
-          Bookmark useful nodes, highlight passages, add notes, and share one link to the same map. Use Doc or Present view when you want to guide someone through the result.
+          Save whole ideas or exact passages as you read. Your profile keeps them together so you can return and see the original text.
         </p>
-        <div class="mt-5 grid gap-3 sm:grid-cols-2">
-          <div class="rounded-xl border border-slate-200 bg-white p-4">
-            <.icon name="hero-bookmark" class="h-5 w-5 text-amber-600" />
-            <h3 class="mt-2 text-sm font-semibold">Save attention</h3>
+        <div class="mt-5 grid gap-3">
+          <div id="guide-bookmark-nodes" class="border-t-2 border-amber-600 bg-white p-4">
+            <div class="flex items-center gap-2">
+              <.icon name="hero-bookmark" class="h-5 w-5 shrink-0 text-amber-600" />
+              <h3 class="text-sm font-semibold">Bookmark an idea</h3>
+            </div>
             <p class="mt-1 text-xs leading-5 text-slate-600">
-              Keep nodes and quotes worth returning to.
+              Select the bookmark beside an idea. It appears with that grid in your <strong>saved thinking</strong>, where you can jump back to it.
             </p>
           </div>
-          <div class="rounded-xl border border-slate-200 bg-white p-4">
-            <.icon name="hero-share" class="h-5 w-5 text-teal-700" />
-            <h3 class="mt-2 text-sm font-semibold">Share the path</h3>
+          <div id="guide-save-highlights" class="border-t-2 border-indigo-600 bg-white p-4">
+            <div class="flex items-center gap-2">
+              <.icon name="hero-bookmark-square" class="h-5 w-5 shrink-0 text-indigo-600" />
+              <h3 class="text-sm font-semibold">Highlight a passage</h3>
+            </div>
             <p class="mt-1 text-xs leading-5 text-slate-600">
-              Give others the same context and entry point.
+              Select text and choose <strong>Save as a highlight</strong>. The quote, source, and any note are stored under
+              <strong>Quotes and notes</strong>
+              on your profile.
+            </p>
+          </div>
+          <div id="guide-export-grid" class="border-t-2 border-sky-600 bg-white p-4">
+            <div class="flex items-center gap-2">
+              <.icon name="hero-arrow-down-tray" class="h-5 w-5 shrink-0 text-sky-700" />
+              <h3 class="text-sm font-semibold">Export the grid</h3>
+            </div>
+            <p class="mt-1 text-xs leading-5 text-slate-600">
+              Under <strong>Settings → Export</strong>, download the grid for your notes, as an image to share, or as data for other tools.
             </p>
           </div>
         </div>
+        <p class="mt-3 text-xs leading-5 text-slate-500">
+          Bookmarks and highlights stay private. They do not appear on your public profile.
+        </p>
       </div>
-      <figure class="overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 p-3 shadow-sm">
+      <figure class="overflow-hidden border border-slate-300 bg-slate-950 p-3 shadow-sm">
         <img
           src="/images/guide/grid-dense-example.webp"
           alt="A large RationalGrid map with many connected branches"
-          class="w-full rounded-xl"
+          class="w-full"
           loading="lazy"
         />
         <figcaption class="px-2 pt-3 text-xs text-slate-300">
-          As a grid grows, the connected structure remains available to explore.
+          The structure stays clear as the grid grows.
         </figcaption>
       </figure>
     </section>
 
-    <section class="mt-12 rounded-2xl border border-teal-200 bg-teal-50 p-6 sm:p-8">
-      <p class="text-xs font-semibold uppercase tracking-wide text-teal-700">
-        Ready to try the loop?
+    <section
+      id="guide-present-grid"
+      class="mt-12 grid gap-8 border border-slate-700 bg-slate-950 p-6 text-white sm:p-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(24rem,1.2fr)] lg:items-center"
+      aria-labelledby="guide-present-grid-heading"
+    >
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-wide text-indigo-300">
+          From map to presentation
+        </p>
+        <h2
+          id="guide-present-grid-heading"
+          class="mt-2 font-serif text-4xl font-semibold tracking-tight"
+        >
+          Guide people through what you found.
+        </h2>
+        <p class="mt-3 max-w-xl leading-7 text-slate-300">
+          A large grid can hold every branch. A presentation lets you choose the path your audience sees first.
+        </p>
+      </div>
+
+      <ol class="grid gap-px overflow-hidden border border-slate-700 bg-slate-700 sm:grid-cols-3">
+        <%= for {number, title, copy} <- [
+          {"01", "Choose", "Select Present, then click the nodes you want to show."},
+          {"02", "Order", "Drag the selected nodes into a clear sequence."},
+          {"03", "Share", "Present the path live or send its presentation link."}
+        ] do %>
+          <li class="bg-slate-950 p-4">
+            <div class="flex items-center gap-2">
+              <p class="font-mono text-xs font-bold text-indigo-300">{number}</p>
+              <h3 class="text-sm font-semibold text-white">{title}</h3>
+            </div>
+            <p class="mt-1 text-xs leading-5 text-slate-300">{copy}</p>
+          </li>
+        <% end %>
+      </ol>
+    </section>
+
+    <section
+      id="guide-collaborate"
+      class="mt-12 border border-stone-300 bg-white p-6 shadow-sm sm:p-8"
+      aria-labelledby="guide-collaborate-heading"
+    >
+      <div class="max-w-3xl">
+        <p class="text-xs font-semibold uppercase tracking-wide text-teal-700">
+          Step 6 · Share
+        </p>
+        <h2
+          id="guide-collaborate-heading"
+          class="mt-2 font-serif text-4xl font-semibold tracking-tight"
+        >
+          Work together live, then choose what becomes public.
+        </h2>
+        <p class="mt-3 leading-7 text-slate-600">
+          A grid is a shared workspace, not a finished image. Send its link so other people can see what came before and add to it with you.
+        </p>
+      </div>
+
+      <div class="mt-6 grid gap-px overflow-hidden border border-stone-300 bg-stone-300 lg:grid-cols-3">
+        <article id="guide-live-editing" class="bg-[#f8f6f0] p-5">
+          <div class="flex items-center gap-2">
+            <.icon name="hero-users" class="h-5 w-5 shrink-0 text-emerald-700" />
+            <h3 class="text-base font-semibold text-slate-950">
+              Edit and talk together live
+            </h3>
+          </div>
+          <p class="mt-2 text-sm leading-6 text-slate-600">
+            Share an editable link so people can branch and comment in the same grid. See who is viewing and use live chat to coordinate. Chat is temporary; add a comment when an idea should remain in the grid.
+          </p>
+        </article>
+
+        <article id="guide-grid-visibility" class="bg-[#f8f6f0] p-5">
+          <div class="flex items-center gap-2">
+            <.icon name="hero-lock-closed" class="h-5 w-5 shrink-0 text-sky-700" />
+            <h3 class="text-base font-semibold text-slate-950">Choose public or private</h3>
+          </div>
+          <p class="mt-2 text-sm leading-6 text-slate-600">
+            Under <strong>Settings → Collaboration</strong>, set <strong>Visibility</strong>
+            to <strong>Public</strong>
+            or <strong>Private</strong>. Anyone can open a public grid. Send a private link only to people you trust.
+          </p>
+        </article>
+
+        <article id="guide-public-profile" class="bg-[#f8f6f0] p-5">
+          <div class="flex items-center gap-2">
+            <.icon name="hero-identification" class="h-5 w-5 shrink-0 text-indigo-700" />
+            <h3 class="text-base font-semibold text-slate-950">
+              Publish through your profile
+            </h3>
+          </div>
+          <p class="mt-2 text-sm leading-6 text-slate-600">
+            Your public profile shows your bio and public grids. Share it as a growing record of your work. Private grids and saved ideas remain visible only to you.
+          </p>
+        </article>
+
+        <article id="guide-contribution-history" class="bg-[#f8f6f0] p-5">
+          <div class="flex items-center gap-2">
+            <.icon name="hero-clipboard-document-list" class="h-5 w-5 shrink-0 text-emerald-700" />
+            <h3 class="text-base font-semibold text-slate-950">See who added what</h3>
+          </div>
+          <p class="mt-2 text-sm leading-6 text-slate-600">
+            Open <strong>Settings → Activity</strong>
+            to see who added each question, branch, comment, or check. This helps teachers and teams see each person's work.
+          </p>
+        </article>
+
+        <article id="guide-follow-updates" class="bg-[#f8f6f0] p-5">
+          <div class="flex items-center gap-2">
+            <.icon name="hero-bell" class="h-5 w-5 shrink-0 text-amber-700" />
+            <h3 class="text-base font-semibold text-slate-950">Follow future updates</h3>
+          </div>
+          <p class="mt-2 text-sm leading-6 text-slate-600">
+            Select <strong>Follow</strong>
+            at the top of a public grid. New changes appear in <strong>Activity</strong>. Use the
+            <strong>Following</strong>
+            tab to manage the grids and people you follow.
+          </p>
+        </article>
+
+        <article id="guide-focused-sharing" class="bg-[#f8f6f0] p-5">
+          <div class="flex items-center gap-2">
+            <.icon name="hero-cursor-arrow-rays" class="h-5 w-5 shrink-0 text-rose-700" />
+            <h3 class="text-base font-semibold text-slate-950">
+              Share or question exact text
+            </h3>
+          </div>
+          <p class="mt-2 text-sm leading-6 text-slate-600">
+            Select a word or passage to save it with its own link. You can also ask about an unfamiliar word, book, or topic. The full passage stays attached to your question.
+          </p>
+        </article>
+      </div>
+
+      <p id="guide-shared-paths" class="mt-5 flex gap-2 text-sm leading-6 text-slate-600">
+        <.icon name="hero-link" class="mt-1 h-4 w-4 shrink-0 text-teal-700" />
+        <span>
+          Share the whole grid or link directly to the current idea. Use <strong>Read</strong>
+          or <strong>Present</strong>
+          when you want to guide someone through a path.
+        </span>
       </p>
-      <h2 class="mt-2 text-3xl font-semibold tracking-tight">
-        Ask a question, then follow the next useful move.
+    </section>
+
+    <section class="mt-12 border border-stone-300 border-l-4 border-l-teal-700 bg-white p-6 sm:p-8">
+      <p class="text-xs font-semibold uppercase tracking-wide text-teal-700">
+        Start now
+      </p>
+      <h2 class="mt-2 font-serif text-4xl font-semibold tracking-tight">
+        Ask one question. Follow the next useful branch.
       </h2>
       <p class="mt-3 max-w-2xl leading-7 text-slate-700">
-        You do not need to understand every tool before you begin. Start with one node and let the map show you where to go.
+        Learn the other tools as you go.
       </p>
       <div class="mt-5 flex flex-wrap gap-3">
         <a
           href="/?focus=grid#start-here"
-          class="inline-flex items-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+          class="inline-flex items-center gap-2 rounded-md bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
         >
           <.icon name="hero-plus" class="h-4 w-4" /> Create a grid
         </a>
         <a
           href="/about"
-          class="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-teal-800 ring-1 ring-teal-200 transition hover:bg-teal-100"
+          class="inline-flex items-center gap-2 rounded-md border border-stone-300 bg-white px-5 py-3 text-sm font-semibold text-teal-800 transition hover:border-teal-700"
         >
           <.icon name="hero-information-circle" class="h-4 w-4" /> About RationalGrid
         </a>

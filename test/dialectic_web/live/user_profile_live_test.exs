@@ -44,7 +44,7 @@ defmodule DialecticWeb.UserProfileLiveTest do
     test "renders the profile page for a user with a stored username", %{conn: conn} do
       _user = create_user_with_username("profiletest")
 
-      {:ok, _lv, html} = live(conn, ~p"/u/profiletest")
+      {:ok, lv, html} = live(conn, ~p"/u/profiletest")
 
       assert html =~ "profiletest"
       assert html =~ "— Profile"
@@ -54,8 +54,8 @@ defmodule DialecticWeb.UserProfileLiveTest do
       assert html =~ "Days"
       # Should not see edit link when not logged in
       refute html =~ "Edit Profile"
-      # Should see archive heading for other users
-      assert html =~ "Grid archive by profiletest"
+      assert has_element?(lv, "#public-grids-content")
+      assert has_element?(lv, "h2", "Public grids")
     end
 
     test "renders bio when present", %{conn: conn} do
@@ -149,10 +149,13 @@ defmodule DialecticWeb.UserProfileLiveTest do
       user = create_user_with_username("graphuser")
       create_public_graph(user, "My Cool Graph", slug: "my-cool-graph", tags: [])
 
-      {:ok, _lv, html} = live(conn, ~p"/u/graphuser")
+      {:ok, lv, html} = live(conn, ~p"/u/graphuser")
 
       assert html =~ "My Cool Graph"
       refute html =~ "No public graphs yet."
+      assert has_element?(lv, "#public-grids-content:not(.hidden)")
+      assert has_element?(lv, "#profile-public-grid-list")
+      assert has_element?(lv, ~s([data-role="profile-public-grid-row"]), "My Cool Graph")
     end
 
     test "renders common tags when user has tagged graphs", %{conn: conn} do
@@ -181,15 +184,16 @@ defmodule DialecticWeb.UserProfileLiveTest do
         nodes: Enum.map(1..22, fn id -> %{"id" => Integer.to_string(id), "label" => "Node"} end)
       )
 
-      {:ok, _lv, html} = live(conn, ~p"/u/starthere")
+      {:ok, lv, html} = live(conn, ~p"/u/starthere")
 
       assert html =~ "Start here"
       assert html =~ "Entry points"
       assert html =~ "Deep Question"
       assert html =~ "Deep dive"
-      assert html =~ "22 ideas"
       assert html =~ "find thinking on"
       assert html =~ "public grids"
+      assert has_element?(lv, ~s([data-role="featured-grid-card"]), "connected ideas")
+      assert has_element?(lv, ~s([data-role="featured-grid-card"] strong), "22")
     end
   end
 
@@ -201,7 +205,7 @@ defmodule DialecticWeb.UserProfileLiveTest do
   end
 
   describe "own profile vs other profile" do
-    test "shows 'Account Settings' link when viewing own profile", %{conn: conn} do
+    test "defaults to the private library and can preview the public profile", %{conn: conn} do
       user = create_user_with_username("ownprofile")
 
       {:ok, lv, _html} =
@@ -209,8 +213,21 @@ defmodule DialecticWeb.UserProfileLiveTest do
         |> log_in_user(user)
         |> live(~p"/u/ownprofile")
 
-      assert has_element?(lv, "#profile-settings-link", "Account Settings")
+      assert has_element?(lv, "#profile-view-switcher")
+      assert has_element?(lv, "#profile-library-tab", "My library")
+      assert has_element?(lv, "#profile-library-header", "Only you can see this")
+      assert has_element?(lv, "#profile-settings-link", "Settings")
+      assert has_element?(lv, "#profile-thinking-library")
+      refute has_element?(lv, "#public-grids-content")
+
+      lv
+      |> element("#profile-public-tab")
+      |> render_click()
+
+      assert has_element?(lv, "#profile-public-tab", "Public profile")
       assert has_element?(lv, "#public-grids-content")
+      refute has_element?(lv, "#profile-thinking-library")
+      refute has_element?(lv, "#profile-settings-link")
     end
 
     test "does not show 'Account Settings' link when viewing another user's profile", %{
@@ -228,7 +245,7 @@ defmodule DialecticWeb.UserProfileLiveTest do
       assert has_element?(lv, "#public-grids-content")
     end
 
-    test "shows 'Create your first grid' only on own empty profile", %{conn: conn} do
+    test "shows a start grid action only in the owner's library", %{conn: conn} do
       user = create_user_with_username("emptyown")
 
       {:ok, _lv, html} =
@@ -236,7 +253,7 @@ defmodule DialecticWeb.UserProfileLiveTest do
         |> log_in_user(user)
         |> live(~p"/u/emptyown")
 
-      assert html =~ "Create your first grid"
+      assert html =~ "Start a grid"
     end
 
     test "does not show 'Create your first grid' on other user's empty profile", %{conn: conn} do
@@ -248,7 +265,7 @@ defmodule DialecticWeb.UserProfileLiveTest do
         |> log_in_user(viewer)
         |> live(~p"/u/emptyother")
 
-      refute html =~ "Create your first grid"
+      refute html =~ "Start a grid"
     end
 
     test "can follow and unfollow another user's profile", %{conn: conn} do
@@ -368,12 +385,41 @@ defmodule DialecticWeb.UserProfileLiveTest do
         |> log_in_user(user)
         |> live(~p"/u/highlightprofile")
 
-      assert html =~ "Bookmarks and notes"
-      assert html =~ "Bookmarked ideas"
-      assert has_element?(lv, "#profile-noted-note-#{note.id}")
-      assert html =~ "Quotes and notes"
+      assert html =~ "Bookmarks and highlights"
+      assert html =~ "Saved for recall"
+      assert html =~ "Saved grids"
+      refute has_element?(lv, "#profile-bookmark-groups")
+      refute has_element?(lv, "#profile-highlight-groups")
+
+      assert has_element?(lv, "#profile-saved-graph-quote-grid > summary", graph.title)
+      assert has_element?(lv, "#profile-saved-graph-quote-grid > summary", "1 bookmark")
+      assert has_element?(lv, "#profile-saved-graph-quote-grid > summary", "1 highlight")
+      refute has_element?(lv, "#profile-saved-graph-quote-grid > summary", "node")
+
+      assert has_element?(
+               lv,
+               "#profile-saved-graph-quote-grid #profile-noted-note-#{note.id}"
+             )
+
+      assert has_element?(lv, "#profile-noted-title-#{note.id}", "Source Node Title")
       refute html =~ "My Notes"
-      assert has_element?(lv, "#profile-highlight-#{highlight.id}")
+      refute html =~ "Saved node"
+      refute html =~ "Saved passage"
+      assert has_element?(lv, "#profile-saved-graph-quote-grid section h4", "Source Node Title")
+
+      assert has_element?(
+               lv,
+               "#profile-saved-graph-quote-grid #profile-highlight-#{highlight.id}"
+             )
+
+      assert has_element?(lv, "#profile-highlight-quote-#{highlight.id}")
+
+      assert has_element?(
+               lv,
+               "#profile-highlight-note-#{highlight.id}",
+               "A useful saved thought."
+             )
+
       assert render(lv) =~ "This is a saved quote."
       assert render(lv) =~ "A useful saved thought."
       assert render(lv) =~ "Source Node Title"

@@ -228,27 +228,27 @@ defmodule Dialectic.GridActivity do
     do: display_message(action, actor_name)
 
   def display_message(action, actor_name) when is_binary(action) do
-    actor = actor_name(actor_name)
-
-    case action do
-      "graph.created" -> "#{actor} created this grid."
-      "node.comment.created" -> "#{actor} added a comment."
-      "node.follow_up.created" -> "#{actor} asked a follow-up question."
-      "node.branch.created" -> "#{actor} branched from a node."
-      "node.synthesis.created" -> "#{actor} added a synthesis."
-      "node.related_ideas.created" -> "#{actor} added related ideas."
-      "node.selection_explained" -> "#{actor} asked about selected text."
-      "node.selection_question.created" -> "#{actor} asked a question about selected text."
-      "node.deep_dive.created" -> "#{actor} added a deep dive."
-      "node.critical_tool.created" -> "#{actor} used a critical thinking tool."
-      "node.starting_point.created" -> "#{actor} added a new starting point."
-      "node.regenerated" -> "#{actor} regenerated a node."
-      "node.deleted" -> "#{actor} deleted a node."
-      _ -> "#{actor} updated this grid."
-    end
+    "#{actor_name(actor_name)} #{action_label(action)}."
   end
 
   def display_message(_action, actor_name), do: "#{actor_name(actor_name)} updated this grid."
+
+  def action_label(%Log{action: action}), do: action_label(action)
+  def action_label(%{action: action}), do: action_label(action)
+  def action_label("graph.created"), do: "created this grid"
+  def action_label("node.comment.created"), do: "added a comment"
+  def action_label("node.follow_up.created"), do: "asked a follow-up question"
+  def action_label("node.branch.created"), do: "branched from a node"
+  def action_label("node.synthesis.created"), do: "added a synthesis"
+  def action_label("node.related_ideas.created"), do: "added related ideas"
+  def action_label("node.selection_explained"), do: "asked about selected text"
+  def action_label("node.selection_question.created"), do: "asked a question about selected text"
+  def action_label("node.deep_dive.created"), do: "added a deep dive"
+  def action_label("node.critical_tool.created"), do: "used a critical thinking tool"
+  def action_label("node.starting_point.created"), do: "added a new starting point"
+  def action_label("node.regenerated"), do: "regenerated a node"
+  def action_label("node.deleted"), do: "deleted a node"
+  def action_label(_action), do: "updated this grid"
 
   defp insert_log(attrs) do
     actor = Map.get(attrs, :actor) || Map.get(attrs, "actor")

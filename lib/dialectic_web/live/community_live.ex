@@ -17,8 +17,7 @@ defmodule DialecticWeb.CommunityLive do
     {:ok,
      assign(socket,
        page_title: "Community Grids",
-       page_description:
-         "Explore community-built RationalGrids, curated questions, and partner collections.",
+       page_description: "Browse public and partner grids built with RationalGrid.",
        search_term: "",
        active_tag: nil,
        active_category: nil,
@@ -140,35 +139,35 @@ defmodule DialecticWeb.CommunityLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="min-h-screen bg-slate-100 text-slate-900">
+    <div class="min-h-screen bg-[#f4f1e9] text-slate-950">
       <div class="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
         <header
           id="community-page-header"
-          class="mb-5 flex flex-col gap-4 rounded-3xl bg-slate-950 px-5 py-4 text-white shadow-lg sm:px-6 sm:py-5 lg:flex-row lg:items-center lg:justify-between"
+          class="mb-6 flex flex-col gap-5 border border-stone-300 border-l-4 border-l-teal-700 bg-white px-5 py-5 shadow-sm sm:px-7 sm:py-6 lg:flex-row lg:items-end lg:justify-between"
         >
           <div class="max-w-3xl">
-            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-teal-300">
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
               Community
             </p>
-            <h1 class="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
-              Explore, expand, and challenge ideas together.
+            <h1 class="mt-2 font-serif text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
+              Explore public grids.
             </h1>
-            <p class="mt-2 max-w-2xl text-sm leading-5 text-slate-300">
-              Browse living questions from the community, test the reasoning, and add your own branches to help each idea grow.
+            <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+              See the questions, branches, and sources other people thought worth following. Discover unfamiliar ideas, question any part, or take the enquiry in a direction they missed.
             </p>
           </div>
           <div class="flex flex-wrap gap-2">
             <.link
               navigate={~p"/?focus=grid#start-here"}
-              class="inline-flex items-center gap-2 rounded-full bg-teal-300 px-3.5 py-2 text-sm font-semibold text-slate-950 transition hover:bg-teal-200"
+              class="inline-flex items-center gap-2 rounded-md bg-slate-950 px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
             >
               <.icon name="hero-plus" class="h-4 w-4" /> Create a grid
             </.link>
             <.link
               navigate={~p"/intro/how"}
-              class="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-white/15"
+              class="inline-flex items-center gap-2 border-b border-slate-500 px-1 py-2 text-sm font-semibold text-slate-800 transition hover:border-teal-700 hover:text-teal-800"
             >
-              <.icon name="hero-book-open" class="h-4 w-4" /> Read the guide
+              <.icon name="hero-book-open" class="h-4 w-4" /> How it works
             </.link>
           </div>
         </header>
@@ -177,26 +176,21 @@ defmodule DialecticWeb.CommunityLive do
           <%= if @featured_grids != [] do %>
             <.curated_grid_section
               items={@featured_grids}
-              icon="hero-users"
-              icon_class="text-indigo-500"
               title="Partner grids"
-              pills={partner_pills(@featured_grids)}
               id_prefix="community-featured"
-              section_class="from-indigo-50 via-white to-teal-50"
-              icon_wrap_class="bg-indigo-100 text-indigo-700 ring-indigo-200"
             />
           <% end %>
 
           <section
             id="community-search"
-            class="overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-white shadow-sm"
+            class="overflow-hidden border border-stone-300 bg-white shadow-sm"
           >
-            <div class="h-1 bg-[linear-gradient(90deg,#0f766e_0%,#f59e0b_48%,#4f46e5_100%)]"></div>
-            <div class="bg-[linear-gradient(135deg,#0f172a_0%,#134e4a_54%,#7c2d12_100%)] p-5 text-white sm:p-7">
+            <div class="h-1 bg-teal-700"></div>
+            <div class="bg-slate-950 p-5 text-white sm:p-7">
               <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <div>
                   <p class="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">
-                    Discover community grids
+                    Community library
                   </p>
                   <h2 id="community-results-heading" class="mt-2 text-2xl font-semibold sm:text-3xl">
                     <%= cond do %>
@@ -209,11 +203,11 @@ defmodule DialecticWeb.CommunityLive do
                       <% @search_term != "" -> %>
                         Search results for "{@search_term}"
                       <% true -> %>
-                        Find an idea to explore and extend
+                        Find a question to explore
                     <% end %>
                   </h2>
                   <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
-                    Search by question, browse by topic, and find a living thread of ideas to test, challenge, and build on.
+                    Search by question or topic.
                   </p>
                 </div>
                 <form
@@ -231,7 +225,7 @@ defmodule DialecticWeb.CommunityLive do
                     value={@search_term}
                     phx-debounce="300"
                     placeholder="Search by question or topic..."
-                    class="h-11 w-full rounded-full border border-white/60 bg-white px-10 pr-4 text-sm text-slate-900 placeholder:text-slate-500 shadow-sm focus:border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-200"
+                    class="h-11 w-full rounded-md border border-white/60 bg-white px-10 pr-4 text-sm text-slate-900 placeholder:text-slate-500 shadow-sm focus:border-teal-300 focus:outline-none focus:ring-2 focus:ring-teal-200"
                     autocomplete="off"
                   />
                 </form>
@@ -239,7 +233,7 @@ defmodule DialecticWeb.CommunityLive do
 
               <div class="mt-5">
                 <p class="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/60">
-                  Browse by format or topic
+                  Filter by format or topic
                 </p>
                 <div class="flex flex-wrap gap-2">
                   <.link
@@ -261,9 +255,9 @@ defmodule DialecticWeb.CommunityLive do
                     Seedlings
                   </.link>
                 </div>
-                <div class="mt-3 max-h-36 overflow-y-auto rounded-2xl border border-white/10 bg-black/10 p-2">
+                <div class="mt-3 max-h-36 overflow-y-auto border border-white/15 bg-black/10 p-2">
                   <p class="px-2 pb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/50">
-                    Topics from public grids
+                    Topics
                   </p>
                   <div class="flex flex-wrap gap-2">
                     <%= for %{tag: tag, count: count} <- display_popular_tags(@popular_tags, :all) do %>
@@ -282,19 +276,17 @@ defmodule DialecticWeb.CommunityLive do
             <div class="bg-slate-50/70 p-4 sm:p-5">
               <%= if @graphs == [] do %>
                 <div class="border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-600">
-                  No grids match that search yet. Try a broader question or browse by topic above.
+                  No grids found. Try a broader search or another topic.
                 </div>
               <% else %>
                 <div
                   id="community-grid-list"
-                  class="divide-y divide-slate-200 overflow-hidden rounded-2xl border border-slate-200 bg-white"
+                  class="divide-y divide-slate-200 overflow-hidden border border-slate-200 bg-white"
                 >
-                  <%= for {{graph, _count, author_username}, index} <- Enum.with_index(@graphs, 1) do %>
+                  <%= for {graph, _count, author_username} <- @graphs do %>
                     <.community_grid_row
                       graph={graph}
                       author_name={author_username}
-                      author_marker="@"
-                      number={index}
                       selected_tag={@active_tag}
                       can_generate_tags={admin?(@current_user)}
                       generating_tags={@generating_tags}
@@ -312,60 +304,40 @@ defmodule DialecticWeb.CommunityLive do
   end
 
   defp curated_grid_section(assigns) do
-    assigns =
-      assigns
-      |> assign_new(:pills, fn -> [] end)
-      |> assign(
-        :card_label,
-        if(assigns.title == "Partner grids", do: "Partner grid", else: "Curated grid")
-      )
+    assigns = assign_new(assigns, :pills, fn -> [] end)
 
     ~H"""
-    <section
-      id={"#{@id_prefix}-section"}
-      class="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-sm"
-    >
-      <div class="h-1 bg-[linear-gradient(90deg,#0f766e_0%,#f59e0b_48%,#4f46e5_100%)]"></div>
-      <div class="border-b border-slate-200/80 bg-slate-50/80 px-4 py-3 sm:px-5">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <div class="flex items-center gap-2.5">
-            <span class={[
-              "inline-flex h-8 w-8 items-center justify-center rounded-xl ring-1",
-              @icon_wrap_class
-            ]}>
-              <.icon name={@icon} class={"h-4 w-4 " <> @icon_class} />
-            </span>
-            <div>
-              <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                Curated
-              </p>
-              <h2 class="text-lg font-semibold tracking-tight text-slate-950">{@title}</h2>
-            </div>
-          </div>
-          <div :if={@pills != []} class="flex flex-wrap gap-1.5">
-            <span
-              :for={pill <- @pills}
-              class="rounded-full border border-indigo-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-700"
-            >
-              {pill}
-            </span>
-          </div>
+    <section id={"#{@id_prefix}-section"} class="w-full min-w-0 py-2">
+      <div class="mb-5 flex items-center gap-4">
+        <h2 class="shrink-0 text-sm font-semibold uppercase tracking-[0.16em] text-slate-700">
+          {@title}
+        </h2>
+        <div
+          aria-hidden="true"
+          class="h-px flex-1 bg-[linear-gradient(90deg,#2dd4bf_0%,#818cf8_52%,#fbbf24_100%)]"
+        >
+        </div>
+        <div :if={@pills != []} class="flex flex-wrap gap-1.5">
+          <span
+            :for={pill <- @pills}
+            class="border-l border-slate-400 pl-2 text-[11px] font-medium text-slate-700"
+          >
+            {pill}
+          </span>
         </div>
       </div>
-      <div class="bg-slate-50/40 p-3 sm:p-4">
-        <div id={"#{@id_prefix}-grids-list"} class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          <%= for item <- @items do %>
-            <.grid_card
-              graph={item.graph}
-              author_name={item.author_name}
-              author_marker="@"
-              id={@id_prefix <> "-" <> (item.graph.slug || "t-" <> Integer.to_string(:erlang.phash2(item.graph.title || "")))}
-              variant={:community_compact}
-              label={@card_label}
-              tag_limit={3}
-            />
-          <% end %>
-        </div>
+      <div id={"#{@id_prefix}-grids-list"} class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+        <%= for item <- @items do %>
+          <.grid_card
+            graph={item.graph}
+            author_name={item.author_name}
+            author_marker="@"
+            id={@id_prefix <> "-" <> (item.graph.slug || "t-" <> Integer.to_string(:erlang.phash2(item.graph.title || "")))}
+            variant={:partner}
+            show_badge={false}
+            tag_limit={3}
+          />
+        <% end %>
       </div>
     </section>
     """
@@ -374,106 +346,100 @@ defmodule DialecticWeb.CommunityLive do
   attr :id, :string, required: true
   attr :graph, :map, required: true
   attr :author_name, :string, default: nil
-  attr :author_marker, :string, default: ""
-  attr :number, :integer, required: true
   attr :selected_tag, :string, default: nil
   attr :can_generate_tags, :boolean, default: false
   attr :generating_tags, :any, required: true
 
   defp community_grid_row(assigns) do
+    tags = visible_tags(assigns.graph, assigns.selected_tag)
+
     assigns =
       assigns
-      |> assign(:title, Map.get(assigns.graph, :title) || "Untitled grid")
-      |> assign(:tags, visible_tags(assigns.graph, assigns.selected_tag))
+      |> assign(:title, display_title(assigns.graph))
+      |> assign(:tags, tags)
       |> assign(:node_count, graph_node_count(assigns.graph))
-      |> assign(:icon_theme, icon_theme(assigns.graph))
+      |> assign(:accent_style, row_accent_style(tags))
       |> assign(:generating_tags?, MapSet.member?(assigns.generating_tags, assigns.graph.title))
 
     ~H"""
     <article
       id={@id}
-      class="group grid gap-4 px-4 py-4 transition hover:bg-slate-50 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-5"
+      data-role="community-grid-row"
+      class="group relative grid gap-5 px-5 py-5 pl-6 transition hover:bg-[#fbfaf6] sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-6 sm:pl-7"
     >
-      <div class="flex min-w-0 items-start gap-3 sm:gap-4">
-        <div class={[
-          "relative flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br shadow-sm ring-1 sm:h-14 sm:w-20",
-          @icon_theme
-        ]}>
-          <span
-            aria-label={"Result #{@number}"}
-            class="absolute left-1.5 top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-white/90 px-1 text-[11px] font-bold tabular-nums text-slate-700 shadow-sm ring-1 ring-slate-900/10"
-          >
-            {@number}
-          </span>
-          <.icon name="hero-squares-2x2" class="h-6 w-6 sm:h-7 sm:w-7" />
-        </div>
-        <div class="min-w-0">
-          <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <.link
-              navigate={graph_path(@graph)}
-              class="text-base font-semibold leading-6 text-slate-950 transition group-hover:text-teal-700"
-            >
-              {@title}
-            </.link>
-            <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-              Community grid
-            </span>
-          </div>
+      <div aria-hidden="true" class="absolute inset-y-0 left-0 w-1" style={@accent_style}></div>
+      <div class="min-w-0">
+        <.link
+          navigate={graph_path(@graph)}
+          class="text-balance font-serif text-xl font-semibold leading-7 tracking-tight text-slate-950 transition group-hover:text-teal-800 hover:text-teal-900 sm:text-2xl"
+        >
+          {@title}
+        </.link>
+
+        <div
+          data-role="community-grid-meta"
+          class="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500"
+        >
           <%= if is_binary(@author_name) and String.trim(@author_name) != "" do %>
             <.link
               navigate={~p"/u/#{@author_name}"}
-              class="mt-1 inline-flex text-xs font-medium text-teal-700 hover:text-teal-900"
+              class="font-medium text-slate-600 transition hover:text-teal-800"
             >
-              by {@author_marker}{@author_name}
+              by @{@author_name}
             </.link>
+            <span aria-hidden="true">·</span>
           <% end %>
-          <p class="mt-1 line-clamp-2 text-sm leading-5 text-slate-600">
-            {preview_sentence(@graph)}
-          </p>
-          <div class="mt-2 flex flex-wrap items-center gap-1.5">
-            <%= if @tags == [] do %>
-              <span class="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">
-                Untagged
-              </span>
-              <button
-                :if={@can_generate_tags}
-                id={@id <> "-generate-tags"}
-                type="button"
-                phx-click="generate_tags"
-                phx-value-identifier={@graph.slug || @graph.title}
-                disabled={@generating_tags?}
-                class="inline-flex items-center gap-1 rounded-md bg-teal-50 px-2 py-0.5 text-[11px] font-semibold text-teal-700 ring-1 ring-inset ring-teal-200 transition hover:bg-teal-100 disabled:cursor-wait disabled:opacity-60"
-              >
-                <.icon
-                  name={if(@generating_tags?, do: "hero-arrow-path", else: "hero-sparkles")}
-                  class={tag_generation_icon_class(@generating_tags?)}
-                />
-                {if(@generating_tags?, do: "Generating...", else: "Generate tags")}
-              </button>
-            <% else %>
+          <span>{updated_label(@graph)}</span>
+          <span aria-hidden="true">·</span>
+          <span>{idea_count_label(@node_count)}</span>
+        </div>
+
+        <div class="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
+          <%= if @tags == [] do %>
+            <span class="text-xs font-medium text-slate-500">Untagged</span>
+            <button
+              :if={@can_generate_tags}
+              id={@id <> "-generate-tags"}
+              type="button"
+              phx-click="generate_tags"
+              phx-value-identifier={@graph.slug || @graph.title}
+              disabled={@generating_tags?}
+              class="inline-flex items-center gap-1 text-xs font-semibold text-teal-700 transition hover:text-teal-900 disabled:cursor-wait disabled:opacity-60"
+            >
+              <.icon
+                name={if(@generating_tags?, do: "hero-arrow-path", else: "hero-sparkles")}
+                class={tag_generation_icon_class(@generating_tags?)}
+              />
+              {if(@generating_tags?, do: "Generating...", else: "Generate tags")}
+            </button>
+          <% else %>
+            <span
+              :for={tag <- @tags}
+              class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600"
+            >
               <span
-                :for={tag <- @tags}
-                class={[
-                  "rounded-md px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset",
-                  tag_pill_classes(tag)
-                ]}
+                aria-hidden="true"
+                class="h-1.5 w-1.5 shrink-0 rounded-full"
+                style={"background-color: " <> tag_color_hex(tag)}
               >
-                #{tag}
               </span>
-            <% end %>
-          </div>
+              {tag}
+            </span>
+          <% end %>
         </div>
       </div>
-      <div class="flex items-center justify-between gap-4 border-t border-slate-100 pt-3 sm:flex-col sm:items-end sm:border-t-0 sm:pt-0">
-        <span class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500">
-          <.icon name="hero-squares-2x2" class="h-3.5 w-3.5 text-slate-400" />
-          {@node_count} ideas
-        </span>
+
+      <div class="flex items-center border-t border-stone-200 pt-4 sm:border-t-0 sm:pt-0">
         <.link
           navigate={graph_path(@graph)}
-          class="inline-flex items-center gap-1.5 rounded-full bg-slate-950 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-teal-700"
+          class="inline-flex items-center gap-1.5 text-xs font-semibold text-teal-800 transition hover:text-teal-950"
+          aria-label={"Read " <> @title}
         >
-          View grid <.icon name="hero-arrow-up-right" class="h-3.5 w-3.5" />
+          Read grid
+          <.icon
+            name="hero-arrow-right"
+            class="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5"
+          />
         </.link>
       </div>
     </article>
@@ -594,35 +560,29 @@ defmodule DialecticWeb.CommunityLive do
     end
   end
 
-  defp icon_theme(graph) do
-    tags = Map.get(graph, :tags, []) || []
+  defp idea_count_label(1), do: "1 idea"
+  defp idea_count_label(count), do: "#{count} ideas"
 
-    tags
-    |> List.first()
-    |> to_string()
-    |> String.downcase()
-    |> then(fn tag ->
-      cond do
-        String.contains?(tag, ["science", "technology", "physics"]) ->
-          "from-sky-50 via-cyan-50 to-teal-100 text-sky-700 ring-sky-200/80"
+  defp display_title(graph) do
+    title = Map.get(graph, :title) || "Untitled grid"
 
-        String.contains?(tag, ["history", "politics", "society"]) ->
-          "from-amber-50 via-orange-50 to-rose-100 text-amber-700 ring-amber-200/80"
-
-        String.contains?(tag, ["mind", "psychology", "philosophy"]) ->
-          "from-indigo-50 via-violet-50 to-fuchsia-100 text-indigo-700 ring-indigo-200/80"
-
-        true ->
-          "from-teal-50 via-cyan-50 to-indigo-100 text-teal-700 ring-teal-200/80"
-      end
-    end)
+    case String.next_grapheme(title) do
+      {first, rest} -> String.upcase(first) <> rest
+      nil -> "Untitled grid"
+    end
   end
 
-  defp partner_pills(items) do
-    items
-    |> Enum.map(&Map.get(&1, :author_name))
-    |> Enum.filter(fn name -> is_binary(name) and String.trim(name) != "" end)
-    |> Enum.uniq()
+  defp row_accent_style(tags) do
+    colors = tags |> Enum.map(&tag_color_hex/1) |> Enum.uniq()
+
+    gradient_colors =
+      case colors do
+        [] -> [tag_color_hex(""), "#cbd5e1"]
+        [color] -> [color, "#cbd5e1"]
+        colors -> colors
+      end
+
+    "background-image: linear-gradient(180deg, #{Enum.join(gradient_colors, ", ")});"
   end
 
   defp page_title(search, tag, category) do

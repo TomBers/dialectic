@@ -236,14 +236,14 @@ const SelectionActionsHook = {
     if (description) {
       description.textContent =
         mode === ASK_MODE
-          ? "Use the selected text as the context for a more specific answer."
-          : "Save your own interpretation directly against this excerpt.";
+          ? "Use the selected passage as context."
+          : "Save your interpretation with this passage.";
     }
     if (input) {
       input.placeholder =
         mode === ASK_MODE
-          ? "What do you want to know about this exact wording?"
-          : "Add your thought about this selection...";
+          ? "What do you want to ask about this passage?"
+          : "Add your thought about this passage...";
     }
     if (submit) {
       submit.textContent = mode === ASK_MODE ? "Ask" : "Post";

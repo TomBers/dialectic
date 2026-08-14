@@ -6,11 +6,11 @@ export const layoutConfig = {
     name: "dagre",
     rankDir: "TB",
     // Spacing adjustments for better proportions
-    nodeSep: 50, // Horizontal spacing between nodes
-    edgeSep: 30, // Spacing between parallel edges
-    rankSep: 70, // Vertical spacing between ranks
+    nodeSep: 64, // Horizontal spacing between nodes
+    edgeSep: 38, // Spacing between parallel edges
+    rankSep: 88, // Vertical spacing between ranks
     // Visual enhancement settings
-    spacingFactor: 1.05, // Relaxed spacing factor for more readable layout
+    spacingFactor: 1.08, // Relaxed spacing factor for more readable layout
     padding: 30, // Minimum padding around the graph
     // More natural arrangement for complex graphs
     weaveToward: "leaves",
@@ -18,14 +18,12 @@ export const layoutConfig = {
     fit: false, // Do not auto-fit to viewport
     // Higher quality layout algorithm
     ranker: "network-simplex", // More compact layout algorithm
-    // Better alignment for hierarchical structures
-    align: "DL", // Down-Left
     // Animation settings
     animate: true,
     animationDuration: 250, // Faster animations
     animationEasing: "ease-out-cubic",
     // Additional compactness settings
-    gravity: 1.5, // Pull nodes toward the center
+    gravity: 1.2, // Pull nodes toward the center without crowding branches
   },
 
   // Compact layout options
@@ -33,9 +31,9 @@ export const layoutConfig = {
     name: "dagre",
     rankDir: "TB",
     // Tighter spacing for compact view
-    nodeSep: 35, // Horizontal spacing (increased to prevent child overlaps)
-    edgeSep: 15, // Minimal spacing between parallel edges
-    rankSep: 35, // Minimal vertical spacing (increased to prevent overlap)
+    nodeSep: 42, // Horizontal spacing (increased to prevent child overlaps)
+    edgeSep: 20, // Minimal spacing between parallel edges
+    rankSep: 42, // Minimal vertical spacing (increased to prevent overlap)
     // Visual enhancement settings
     spacingFactor: 0.9, // Tight spacing factor (slightly relaxed)
     padding: 15, // Minimal padding
@@ -45,8 +43,6 @@ export const layoutConfig = {
     fit: false, // Do not auto-fit to viewport
     // Higher quality layout algorithm
     ranker: "network-simplex", // More compact layout algorithm
-    // Better alignment for hierarchical structures
-    align: "DL", // Down-Left
     // Animation settings
     animate: true,
     animationDuration: 250, // Faster animations
@@ -63,13 +59,17 @@ export const layoutConfig = {
     animate: true,
     animationDuration: 300,
     // Spacing for expanded compound nodes
-    nodeSep: 30,
-    edgeSep: 15,
-    rankSep: 50,
+    nodeSep: 42,
+    edgeSep: 20,
+    rankSep: 64,
     // Better handling of expanded groups
     spacingFactor: 1.0,
     nestingFactor: 0.95,
-    align: "DL", // Down-left alignment for better compound node layout
+  },
+
+  readabilitySettings: {
+    spacedMinInitialZoom: 0.75,
+    compactMinInitialZoom: 0.78,
   },
 
   // Compound drag and drop options

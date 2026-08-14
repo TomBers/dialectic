@@ -1,6 +1,8 @@
 defmodule DialecticWeb.GraphLiveTest do
   use DialecticWeb.ConnCase, async: false
+  alias Dialectic.Accounts
   alias Dialectic.Follows
+  alias Dialectic.GridActivity
 
   import Phoenix.LiveViewTest
   import Dialectic.AccountsFixtures
@@ -101,6 +103,79 @@ defmodule DialecticWeb.GraphLiveTest do
       assert socket.assigns.llm_actor_id != ""
     end
 
+    test "uses the signed-in user's account-wide appearance preferences", %{conn: conn} do
+      user = user_fixture()
+
+      {:ok, user} =
+        Accounts.update_user_appearance(user, %{
+          reading_density: "large",
+          reading_font: "serif",
+          graph_view_mode: "compact",
+          graph_direction: "RL",
+          reduce_motion: true,
+          high_contrast: true
+        })
+
+      {:ok, graph} =
+        Dialectic.GraphFixtures.insert_graph_fixture(
+          "Appearance Graph #{System.unique_integer([:positive])}"
+        )
+
+      {:ok, view, _html} =
+        conn
+        |> log_in_user(user)
+        |> live(~p"/g/#{graph.slug}/graph?node=1")
+
+      assert has_element?(
+               view,
+               "#graph-layout[data-reading-density='large'][data-reading-font='serif'][data-graph-view-mode='compact'][data-graph-direction='RL'][data-reduce-motion='true'][data-high-contrast='true']"
+             )
+
+      assert has_element?(
+               view,
+               "#cy[data-graph-view-mode='compact'][data-graph-direction='RL'][data-reduce-motion='true'][data-high-contrast='true']"
+             )
+
+      refute has_element?(view, "#settings-menu", "Appearance")
+    end
+
+    test "renders activity as a readable actor, action, target, and time", %{conn: conn} do
+      user = user_fixture()
+
+      graph =
+        Dialectic.GraphFixtures.insert_graph(%{
+          title: "Activity Panel Graph #{System.unique_integer([:positive])}",
+          data: source_text_graph_data()
+        })
+
+      assert {:ok, log} =
+               GridActivity.record_node_event(
+                 graph.title,
+                 user,
+                 "node.follow_up.created",
+                 "2"
+               )
+
+      {:ok, view, _html} =
+        conn
+        |> log_in_user(user)
+        |> live(~p"/g/#{graph.slug}/graph?node=2")
+
+      assert has_element?(
+               view,
+               "#grid-activity-actor-#{log.id}",
+               Dialectic.Accounts.User.display_name(user)
+             )
+
+      assert has_element?(view, "#grid-activity-log-#{log.id}", "asked a follow-up question")
+      assert has_element?(view, "#grid-activity-time-#{log.id}[datetime]")
+
+      assert has_element?(
+               view,
+               "#grid-activity-node-#{log.id}[phx-value-node_id='2']"
+             )
+    end
+
     test "shows a persistent reader switch for the current node", %{conn: conn} do
       {:ok, view, _html} = setup_live(conn)
       state = :sys.get_state(view.pid).socket
@@ -113,6 +188,30 @@ defmodule DialecticWeb.GraphLiveTest do
                view,
                ~s(#graph-workspace-bar-reader[href="/g/#{graph.slug}?node=#{node_id}"])
              )
+    end
+
+    test "surfaces the explanation level and opens its settings", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+
+      assert has_element?(view, "#graph-workspace-bar-level", "Detailed")
+
+      view
+      |> element("#graph-workspace-bar-level")
+      |> render_click()
+
+      assert has_element?(view, "#right-panel", "Grid tools")
+      assert has_element?(view, "#details-configure[open]", "Explanation level")
+      assert has_element?(view, "#answer-level-university[aria-pressed='true']")
+
+      assert has_element?(
+               view,
+               "#document-menu-settings-document-menu[aria-label='Open grid tools']"
+             )
+
+      render_click(view, "set_prompt_mode", %{"prompt_mode" => "simple"})
+
+      assert has_element?(view, "#graph-workspace-bar-level", "Plain")
+      assert has_element?(view, "#answer-level-simple[aria-pressed='true']")
     end
 
     test "can follow and unfollow the current grid", %{conn: conn} do
@@ -158,6 +257,9 @@ defmodule DialecticWeb.GraphLiveTest do
       assert has_element?(view, "#grid-chat-toggle")
       assert has_element?(view, "#chat-drawer")
       assert has_element?(view, "#grid-chat-form")
+      assert has_element?(view, "#grid-chat-viewers[tabindex='0'][role='region']")
+      assert has_element?(view, "#grid-chat-messages[tabindex='0'][role='region']")
+      assert has_element?(view, "#graph-workspace-bar-highlights", "Highlights")
 
       view
       |> element("#grid-chat-form")
@@ -570,12 +672,18 @@ defmodule DialecticWeb.GraphLiveTest do
 
   describe "handle_event \"note\"" do
     test "note event updates the graph", %{conn: conn} do
-      {:ok, view, _html} = setup_live(conn)
+      {:ok, view, _html} = setup_live_for_graph(conn, "What is ethics?")
+
+      assert has_element?(view, "#graph-bookmark-node-1[aria-pressed='false']")
+      assert has_element?(view, "#graph-bookmark-node-1 .hero-bookmark")
 
       # Simulate a note event on node "1". (In a real test you might stub
       # GraphActions.change_noted_by/3 to return a predictable updated graph/node.)
       render_click(view, "note", %{"node" => "1"})
       _state = :sys.get_state(view.pid).socket
+
+      assert has_element?(view, "#graph-bookmark-node-1[aria-pressed='true']")
+      assert has_element?(view, "#graph-bookmark-node-1 .hero-bookmark-solid")
 
       # Additional assertions (e.g. on assigns.graph or assigns.node) depend on your implementation.
     end

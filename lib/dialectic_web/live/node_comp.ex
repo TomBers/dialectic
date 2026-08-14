@@ -145,8 +145,8 @@ defmodule DialecticWeb.NodeComp do
                     <%!-- Client-side Markdown rendering via Markdown hook --%>
                     <% origin_meta? =
                       GraphHelpers.origin_branching_disabled?(@node) && is_map(@graph_struct) %>
-                    <h3 class={[
-                      "mt-0 flex items-start justify-between gap-4 leading-tight tracking-tight text-gray-900",
+                    <h2 class={[
+                      "mt-0 flex items-start justify-between gap-4 font-serif leading-[1.15] tracking-tight text-gray-900",
                       node_title_size_class(@node),
                       if(origin_meta?,
                         do: "mb-2 pb-0",
@@ -165,51 +165,29 @@ defmodule DialecticWeb.NodeComp do
                         <% noted? =
                           Enum.any?(Map.get(@node || %{}, :noted_by, []), fn u -> u == @user end) %>
                         <button
+                          id={"graph-bookmark-node-#{@node.id}"}
                           type="button"
                           class={[
-                            "flex-none inline-flex items-center justify-center p-1.5 rounded-full transition-all",
+                            "inline-flex h-8 w-8 flex-none items-center justify-center rounded-full border transition-all",
                             if(noted?,
-                              do: "bg-yellow-400 text-gray-900 hover:bg-yellow-500",
+                              do: "border-amber-300 bg-amber-100 text-amber-800 hover:bg-amber-200",
                               else:
-                                "bg-gray-100 text-gray-600 hover:bg-yellow-400 hover:text-gray-900"
+                                "border-slate-200 bg-white text-slate-500 hover:border-amber-300 hover:bg-amber-50 hover:text-amber-800"
                             )
                           ]}
                           phx-click={if noted?, do: "unnote", else: "note"}
                           phx-value-node={@node.id}
-                          title={if noted?, do: "Remove from your notes", else: "Add to your notes"}
+                          aria-label={if(noted?, do: "Remove bookmark", else: "Bookmark this node")}
+                          aria-pressed={to_string(noted?)}
+                          title={if(noted?, do: "Remove bookmark", else: "Bookmark this node")}
                         >
-                          <%= if noted? do %>
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              class="h-4 w-4"
-                              viewBox="0 0 24 24"
-                              fill="currentColor"
-                            >
-                              <path
-                                fill-rule="evenodd"
-                                d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z"
-                                clip-rule="evenodd"
-                              />
-                            </svg>
-                          <% else %>
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              class="h-4 w-4"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
-                              />
-                            </svg>
-                          <% end %>
+                          <.icon
+                            name={if(noted?, do: "hero-bookmark-solid", else: "hero-bookmark")}
+                            class="h-4 w-4"
+                          />
                         </button>
                       </span>
-                    </h3>
+                    </h2>
                     <div
                       :if={origin_meta?}
                       id={"origin-intro-subheading-#{@node.id}"}
@@ -238,17 +216,30 @@ defmodule DialecticWeb.NodeComp do
                     >
                       <div
                         :if={!GraphHelpers.origin_branching_disabled?(@node)}
-                        class="not-prose mb-5 mt-3 flex items-center gap-3 border-l-4 border-teal-400 bg-slate-50 px-3 py-2.5 text-sm leading-5 text-slate-700 shadow-sm ring-1 ring-slate-200/80"
+                        id={"branch-from-text-hint-#{@node.id}"}
+                        phx-hook="DismissibleHint"
+                        data-dismiss-key="rg:dismissed:branch-from-text:v1"
+                        class="not-prose relative mb-5 mt-3 overflow-hidden rounded-xl border border-teal-200/90 bg-gradient-to-r from-teal-50 via-white to-amber-50/80 p-3.5 pr-11 shadow-[0_14px_32px_-24px_rgba(15,118,110,0.9)] ring-1 ring-teal-100/70"
+                        hidden
                       >
-                        <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-teal-50 text-teal-700 ring-1 ring-teal-200">
-                          <.icon name="hero-cursor-arrow-rays" class="h-4 w-4" />
-                        </span>
-                        <p class="min-w-0 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                          <span class="font-semibold text-slate-900">Branch from the text</span>
-                          <span class="text-slate-600">
-                            Select a phrase to ask a focused follow-up question.
+                        <div class="flex items-center gap-2.5">
+                          <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-teal-700 text-white shadow-sm ring-1 ring-teal-800/10">
+                            <.icon name="hero-cursor-arrow-rays" class="h-3.5 w-3.5" />
                           </span>
-                        </p>
+                          <p class="min-w-0 text-sm font-semibold leading-5 text-slate-800">
+                            Select a phrase to ask about it.
+                          </p>
+                        </div>
+                        <button
+                          id={"branch-from-text-hint-dismiss-#{@node.id}"}
+                          type="button"
+                          data-dismiss-hint
+                          class="absolute right-2.5 top-2.5 inline-flex h-7 w-7 items-center justify-center rounded-full text-slate-500 transition hover:bg-white/90 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+                          aria-label="Dismiss selection tip"
+                          title="Dismiss tip"
+                        >
+                          <.icon name="hero-x-mark" class="h-4 w-4" />
+                        </button>
                       </div>
 
                       <div

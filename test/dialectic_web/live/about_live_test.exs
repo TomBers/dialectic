@@ -13,9 +13,87 @@ defmodule DialecticWeb.AboutLiveTest do
 
   describe "about page" do
     test "renders the about page", %{conn: conn} do
-      {:ok, _view, html} = live(conn, ~p"/about")
+      {:ok, view, html} = live(conn, ~p"/about")
 
       assert html =~ "About RationalGrid"
+      refute has_element?(view, "#about-connected-knowledge")
+      assert has_element?(view, "#about-hero", "Know what you think—and show how you got there.")
+      assert has_element?(view, "#about-purpose", "Some questions deserve more than one answer.")
+      assert has_element?(view, "#about-purpose", "meaning, belief, identity, doubt")
+      assert has_element?(view, "#about-outcome-whole-question", "See the whole question")
+      assert has_element?(view, "#about-outcome-unstuck", "Get unstuck")
+      assert has_element?(view, "#about-outcome-unstuck", "built-in critical-thinking tools")
+
+      assert has_element?(
+               view,
+               ~s(#about-unstuck-tools-link[href="/intro/how#guide-critical-thinking-tools"]),
+               "See the critical-thinking tools in the Guide"
+             )
+
+      assert has_element?(view, "#about-outcome-certainty", "Question what sounds certain")
+      assert has_element?(view, "#about-outcome-reasons", "Decide with reasons")
+      assert has_element?(view, "#about-outcome-disagreement", "Disagree more usefully")
+      assert has_element?(view, "#about-outcome-revision", "Change your mind well")
+
+      assert has_element?(
+               view,
+               "#about-ai-artifacts",
+               "AI helps you explore. The grid helps you remember."
+             )
+
+      assert has_element?(
+               view,
+               ~s(#about-ai-exploration-link[href="/intro/ai"]),
+               "Read about AI and exploration"
+             )
+
+      assert has_element?(view, "#about-tools", "Explore freely. Keep what matters.")
+      assert has_element?(view, "#about-tools", "Philosophy for All and Peter Worley")
+      assert has_element?(view, "#about-explore-question", "Question any part")
+      assert has_element?(view, "#about-explore-level", "Plain, Standard, Detailed")
+      assert has_element?(view, "#about-explore-branches", "separate branches")
+
+      assert has_element?(
+               view,
+               "#about-explore-critical-thinking",
+               "test assumptions, strengthen arguments"
+             )
+
+      assert has_element?(view, "#about-explore-views", "compare their evidence")
+      assert has_element?(view, "#about-explore-sources", "primary research")
+      assert has_element?(view, "#about-recall-highlights", "shareable link")
+      assert has_element?(view, "#about-recall-bookmarks", "find again")
+      assert has_element?(view, "#about-recall-export", "other tools")
+      assert has_element?(view, "#about-recall-shared", "see who added what")
+      assert has_element?(view, "#about-recall-profile", "others can follow and challenge")
+
+      assert has_element?(
+               view,
+               ~s(#about-tools-guide-link[href="/intro/how"]),
+               "See how the tools work"
+             )
+
+      assert has_element?(view, "#about-audiences", "Who is it for?")
+      assert has_element?(view, "#about-audience-students", "Students and lifelong learners")
+      assert has_element?(view, "#about-audience-teachers", "Teachers and tutors")
+
+      assert has_element?(
+               view,
+               "#about-audience-researchers-writers",
+               "Researchers, journalists, and writers"
+             )
+
+      assert has_element?(view, "#about-audience-debate-organisers", "Debate and discussion")
+      assert has_element?(view, "#about-audience-teams", "Teams and decision-makers")
+      assert has_element?(view, "#about-audience-book-clubs", "Book clubs and study groups")
+
+      assert has_element?(
+               view,
+               "#about-audience-critical-thinkers",
+               "Philosophers and critical thinkers"
+             )
+
+      assert has_element?(view, ~s(#about-start-grid-link[href="/?focus=grid#start-here"]))
     end
 
     test "shows error when submitting blank feedback", %{conn: conn} do

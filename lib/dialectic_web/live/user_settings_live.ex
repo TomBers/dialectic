@@ -189,13 +189,13 @@ defmodule DialecticWeb.UserSettingsLive do
           <div class="flex items-start justify-between gap-4">
             <div class="min-w-0">
               <p class="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                Profile settings
+                Settings
               </p>
               <h1 class="mt-1 text-xl font-semibold tracking-tight text-zinc-900">
-                Profile home
+                Account settings
               </h1>
               <p class="mt-1 max-w-2xl text-sm text-zinc-600">
-                Shape the public page where your grids, ideas, and ways to connect are gathered.
+                Manage your public profile, reading preferences, email, and password.
               </p>
             </div>
 
@@ -543,6 +543,109 @@ defmodule DialecticWeb.UserSettingsLive do
 
             <div class="h-px bg-zinc-100"></div>
 
+            <section id="user-settings-appearance-section" class="space-y-4">
+              <div class="flex items-start gap-3">
+                <div class="mt-0.5 flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 ring-1 ring-violet-100">
+                  <.icon name="hero-eye" class="h-5 w-5 text-violet-700" />
+                </div>
+
+                <div>
+                  <h2 class="text-base font-semibold text-zinc-900">Reading and grid appearance</h2>
+                  <p class="mt-1 text-sm text-zinc-600">
+                    These preferences apply to every grid you open while signed in.
+                  </p>
+                </div>
+              </div>
+
+              <div class="rounded-2xl border border-zinc-200/60 bg-zinc-50/50 p-5 sm:p-6">
+                <.simple_form
+                  for={@appearance_form}
+                  id="appearance-form"
+                  phx-change="validate_appearance"
+                  phx-submit="update_appearance"
+                >
+                  <div class="grid gap-5 sm:grid-cols-2">
+                    <.input
+                      field={@appearance_form[:reading_density]}
+                      type="select"
+                      label="Text size & spacing"
+                      options={[
+                        {"Compact", "compact"},
+                        {"Comfortable", "comfortable"},
+                        {"Large", "large"}
+                      ]}
+                    />
+                    <.input
+                      field={@appearance_form[:reading_font]}
+                      type="select"
+                      label="Reading font"
+                      options={[{"Sans", "sans"}, {"Serif", "serif"}]}
+                    />
+                    <.input
+                      field={@appearance_form[:graph_view_mode]}
+                      type="select"
+                      label="Grid spacing"
+                      options={[{"Spaced", "spaced"}, {"Compact", "compact"}]}
+                    />
+                    <div class="rounded-xl border border-zinc-200 bg-white px-4 py-3">
+                      <.input
+                        field={@appearance_form[:high_contrast]}
+                        type="checkbox"
+                        label="High contrast grid"
+                      />
+                      <p class="mt-1 pl-7 text-xs leading-5 text-zinc-500">
+                        Adds clearer borders and a subtle colour tint to nodes.
+                      </p>
+                    </div>
+                    <div class="rounded-xl border border-zinc-200 bg-white px-4 py-3">
+                      <.input
+                        field={@appearance_form[:reduce_motion]}
+                        type="checkbox"
+                        label="Reduce motion"
+                      />
+                      <p class="mt-1 pl-7 text-xs leading-5 text-zinc-500">
+                        Minimises grid movement and interface animation.
+                      </p>
+                    </div>
+                  </div>
+
+                  <details class="group rounded-xl border border-zinc-200 bg-white">
+                    <summary class="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-medium text-zinc-700 hover:text-zinc-950">
+                      <span>Advanced grid layout</span>
+                      <.icon
+                        name="hero-chevron-down"
+                        class="h-4 w-4 text-zinc-400 transition group-open:rotate-180"
+                      />
+                    </summary>
+                    <div class="border-t border-zinc-100 px-4 pb-4 pt-3">
+                      <.input
+                        field={@appearance_form[:graph_direction]}
+                        type="select"
+                        label="Grid direction"
+                        options={[
+                          {"Top to bottom", "TB"},
+                          {"Bottom to top", "BT"},
+                          {"Left to right", "LR"},
+                          {"Right to left", "RL"}
+                        ]}
+                      />
+                    </div>
+                  </details>
+
+                  <:actions>
+                    <.button
+                      phx-disable-with="Saving..."
+                      class="inline-flex items-center justify-center rounded-xl bg-violet-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-violet-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-700"
+                    >
+                      Save appearance
+                    </.button>
+                  </:actions>
+                </.simple_form>
+              </div>
+            </section>
+
+            <div class="h-px bg-zinc-100"></div>
+
             <%!-- Email Section --%>
             <section id="user-settings-email-section" class="space-y-4">
               <div class="flex items-start gap-3">
@@ -711,6 +814,7 @@ defmodule DialecticWeb.UserSettingsLive do
     effective_username = User.effective_username(user)
 
     profile_changeset = Accounts.change_user_profile(user)
+    appearance_changeset = Accounts.change_user_appearance(user)
 
     socket =
       socket
@@ -720,6 +824,7 @@ defmodule DialecticWeb.UserSettingsLive do
       |> assign(:email_form, to_form(email_changeset))
       |> assign(:password_form, to_form(password_changeset))
       |> assign(:profile_form, to_form(profile_changeset))
+      |> assign(:appearance_form, to_form(appearance_changeset))
       |> assign(:trigger_submit, false)
       |> assign(:effective_username, effective_username)
       |> assign(:avatar_preview_url, user.avatar_path)
@@ -732,6 +837,31 @@ defmodule DialecticWeb.UserSettingsLive do
       |> assign(:profile_links_error, nil)
 
     {:ok, socket}
+  end
+
+  def handle_event("validate_appearance", %{"user" => appearance_params}, socket) do
+    appearance_form =
+      socket.assigns.current_user
+      |> Accounts.change_user_appearance(appearance_params)
+      |> Map.put(:action, :validate)
+      |> to_form()
+
+    {:noreply, assign(socket, :appearance_form, appearance_form)}
+  end
+
+  def handle_event("update_appearance", %{"user" => appearance_params}, socket) do
+    case Accounts.update_user_appearance(socket.assigns.current_user, appearance_params) do
+      {:ok, updated_user} ->
+        {:noreply,
+         socket
+         |> assign(:current_user, updated_user)
+         |> assign(:appearance_form, to_form(Accounts.change_user_appearance(updated_user)))
+         |> put_flash(:info, "Appearance preferences updated.")}
+
+      {:error, changeset} ->
+        {:noreply,
+         assign(socket, :appearance_form, to_form(Map.put(changeset, :action, :update)))}
+    end
   end
 
   # --- Profile events ---

@@ -133,7 +133,7 @@ defmodule DialecticWeb.UserLoginLive do
 
   def mount(_params, _session, socket) do
     email = Phoenix.Flash.get(socket.assigns.flash, :email)
-    form = to_form(%{"email" => email}, as: "user")
+    form = to_form(%{"email" => email, "remember_me" => "true"}, as: "user")
     {:ok, assign(socket, form: form), temporary_assigns: [form: form]}
   end
 end

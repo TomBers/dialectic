@@ -501,6 +501,16 @@ defmodule Dialectic.Accounts do
     |> Repo.update()
   end
 
+  def change_user_appearance(%User{} = user, attrs \\ %{}) do
+    User.appearance_changeset(user, attrs)
+  end
+
+  def update_user_appearance(%User{} = user, attrs) do
+    user
+    |> User.appearance_changeset(attrs)
+    |> Repo.update()
+  end
+
   def update_user_profile_links(%User{} = user, rows) do
     case ProfileLinks.prepare_for_storage(rows) do
       {:ok, profile_links} ->

@@ -178,186 +178,203 @@ defmodule DialecticWeb.SelectionActionsComp do
       <div id={"selection-actions-modal-#{@id}"} class="hidden" phx-update="ignore" aria-hidden="true">
         <div
           data-selection-close
-          class="fixed inset-0 z-[999] bg-slate-950/45 backdrop-blur-sm transition-opacity duration-200"
+          class="fixed inset-0 z-[999] bg-slate-950/40 backdrop-blur-sm transition-opacity duration-200"
         >
         </div>
-        <div class="fixed left-1/2 top-1/2 z-[1000] flex max-h-[88vh] w-[92vw] max-w-[620px] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_32px_80px_rgba(15,23,42,0.22)] ring-1 ring-slate-200/80 transition-all duration-200 opacity-100 scale-100">
-          <div class="relative overflow-y-auto px-4 pb-4 pt-4 sm:px-5 sm:pb-5 sm:pt-4">
-            <div class="mb-3 flex items-start justify-between gap-4">
-              <span class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600">
-                Selection actions
-              </span>
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={"selection-actions-title-#{@id}"}
+          class="fixed left-1/2 top-1/2 z-[1000] flex max-h-[88vh] w-[92vw] max-w-[620px] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-[1.35rem] border border-slate-200 bg-white shadow-[0_28px_72px_rgba(15,23,42,0.2)] ring-1 ring-slate-950/5 transition-all duration-200 opacity-100 scale-100"
+        >
+          <div class="relative overflow-y-auto px-4 pb-5 pt-4 sm:px-5 sm:pb-5 sm:pt-5">
+            <div class="flex items-start justify-between gap-4">
+              <div class="min-w-0">
+                <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-teal-700">
+                  Selection tools
+                </p>
+                <h2
+                  id={"selection-actions-title-#{@id}"}
+                  class="mt-1 font-serif text-2xl font-semibold leading-tight tracking-tight text-slate-950"
+                >
+                  {if(@highlight_only, do: "Save this passage", else: "Take this passage further")}
+                </h2>
+                <p class="mt-1 text-sm leading-5 text-slate-600">
+                  <%= if @highlight_only do %>
+                    Keep this exact passage so you can return to it later.
+                  <% else %>
+                    Choose what you want to understand, test, or remember.
+                  <% end %>
+                </p>
+              </div>
+
               <button
+                id={"selection-actions-close-#{@id}"}
                 type="button"
                 data-selection-close
-                class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 shadow-sm transition-colors hover:bg-slate-50 hover:text-slate-700"
+                class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 transition-colors hover:bg-slate-50 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
                 aria-label="Close selection actions"
               >
-                <.icon name="hero-x-mark" class="h-[18px] w-[18px]" />
+                <.icon name="hero-x-mark" class="h-4 w-4" />
               </button>
             </div>
 
-            <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 shadow-sm">
-              <div class="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600">
-                Selected text
-              </div>
+            <div class="mt-3 rounded-xl border border-slate-200/80 bg-slate-50/70 px-3 py-2.5 shadow-[inset_3px_0_0_rgba(20,184,166,0.35)]">
+              <p class="mb-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                Selected passage
+              </p>
               <div
                 data-selection-text
-                class="max-h-24 overflow-y-auto text-[0.95rem] font-medium leading-6 text-slate-900"
+                class="max-h-20 overflow-y-auto font-serif text-[0.98rem] leading-5 text-slate-800"
               >
               </div>
             </div>
 
             <div class={[
-              "mt-3 grid gap-2.5",
-              if(@highlight_only, do: "grid-cols-1", else: "grid-cols-2")
+              "mt-3 grid gap-px overflow-hidden rounded-xl border border-slate-200/80 bg-slate-200/80",
+              if(@highlight_only, do: "grid-cols-1", else: "grid-cols-1 sm:grid-cols-2")
             ]}>
               <%= if !@highlight_only do %>
                 <button
+                  id={"selection-action-explain-#{@id}"}
                   type="button"
                   data-selection-action="explain"
                   data-disable-if-links="explain"
                   disabled={!@can_edit}
                   title="Create an AI explanation"
-                  class="group flex min-h-[96px] flex-col items-start justify-between rounded-2xl border-2 border-slate-200 bg-white px-3.5 py-3 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-[0_12px_24px_rgba(15,23,42,0.08)] active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100 disabled:cursor-not-allowed disabled:opacity-50"
+                  class="group grid w-full min-w-0 grid-cols-[1.5rem_minmax(0,1fr)_auto] items-start gap-2.5 bg-white/90 px-3 py-2.5 text-left transition hover:bg-white active:scale-[0.995] focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-200 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  <span class="w-full space-y-1">
-                    <span class="flex items-center gap-2 text-[1.05rem] font-semibold leading-5 text-slate-900">
-                      <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-sky-500 text-white shadow-sm ring-4 ring-white/70">
-                        <.icon name="hero-question-mark-circle" class="h-4.5 w-4.5" />
-                      </span>
-                      <span>Explain</span>
+                  <span class="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-md bg-white text-sky-700 ring-1 ring-slate-200/90">
+                    <.icon name="hero-question-mark-circle" class="h-3.5 w-3.5" />
+                  </span>
+                  <span class="min-w-0">
+                    <span class="block text-sm font-semibold leading-5 text-slate-900">
+                      Explain this passage
                     </span>
-                    <span class="block whitespace-nowrap text-[12px] leading-4 text-slate-600">
-                      Ask AI to unpack this phrase.
+                    <span class="block text-xs leading-4 text-slate-500">
+                      Unpack its meaning and context.
                     </span>
                   </span>
-                  <span class="mt-auto flex w-full items-center justify-between border-t border-slate-200 pt-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-sky-700">
-                    <span>Use this</span>
-                    <.icon
-                      name="hero-arrow-right"
-                      class="h-4 w-4 transition-transform group-hover:translate-x-0.5"
-                    />
-                  </span>
+                  <.icon
+                    name="hero-arrow-right"
+                    class="mt-1 h-3.5 w-3.5 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-sky-700"
+                  />
                 </button>
               <% end %>
 
               <button
+                id={"selection-action-highlight-#{@id}"}
                 type="button"
                 data-selection-action="highlight_only"
                 data-disable-if-highlight="true"
                 disabled={!@can_edit}
                 title="Save this text selection as a highlight"
-                class="group flex min-h-[96px] flex-col items-start justify-between rounded-2xl border-2 border-slate-200 bg-white px-3.5 py-3 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-[0_12px_24px_rgba(15,23,42,0.08)] active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-100 disabled:cursor-not-allowed disabled:opacity-50"
+                class="group grid w-full min-w-0 grid-cols-[1.5rem_minmax(0,1fr)_auto] items-start gap-2.5 bg-white/90 px-3 py-2.5 text-left transition hover:bg-white active:scale-[0.995] focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <span class="w-full space-y-1">
-                  <span class="flex items-center gap-2 text-[1.05rem] font-semibold leading-5 text-slate-900">
-                    <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-amber-400 text-amber-950 shadow-sm ring-4 ring-white/70">
-                      <.icon name="hero-bookmark" class="h-4.5 w-4.5" />
-                    </span>
-                    <span>Highlight</span>
+                <span class="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-md bg-white text-amber-700 ring-1 ring-slate-200/90">
+                  <.icon name="hero-bookmark" class="h-3.5 w-3.5" />
+                </span>
+                <span class="min-w-0">
+                  <span class="block text-sm font-semibold leading-5 text-slate-900">
+                    Save as a highlight
                   </span>
-                  <span class="block whitespace-nowrap text-[12px] leading-4 text-slate-600">
-                    Save this passage to return to later.
+                  <span class="block text-xs leading-4 text-slate-500">
+                    Keep this passage for later.
                   </span>
                 </span>
-                <span class="mt-auto flex w-full items-center justify-between border-t border-slate-200 pt-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-amber-700">
-                  <span>Use this</span>
-                  <.icon
-                    name="hero-arrow-right"
-                    class="h-4 w-4 transition-transform group-hover:translate-x-0.5"
-                  />
-                </span>
+                <.icon
+                  name="hero-arrow-right"
+                  class="mt-1 h-3.5 w-3.5 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-amber-700"
+                />
               </button>
 
               <%= if !@highlight_only do %>
                 <button
+                  id={"selection-action-pros-cons-#{@id}"}
                   type="button"
                   data-selection-action="pros_cons"
                   data-disable-if-links="pro,con"
                   disabled={!@can_edit}
                   title="Analyze pros and cons"
-                  class="group flex min-h-[96px] flex-col items-start justify-between rounded-2xl border-2 border-slate-200 bg-white px-3.5 py-3 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-[0_12px_24px_rgba(15,23,42,0.08)] active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-100 disabled:cursor-not-allowed disabled:opacity-50"
+                  class="group grid w-full min-w-0 grid-cols-[1.5rem_minmax(0,1fr)_auto] items-start gap-2.5 bg-white/90 px-3 py-2.5 text-left transition hover:bg-white active:scale-[0.995] focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  <span class="w-full space-y-1">
-                    <span class="flex items-center gap-2 text-[1.05rem] font-semibold leading-5 text-slate-900">
-                      <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500 text-white shadow-sm ring-4 ring-white/70">
-                        <.icon name="hero-scale" class="h-4.5 w-4.5" />
-                      </span>
-                      <span>Pros & Cons</span>
+                  <span class="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-md bg-white text-emerald-700 ring-1 ring-slate-200/90">
+                    <.icon name="hero-scale" class="h-3.5 w-3.5" />
+                  </span>
+                  <span class="min-w-0">
+                    <span class="block text-sm font-semibold leading-5 text-slate-900">
+                      Test both sides
                     </span>
-                    <span class="block whitespace-nowrap text-[12px] leading-4 text-slate-600">
-                      Test the strongest case for and against it.
+                    <span class="block text-xs leading-4 text-slate-500">
+                      Build the case for and against.
                     </span>
                   </span>
-                  <span class="mt-auto flex w-full items-center justify-between border-t border-slate-200 pt-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-emerald-700">
-                    <span>Use this</span>
-                    <.icon
-                      name="hero-arrow-right"
-                      class="h-4 w-4 transition-transform group-hover:translate-x-0.5"
-                    />
-                  </span>
+                  <.icon
+                    name="hero-arrow-right"
+                    class="mt-1 h-3.5 w-3.5 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-emerald-700"
+                  />
                 </button>
 
                 <button
+                  id={"selection-action-related-#{@id}"}
                   type="button"
                   data-selection-action="related_ideas"
                   data-disable-if-links="related_idea"
                   disabled={!@can_edit}
                   title="Find related ideas"
-                  class="group flex min-h-[96px] flex-col items-start justify-between rounded-2xl border-2 border-slate-200 bg-white px-3.5 py-3 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-orange-300 hover:shadow-[0_12px_24px_rgba(15,23,42,0.08)] active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-100 disabled:cursor-not-allowed disabled:opacity-50"
+                  class="group grid w-full min-w-0 grid-cols-[1.5rem_minmax(0,1fr)_auto] items-start gap-2.5 bg-white/90 px-3 py-2.5 text-left transition hover:bg-white active:scale-[0.995] focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-200 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  <span class="w-full space-y-1">
-                    <span class="flex items-center gap-2 text-[1.05rem] font-semibold leading-5 text-slate-900">
-                      <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-orange-500 text-white shadow-sm ring-4 ring-white/70">
-                        <.icon name="hero-light-bulb" class="h-4.5 w-4.5" />
-                      </span>
-                      <span>Related Ideas</span>
+                  <span class="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-md bg-white text-orange-700 ring-1 ring-slate-200/90">
+                    <.icon name="hero-light-bulb" class="h-3.5 w-3.5" />
+                  </span>
+                  <span class="min-w-0">
+                    <span class="block text-sm font-semibold leading-5 text-slate-900">
+                      Find related ideas
                     </span>
-                    <span class="block whitespace-nowrap text-[12px] leading-4 text-slate-600">
-                      Pull in adjacent comparisons and next angles.
+                    <span class="block text-xs leading-4 text-slate-500">
+                      Find useful connections and comparisons.
                     </span>
                   </span>
-                  <span class="mt-auto flex w-full items-center justify-between border-t border-slate-200 pt-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-orange-700">
-                    <span>Use this</span>
-                    <.icon
-                      name="hero-arrow-right"
-                      class="h-4 w-4 transition-transform group-hover:translate-x-0.5"
-                    />
-                  </span>
+                  <.icon
+                    name="hero-arrow-right"
+                    class="mt-1 h-3.5 w-3.5 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-orange-700"
+                  />
                 </button>
               <% end %>
             </div>
 
             <%= if !@highlight_only do %>
-              <div class="mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+              <div class="mt-2">
                 <button
                   type="button"
                   id={"selection-advanced-tools-toggle-#{@id}"}
                   data-selection-advanced-toggle
                   aria-expanded="false"
-                  class="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition hover:bg-slate-50"
+                  class="flex w-full items-center justify-between gap-3 rounded-xl px-2 py-2 text-left transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
                 >
-                  <span>
+                  <span class="min-w-0">
                     <span class="block text-sm font-semibold text-slate-900">
-                      Critical thinking tools
+                      More ways to examine this passage
                     </span>
-                    <span class="block text-[11px] leading-4 text-slate-500">
-                      A toolkit for better understanding ideas, stress-testing them, and exploring where they lead.
+                    <span class="block text-xs leading-4 text-slate-500">
+                      Clarify it, challenge it, or follow its implications.
                     </span>
                   </span>
-                  <.icon name="hero-chevron-down" class="h-4 w-4 text-slate-500 transition-transform" />
+                  <.icon
+                    name="hero-chevron-down"
+                    class="h-4 w-4 shrink-0 text-slate-400 transition-transform"
+                  />
                 </button>
 
                 <div
                   data-selection-advanced-tools
-                  class="hidden space-y-4 border-t border-slate-200 bg-slate-50/70 px-3 py-3"
+                  class="hidden mt-3 space-y-4 border-t border-slate-200/70 pt-4"
                 >
-                  <div :for={section <- @critical_tool_sections} class="space-y-2">
-                    <div class="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  <div :for={section <- @critical_tool_sections} class="space-y-1.5">
+                    <div class="px-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
                       {section.title}
                     </div>
-                    <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                    <div class="grid gap-1 sm:grid-cols-2">
                       <button
                         :for={tool <- section.tools}
                         type="button"
@@ -366,30 +383,21 @@ defmodule DialecticWeb.SelectionActionsComp do
                         data-disable-if-links={tool.key}
                         disabled={!@can_edit}
                         title={tool.title}
-                        class={[
-                          "group flex min-h-[86px] flex-col items-start justify-between rounded-2xl px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-50",
-                          ColUtils.advanced_tool_surface_class(tool.key)
-                        ]}
+                        class="group flex min-w-0 items-start gap-2.5 rounded-xl border border-transparent px-2.5 py-2.5 text-left transition hover:border-slate-200 hover:bg-slate-50 active:scale-[0.995] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        <span class="space-y-1">
-                          <span class={[
-                            "inline-flex h-8 w-8 items-center justify-center rounded-xl ring-1 ring-white/70",
-                            ColUtils.advanced_tool_icon_class(tool.key)
-                          ]}>
-                            <.icon name={tool.icon} class="h-4 w-4" />
-                          </span>
-                          <span class="block text-sm font-semibold leading-4 text-slate-900">
-                            {tool.label}
-                          </span>
-                          <span class="block text-[11px] leading-4 text-slate-500">
-                            {tool.blurb}
-                          </span>
-                        </span>
                         <span class={[
-                          "mt-2 text-[10px] font-semibold uppercase tracking-[0.12em]",
+                          "mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-white ring-1 ring-slate-200/80",
                           ColUtils.advanced_tool_text_class(tool.key)
                         ]}>
-                          Use this
+                          <.icon name={tool.icon} class="h-3.5 w-3.5" />
+                        </span>
+                        <span class="min-w-0">
+                          <span class="block text-xs font-semibold leading-4 text-slate-900">
+                            {tool.label}
+                          </span>
+                          <span class="mt-0.5 block text-xs leading-4 text-slate-500">
+                            {tool.blurb}
+                          </span>
                         </span>
                       </button>
                     </div>
@@ -397,11 +405,11 @@ defmodule DialecticWeb.SelectionActionsComp do
                 </div>
               </div>
 
-              <div class="mt-3 rounded-2xl border border-slate-200 bg-slate-50/85 p-3 shadow-sm">
+              <div class="mt-3 border-t border-slate-200/80 pt-3">
                 <form
                   id={"selection-input-form-#{@id}"}
                   data-selection-input-form
-                  class="flex flex-col gap-2.5"
+                  class="flex flex-col gap-2"
                 >
                   <div class="flex items-center justify-between gap-3">
                     <div>
@@ -412,16 +420,14 @@ defmodule DialecticWeb.SelectionActionsComp do
                       >
                         Ask a custom question
                       </label>
-                      <p
-                        data-selection-input-description
-                        class="mt-0.5 text-[11px] leading-4 text-slate-500"
-                      >
-                        Use the selected text as the context for a more specific answer.
+                      <p data-selection-input-description class="text-[11px] leading-4 text-slate-500">
+                        Use the selected passage as context.
                       </p>
                     </div>
 
-                    <div class="inline-flex rounded-full border border-slate-200 bg-white p-1 shadow-sm">
+                    <div class="inline-flex rounded-full border border-slate-200 bg-slate-50 p-1">
                       <button
+                        id={"selection-mode-ask-#{@id}"}
                         type="button"
                         data-selection-mode="ask_question"
                         class="rounded-full bg-indigo-500 px-3 py-1 text-xs font-semibold text-white shadow-sm transition-all"
@@ -430,6 +436,7 @@ defmodule DialecticWeb.SelectionActionsComp do
                         Ask
                       </button>
                       <button
+                        id={"selection-mode-comment-#{@id}"}
                         type="button"
                         data-selection-mode="comment"
                         class="rounded-full px-3 py-1 text-xs font-semibold text-slate-600 transition-all hover:text-slate-900"
@@ -447,7 +454,7 @@ defmodule DialecticWeb.SelectionActionsComp do
                       rows="1"
                       phx-hook="AutoExpandTextarea"
                       id={"selection-question-input-#{@id}"}
-                      class="min-h-[2.5rem] max-h-[7rem] flex-1 resize-none rounded-2xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 shadow-sm outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
+                      class="min-h-9 max-h-[7rem] flex-1 resize-none rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-teal-400 focus:ring-4 focus:ring-teal-100"
                       placeholder="What do you want to know about this exact wording?"
                       autocomplete="off"
                       disabled={!@can_edit}
@@ -456,14 +463,14 @@ defmodule DialecticWeb.SelectionActionsComp do
                       type="submit"
                       data-selection-input-submit
                       disabled={!@can_edit}
-                      class="self-start whitespace-nowrap rounded-2xl bg-gradient-to-r from-indigo-500 to-sky-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-[0_12px_24px_rgba(79,70,229,0.24)] disabled:cursor-not-allowed disabled:opacity-50"
+                      class="self-start whitespace-nowrap rounded-xl bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       Ask
                     </button>
                   </div>
 
-                  <div class="flex items-center justify-between gap-3 text-[11px] text-slate-500">
-                    <span>Press Enter to submit • Escape to close</span>
+                  <div class="flex items-center justify-between gap-3 text-[10px] text-slate-500">
+                    <span>Enter to submit · Escape to close</span>
                     <div class="flex flex-wrap justify-end gap-2">
                       <span
                         data-selection-question-count

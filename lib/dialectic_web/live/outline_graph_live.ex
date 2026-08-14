@@ -1,6 +1,8 @@
 defmodule DialecticWeb.OutlineGraphLive do
   use DialecticWeb, :live_view
 
+  alias Dialectic.Accounts.User
+  alias Dialectic.DbActions.Notes
   alias Dialectic.Graph.GraphActions
   alias Dialectic.Follows
   alias Dialectic.Highlights
@@ -10,6 +12,7 @@ defmodule DialecticWeb.OutlineGraphLive do
   alias DialecticWeb.HighlightShare
   alias DialecticWeb.NodeSearch
   alias DialecticWeb.Utils.NodeTitleHelper
+  alias DialecticWeb.Utils.UserUtils
   alias Phoenix.PubSub
 
   require Logger
@@ -177,6 +180,16 @@ defmodule DialecticWeb.OutlineGraphLive do
   end
 
   @impl true
+  def handle_event("note", %{"node" => node_id}, socket) do
+    update_reader_bookmark(socket, node_id, :note)
+  end
+
+  @impl true
+  def handle_event("unnote", %{"node" => node_id}, socket) do
+    update_reader_bookmark(socket, node_id, :unnote)
+  end
+
+  @impl true
   def handle_event("highlight_clicked", %{"id" => highlight_id} = params, socket) do
     node_id = params["node-id"] || params["node_id"]
 
@@ -313,7 +326,7 @@ defmodule DialecticWeb.OutlineGraphLive do
     highlights = Highlights.list_highlights_with_links(mudg_id: graph_db.title)
     base_url = DialecticWeb.Endpoint.url()
     canonical = canonical_graph_url(graph_db)
-    description = reader_description(graph_db)
+    description = reader_description(graph_db, graph)
 
     json_ld =
       Jason.encode!(%{
@@ -323,6 +336,7 @@ defmodule DialecticWeb.OutlineGraphLive do
         "headline" => graph_db.title,
         "description" => description,
         "url" => canonical,
+        "mainEntityOfPage" => %{"@type" => "WebPage", "@id" => canonical},
         "image" => base_url <> ~p"/images/graph_live.webp",
         "dateModified" => DateTime.to_iso8601(graph_db.updated_at),
         "datePublished" => DateTime.to_iso8601(graph_db.inserted_at),
@@ -332,6 +346,7 @@ defmodule DialecticWeb.OutlineGraphLive do
           "url" => base_url
         },
         "keywords" => graph_db.tags || [],
+        "inLanguage" => "en",
         "isAccessibleForFree" => true
       })
 
@@ -346,6 +361,12 @@ defmodule DialecticWeb.OutlineGraphLive do
       graph_id: graph_db.title,
       graph_struct: graph_db,
       graph_topic: graph_topic,
+      user: UserUtils.current_identity(socket.assigns),
+      bookmarked_node_ids:
+        graph_db.title
+        |> Notes.list_noted_node_ids(socket.assigns[:current_user])
+        |> MapSet.new(),
+      appearance_preferences: User.appearance_preferences(socket.assigns[:current_user]),
       token: token_param,
       nav_params: token_params(token_param),
       can_edit: !graph_db.is_locked,
@@ -370,12 +391,31 @@ defmodule DialecticWeb.OutlineGraphLive do
       highlights: highlights,
       page_title: graph_db.title,
       page_description: description,
+      default_page_description: description,
       canonical_url: canonical,
       og_type: "article",
       og_image: base_url <> ~p"/images/graph_live.webp",
       json_ld: json_ld,
       noindex: !indexable_graph?(graph_db)
     )
+  end
+
+  defp update_reader_bookmark(socket, node_id, action) do
+    case GraphHelpers.handle_note(socket, node_id, action) do
+      {:noreply, updated_socket} ->
+        {:noreply, updated_socket}
+
+      {:ok, _graph_result, _operation} ->
+        GraphManager.save_graph(socket.assigns.graph_id)
+
+        bookmarked_node_ids =
+          case action do
+            :note -> MapSet.put(socket.assigns.bookmarked_node_ids, node_id)
+            :unnote -> MapSet.delete(socket.assigns.bookmarked_node_ids, node_id)
+          end
+
+        {:noreply, assign(socket, :bookmarked_node_ids, bookmarked_node_ids)}
+    end
   end
 
   defp canonical_graph_url(%{slug: slug}) when is_binary(slug) and slug != "" do
@@ -386,8 +426,23 @@ defmodule DialecticWeb.OutlineGraphLive do
     DialecticWeb.Endpoint.url() <> "/g/#{URI.encode(graph.title)}"
   end
 
-  defp reader_description(graph_db) do
-    "Explore \"#{graph_db.title}\" on RationalGrid. Read the main thread in order and follow nearby branches when the argument splits."
+  defp reader_description(graph_db, graph) do
+    summary =
+      graph
+      |> ThreadedConv.prepare_conversation()
+      |> Enum.filter(&visible_node?/1)
+      |> Enum.find_value(fn node ->
+        body = node |> node_body_content() |> sanitize_preview_text()
+        if String.length(body) >= 40, do: body
+      end)
+
+    case summary do
+      nil ->
+        "Explore \"#{graph_db.title}\" on RationalGrid. Follow the main thread and compare its branches."
+
+      body ->
+        truncate_description("#{graph_db.title}: #{body}", 160)
+    end
   end
 
   defp assign_share_metadata(socket, %{id: _id} = highlight) do
@@ -405,7 +460,7 @@ defmodule DialecticWeb.OutlineGraphLive do
   defp assign_share_metadata(socket, _highlight) do
     graph = socket.assigns.graph_struct
     canonical = canonical_graph_url(graph)
-    description = reader_description(graph)
+    description = socket.assigns.default_page_description
     base_url = DialecticWeb.Endpoint.url()
 
     assign(socket,
@@ -883,6 +938,19 @@ defmodule DialecticWeb.OutlineGraphLive do
     |> String.replace(~r/[#*_`~\[\]\(\)>!\-]/, "")
     |> String.replace(~r/\s+/, " ")
     |> String.trim()
+  end
+
+  defp truncate_description(text, limit) do
+    if String.length(text) <= limit do
+      text
+    else
+      text
+      |> String.slice(0, limit + 1)
+      |> String.split()
+      |> Enum.drop(-1)
+      |> Enum.join(" ")
+      |> Kernel.<>("…")
+    end
   end
 
   defp pluralize(1, singular, _plural), do: singular

@@ -454,7 +454,15 @@ defmodule DialecticWeb.ActivityLive do
   defp unseen_since?(inserted_at, seen_at), do: DateTime.compare(inserted_at, seen_at) == :gt
 
   defp activity_time(nil), do: ""
-  defp activity_time(inserted_at), do: Calendar.strftime(inserted_at, "%d %b %Y, %H:%M")
+
+  defp activity_time(%DateTime{} = inserted_at) do
+    "#{inserted_at.day} #{Calendar.strftime(inserted_at, "%b %Y")} · #{Calendar.strftime(inserted_at, "%H:%M")}"
+  end
+
+  defp activity_time(inserted_at), do: to_string(inserted_at)
+
+  defp activity_datetime(%DateTime{} = inserted_at), do: DateTime.to_iso8601(inserted_at)
+  defp activity_datetime(_inserted_at), do: nil
 
   defp last_update_label(nil), do: "No updates"
   defp last_update_label(inserted_at), do: Calendar.strftime(inserted_at, "%d %b, %H:%M")
@@ -581,19 +589,35 @@ defmodule DialecticWeb.ActivityLive do
   defp item_accent_class(%{category: "your_grids"}), do: "border-l-amber-400"
   defp item_accent_class(_item), do: "border-l-slate-200"
 
-  defp item_icon_tone_class(%{category: "mentions"}), do: "bg-emerald-50 text-emerald-700"
-
-  defp item_icon_tone_class(%{category: "following", unseen?: true}),
-    do: "bg-indigo-600 text-white"
-
-  defp item_icon_tone_class(%{category: "following"}), do: "bg-sky-50 text-sky-700"
-  defp item_icon_tone_class(%{category: "your_grids"}), do: "bg-amber-50 text-amber-700"
-  defp item_icon_tone_class(_item), do: "bg-slate-100 text-slate-700"
-
   defp item_source_label(%{category: "mentions"}), do: "Mention"
   defp item_source_label(%{category: "following"}), do: "Following"
   defp item_source_label(%{category: "your_grids"}), do: "Your grid"
   defp item_source_label(_item), do: "Activity"
+
+  defp item_actor(%{actor: %User{} = actor}), do: display_name(actor)
+
+  defp item_actor(%{latest_log: %{actor_name: actor_name}}),
+    do: GridActivity.actor_name(actor_name)
+
+  defp item_actor(_item), do: "Someone"
+
+  defp item_action(%{type: :user_followed_you}), do: "followed you"
+  defp item_action(%{type: :grid_followed}), do: "followed your grid"
+  defp item_action(%{type: :followed_user_created_grid}), do: "created a new grid"
+
+  defp item_action(%{type: :followed_grid_updated, latest_log: log}),
+    do: GridActivity.action_label(log)
+
+  defp item_action(_item), do: "shared an update"
+
+  defp item_dot_class(%{category: "mentions"}), do: "bg-emerald-500 ring-emerald-200"
+
+  defp item_dot_class(%{category: "following", unseen?: true}),
+    do: "bg-indigo-600 ring-indigo-200"
+
+  defp item_dot_class(%{category: "following"}), do: "bg-sky-500 ring-sky-200"
+  defp item_dot_class(%{category: "your_grids"}), do: "bg-amber-500 ring-amber-200"
+  defp item_dot_class(_item), do: "bg-slate-400 ring-slate-200"
 
   defp node_context(%{node_label: node_label}) when is_binary(node_label) and node_label != "",
     do: node_label
@@ -614,7 +638,8 @@ defmodule DialecticWeb.ActivityLive do
 
   defp action_icon(_log), do: "hero-bolt"
 
-  defp node_label(%{metadata: %{"node_title" => title}}) when is_binary(title) and title != "" do
+  defp node_label(%{metadata: %{"node_title" => title}, node_id: node_id})
+       when is_binary(title) and title != "" and title != node_id do
     title
   end
 
@@ -622,8 +647,12 @@ defmodule DialecticWeb.ActivityLive do
        when is_binary(node_id) and node_id != "" do
     case find_graph_node(graph, node_id) do
       nil -> "Node #{node_id}"
-      node -> NodeTitleHelper.extract_node_title(node, max_length: 96)
+      node -> readable_node_title(node, node_id)
     end
+  end
+
+  defp node_label(%{metadata: %{"node_title" => title}}) when is_binary(title) and title != "" do
+    title
   end
 
   defp node_label(%{node_id: node_id}) when is_binary(node_id) and node_id != "",
@@ -638,6 +667,17 @@ defmodule DialecticWeb.ActivityLive do
   end
 
   defp find_graph_node(_graph, _node_id), do: nil
+
+  defp readable_node_title(node, node_id) do
+    title = NodeTitleHelper.extract_node_title(node, max_length: 96)
+    source_text = Map.get(node, "source_text") || Map.get(node, :source_text)
+
+    if title == node_id and is_binary(source_text) and String.trim(source_text) != "" do
+      NodeTitleHelper.extract_node_title(%{content: source_text}, max_length: 96)
+    else
+      title
+    end
+  end
 
   defp graph_nodes(data) do
     nodes = Map.get(data, "nodes") || Map.get(data, :nodes) || []
@@ -917,73 +957,93 @@ defmodule DialecticWeb.ActivityLive do
               <% else %>
                 <ol
                   id="activity-stream"
-                  class="overflow-hidden rounded-xl border border-slate-200 bg-white"
+                  class="divide-y divide-stone-200 overflow-hidden rounded-xl border border-stone-200 bg-white px-4"
                 >
                   <%= for item <- @activity_feed_items do %>
                     <li
                       id={"activity-item-#{item.id}"}
                       class={[
-                        "group relative border-b border-slate-100 border-l-4 p-3 transition last:border-b-0 hover:bg-slate-50/70 sm:p-4",
-                        item_accent_class(item),
+                        "group grid grid-cols-[0.75rem_minmax(0,1fr)] gap-3 py-4",
                         unseen_item?(item) && "ring-1 ring-indigo-100"
                       ]}
                     >
-                      <div class="flex items-start gap-2.5">
-                        <div class={[
-                          "mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
-                          item_icon_tone_class(item)
-                        ]}>
-                          <.icon name={item.icon} class="h-5 w-5" />
-                        </div>
+                      <span class={[
+                        "mt-1.5 h-3 w-3 rounded-full border-2 border-white ring-1",
+                        item_dot_class(item)
+                      ]}>
+                      </span>
 
-                        <div class="min-w-0 flex-1">
-                          <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                            <div class="min-w-0">
-                              <div class="flex flex-wrap items-center gap-2 text-xs font-semibold">
-                                <span class="text-slate-600">{item_source_label(item)}</span>
-                                <span
-                                  :if={unseen_item?(item)}
-                                  class="rounded-full bg-indigo-600 px-2 py-0.5 text-[11px] text-white"
-                                >
-                                  New
-                                </span>
-                                <span class="text-slate-400">
-                                  · {activity_time(item.occurred_at)}
-                                </span>
-                              </div>
-
-                              <p class="mt-0.5 text-sm font-semibold leading-5 text-slate-950">
-                                {item.title}
-                              </p>
-
-                              <.link
-                                :if={item.path && item.body}
-                                navigate={item.path}
-                                class="mt-1.5 inline-flex max-w-full items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
-                              >
-                                <.icon name="hero-squares-2x2" class="h-3.5 w-3.5 shrink-0" />
-                                <span class="truncate">{item.body}</span>
-                              </.link>
-
-                              <p :if={node_context(item)} class="mt-1 text-xs text-slate-500">
-                                {node_context(item)}
-                              </p>
-
-                              <p class="mt-1 text-xs font-medium text-slate-400">
-                                {item_detail(item)}
-                              </p>
-                            </div>
-
-                            <.link
-                              :if={item.path}
-                              navigate={item.path}
-                              class="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 transition group-hover:border-indigo-200 group-hover:text-indigo-700 hover:bg-indigo-50"
+                      <div class="min-w-0">
+                        <div class="flex flex-wrap items-start justify-between gap-2">
+                          <p
+                            class="text-sm leading-5 text-slate-700"
+                            aria-label={"#{item_actor(item)} #{item_action(item)}"}
+                          >
+                            <span
+                              id={"activity-feed-actor-#{item.id}"}
+                              class="font-semibold text-slate-950"
                             >
-                              {item.action_label}
-                              <.icon name="hero-arrow-right" class="h-3.5 w-3.5" />
-                            </.link>
+                              {item_actor(item)}
+                            </span>
+                            <span>{item_action(item)}</span>
+                          </p>
+                          <div class="flex items-center gap-1.5">
+                            <span class="text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                              {item_source_label(item)}
+                            </span>
+                            <span
+                              :if={unseen_item?(item)}
+                              class="rounded-full bg-indigo-600 px-2 py-0.5 text-[10px] font-semibold text-white"
+                            >
+                              New
+                            </span>
                           </div>
                         </div>
+
+                        <time
+                          id={"activity-feed-time-#{item.id}"}
+                          datetime={activity_datetime(item.occurred_at)}
+                          class="block text-[10px] font-medium uppercase tracking-[0.08em] text-slate-500"
+                        >
+                          {activity_time(item.occurred_at)}
+                        </time>
+
+                        <.link
+                          :if={item.path && item.body}
+                          id={"activity-feed-target-#{item.id}"}
+                          navigate={item.path}
+                          class="mt-2 grid max-w-2xl grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-2.5 border border-stone-200 bg-stone-50 px-3 py-2.5 text-left transition-colors hover:border-teal-600 hover:bg-white"
+                        >
+                          <.icon
+                            name="hero-squares-2x2"
+                            class="mt-0.5 h-4 w-4 shrink-0 text-teal-700"
+                          />
+                          <span class="min-w-0">
+                            <span class="block text-sm font-semibold leading-5 text-slate-800">
+                              {item.body}
+                            </span>
+                            <span
+                              :if={node_context(item)}
+                              class="mt-0.5 block line-clamp-2 text-xs leading-5 text-slate-500"
+                            >
+                              {node_context(item)}
+                            </span>
+                          </span>
+                          <.icon
+                            name="hero-arrow-right"
+                            class="mt-0.5 h-4 w-4 shrink-0 text-slate-400"
+                          />
+                        </.link>
+
+                        <.link
+                          :if={item.path && !item.body}
+                          id={"activity-feed-target-#{item.id}"}
+                          navigate={item.path}
+                          class="mt-2 inline-flex items-center gap-1.5 border border-stone-200 bg-stone-50 px-3 py-2 text-xs font-semibold text-slate-700 transition-colors hover:border-teal-600 hover:bg-white hover:text-slate-950"
+                        >
+                          {item.action_label}
+                          <.icon name="hero-arrow-right" class="h-3.5 w-3.5" />
+                        </.link>
                       </div>
                     </li>
                   <% end %>
@@ -1049,24 +1109,53 @@ defmodule DialecticWeb.ActivityLive do
 
                       <ol
                         :if={item_preview_logs(item) != []}
-                        class="mt-3 grid gap-1.5 border-t border-slate-100 pt-2.5 sm:ml-11"
+                        class="mt-3 divide-y divide-stone-200 border-y border-stone-200 bg-white px-3 sm:ml-11"
                       >
                         <%= for log <- item_preview_logs(item) do %>
+                          <% target = node_label(log) %>
                           <li
                             id={"activity-log-#{log.id}"}
-                            class="flex items-start gap-2 rounded-lg border border-slate-100 bg-slate-50/80 px-3 py-2.5 transition hover:border-indigo-100 hover:bg-indigo-50/50"
+                            class="grid grid-cols-[0.75rem_minmax(0,1fr)] gap-2.5 py-3"
                           >
-                            <.icon
-                              name={action_icon(log)}
-                              class="mt-0.5 h-4 w-4 shrink-0 text-slate-400"
-                            />
+                            <span class="mt-1.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-amber-500 ring-1 ring-amber-200">
+                            </span>
                             <div class="min-w-0">
-                              <p class="text-xs font-medium leading-5 text-slate-700">
-                                {GridActivity.display_message(log)}
+                              <p class="text-xs leading-5 text-slate-700">
+                                <span
+                                  id={"activity-log-actor-#{log.id}"}
+                                  class="font-semibold text-slate-950"
+                                >
+                                  {GridActivity.actor_name(log.actor_name)}
+                                </span>
+                                <span>{GridActivity.action_label(log)}</span>
                               </p>
-                              <p :if={node_label(log)} class="text-xs text-slate-500">
-                                {node_label(log)}
-                              </p>
+                              <time
+                                id={"activity-log-time-#{log.id}"}
+                                datetime={activity_datetime(log.inserted_at)}
+                                class="block text-[10px] font-medium uppercase tracking-[0.08em] text-slate-500"
+                              >
+                                {activity_time(log.inserted_at)}
+                              </time>
+                              <.link
+                                :if={target && log.action != "node.deleted"}
+                                id={"activity-log-target-#{log.id}"}
+                                navigate={graph_path(item.graph, log.node_id)}
+                                class="mt-2 flex items-start gap-2 border border-stone-200 bg-stone-50 px-2.5 py-2 text-[11px] font-medium leading-4 text-slate-700 transition-colors hover:border-teal-600 hover:bg-white hover:text-slate-950"
+                              >
+                                <.icon
+                                  name="hero-arrow-top-right-on-square"
+                                  class="mt-0.5 h-3.5 w-3.5 shrink-0 text-teal-700"
+                                />
+                                <span class="line-clamp-2">{target}</span>
+                              </.link>
+                              <span
+                                :if={target && log.action == "node.deleted"}
+                                id={"activity-log-target-#{log.id}"}
+                                class="mt-2 flex items-start gap-2 border border-stone-200 bg-stone-50 px-2.5 py-2 text-[11px] font-medium leading-4 text-slate-500"
+                              >
+                                <.icon name="hero-trash" class="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                                <span class="line-clamp-2">{target}</span>
+                              </span>
                             </div>
                           </li>
                         <% end %>

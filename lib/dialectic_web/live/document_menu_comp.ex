@@ -13,12 +13,13 @@ defmodule DialecticWeb.DocumentMenuComp do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class={root_classes(@compact)}>
+    <div id={"document-menu-actions-#{@id}"} class={root_classes(@compact)}>
       <button
         id={"document-menu-help-#{@id}"}
         type="button"
         phx-click="open_help_modal"
         class={action_button_classes(@compact)}
+        aria-label="Open how-to guide for this page"
         title="Open how-to guide for this page"
       >
         <.icon name="hero-academic-cap" class="h-4 w-4" />
@@ -63,11 +64,11 @@ defmodule DialecticWeb.DocumentMenuComp do
         }
         class={action_button_classes(@compact)}
         data-panel-toggle="right-panel"
-        aria-label="Open workspace settings"
-        title="Open workspace settings"
+        aria-label="Open grid tools"
+        title="Open grid tools"
       >
         <.icon name="hero-adjustments-horizontal" class="h-4 w-4" />
-        <span class={action_label_classes(@compact)}>Settings</span>
+        <span class={action_label_classes(@compact)}>Tools</span>
       </button>
 
       <%= if @can_edit == false do %>
@@ -81,30 +82,30 @@ defmodule DialecticWeb.DocumentMenuComp do
 
   defp root_classes(true) do
     [
-      "flex w-full max-w-full items-center gap-0.5 rounded-[0.95rem] border border-slate-300 bg-slate-50/95 px-1 py-1 ring-1 ring-white/80 sm:inline-flex sm:w-auto sm:flex-wrap sm:justify-start sm:gap-0.5 sm:rounded-[1.05rem]"
+      "flex max-w-full items-center gap-0.5 sm:inline-flex sm:flex-wrap sm:justify-start"
     ]
   end
 
   defp root_classes(false) do
     [
-      "flex w-full max-w-full items-center gap-1 rounded-[1.2rem] border border-slate-300 bg-slate-50/95 px-1.5 py-1.5 ring-1 ring-white/80 sm:inline-flex sm:w-auto sm:flex-wrap sm:justify-start sm:rounded-[1.35rem] sm:px-2 sm:py-2"
+      "flex max-w-full items-center gap-1 sm:inline-flex sm:flex-wrap sm:justify-start"
     ]
   end
 
   defp action_button_classes(true) do
     [
-      "inline-flex h-8 w-8 shrink-0 items-center justify-center gap-1 rounded-full border border-slate-200 bg-white text-xs font-semibold text-slate-700 transition duration-150 sm:h-7 sm:w-auto sm:justify-start sm:rounded-[0.7rem] sm:border-slate-200 sm:px-2.5",
-      "hover:border-slate-300 hover:bg-white hover:text-slate-950"
+      "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-transparent bg-slate-50 text-xs font-semibold text-slate-600 transition duration-150 sm:h-7 sm:w-7 sm:bg-transparent",
+      "hover:bg-slate-100 hover:text-slate-950"
     ]
   end
 
   defp action_button_classes(false) do
     [
-      "inline-flex h-9 w-9 shrink-0 items-center justify-center gap-1.5 rounded-full border border-slate-200 bg-white text-sm font-semibold text-slate-700 transition duration-150 sm:w-auto sm:justify-start sm:rounded-[0.95rem] sm:border-slate-200 sm:px-3",
-      "hover:border-slate-300 hover:bg-white hover:text-slate-950"
+      "inline-flex h-9 w-9 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-transparent bg-slate-50 text-sm font-semibold text-slate-600 transition duration-150 sm:w-auto sm:justify-start sm:bg-transparent sm:px-3",
+      "hover:bg-slate-100 hover:text-slate-950"
     ]
   end
 
-  defp action_label_classes(true), do: "hidden xl:inline"
+  defp action_label_classes(true), do: "hidden"
   defp action_label_classes(false), do: "hidden sm:inline"
 end

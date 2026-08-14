@@ -17,11 +17,11 @@ defmodule DialecticWeb.LockComp do
               <.icon
                 name="hero-lock-closed"
                 class="h-3.5 w-3.5 text-gray-400"
-                tooltip="When locked, no one can edit the graph."
+                tooltip="When editing is on, anyone with access can add to this grid."
               />
             </div>
             <p class="mt-0.5 text-[11px] leading-4 text-gray-500">
-              Turn on to keep the map editable.
+              On allows anyone with access to contribute.
             </p>
           </div>
 
@@ -72,11 +72,11 @@ defmodule DialecticWeb.LockComp do
               <.icon
                 name="hero-information-circle"
                 class="h-3.5 w-3.5 text-gray-400"
-                tooltip="When private, only you and invited users can access."
+                tooltip="Public grids can be found and opened by anyone."
               />
             </div>
             <p class="mt-0.5 text-[11px] leading-4 text-gray-500">
-              Turn on to make the map public.
+              On makes this grid public and discoverable.
             </p>
           </div>
 

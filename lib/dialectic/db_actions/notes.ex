@@ -49,6 +49,18 @@ defmodule Dialectic.DbActions.Notes do
     }
   end
 
+  def list_noted_node_ids(_graph_title, nil), do: []
+
+  def list_noted_node_ids(graph_title, %{id: user_id}) when is_binary(graph_title) do
+    Note
+    |> where(
+      [note],
+      note.graph_title == ^graph_title and note.user_id == ^user_id and note.is_noted == true
+    )
+    |> select([note], note.node_id)
+    |> Repo.all()
+  end
+
   def top_graphs(limit \\ 12) do
     query =
       from g in Dialectic.Accounts.Graph,

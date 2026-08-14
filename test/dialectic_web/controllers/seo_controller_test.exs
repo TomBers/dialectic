@@ -7,15 +7,17 @@ defmodule DialecticWeb.SeoControllerTest do
   alias Dialectic.Highlights
 
   describe "GET /robots.txt" do
-    test "blocks duplicate editor and query-variant routes", %{conn: conn} do
+    test "lets crawlers read graph canonical and noindex rules", %{conn: conn} do
       conn = get(conn, "/robots.txt")
       body = response(conn, 200)
 
       assert get_resp_header(conn, "content-type") |> List.first() =~ "text/plain"
-      assert body =~ "Disallow: /g/*/graph"
-      assert body =~ "Disallow: /g/*/linear"
-      assert body =~ "Disallow: /g/*/outline"
-      assert body =~ "Disallow: /*?node="
+      refute body =~ "Disallow: /g/*/graph"
+      refute body =~ "Disallow: /g/*/linear"
+      refute body =~ "Disallow: /g/*/outline"
+      refute body =~ "Disallow: /*?node="
+      assert body =~ "Disallow: /*?search="
+      assert body =~ "Disallow: /*?token="
       assert body =~ "Sitemap: https://rationalgrid.ai/sitemap.xml"
     end
   end
@@ -33,6 +35,40 @@ defmodule DialecticWeb.SeoControllerTest do
       assert body =~ ~s(<meta name="twitter:url" content="#{base_url}/g/#{graph.slug}")
       assert body =~ ~s(<meta property="og:type" content="article")
       assert body =~ ~s(<script type="application/ld+json">)
+      assert body =~ ~s("mainEntityOfPage")
+      assert body =~ ~s("inLanguage":"en")
+    end
+
+    test "reader sends substantive node text before JavaScript runs", %{conn: conn} do
+      graph =
+        insert_graph(%{
+          title: "Server Rendered Reader Graph",
+          data: %{
+            "nodes" => [
+              %{
+                "id" => "1",
+                "content" =>
+                  "# A searchable topic\n\nThis explanation is available in the initial HTML response.",
+                "class" => "origin",
+                "user" => nil,
+                "parent" => nil,
+                "noted_by" => [],
+                "deleted" => false,
+                "compound" => false
+              }
+            ],
+            "edges" => []
+          }
+        })
+
+      conn = get(conn, "/g/#{graph.slug}")
+      body = html_response(conn, 200)
+
+      assert body =~ ~s(data-role="server-markdown-fallback")
+      assert body =~ "This explanation is available in the initial HTML response."
+
+      assert body =~
+               "Server Rendered Reader Graph: This explanation is available in the initial HTML response."
     end
 
     test "editor route is noindex and canonicalizes back to the reader", %{conn: conn} do

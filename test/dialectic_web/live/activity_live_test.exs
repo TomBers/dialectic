@@ -78,12 +78,27 @@ defmodule DialecticWeb.ActivityLiveTest do
     assert render(lv) =~ "stream-author created a new grid"
     assert render(lv) =~ followed_user_graph.title
     assert has_element?(lv, "#activity-item-followed-grid-log-#{followed_graph_log.id}")
+    assert has_element?(lv, "#activity-feed-actor-followed-grid-log-#{followed_graph_log.id}")
+
+    assert has_element?(
+             lv,
+             "#activity-feed-time-followed-grid-log-#{followed_graph_log.id}[datetime]"
+           )
+
+    assert has_element?(
+             lv,
+             "#activity-feed-target-followed-grid-log-#{followed_graph_log.id}[href*='node=3']"
+           )
+
     refute has_element?(lv, "#activity-log-#{owned_log.id}")
 
     lv |> element("#activity-tab-my-grids") |> render_click()
 
     assert render(lv) =~ owned_graph.title
     assert has_element?(lv, "#activity-log-#{owned_log.id}")
+    assert has_element?(lv, "#activity-log-actor-#{owned_log.id}", "stream-follower")
+    assert has_element?(lv, "#activity-log-time-#{owned_log.id}[datetime]")
+    assert has_element?(lv, "#activity-log-target-#{owned_log.id}[href*='node=2']")
     refute has_element?(lv, "#activity-item-followed-grid-log-#{followed_graph_log.id}")
   end
 
@@ -226,7 +241,7 @@ defmodule DialecticWeb.ActivityLiveTest do
     assert render(lv) =~ "Profile unfollowed."
   end
 
-  test "owned grid previews use node title from graph data when activity metadata is sparse", %{
+  test "owned grid previews use readable graph context when activity metadata is sparse", %{
     conn: conn
   } do
     viewer = named_user("node-title-viewer")
@@ -240,7 +255,8 @@ defmodule DialecticWeb.ActivityLiveTest do
           "nodes" => [
             %{
               "id" => "42",
-              "content" => "# Actual node title\n\nBody text.",
+              "content" => "",
+              "source_text" => "Actual node title",
               "class" => "answer"
             }
           ],
@@ -249,7 +265,8 @@ defmodule DialecticWeb.ActivityLiveTest do
       })
       |> Dialectic.Repo.update!()
 
-    {:ok, log} = GridActivity.record_node_comment_created(graph.title, actor, "42")
+    {:ok, log} =
+      GridActivity.record_node_comment_created(graph.title, actor, "42", %{"node_title" => "42"})
 
     {:ok, lv, _html} =
       conn

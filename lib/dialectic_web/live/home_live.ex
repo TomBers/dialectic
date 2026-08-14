@@ -1,6 +1,5 @@
 defmodule DialecticWeb.HomeLive do
   use DialecticWeb, :live_view
-  alias Dialectic.Accounts.User
   alias Dialectic.DbActions.Graphs
   alias Dialectic.Graph.GraphActions
   alias Dialectic.Graph.Vertex
@@ -18,8 +17,6 @@ defmodule DialecticWeb.HomeLive do
         llm_actor_id: session["llm_actor_id"] || "home:#{socket.id}"
       )
 
-    if connected?(socket), do: Phoenix.PubSub.subscribe(Dialectic.PubSub, "graphs")
-
     user = UserUtils.current_identity(socket.assigns)
     initial_content = params["initial_prompt"]
 
@@ -32,13 +29,7 @@ defmodule DialecticWeb.HomeLive do
     {:ok,
      assign(socket,
        og_image: DialecticWeb.Endpoint.url() <> ~p"/images/graph_live.webp",
-       search_term: "",
-       active_tag: nil,
-       active_category: nil,
-       graphs: [],
-       popular_tags: [],
-       limit: 12,
-       generating: MapSet.new(),
+       page_title: "RationalGrid",
        user: user,
        form: to_form(changeset),
        prompt_mode: prompt_mode,
@@ -47,80 +38,24 @@ defmodule DialecticWeb.HomeLive do
        focus_new_grid: params["focus"] == "grid",
        preview_seed: home_preview_seed(),
        curated_grids: [],
-       all_curated_grids: [],
-       editor_pick_grids: [],
-       featured_grids: [],
-       quick_tags: [],
        page_description:
-         "RationalGrid helps people turn difficult questions into clear, connected understanding they can test, revisit, and share."
+         "For questions that matter, compare views, trace claims to sources, and keep your reasoning in a grid you can revisit and share."
      )}
   end
 
   @impl true
-  def handle_params(params, _url, socket) do
-    search_term = Map.get(params, "search", "")
-    tag = Map.get(params, "tag")
-    category = Map.get(params, "category")
-    limit = 12
+  def handle_params(_params, _url, socket) do
+    curated_grids =
+      Graphs.list_curated_grids("curated", 20)
+      |> preview_curated_grids(3, socket.assigns.preview_seed)
 
-    graphs = fetch_graphs(search_term, tag, category, limit)
-    popular_tags = Graphs.list_popular_tags()
-    # Fetch more items than needed to have a pool for randomization
-    all_curated_grids = Graphs.list_curated_grids("curated", 20)
-    all_featured_grids = Graphs.list_curated_grids("featured", 20)
-
-    curated_grids = preview_curated_grids(all_curated_grids, 3, socket.assigns.preview_seed)
-    editor_pick_grids = editor_pick_grids(all_curated_grids, 2)
-
-    featured_grids =
-      home_featured_grids(all_featured_grids, curated_grids, socket.assigns.preview_seed)
-
-    {:noreply,
-     assign(socket,
-       search_term: search_term,
-       active_tag: tag,
-       active_category: category,
-       graphs: graphs,
-       popular_tags: popular_tags,
-       curated_grids: curated_grids,
-       all_curated_grids: all_curated_grids,
-       editor_pick_grids: editor_pick_grids,
-       featured_grids: featured_grids,
-       page_title: page_title(search_term, tag, category)
-     )}
-  end
-
-  @impl true
-  def handle_event("search", %{"search" => term}, socket) do
-    # For live search, we update the URL params which triggers handle_params
-    # We maintain existing category filters if present? Usually search clears category filters
-    # or works within them. Let's make search global for now (clears other filters).
-    params =
-      if term == "" do
-        %{}
-      else
-        %{"search" => term}
-      end
-
-    {:noreply, push_patch(socket, to: ~p"/?#{params}")}
+    {:noreply, assign(socket, :curated_grids, curated_grids)}
   end
 
   @impl true
   def handle_event("reply-and-answer", %{"vertex" => %{"content" => answer}} = params, socket) do
     mode_param = Map.get(params, "mode")
     {:noreply, submit_new_grid(socket, answer, mode_param)}
-  end
-
-  @impl true
-  def handle_event("generate_tags", %{"title" => title}, socket) do
-    case Graphs.get_graph_by_title(title) do
-      nil ->
-        {:noreply, put_flash(socket, :error, "Grid not found")}
-
-      graph ->
-        Dialectic.Categorisation.AutoTagger.tag_graph(graph)
-        {:noreply, assign(socket, generating: MapSet.put(socket.assigns.generating, title))}
-    end
   end
 
   @impl true
@@ -186,27 +121,6 @@ defmodule DialecticWeb.HomeLive do
     end
   end
 
-  @impl true
-  def handle_info({:tags_updated, title, tags}, socket) do
-    graphs =
-      Enum.map(socket.assigns.graphs, fn {g, c, username} ->
-        if g.title == title do
-          {Map.put(g, :tags, tags), c, username}
-        else
-          {g, c, username}
-        end
-      end)
-
-    popular_tags = Graphs.list_popular_tags()
-
-    {:noreply,
-     assign(socket,
-       graphs: graphs,
-       popular_tags: popular_tags,
-       generating: MapSet.delete(socket.assigns.generating, title)
-     )}
-  end
-
   defp create_graph_task(title, answer, prompt_mode, current_user, actor_id, parent_pid) do
     mode_str = prompt_mode || "university"
 
@@ -266,1172 +180,326 @@ defmodule DialecticWeb.HomeLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="w-screen bg-slate-100 font-sans text-slate-900 antialiased">
-      <div class="relative w-screen overflow-hidden bg-gradient-to-b from-slate-100 via-white to-slate-100">
-        <%= if @loading_graph do %>
-          <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm">
-            <div class="max-w-md w-full p-8 bg-white/10 border border-white/20 rounded-2xl shadow-2xl backdrop-blur-md">
-              <div class="flex flex-col items-center gap-6">
-                <div class="relative w-16 h-16">
-                  <div class="absolute inset-0 border-4 border-white/20 rounded-full"></div>
-                  <div class="absolute inset-0 border-4 border-t-white rounded-full animate-spin">
-                  </div>
-                </div>
-
-                <div class="space-y-2 text-center">
-                  <h3 class="text-xl font-bold text-white">{@loading_graph.title}</h3>
-                  <p class="text-indigo-200">{@loading_graph.status}</p>
-                </div>
-
-                <div class="w-full space-y-2">
-                  <%= for step <- Enum.reverse(@loading_graph.steps) |> Enum.take(3) do %>
-                    <div class="text-sm text-white/60 flex items-center gap-2">
-                      <.icon name="hero-check-circle" class="w-4 h-4 text-green-400" />
-                      {step}
-                    </div>
-                  <% end %>
-                </div>
-              </div>
-            </div>
-          </div>
-        <% end %>
-        <div class="relative z-10 flex flex-col pb-4 sm:pb-5">
-          <section
-            id="home-video-hero"
-            class="relative isolate flex min-h-[78svh] w-full items-center overflow-hidden border-b border-slate-900 bg-slate-950 text-white sm:min-h-[82svh]"
-          >
-            <video
-              id="home-video-hero-player"
-              phx-hook="VideoPlayback"
-              phx-update="ignore"
-              data-playback-rate="4.5"
-              class="absolute inset-0 -z-20 h-full w-full object-cover opacity-70"
-              autoplay={true}
-              muted={true}
-              playsinline={true}
-              preload="metadata"
-              aria-hidden="true"
-            >
-              <source src={~p"/images/FractalBranchingTree.mp4"} type="video/mp4" />
-            </video>
-            <div class="absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(2,6,23,0.58)_0%,rgba(2,6,23,0.22)_42%,rgba(2,6,23,0.86)_100%)]">
-            </div>
-            <div class="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(2,6,23,0.5)_0%,rgba(2,6,23,0.08)_50%,rgba(2,6,23,0.5)_100%)]">
-            </div>
-
-            <div class="mx-auto flex w-full max-w-6xl flex-col items-center px-4 py-20 text-center sm:px-6 sm:py-24">
-              <h1 class="max-w-5xl text-balance text-5xl font-semibold leading-[0.94] text-white drop-shadow-[0_6px_24px_rgba(0,0,0,0.42)] sm:text-7xl lg:text-8xl">
-                Turn complex questions into clear, connected thinking.
-              </h1>
-              <p class="mt-6 max-w-2xl text-pretty text-base leading-7 text-slate-100 drop-shadow-[0_4px_18px_rgba(0,0,0,0.45)] sm:text-xl sm:leading-8">
-                RationalGrid gives you a clearer way to understand difficult ideas, test what matters,
-                and build knowledge you can return to and share.
-              </p>
-            </div>
-            <.link
-              href="#start-here"
-              aria-label="Go to the start section"
-              class="absolute bottom-5 left-1/2 inline-flex h-10 w-10 -translate-x-1/2 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white shadow-sm backdrop-blur transition hover:border-white/35 hover:bg-white/15"
-            >
-              <.icon name="hero-arrow-down" class="h-5 w-5" />
-            </.link>
-          </section>
-
-          <section
-            class="relative isolate w-full overflow-hidden border-b border-slate-900 bg-slate-950"
-            id="start-here"
-          >
-            <img
-              src={~p"/images/guide/grid-workspace.webp"}
-              alt=""
-              class="absolute inset-0 -z-20 h-full w-full object-cover opacity-[0.08]"
-              aria-hidden="true"
-            />
-            <div class="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(2,6,23,0.98)_0%,rgba(15,23,42,0.96)_52%,rgba(15,23,42,0.9)_100%)]">
-            </div>
-            <div class="absolute inset-x-0 top-0 -z-10 h-px bg-[linear-gradient(90deg,rgba(45,212,191,0),rgba(45,212,191,0.65),rgba(251,191,36,0.45),rgba(56,189,248,0))]">
-            </div>
-
-            <div class="mx-auto flex w-full max-w-4xl flex-col items-center px-4 py-10 text-center sm:px-6 sm:py-12 lg:py-14">
-              <div class="flex max-w-3xl flex-col items-center">
-                <p class="inline-flex w-fit items-center gap-2 rounded-full border border-teal-300/25 bg-teal-300/10 px-3 py-1 text-xs font-semibold uppercase tracking-normal text-teal-100">
-                  <span class="h-1.5 w-1.5 rounded-full bg-teal-300"></span> Start here
+    <div class="min-h-screen bg-[#f4f1e9] font-sans text-slate-950 antialiased">
+      <%= if @loading_graph do %>
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/95 px-4">
+          <div class="w-full max-w-md border border-slate-700 bg-slate-900 p-6 text-white shadow-2xl sm:p-8">
+            <div class="flex items-start gap-4">
+              <span class="mt-1 h-3 w-3 shrink-0 animate-pulse bg-teal-300"></span>
+              <div class="min-w-0">
+                <p class="text-xs font-semibold uppercase tracking-[0.18em] text-teal-300">
+                  Building your grid
                 </p>
-                <h2 class="mt-4 text-3xl font-semibold leading-tight text-white sm:text-4xl">
-                  What would you like to understand?
-                </h2>
-                <p class="mt-3 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg sm:leading-8">
-                  Start with one question, then branch into as many follow-ups as you need. Each answer
-                  keeps the context above it.
-                </p>
-              </div>
-
-              <div
-                id="home-start-panel"
-                class="relative mt-7 w-full max-w-3xl rounded-[1.65rem] bg-[linear-gradient(135deg,rgba(45,212,191,0.95),rgba(255,255,255,0.92)_38%,rgba(251,191,36,0.9)_72%,rgba(56,189,248,0.95))] p-[1px] shadow-[0_34px_100px_-50px_rgba(20,184,166,0.9)] sm:mt-8"
-              >
-                <div class="relative overflow-hidden rounded-[calc(1.65rem-1px)] bg-white p-3 ring-1 ring-white/80 sm:p-4">
-                  <div
-                    class="pointer-events-none absolute inset-x-5 top-0 h-px bg-[linear-gradient(90deg,rgba(45,212,191,0),rgba(45,212,191,0.9),rgba(251,191,36,0.75),rgba(56,189,248,0))]"
-                    aria-hidden="true"
-                  >
-                  </div>
-                  <div class="mb-3 flex items-center justify-center gap-3 px-1">
-                    <div>
-                      <p class="inline-flex items-center gap-1.5 rounded-full bg-slate-950 px-2.5 py-1 text-[0.68rem] font-bold uppercase tracking-normal text-white shadow-sm">
-                        <.icon name="hero-sparkles" class="h-3.5 w-3.5 text-amber-300" />
-                        Start a new grid
-                      </p>
-                    </div>
-                  </div>
-                  <div class="rounded-[1.2rem] bg-slate-50/80 p-1.5 ring-1 ring-slate-200/80">
-                    <.live_component
-                      module={DialecticWeb.NewIdeaFormComp}
-                      id="new-idea-form"
-                      form={@form}
-                      placeholder="What do you want to understand?"
-                      submit_label="Continue"
-                      autofocus={@focus_new_grid}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div
-                id="home-start-steps"
-                class="mt-6 grid w-full max-w-3xl gap-3 text-sm text-slate-300 sm:grid-cols-3"
-              >
-                <div class="flex flex-col items-center border border-teal-300/20 bg-white/[0.05] px-3 py-3 ring-1 ring-white/10">
-                  <span class="flex h-6 w-6 shrink-0 items-center justify-center bg-teal-300/15 text-xs font-semibold text-teal-100 ring-1 ring-teal-200/25">
-                    1
-                  </span>
-                  <div class="mt-2">
-                    <p class="font-semibold text-white">Start with a question</p>
-                    <p class="mt-0.5 leading-5">
-                      Bring any question, idea, or source into one focused workspace.
-                    </p>
-                  </div>
-                </div>
-                <div class="flex flex-col items-center border border-amber-300/20 bg-white/[0.05] px-3 py-3 ring-1 ring-white/10">
-                  <span class="flex h-6 w-6 shrink-0 items-center justify-center bg-amber-300/15 text-xs font-semibold text-amber-100 ring-1 ring-amber-200/25">
-                    2
-                  </span>
-                  <div class="mt-2">
-                    <p class="font-semibold text-white">Branch into follow-ups</p>
-                    <p class="mt-0.5 leading-5">
-                      Ask as many questions as you need from any idea in the grid.
-                    </p>
-                  </div>
-                </div>
-                <div class="flex flex-col items-center border border-sky-300/20 bg-white/[0.05] px-3 py-3 ring-1 ring-white/10">
-                  <span class="flex h-6 w-6 shrink-0 items-center justify-center bg-sky-300/15 text-xs font-semibold text-sky-100 ring-1 ring-sky-200/25">
-                    3
-                  </span>
-                  <div class="mt-2">
-                    <p class="font-semibold text-white">Keep the context</p>
-                    <p class="mt-0.5 leading-5">
-                      Each answer keeps its parent’s context, so the whole thread stays connected.
-                    </p>
-                  </div>
-                </div>
-                <.link
-                  navigate={~p"/intro/how"}
-                  class="col-span-full mt-1 inline-flex w-fit items-center justify-self-center gap-2 text-sm font-semibold text-teal-200 underline decoration-teal-300/50 underline-offset-4 transition hover:text-white hover:decoration-teal-200"
-                >
-                  Read the quick guide <.icon name="hero-arrow-up-right" class="h-4 w-4" />
-                </.link>
+                <h3 class="mt-2 font-serif text-2xl font-semibold">{@loading_graph.title}</h3>
+                <p class="mt-2 text-sm text-slate-300">{@loading_graph.status}</p>
               </div>
             </div>
-          </section>
-
-          <section
-            id="home-product-preview"
-            class="order-3 w-full border-y border-slate-800 bg-[linear-gradient(180deg,#020617_0%,#050816_58%,#0f172a_100%)]"
-          >
-            <div class="mx-auto w-full max-w-6xl px-4 py-7 sm:px-6 sm:py-8">
-              <div class="mb-6">
-                <div class="max-w-3xl">
-                  <div class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-normal text-sky-100">
-                    <.icon name="hero-sparkles" class="h-3.5 w-3.5" /> See it in action
-                  </div>
-                  <h2 class="mt-3 text-2xl font-semibold text-white sm:text-3xl">
-                    See the difference a connected view makes.
-                  </h2>
-                  <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-300">
-                    Keep the answer, context, and next steps together instead of losing useful
-                    thinking in a chat.
-                  </p>
-                </div>
-                <div class="mt-5 grid gap-3 text-xs font-medium text-slate-200 sm:grid-cols-2 lg:grid-cols-5">
-                  <div class="flex items-center gap-2 border border-white/10 bg-white/[0.06] px-3 py-3 leading-5">
-                    <.icon name="hero-map" class="h-4 w-4 text-sky-200" /> See the bigger picture
-                  </div>
-                  <div class="flex items-center gap-2 border border-white/10 bg-white/[0.06] px-3 py-3 leading-5">
-                    <.icon name="hero-scale" class="h-4 w-4 text-teal-200" /> Think with confidence
-                  </div>
-                  <div class="flex items-center gap-2 border border-white/10 bg-white/[0.06] px-3 py-3 leading-5">
-                    <.icon name="hero-squares-plus" class="h-4 w-4 text-amber-200" /> Develop ideas
-                  </div>
-                  <div class="flex items-center gap-2 border border-white/10 bg-white/[0.06] px-3 py-3 leading-5">
-                    <.icon name="hero-bookmark" class="h-4 w-4 text-indigo-200" /> Keep what matters
-                  </div>
-                  <div class="flex items-center gap-2 border border-white/10 bg-white/[0.06] px-3 py-3 leading-5">
-                    <.icon name="hero-share" class="h-4 w-4 text-rose-200" /> Share understanding
-                  </div>
-                </div>
-              </div>
-
-              <div class="grid gap-4">
-                <div class="overflow-hidden rounded-2xl border border-white/10 bg-white px-4 py-4 shadow-[0_18px_44px_rgba(0,0,0,0.22)] sm:px-5 sm:py-5 lg:h-full">
-                  <div class="flex h-full flex-col gap-4">
-                    <div class="rounded-2xl border border-slate-900/10 bg-slate-950 p-3 shadow-sm sm:p-4">
-                      <div id="home-example-video" class="group block w-full">
-                        <iframe
-                          class="aspect-video w-full rounded-xl"
-                          src="https://www.youtube.com/embed/nZOqbspGPfY?si=iOZEER4hWd31G157"
-                          title="RationalGrid product video"
-                          loading="lazy"
-                          frameborder="0"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                          referrerpolicy="strict-origin-when-cross-origin"
-                          allowfullscreen
-                        >
-                        </iframe>
-                      </div>
-
-                      <div class="mt-3 flex flex-wrap items-center justify-between gap-3">
-                        <p class="text-sm leading-6 text-slate-300">
-                          See how RationalGrid turns a question into a workspace you can revisit and share.
-                        </p>
-                        <.link
-                          href="https://www.youtube.com/@RationalGrid"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          class="inline-flex items-center gap-2 rounded-full border border-sky-300/35 bg-sky-400/10 px-4 py-2 text-sm font-medium text-sky-100 transition hover:border-sky-200/60 hover:bg-sky-400/15"
-                        >
-                          <.icon name="hero-arrow-top-right-on-square" class="h-4 w-4" />
-                          Visit the YouTube channel
-                        </.link>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <%= if @editor_pick_grids != [] do %>
-                  <div
-                    hidden
-                    class="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-4 ring-1 ring-white/5 sm:p-5"
-                  >
-                    <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                      <div>
-                        <div class="inline-flex items-center gap-2 rounded-full border border-amber-200/20 bg-amber-300/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-normal text-amber-100">
-                          <.icon name="hero-star" class="h-3.5 w-3.5" /> Editor’s picks
-                        </div>
-                        <h3 class="mt-2 text-xl font-semibold text-white">
-                          Thinking worth returning to
-                        </h3>
-                      </div>
-                      <div class="flex flex-col gap-2 sm:flex-row">
-                        <.link
-                          href="#explore"
-                          class="inline-flex items-center justify-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium text-white transition hover:border-white/25 hover:bg-white/15"
-                        >
-                          <.icon name="hero-magnifying-glass" class="h-4 w-4" /> Browse all
-                        </.link>
-                        <.link
-                          navigate={~p"/gallery"}
-                          class="inline-flex items-center justify-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium text-white transition hover:border-white/25 hover:bg-white/15"
-                        >
-                          <.icon name="hero-photo" class="h-4 w-4" /> Gallery
-                        </.link>
-                      </div>
-                    </div>
-
-                    <div
-                      id="home-editor-picks-list"
-                      class="flex gap-3 overflow-x-auto pb-1 md:grid md:grid-cols-2 md:overflow-visible md:pb-0"
-                    >
-                      <%= for {item, index} <- Enum.with_index(@editor_pick_grids) do %>
-                        <div class="min-w-[17.5rem] md:min-w-0">
-                          <.grid_card
-                            graph={item.graph}
-                            author_name={item.author_name}
-                            id={"home-editor-pick-#{index}-#{item.graph.slug || Integer.to_string(:erlang.phash2(item.graph.title || ""))}"}
-                            variant={:compact}
-                            label="Editor’s pick"
-                            tag_limit={2}
-                          />
-                        </div>
-                      <% end %>
-                    </div>
-                  </div>
-                <% end %>
-              </div>
-            </div>
-          </section>
-
-          <section hidden id="home-use-cases" class="w-full border-b border-slate-200 bg-white">
-            <div class="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 sm:py-12">
-              <div class="max-w-3xl">
-                <p class="text-xs font-semibold uppercase tracking-wide text-teal-700">
-                  Industries and use cases
-                </p>
-                <h2 class="mt-2 text-3xl font-semibold text-slate-950 sm:text-4xl">
-                  A clearer workspace for consequential questions.
-                </h2>
-                <p class="mt-3 text-base leading-7 text-slate-600">
-                  Use a grid wherever a single answer is not enough and the reasoning needs to remain visible.
-                </p>
-              </div>
-              <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                <%= for {icon, title, copy, accent} <- [
-                  {"hero-academic-cap", "Education", "Build study maps, compare interpretations, and turn research into reusable learning paths.", "text-teal-700 bg-teal-50 ring-teal-200"},
-                  {"hero-building-office-2", "Organisations", "Explore strategy, policy, and change while keeping assumptions and objections in view.", "text-sky-700 bg-sky-50 ring-sky-200"},
-                  {"hero-beaker", "Research", "Organise evidence, competing explanations, open questions, and promising next investigations.", "text-indigo-700 bg-indigo-50 ring-indigo-200"},
-                  {"hero-scale", "Public decisions", "Make trade-offs legible across policy, ethics, communities, and civic debate.", "text-amber-700 bg-amber-50 ring-amber-200"}
-                ] do %>
-                  <article class="border border-slate-200 bg-slate-50/60 p-5 shadow-sm">
-                    <span class={[
-                      "inline-flex h-10 w-10 items-center justify-center rounded-xl ring-1",
-                      accent
-                    ]}>
-                      <.icon name={icon} class="h-5 w-5" />
-                    </span>
-                    <h3 class="mt-4 text-base font-semibold text-slate-950">{title}</h3>
-                    <p class="mt-2 text-sm leading-6 text-slate-600">{copy}</p>
-                  </article>
-                <% end %>
-              </div>
-            </div>
-          </section>
-
-          <section id="home-community-profiles" class="order-5 w-full">
-            <div>
-              <section
-                id="home-profile-section"
-                class="w-full border-b border-slate-200 bg-[linear-gradient(135deg,#ffffff_0%,#f8fafc_44%,#ecfeff_100%)]"
-              >
-                <div class="mx-auto grid w-full max-w-6xl gap-6 px-4 py-8 sm:px-6 sm:py-10 lg:grid-cols-[minmax(0,0.92fr)_minmax(360px,0.72fr)] lg:items-center">
-                  <div>
-                    <div class="inline-flex items-center gap-2 rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-normal text-teal-800">
-                      <.icon name="hero-user-group" class="h-3.5 w-3.5" /> Profiles and follows
-                    </div>
-                    <h2 class="mt-3 max-w-2xl text-3xl font-semibold text-slate-950 sm:text-4xl">
-                      Turn your learning into a public good.
-                    </h2>
-                    <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-700 sm:text-base sm:leading-7">
-                      Your grids, highlights, and followed ideas become a public trail people can
-                      learn from, return to, and build on with their own questions.
-                    </p>
-
-                    <div hidden class="mt-5 grid gap-3 sm:grid-cols-3">
-                      <div class="border border-slate-200 bg-white p-3 shadow-sm">
-                        <.icon name="hero-identification" class="h-5 w-5 text-teal-700" />
-                        <p class="mt-2 text-sm font-semibold text-slate-950">Personal library</p>
-                        <p class="mt-1 text-sm leading-5 text-slate-600">
-                          Public grids and highlights become entry points others can build from.
-                        </p>
-                      </div>
-                      <div class="border border-slate-200 bg-white p-3 shadow-sm">
-                        <.icon name="hero-user-plus" class="h-5 w-5 text-indigo-700" />
-                        <p class="mt-2 text-sm font-semibold text-slate-950">Follow thinkers</p>
-                        <p class="mt-1 text-sm leading-5 text-slate-600">
-                          Follow profiles, then ask new questions from the ideas they uncover.
-                        </p>
-                      </div>
-                      <div class="border border-slate-200 bg-white p-3 shadow-sm">
-                        <.icon name="hero-plus-circle" class="h-5 w-5 text-amber-700" />
-                        <p class="mt-2 text-sm font-semibold text-slate-950">Shared contribution</p>
-                        <p class="mt-1 text-sm leading-5 text-slate-600">
-                          Every profile, grid, node, and highlight has a URL for adding context.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div class="mt-5 flex flex-col gap-2 sm:flex-row">
-                      <%= if @current_user do %>
-                        <.link
-                          navigate={~p"/u/#{User.effective_username(@current_user)}"}
-                          class="inline-flex items-center justify-center gap-2 rounded-full bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
-                        >
-                          <.icon name="hero-user-circle" class="h-4 w-4" /> View my profile
-                        </.link>
-                      <% else %>
-                        <.link
-                          navigate={~p"/users/register"}
-                          class="inline-flex items-center justify-center gap-2 rounded-full bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
-                        >
-                          <.icon name="hero-user-plus" class="h-4 w-4" /> Create your profile
-                        </.link>
-                      <% end %>
-                      <.link
-                        navigate={~p"/community"}
-                        class="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-slate-400 hover:bg-slate-50"
-                      >
-                        <.icon name="hero-magnifying-glass" class="h-4 w-4" /> Explore public grids
-                      </.link>
-                    </div>
-                  </div>
-
-                  <div class="overflow-hidden rounded-[1.75rem] border border-slate-900/10 bg-slate-950 text-white shadow-[0_28px_90px_-54px_rgba(15,23,42,0.95)]">
-                    <div class="relative h-24 overflow-hidden border-b border-white/10 bg-orange-500">
-                      <img
-                        src={~p"/images/profile-banners/flat-mountains.svg"}
-                        alt=""
-                        class="absolute inset-0 h-full w-full object-cover"
-                        aria-hidden="true"
-                      />
-                    </div>
-                    <div class="px-4 pb-4">
-                      <div class="mt-4 flex items-center justify-between gap-3">
-                        <div class="flex items-center gap-3">
-                          <img
-                            src={~p"/images/tom.webp"}
-                            alt="TomBers's avatar"
-                            class="h-16 w-16 rounded-full border-4 border-white bg-slate-950 object-cover shadow-2xl shadow-slate-950/35"
-                          />
-                          <div class="min-w-0">
-                            <p class="text-2xl font-semibold tracking-tight text-white">TomBers</p>
-                            <p class="text-sm font-semibold text-slate-300">Makes MuDG</p>
-                          </div>
-                        </div>
-                        <span class="inline-flex items-center gap-1 rounded-xl border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white">
-                          <.icon name="hero-user-plus" class="h-3.5 w-3.5" /> Follow
-                        </span>
-                      </div>
-
-                      <p class="mt-4 rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-sm font-medium leading-5 text-slate-100">
-                        You’ll find thinking on Philosophy, Sociology, and History here, spread across
-                        127 public grids.
-                      </p>
-
-                      <div class="mt-4 grid grid-cols-3 divide-x divide-white/10 rounded-xl border border-white/10 bg-white/10 text-center">
-                        <div class="px-2 py-3">
-                          <p class="text-xl font-semibold text-white">127</p>
-                          <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-300">
-                            grids
-                          </p>
-                        </div>
-                        <div class="px-2 py-3">
-                          <p class="text-xl font-semibold text-white">1425</p>
-                          <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-300">
-                            ideas
-                          </p>
-                        </div>
-                        <div class="px-2 py-3">
-                          <p class="text-xl font-semibold text-white">2</p>
-                          <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-300">
-                            followers
-                          </p>
-                        </div>
-                      </div>
-
-                      <div hidden class="mt-4 flex flex-wrap gap-1.5 border-b border-white/10 pb-4">
-                        <span class="rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold text-white">
-                          Philosophy
-                        </span>
-                        <span class="rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold text-white">
-                          Sociology
-                        </span>
-                        <span class="rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold text-white">
-                          History
-                        </span>
-                        <span class="rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold text-white">
-                          Ethics
-                        </span>
-                        <span class="rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold text-white">
-                          Psychology
-                        </span>
-                      </div>
-
-                      <div hidden class="mt-4 space-y-2">
-                        <div class="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.06] p-3 shadow-sm">
-                          <span class="mt-0.5 inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-teal-300/15 text-teal-100 ring-1 ring-teal-200/20">
-                            <.icon name="hero-squares-2x2" class="h-4 w-4" />
-                          </span>
-                          <div>
-                            <p class="text-sm font-semibold text-white">
-                              What is the collective subconscious?
-                            </p>
-                            <p class="mt-0.5 text-sm leading-5 text-slate-300">
-                              A public deep dive followers can question, extend, and build on.
-                            </p>
-                            <p class="mt-1 text-xs font-medium text-teal-200">
-                              /g/what-is-the-collective-subconscious-637e9a
-                            </p>
-                          </div>
-                        </div>
-
-                        <div class="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.06] p-3 shadow-sm">
-                          <span class="mt-0.5 inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-amber-300/15 text-amber-100 ring-1 ring-amber-200/20">
-                            <.icon name="hero-pencil-square" class="h-4 w-4" />
-                          </span>
-                          <div>
-                            <p class="text-sm font-semibold text-white">Highlighted a passage</p>
-                            <p class="mt-0.5 text-sm leading-5 text-slate-300">
-                              Saved a quote so others can add context, objections, or next steps.
-                            </p>
-                            <p class="mt-1 text-xs font-medium text-amber-200">
-                              unique highlight URL
-                            </p>
-                          </div>
-                        </div>
-
-                        <div class="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.06] p-3 shadow-sm">
-                          <span class="mt-0.5 inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-indigo-300/15 text-indigo-100 ring-1 ring-indigo-200/20">
-                            <.icon name="hero-user-plus" class="h-4 w-4" />
-                          </span>
-                          <div>
-                            <p class="text-sm font-semibold text-white">People can follow along</p>
-                            <p class="mt-0.5 text-sm leading-5 text-slate-300">
-                              Followers see activity and contribute their own questions from your trail.
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </section>
-            </div>
-          </section>
-
-          <section
-            id="home-community-grids"
-            class="order-4 w-full border-b border-slate-200 bg-slate-50"
-          >
-            <div class="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
-              <div class="relative isolate overflow-hidden rounded-[2rem] bg-slate-950 px-5 py-7 text-white shadow-[0_28px_80px_-48px_rgba(15,23,42,0.95)] sm:px-8 sm:py-9 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(20rem,0.62fr)] lg:items-center lg:gap-10 lg:px-10">
-                <div class="absolute -left-20 -top-24 -z-10 h-64 w-64 rounded-full bg-indigo-500/25 blur-3xl">
-                </div>
-                <div class="absolute -bottom-32 right-10 -z-10 h-72 w-72 rounded-full bg-teal-400/20 blur-3xl">
-                </div>
-
-                <div class="max-w-2xl">
-                  <p class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-teal-200">
-                    <.icon name="hero-user-group" class="h-3.5 w-3.5" /> Community grid library
-                  </p>
-                  <h2 class="mt-4 text-3xl font-semibold leading-tight text-white sm:text-4xl">
-                    See how other people are thinking.
-                  </h2>
-                  <p class="mt-3 max-w-xl text-sm leading-6 text-slate-300 sm:text-base sm:leading-7">
-                    Browse public grids, follow their reasoning, and branch any idea into a question of your own.
-                  </p>
-                </div>
-
-                <.link
-                  id="home-community-grids-link"
-                  navigate={~p"/community"}
-                  class="group mt-6 flex w-full items-center justify-between gap-5 rounded-2xl bg-teal-300 p-5 text-left text-slate-950 shadow-[0_18px_45px_-24px_rgba(45,212,191,0.9)] ring-1 ring-white/20 transition hover:bg-teal-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-teal-100/60 lg:mt-0"
-                >
-                  <span>
-                    <span class="block text-xs font-bold uppercase tracking-wide text-teal-900/70">
-                      Start exploring
-                    </span>
-                    <span class="mt-1 block text-lg font-bold sm:text-xl">
-                      Explore all community grids
-                    </span>
-                    <span class="mt-1 block text-sm font-medium text-teal-950/70">
-                      Discover public questions and ideas
-                    </span>
-                  </span>
-                  <span class="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-slate-950 text-white shadow-lg transition group-hover:translate-x-1">
-                    <.icon name="hero-arrow-right" class="h-5 w-5" />
-                  </span>
-                </.link>
-              </div>
-
-              <%= if @curated_grids == [] do %>
-                <div class="mt-6 border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
-                  Community examples will appear here as more people share useful thinking.
-                </div>
-              <% else %>
-                <div class="mt-7 flex items-center justify-between gap-4">
-                  <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-600">
-                    A few grids to start with
-                  </h3>
-                  <span class="hidden text-sm text-slate-500 sm:inline">
-                    Selected from the community
-                  </span>
-                </div>
-                <div id="home-community-grid-list" class="mt-3 grid gap-4 md:grid-cols-3">
-                  <%= for item <- @curated_grids do %>
-                    <.grid_card
-                      graph={item.graph}
-                      author_name={item.author_name}
-                      author_marker="@"
-                      id={graph_dom_id(item.graph, "home-community-grid")}
-                      variant={:compact}
-                      label="Curated grid"
-                      tag_limit={3}
-                    />
-                  <% end %>
+            <div class="mt-6 border-t border-slate-700 pt-4">
+              <%= for step <- Enum.reverse(@loading_graph.steps) |> Enum.take(3) do %>
+                <div class="mt-2 flex items-center gap-2 text-sm text-slate-300">
+                  <.icon name="hero-check" class="h-4 w-4 text-teal-300" />
+                  {step}
                 </div>
               <% end %>
-            </div>
-          </section>
-
-          <section
-            hidden
-            id="home-community-profiles-old"
-            class="w-full border-b border-slate-200 bg-slate-50"
-          >
-            <div class="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
-              <div class="rounded-2xl border border-teal-200/80 bg-[linear-gradient(135deg,#f0fdfa_0%,#ffffff_55%,#eef2ff_100%)] p-5 shadow-sm sm:p-6">
-                <div class="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-                  <div class="max-w-2xl">
-                    <p class="inline-flex items-center gap-2 rounded-full border border-teal-200 bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-teal-800">
-                      <.icon name="hero-user-group" class="h-3.5 w-3.5" /> Public profiles
-                    </p>
-                    <h2 class="mt-3 text-2xl font-semibold text-slate-950 sm:text-3xl">
-                      Let your thinking become part of the community.
-                    </h2>
-                    <p class="mt-2 text-sm leading-6 text-slate-600 sm:text-base">
-                      Your profile brings together the public grids and ideas you want to share, so other people can follow your trail and build on it.
-                    </p>
-                  </div>
-
-                  <div class="grid gap-2 text-sm text-slate-700 sm:grid-cols-3 lg:w-[34rem]">
-                    <div class="rounded-xl border border-white bg-white/80 p-3 shadow-sm">
-                      <.icon name="hero-squares-2x2" class="h-5 w-5 text-teal-700" />
-                      <p class="mt-2 font-semibold text-slate-950">Share your grids</p>
-                      <p class="mt-1 text-xs leading-5 text-slate-600">
-                        Make useful questions easy to find.
-                      </p>
-                    </div>
-                    <div class="rounded-xl border border-white bg-white/80 p-3 shadow-sm">
-                      <.icon name="hero-user-plus" class="h-5 w-5 text-indigo-700" />
-                      <p class="mt-2 font-semibold text-slate-950">Find thinkers</p>
-                      <p class="mt-1 text-xs leading-5 text-slate-600">
-                        Follow people whose ideas help you learn.
-                      </p>
-                    </div>
-                    <div class="rounded-xl border border-white bg-white/80 p-3 shadow-sm">
-                      <.icon name="hero-link" class="h-5 w-5 text-amber-700" />
-                      <p class="mt-2 font-semibold text-slate-950">Keep a trail</p>
-                      <p class="mt-1 text-xs leading-5 text-slate-600">
-                        Give every idea a place to grow.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="mt-5">
-                  <%= if @current_user do %>
-                    <.link
-                      navigate={~p"/u/#{User.effective_username(@current_user)}"}
-                      class="inline-flex items-center justify-center gap-2 rounded-full bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
-                    >
-                      <.icon name="hero-user-circle" class="h-4 w-4" /> View my profile
-                    </.link>
-                  <% else %>
-                    <.link
-                      navigate={~p"/users/register"}
-                      class="inline-flex items-center justify-center gap-2 rounded-full bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
-                    >
-                      <.icon name="hero-user-plus" class="h-4 w-4" /> Create your profile
-                    </.link>
-                  <% end %>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <section hidden id="home-explore" class="w-full border-t border-slate-200 bg-white">
-            <div class="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-8 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-              <div class="max-w-2xl">
-                <p class="text-xs font-semibold uppercase tracking-wide text-teal-700">Explore</p>
-                <h2 class="mt-2 text-2xl font-semibold text-slate-950">
-                  See what other people are thinking about.
-                </h2>
-                <p class="mt-2 text-sm leading-6 text-slate-600">
-                  Browse public grids for questions to follow, challenge, or use as a starting point for your own.
-                </p>
-              </div>
-              <.link
-                navigate={~p"/gallery"}
-                class="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
-              >
-                Browse the gallery <.icon name="hero-arrow-right" class="h-4 w-4" />
-              </.link>
-            </div>
-          </section>
-
-          <div hidden class="mx-auto max-w-6xl px-4 pt-5 sm:px-6 sm:pt-6">
-            <div class="flex flex-col items-stretch gap-4 sm:gap-5">
-              <.modal id="home-example-grid-modal" class="border-indigo-100/90">
-                <div class="space-y-5">
-                  <div class="space-y-2">
-                    <p class="text-xs font-semibold uppercase tracking-[0.22em] text-indigo-600">
-                      Example grid
-                    </p>
-                    <h3
-                      id="home-example-grid-modal-title"
-                      class="text-2xl font-semibold text-slate-950"
-                    >
-                      Happiness
-                    </h3>
-                    <p
-                      id="home-example-grid-modal-description"
-                      class="text-sm leading-6 text-slate-600"
-                    >
-                      A full RationalGrid example you can inspect before creating your own.
-                    </p>
-                  </div>
-
-                  <div class="overflow-hidden rounded-[1.6rem] border border-slate-200 bg-slate-950 shadow-[0_18px_40px_rgba(15,23,42,0.12)]">
-                    <img
-                      src={~p"/images/guide/grid-workspace.webp"}
-                      alt="Expanded preview of the Happiness grid workspace by TomBers84"
-                      class="w-full object-contain"
-                    />
-                  </div>
-
-                  <div class="flex flex-wrap items-center justify-between gap-3">
-                    <p class="text-sm text-slate-600">
-                      Use this as a reference for how a chat can become a lasting workspace.
-                    </p>
-                    <.link
-                      navigate={~p"/g/happiness-da4f7e"}
-                      class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
-                    >
-                      <.icon name="hero-arrow-right" class="h-4 w-4" /> Open the live grid
-                    </.link>
-                  </div>
-                </div>
-              </.modal>
-
-              <%!-- Curated & Featured Grids – 2-column on desktop --%>
-              <%= if @featured_grids != [] do %>
-                <section
-                  class="w-full overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-[linear-gradient(135deg,#f8fafc_0%,#ffffff_48%,#f0fdfa_100%)] p-2 shadow-[0_24px_70px_-54px_rgba(15,23,42,0.9)] ring-1 ring-white sm:p-3"
-                  id="curated"
-                >
-                  <div class="grid w-full grid-cols-1 gap-2 sm:gap-2.5">
-                    <.curated_grid_section
-                      items={@featured_grids}
-                      icon="hero-users"
-                      icon_class="text-indigo-500"
-                      title="Partner grids"
-                      pills={partner_pills(@featured_grids)}
-                      id_prefix="featured"
-                      section_class="from-indigo-50 via-white to-teal-50"
-                      icon_wrap_class="bg-indigo-100 text-indigo-700 ring-indigo-200"
-                    />
-                  </div>
-                </section>
-              <% end %>
-              <div id="explore" class="h-5"></div>
-              <!-- Below: All ideas (full-width on desktop, uses available space) -->
-              <section
-                id="popular-grids"
-                class="w-full overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-[linear-gradient(135deg,#fff7ed_0%,#ffffff_45%,#eef2ff_100%)] p-2 shadow-[0_24px_70px_-54px_rgba(15,23,42,0.9)] ring-1 ring-white sm:p-3"
-              >
-                <div class="overflow-hidden rounded-[1.35rem] bg-white shadow-sm ring-1 ring-slate-200/80">
-                  <div class="h-1 bg-[linear-gradient(90deg,#0f766e_0%,#f59e0b_48%,#4f46e5_100%)]">
-                  </div>
-                  <div class="bg-[linear-gradient(135deg,#0f172a_0%,#134e4a_54%,#7c2d12_100%)] p-3 text-white shadow-sm sm:p-4">
-                    <div>
-                      <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                        <div class="min-w-0">
-                          <div class="inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-100 ring-1 ring-white/15">
-                            <.icon name="hero-sparkles" class="h-3.5 w-3.5" /> Explore
-                          </div>
-                          <div class="mt-2 flex flex-wrap items-center gap-2">
-                            <h2 class="text-xl font-semibold tracking-tight text-white sm:text-2xl">
-                              <%= cond do %>
-                                <% @active_tag -> %>
-                                  Ideas tagged with "{@active_tag}"
-                                <% @active_category == "deep_dives" -> %>
-                                  Deep Dives
-                                <% @active_category == "seedlings" -> %>
-                                  Seedlings
-                                <% @search_term != "" -> %>
-                                  Search results for "{@search_term}"
-                                <% true -> %>
-                                  Durable Thinking
-                              <% end %>
-                            </h2>
-                            <span class="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-xs font-medium text-white/85">
-                              Community-built
-                            </span>
-                            <span class="inline-flex items-center rounded-full border border-amber-200/30 bg-amber-300/15 px-2.5 py-1 text-xs font-medium text-amber-50">
-                              {length(@graphs)} grids
-                            </span>
-                          </div>
-                        </div>
-
-                        <div class="w-full lg:w-72">
-                          <form
-                            phx-change="search"
-                            phx-submit="search"
-                            class="relative"
-                            onsubmit="return false;"
-                          >
-                            <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
-                              <.icon name="hero-magnifying-glass" class="h-4 w-4" />
-                            </span>
-                            <input
-                              type="text"
-                              name="search"
-                              value={@search_term}
-                              phx-debounce="300"
-                              placeholder="Search ideas..."
-                              class="h-10 w-full rounded-full border border-white/60 bg-white px-10 pr-10 text-sm text-slate-900 placeholder:text-slate-500 shadow-sm transition focus:border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-200"
-                              autocomplete="off"
-                            />
-                            <%= if @search_term && @search_term != "" do %>
-                              <button
-                                type="button"
-                                phx-click="search"
-                                phx-value-search=""
-                                class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 transition-colors hover:text-slate-700"
-                              >
-                                <.icon name="hero-x-mark" class="h-4 w-4" />
-                              </button>
-                            <% end %>
-                          </form>
-                        </div>
-                      </div>
-
-                      <div class="mt-3 flex flex-col gap-2 xl:flex-row xl:flex-wrap xl:items-start xl:justify-between">
-                        <%= if @popular_tags != [] do %>
-                          <div class="flex min-w-0 items-center gap-2">
-                            <span class="flex-shrink-0 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/65">
-                              Trending
-                            </span>
-                            <div class="flex w-full gap-1.5 overflow-x-auto pb-1 -mb-1 xl:w-auto xl:max-w-none xl:flex-wrap xl:overflow-visible">
-                              <%= for %{tag: tag, count: count} <- display_popular_tags(@popular_tags, 6) do %>
-                                <.link
-                                  patch={~p"/?tag=#{tag}"}
-                                  class={[
-                                    "inline-flex flex-shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors whitespace-nowrap",
-                                    (@active_tag == tag && "border-white bg-white text-slate-950") ||
-                                      "border-white/10 bg-white/10 text-white/80 hover:border-white/25 hover:bg-white/15"
-                                  ]}
-                                >
-                                  <span>#{tag}</span>
-                                  <span class={[
-                                    "rounded-full px-1.5 py-0.5 text-[10px]",
-                                    (@active_tag == tag && "bg-slate-950/10 text-slate-700") ||
-                                      "bg-white/10 text-white/70"
-                                  ]}>
-                                    {count}
-                                  </span>
-                                </.link>
-                              <% end %>
-                            </div>
-                          </div>
-                        <% end %>
-
-                        <div class="flex flex-wrap gap-1.5 xl:justify-end">
-                          <.link
-                            patch={~p"/"}
-                            class={[
-                              "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
-                              (!@active_category && !@active_tag && @search_term == "" &&
-                                 "border-white bg-white text-slate-950") ||
-                                "border-white/10 bg-white/10 text-white/80 hover:border-white/25 hover:bg-white/15"
-                            ]}
-                          >
-                            All
-                          </.link>
-                          <.link
-                            patch={~p"/?category=deep_dives"}
-                            class={[
-                              "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
-                              (@active_category == "deep_dives" &&
-                                 "border-white bg-white text-slate-950") ||
-                                "border-white/10 bg-white/10 text-white/80 hover:border-white/25 hover:bg-white/15"
-                            ]}
-                          >
-                            Deep Dives
-                          </.link>
-                          <.link
-                            patch={~p"/?category=seedlings"}
-                            class={[
-                              "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
-                              (@active_category == "seedlings" &&
-                                 "border-white bg-white text-slate-950") ||
-                                "border-white/10 bg-white/10 text-white/80 hover:border-white/25 hover:bg-white/15"
-                            ]}
-                          >
-                            Seedlings
-                          </.link>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="border-t border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)]">
-                    <div
-                      id="home-graph-card-list"
-                      class="grid gap-4 p-3 sm:p-3.5 md:grid-cols-2 xl:grid-cols-3"
-                    >
-                      <%= for {g, _count, author_username} <- @graphs do %>
-                        <.grid_card
-                          graph={g}
-                          author_name={author_username}
-                          author_marker="@"
-                          id={graph_dom_id(g, "home-card-graph")}
-                          tag_limit={4}
-                        />
-                      <% end %>
-                    </div>
-                  </div>
-                </div>
-              </section>
-              <%!-- Social Media Links --%>
-              <section class="w-full pb-3">
-                <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#3a0ca3] to-[#4361ee] px-5 py-4 text-white shadow-xl sm:px-6 sm:py-5">
-                  <div class="pointer-events-none absolute inset-0">
-                    <div class="absolute -top-8 left-10 h-28 w-28 rounded-full bg-white/10 blur-2xl">
-                    </div>
-                    <div class="absolute -bottom-10 right-8 h-32 w-32 rounded-full bg-indigo-300/25 blur-2xl">
-                    </div>
-                  </div>
-                  <div class="relative flex flex-col items-center gap-2.5">
-                    <img
-                      src={~p"/images/favicon.webp"}
-                      alt="RationalGrid"
-                      class="h-10 w-10 rounded-lg shadow-lg"
-                    />
-                    <p class="text-sm text-white/85">Follow RationalGrid</p>
-                    <div class="flex items-center justify-center gap-6">
-                      <a
-                        href="https://github.com/TomBers/dialectic"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="text-white/70 hover:text-white transition-colors"
-                        aria-label="GitHub"
-                      >
-                        <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
-                          <path
-                            fill-rule="evenodd"
-                            d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
-                            clip-rule="evenodd"
-                          />
-                        </svg>
-                      </a>
-                      <a
-                        href="https://x.com/rationalgridai"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="text-white/70 hover:text-white transition-colors"
-                        aria-label="X (Twitter)"
-                      >
-                        <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                        </svg>
-                      </a>
-                      <a
-                        href="https://www.instagram.com/rationalgrid.ai/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="text-white/70 hover:text-white transition-colors"
-                        aria-label="Instagram"
-                      >
-                        <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" />
-                        </svg>
-                      </a>
-                      <a
-                        href="https://www.linkedin.com/company/rationalgrid-ai/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="text-white/70 hover:text-white transition-colors"
-                        aria-label="LinkedIn"
-                      >
-                        <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-                        </svg>
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              </section>
             </div>
           </div>
         </div>
-        <section
-          hidden
-          id="home-community-profiles-replacement"
-          class="w-full border-y border-slate-200 bg-[linear-gradient(135deg,#ffffff_0%,#f0fdfa_55%,#eef2ff_100%)]"
+      <% end %>
+
+      <section
+        id="home-video-hero"
+        class="relative isolate min-h-[72svh] overflow-hidden border-b border-slate-700 bg-slate-950 text-white sm:min-h-[78svh]"
+      >
+        <video
+          id="home-video-hero-player"
+          phx-hook="VideoPlayback"
+          phx-update="ignore"
+          data-playback-rate="4.5"
+          class="absolute inset-0 -z-20 h-full w-full object-cover opacity-55 saturate-[1.15]"
+          autoplay={true}
+          muted={true}
+          playsinline={true}
+          preload="metadata"
+          aria-hidden="true"
         >
-          <div class="mx-auto grid w-full max-w-6xl gap-6 px-4 py-8 sm:px-6 sm:py-10 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.7fr)] lg:items-center">
-            <div>
-              <p class="inline-flex items-center gap-2 rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-teal-800">
-                <.icon name="hero-user-group" class="h-3.5 w-3.5" /> Public profiles
-              </p>
-              <h2 class="mt-3 text-2xl font-semibold text-slate-950 sm:text-3xl">
-                Make your thinking easier to follow.
-              </h2>
-              <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
-                A public profile brings your shared grids together, so people can discover your ideas and build on them.
-              </p>
-              <div class="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium text-slate-700">
-                <span class="inline-flex items-center gap-1.5">
-                  <.icon name="hero-squares-2x2" class="h-4 w-4 text-teal-700" /> Share grids
-                </span>
-                <span class="inline-flex items-center gap-1.5">
-                  <.icon name="hero-user-plus" class="h-4 w-4 text-indigo-700" /> Follow thinkers
-                </span>
-                <span class="inline-flex items-center gap-1.5">
-                  <.icon name="hero-link" class="h-4 w-4 text-amber-700" /> Keep a trail
-                </span>
-              </div>
-            </div>
+          <source src={~p"/images/FractalBranchingTree.mp4"} type="video/mp4" />
+        </video>
+        <div class="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(2,6,23,0.94)_0%,rgba(2,6,23,0.72)_48%,rgba(2,6,23,0.54)_100%)]">
+        </div>
+        <div
+          aria-hidden="true"
+          class="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_78%_24%,rgba(99,102,241,0.25),transparent_30%),radial-gradient(circle_at_18%_90%,rgba(20,184,166,0.20),transparent_34%),radial-gradient(circle_at_92%_86%,rgba(245,158,11,0.12),transparent_24%)]"
+        >
+        </div>
+        <div
+          aria-hidden="true"
+          class="absolute inset-x-0 bottom-0 h-1 bg-[linear-gradient(90deg,#2dd4bf_0%,#818cf8_52%,#fbbf24_100%)]"
+        >
+        </div>
 
-            <div class="rounded-2xl border border-slate-900/10 bg-slate-950 p-4 text-white shadow-[0_20px_55px_-35px_rgba(15,23,42,0.9)]">
-              <div class="flex items-center gap-3">
-                <span class="flex h-11 w-11 items-center justify-center rounded-full bg-teal-300/15 text-teal-100 ring-1 ring-teal-200/25">
-                  <.icon name="hero-user-circle" class="h-6 w-6" />
-                </span>
-                <div>
-                  <p class="font-semibold">Your public trail</p>
-                  <p class="text-xs text-slate-300">Grids, ideas, and highlights in one place.</p>
-                </div>
-              </div>
-              <%= if @current_user do %>
-                <.link
-                  navigate={~p"/u/#{User.effective_username(@current_user)}"}
-                  class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-teal-50"
-                >
-                  View my profile <.icon name="hero-arrow-right" class="h-4 w-4" />
-                </.link>
-              <% else %>
-                <.link
-                  navigate={~p"/users/register"}
-                  class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-teal-50"
-                >
-                  Create your profile <.icon name="hero-arrow-right" class="h-4 w-4" />
-                </.link>
-              <% end %>
+        <div class="mx-auto grid min-h-[72svh] w-full max-w-7xl items-center gap-12 px-5 py-16 sm:min-h-[78svh] sm:px-8 lg:grid-cols-[minmax(0,1.12fr)_minmax(22rem,0.72fr)] lg:px-10">
+          <div class="max-w-4xl">
+            <h1
+              id="home-hero-title"
+              class="text-balance font-serif text-5xl font-semibold leading-[0.98] tracking-tight text-white sm:text-7xl lg:text-[5.4rem]"
+            >
+              For questions that matter, make up your own mind.
+            </h1>
+            <p class="mt-5 max-w-2xl text-balance text-lg leading-8 text-slate-200 sm:text-xl">
+              Explore with AI to discover new information, then keep, find, and share what matters.
+            </p>
+            <div class="mt-7 flex flex-wrap items-center gap-3">
+              <.link
+                href="#start-here"
+                class="inline-flex items-center gap-2 rounded-md bg-teal-300 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-teal-200"
+              >
+                Explore a question <.icon name="hero-arrow-down" class="h-4 w-4" />
+              </.link>
+              <.link
+                id="home-about-link"
+                navigate={~p"/about"}
+                class="inline-flex items-center gap-2 border-b border-slate-400 px-1 py-2 text-sm font-semibold text-white transition hover:border-teal-300 hover:text-teal-200"
+              >
+                Why RationalGrid? <.icon name="hero-arrow-right" class="h-4 w-4" />
+              </.link>
             </div>
+            <.link
+              id="home-ai-scepticism-link"
+              navigate={~p"/intro/ai"}
+              class="group mt-4 inline-flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-400 transition hover:text-slate-200"
+            >
+              <span class="font-semibold text-slate-200 group-hover:text-teal-200">
+                Sceptical about AI?
+              </span>
+              <span>See where it helps—and where it can go wrong.</span>
+              <.icon name="hero-arrow-right" class="h-4 w-4 transition group-hover:translate-x-0.5" />
+            </.link>
           </div>
-        </section>
 
-        <footer id="home-footer" class="mt-2 border-t border-slate-800 bg-slate-950 text-slate-300">
-          <div class="mx-auto flex w-full max-w-6xl flex-col gap-5 px-4 py-7 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-            <div class="flex items-center gap-3">
-              <img src={~p"/images/favicon.webp"} alt="RationalGrid" class="h-8 w-8 rounded-lg" />
-              <div>
-                <p class="text-sm font-semibold text-white">RationalGrid</p>
-                <p class="text-xs text-slate-400">
-                  Turn difficult questions into shared understanding.
+          <div class="hidden lg:block" aria-hidden="true">
+            <div class="relative mx-auto max-w-md">
+              <div class="absolute -inset-12 -z-10 bg-[radial-gradient(circle,rgba(45,212,191,0.13),transparent_62%)] blur-2xl">
+              </div>
+              <div class="border border-white/10 border-l-4 border-l-sky-400 bg-slate-900/80 px-5 py-4 shadow-2xl backdrop-blur-sm">
+                <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-sky-300">Question</p>
+                <p class="mt-1 font-serif text-xl text-white">
+                  What makes an explanation convincing?
                 </p>
               </div>
+              <div class="mx-auto h-9 w-px bg-slate-500"></div>
+              <div class="relative grid grid-cols-2 gap-8 border-t border-slate-500 pt-9">
+                <div class="absolute left-1/4 top-0 h-9 w-px bg-slate-500"></div>
+                <div class="absolute right-1/4 top-0 h-9 w-px bg-slate-500"></div>
+                <div class="border border-white/10 border-l-4 border-l-emerald-400 bg-slate-900/80 px-4 py-3 backdrop-blur-sm">
+                  <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-300">
+                    Answer
+                  </p>
+                  <p class="mt-1 text-sm font-medium text-white">Evidence and reasoning</p>
+                </div>
+                <div class="border border-white/10 border-l-4 border-l-amber-400 bg-slate-900/80 px-4 py-3 backdrop-blur-sm">
+                  <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-300">
+                    Challenge
+                  </p>
+                  <p class="mt-1 text-sm font-medium text-white">Which assumption fails?</p>
+                </div>
+              </div>
+              <div class="ml-auto mr-[12%] h-9 w-px bg-slate-500"></div>
+              <div class="ml-auto w-[58%] border border-white/10 border-l-4 border-l-violet-400 bg-slate-900/80 px-4 py-3 backdrop-blur-sm">
+                <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-300">Source</p>
+                <p class="mt-1 text-sm font-medium text-white">Keep the evidence attached</p>
+              </div>
             </div>
-            <nav
-              aria-label="Homepage footer"
-              class="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm"
-            >
-              <.link navigate={~p"/intro/how"} class="transition hover:text-white">Guide</.link>
-              <.link navigate={~p"/about"} class="transition hover:text-white">About</.link>
-              <.link navigate={~p"/community"} class="transition hover:text-white">Community</.link>
-              <.link
-                href="https://www.youtube.com/@RationalGrid"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="inline-flex items-center gap-1.5 text-sky-300 transition hover:text-white"
-              >
-                <.icon name="hero-play-circle" class="h-4 w-4" /> YouTube
-              </.link>
-              <.link
-                href="https://github.com/TomBers/dialectic"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="transition hover:text-white"
-              >
-                GitHub
-              </.link>
-              <.link
-                href="https://x.com/rationalgridai"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="transition hover:text-white"
-              >
-                X
-              </.link>
-              <.link
-                href="https://www.instagram.com/rationalgrid.ai/"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="transition hover:text-white"
-              >
-                Instagram
-              </.link>
-              <.link
-                href="https://www.linkedin.com/company/rationalgrid-ai/"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="transition hover:text-white"
-              >
-                LinkedIn
-              </.link>
-            </nav>
           </div>
-        </footer>
-      </div>
+        </div>
+      </section>
+
+      <section
+        id="start-here"
+        class="relative isolate overflow-hidden border-b border-stone-300 bg-[#f4f1e9]"
+      >
+        <div
+          aria-hidden="true"
+          class="absolute -left-28 top-10 -z-10 h-64 w-64 rounded-full bg-teal-200/35 blur-3xl"
+        >
+        </div>
+        <div
+          aria-hidden="true"
+          class="absolute -right-28 bottom-0 -z-10 h-64 w-64 rounded-full bg-amber-200/35 blur-3xl"
+        >
+        </div>
+        <div class="mx-auto w-full max-w-3xl px-5 py-12 sm:px-8 sm:py-16">
+          <div class="text-center">
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">Try it</p>
+            <h2 class="mt-3 font-serif text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
+              Start with a question.
+            </h2>
+          </div>
+
+          <div
+            id="home-start-panel"
+            class="mt-7 rounded-xl bg-[linear-gradient(120deg,#2dd4bf_0%,#818cf8_52%,#fbbf24_100%)] p-[1px] shadow-[0_24px_60px_-38px_rgba(15,23,42,0.55)]"
+          >
+            <div class="rounded-[calc(0.75rem-1px)] bg-white p-4 sm:p-6">
+              <.live_component
+                module={DialecticWeb.NewIdeaFormComp}
+                id="new-idea-form"
+                form={@form}
+                placeholder="Ask a question or name a topic"
+                submit_label="Continue"
+                autofocus={@focus_new_grid}
+                minimal={true}
+              />
+              <p id="home-public-grid-note" class="mt-3 text-xs leading-5 text-slate-500">
+                New grids are public and editable by default. Anyone can read them and, while editing is on, add to them. Sign in first if you want to control access in Settings; never include sensitive information.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section
+        id="home-product-preview"
+        class="relative isolate overflow-hidden border-b border-slate-700 bg-slate-950 text-white"
+      >
+        <div
+          aria-hidden="true"
+          class="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_82%_48%,rgba(56,189,248,0.12),transparent_34%),radial-gradient(circle_at_8%_88%,rgba(139,92,246,0.10),transparent_28%)]"
+        >
+        </div>
+        <div class="mx-auto grid w-full max-w-7xl gap-10 px-5 py-12 sm:px-8 sm:py-16 lg:grid-cols-[minmax(20rem,0.72fr)_minmax(0,1.28fr)] lg:items-center lg:px-10">
+          <div id="home-learning-loop">
+            <p class="inline-block border-l-2 border-teal-300 pl-3 text-sm font-bold uppercase tracking-[0.14em] text-teal-200">
+              See it in use
+            </p>
+            <h2 class="mt-3 font-serif text-4xl font-semibold tracking-tight sm:text-5xl">
+              Explore. Keep. Reconsider.
+            </h2>
+            <p class="mt-4 max-w-xl text-base leading-7 text-slate-300">
+              Questions, sources, and notes stay connected as your view develops.
+            </p>
+            <div class="mt-5 flex flex-wrap gap-x-5 gap-y-3">
+              <.link
+                id="home-features-link"
+                navigate={~p"/about"}
+                class="inline-flex items-center gap-2 border-b border-slate-500 pb-1 text-sm font-semibold text-white transition hover:border-teal-300 hover:text-teal-200"
+              >
+                Explore all features <.icon name="hero-arrow-right" class="h-4 w-4" />
+              </.link>
+              <.link
+                id="home-guide-link"
+                navigate={~p"/intro/how"}
+                class="inline-flex items-center gap-2 border-b border-slate-500 pb-1 text-sm font-semibold text-white transition hover:border-teal-300 hover:text-teal-200"
+              >
+                Read the guide <.icon name="hero-arrow-right" class="h-4 w-4" />
+              </.link>
+            </div>
+          </div>
+
+          <div class="border border-slate-700 bg-black p-2 shadow-2xl sm:p-3">
+            <iframe
+              id="home-example-video"
+              class="aspect-video w-full"
+              src="https://www.youtube.com/embed/nZOqbspGPfY?si=iOZEER4hWd31G157"
+              title="RationalGrid product video"
+              loading="lazy"
+              frameborder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerpolicy="strict-origin-when-cross-origin"
+              allowfullscreen
+            >
+            </iframe>
+          </div>
+        </div>
+      </section>
+
+      <section
+        id="popular-grids"
+        class="relative isolate overflow-hidden border-b border-stone-300 bg-[#fbfaf6]"
+      >
+        <div
+          aria-hidden="true"
+          class="absolute inset-x-0 top-0 -z-10 h-44 bg-[linear-gradient(180deg,rgba(45,212,191,0.08),transparent)]"
+        >
+        </div>
+        <div class="mx-auto w-full max-w-7xl px-5 py-12 sm:px-8 sm:py-16 lg:px-10">
+          <div class="flex flex-col gap-5 border-b border-slate-300 pb-6 sm:flex-row sm:items-end sm:justify-between">
+            <div class="max-w-3xl">
+              <p class="inline-block border-l-2 border-teal-500 pl-3 text-sm font-bold uppercase tracking-[0.14em] text-teal-900">
+                Curated grids
+              </p>
+              <h2 class="mt-3 font-serif text-4xl font-semibold tracking-tight sm:text-5xl">
+                See what other people explored.
+              </h2>
+              <p id="home-community-learning" class="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+                Find unfamiliar ideas, then question or extend any part.
+              </p>
+            </div>
+            <.link
+              id="home-community-grids-link"
+              navigate={~p"/community"}
+              class="group inline-flex shrink-0 items-center gap-2 rounded-md bg-teal-300 px-6 py-3.5 text-base font-semibold text-slate-950 shadow-[0_18px_36px_-18px_rgba(13,148,136,0.8)] ring-1 ring-teal-500/30 transition hover:-translate-y-0.5 hover:bg-teal-200 hover:shadow-[0_22px_40px_-18px_rgba(13,148,136,0.9)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+            >
+              Browse community
+              <.icon
+                name="hero-arrow-right"
+                class="h-4 w-4 transition-transform group-hover:translate-x-0.5"
+              />
+            </.link>
+          </div>
+
+          <%= if @curated_grids != [] do %>
+            <section id="curated" class="mt-8">
+              <.curated_grid_section items={@curated_grids} id_prefix="home-curated" />
+            </section>
+          <% end %>
+        </div>
+      </section>
+
+      <footer class="bg-slate-950 text-slate-300">
+        <div class="mx-auto flex w-full max-w-7xl flex-col gap-5 px-5 py-8 sm:flex-row sm:items-center sm:justify-between sm:px-8 lg:px-10">
+          <div class="flex items-center gap-3">
+            <img src={~p"/images/favicon.webp"} alt="RationalGrid" class="h-7 w-7" />
+            <div>
+              <p class="font-semibold text-white">RationalGrid</p>
+              <p class="text-xs text-slate-500">Questions, evidence, and reasoning—connected.</p>
+            </div>
+          </div>
+          <nav aria-label="Homepage footer" class="flex flex-wrap gap-x-5 gap-y-2 text-sm">
+            <.link navigate={~p"/intro/how"} class="hover:text-white">Guide</.link>
+            <.link navigate={~p"/intro/ai"} class="hover:text-white">AI and exploration</.link>
+            <.link navigate={~p"/about"} class="hover:text-white">About</.link>
+            <.link navigate={~p"/community"} class="hover:text-white">Community</.link>
+            <.link navigate={~p"/gallery"} class="hover:text-white">Gallery</.link>
+            <.link
+              href="https://github.com/TomBers/dialectic"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="hover:text-white"
+            >
+              GitHub
+            </.link>
+          </nav>
+        </div>
+      </footer>
     </div>
     """
   end
 
   defp curated_grid_section(assigns) do
-    assigns =
-      assigns
-      |> assign_new(:pills, fn -> [] end)
-      |> assign(:card_label, curated_card_label(assigns.title))
-
     ~H"""
-    <section class="w-full min-w-0 overflow-hidden rounded-[1.35rem] border border-slate-200/80 bg-white shadow-sm">
-      <div class="h-1 bg-[linear-gradient(90deg,#4f46e5_0%,#14b8a6_52%,#f59e0b_100%)]"></div>
-      <div class={[
-        "h-full bg-gradient-to-br",
-        @section_class
-      ]}>
-        <div class="p-3 sm:p-4">
-          <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div class="flex items-center gap-2">
-              <span class={[
-                "inline-flex h-10 w-10 items-center justify-center rounded-2xl shadow-sm ring-1",
-                @icon_wrap_class
-              ]}>
-                <.icon name={@icon} class={"h-5 w-5 " <> @icon_class} />
-              </span>
-              <div class="min-w-0">
-                <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                  Curated
-                </p>
-                <h2 class="text-lg font-semibold tracking-tight text-slate-950">
-                  {@title}
-                </h2>
-              </div>
-            </div>
-            <%= if @pills != [] do %>
-              <div class="flex flex-wrap gap-1.5 sm:justify-end">
-                <span
-                  :for={pill <- @pills}
-                  class="inline-flex items-center rounded-full border border-indigo-200 bg-white/90 px-2.5 py-1 text-[11px] font-medium text-slate-700 shadow-sm"
-                >
-                  {pill}
-                </span>
-              </div>
-            <% end %>
-          </div>
-          <div id={"#{@id_prefix}-grids-list"} class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            <%= for item <- @items do %>
-              <.grid_card
-                graph={item.graph}
-                author_name={item.author_name}
-                author_marker="@"
-                id={@id_prefix <> "-" <> (item.graph.slug || "t-" <> Integer.to_string(:erlang.phash2(item.graph.title || "")))}
-                label={Map.get(item, :card_label, @card_label)}
-                tag_limit={3}
-              />
-            <% end %>
-          </div>
-        </div>
+    <section class="w-full min-w-0">
+      <div id={"#{@id_prefix}-grids-list"} class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+        <%= for item <- @items do %>
+          <.grid_card
+            graph={item.graph}
+            author_name={item.author_name}
+            author_marker="@"
+            id={@id_prefix <> "-" <> (item.graph.slug || "t-" <> Integer.to_string(:erlang.phash2(item.graph.title || "")))}
+            variant={:curated}
+            show_badge={false}
+            tag_limit={3}
+          />
+        <% end %>
       </div>
     </section>
     """
@@ -1459,115 +527,4 @@ defmodule DialecticWeb.HomeLive do
   end
 
   defp preview_key(item), do: item.graph.slug || item.graph.title || ""
-
-  defp home_featured_grids(featured, curated, seed) do
-    featured = preview_curated_grids(featured, 2, seed)
-
-    case {featured, curated} do
-      {featured, [curated_grid | _]} when length(featured) >= 2 ->
-        Enum.take(featured, 2) ++ [Map.put(curated_grid, :card_label, "Curated grid")]
-
-      {featured, curated} ->
-        preview_curated_grids(featured ++ curated, 3, seed)
-    end
-  end
-
-  defp editor_pick_grids(items, limit) do
-    items = items || []
-    {deep_dives, other_grids} = Enum.split_with(items, &(home_graph_node_count(&1.graph) >= 20))
-
-    (deep_dives ++ other_grids)
-    |> Enum.take(limit)
-  end
-
-  defp home_graph_node_count(%{node_count: count}) when is_integer(count), do: count
-
-  defp home_graph_node_count(graph) do
-    nodes =
-      (Map.get(graph, :data) || %{})
-      |> then(fn data -> Map.get(data, "nodes") || Map.get(data, :nodes) || [] end)
-
-    if is_list(nodes) do
-      Enum.count(nodes, fn node ->
-        compound? = Map.get(node, "compound", Map.get(node, :compound, false))
-        compound? != true
-      end)
-    else
-      0
-    end
-  end
-
-  defp display_popular_tags(tags, limit) do
-    tags
-    |> Enum.reduce(%{}, fn {tag, count}, acc ->
-      tag = to_string(tag)
-      key = String.downcase(tag)
-
-      Map.update(acc, key, %{tag: tag, count: count}, fn existing ->
-        %{tag: preferred_tag_label(existing.tag, tag), count: existing.count + count}
-      end)
-    end)
-    |> Map.values()
-    |> Enum.sort_by(fn item -> {-item.count, String.downcase(item.tag)} end)
-    |> Enum.take(limit)
-  end
-
-  defp preferred_tag_label(existing, candidate) do
-    if existing == String.downcase(existing) and candidate != String.downcase(candidate) do
-      candidate
-    else
-      existing
-    end
-  end
-
-  defp curated_card_label("Partner grids"), do: "Partner grid"
-  defp curated_card_label(_title), do: "Curated grid"
-
-  defp partner_pills(items) do
-    items
-    |> Enum.map(&Map.get(&1, :author_name))
-    |> Enum.filter(&author_visible?/1)
-    |> Enum.uniq_by(&(String.trim(&1) |> String.downcase()))
-  end
-
-  defp author_visible?(author_name) when is_binary(author_name) do
-    normalized = author_name |> String.trim() |> String.downcase()
-    normalized != "" and normalized not in ["anonymous", "anon", "-"]
-  end
-
-  defp author_visible?(_), do: false
-
-  defp fetch_graphs(search_term, tag, category, limit) do
-    cond do
-      is_binary(tag) && tag != "" ->
-        Dialectic.DbActions.Graphs.list_graphs_by_tag(tag, limit)
-        |> Enum.map(fn {g, username} -> {g, 0, username} end)
-
-      category == "deep_dives" ->
-        Dialectic.DbActions.Graphs.list_deep_dives(limit)
-        |> Enum.map(fn {g, username} -> {g, 0, username} end)
-
-      category == "seedlings" ->
-        Dialectic.DbActions.Graphs.list_seedlings(limit)
-        |> Enum.map(fn {g, username} -> {g, 0, username} end)
-
-      true ->
-        Dialectic.DbActions.Graphs.all_graphs_with_notes(search_term, limit: limit)
-    end
-  end
-
-  defp graph_dom_id(graph, prefix) do
-    suffix = graph.slug || Integer.to_string(:erlang.phash2(graph.title || "graph"))
-    prefix <> "-" <> suffix
-  end
-
-  defp page_title(search, tag, category) do
-    cond do
-      is_binary(tag) and tag != "" -> "Tagged: #{tag}"
-      category == "deep_dives" -> "Deep Dives"
-      category == "seedlings" -> "Seedlings"
-      is_binary(search) and search != "" -> "Search: #{search}"
-      true -> "RationalGrid"
-    end
-  end
 end

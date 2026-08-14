@@ -14,8 +14,12 @@
   }
   data-graph-id={@graph_id}
   data-presenting={if(@presentation_mode == :presenting, do: "true", else: "false")}
-  data-reading-density="comfortable"
-  data-reading-font="sans"
+  data-reading-density={@appearance_preferences.reading_density}
+  data-reading-font={@appearance_preferences.reading_font}
+  data-graph-view-mode={@appearance_preferences.graph_view_mode}
+  data-graph-direction={@appearance_preferences.graph_direction}
+  data-reduce-motion={if(@appearance_preferences.reduce_motion, do: "true", else: "false")}
+  data-high-contrast={if(@appearance_preferences.high_contrast, do: "true", else: "false")}
   data-mobile-reader-path={
     graph_path(
       @graph_struct,
@@ -24,6 +28,7 @@
     )
   }
 >
+  <h1 :if={@presentation_mode != :presenting} class="sr-only">{@graph_struct.title}</h1>
   <% slides = slides(@graph_id, @presentation_slide_ids) %>
   <% active_slide = active_slide(slides, @node) %>
   <% active_slide_id = if active_slide, do: active_slide.id, else: nil %>
@@ -248,13 +253,24 @@
       <%= if @presentation_mode != :presenting do %>
         <div class="relative z-20 flex-none border-b border-slate-200 bg-white/98 backdrop-blur-lg">
           <div class="px-4 py-1.5 sm:px-5 lg:px-6">
-            <div class="flex min-h-[38px] flex-wrap items-center justify-between gap-1.5 md:flex-nowrap">
+            <div
+              id="graph-top-menu"
+              class="flex min-h-[38px] flex-wrap items-center gap-1.5 lg:flex-nowrap"
+            >
               <DialecticWeb.WorkspaceBarComp.workspace_bar
                 id="graph-workspace-bar"
                 mode={:graph}
                 graph_struct={@graph_struct}
                 node_id={Map.get(@node || %{}, :id)}
                 nav_params={if(@token, do: [token: @token], else: [])}
+                prompt_mode={@prompt_mode}
+                prompt_mode_click={
+                  JS.dispatch("toggle-panel",
+                    to: "#graph-layout",
+                    detail: %{id: "right-panel"}
+                  )
+                  |> JS.push("open_prompt_settings")
+                }
                 show_search
                 search_click="open_search_overlay_click"
                 highlights_click={
@@ -269,50 +285,54 @@
                 compact
               />
 
-              <%= if @current_user do %>
-                <button
-                  id="graph-follow-grid-button"
-                  type="button"
-                  phx-click={if(@following_graph?, do: "unfollow_graph", else: "follow_graph")}
-                  class={[
-                    "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold transition",
-                    if(@following_graph?,
-                      do: "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
-                      else: "bg-slate-950 text-white hover:bg-slate-800"
-                    )
-                  ]}
-                >
-                  <.icon
-                    name={if(@following_graph?, do: "hero-check", else: "hero-plus")}
-                    class="h-3.5 w-3.5"
-                  />
-                  <%= if @following_graph? do %>
-                    Following
-                  <% else %>
-                    Follow
-                  <% end %>
-                </button>
-              <% else %>
-                <.link
-                  navigate={~p"/users/log_in"}
-                  id="graph-follow-grid-login-link"
-                  class="inline-flex items-center gap-1 rounded-full bg-slate-950 px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-slate-800"
-                >
-                  <.icon name="hero-plus" class="h-3.5 w-3.5" /> Follow
-                </.link>
-              <% end %>
+              <div class="ml-auto flex shrink-0 items-center gap-1.5">
+                <%= if @current_user do %>
+                  <button
+                    id="graph-follow-grid-button"
+                    type="button"
+                    phx-click={if(@following_graph?, do: "unfollow_graph", else: "follow_graph")}
+                    class={[
+                      "inline-flex h-7 items-center gap-1 rounded-lg px-2.5 text-[11px] font-semibold transition",
+                      if(@following_graph?,
+                        do: "bg-slate-100 text-slate-700 hover:bg-slate-200/80",
+                        else: "bg-slate-950 text-white hover:bg-slate-800"
+                      )
+                    ]}
+                  >
+                    <.icon
+                      name={if(@following_graph?, do: "hero-check", else: "hero-plus")}
+                      class="h-3.5 w-3.5"
+                    />
+                    <%= if @following_graph? do %>
+                      Following
+                    <% else %>
+                      Follow
+                    <% end %>
+                  </button>
+                <% else %>
+                  <.link
+                    navigate={~p"/users/log_in"}
+                    id="graph-follow-grid-login-link"
+                    class="inline-flex h-7 items-center gap-1 rounded-lg bg-slate-950 px-2.5 text-[11px] font-semibold text-white transition hover:bg-slate-800"
+                  >
+                    <.icon name="hero-plus" class="h-3.5 w-3.5" /> Follow
+                  </.link>
+                <% end %>
 
-              <.live_component
-                module={DialecticWeb.DocumentMenuComp}
-                id="document-menu"
-                graph_id={@graph_id}
-                graph_struct={@graph_struct}
-                node={@node}
-                can_edit={@can_edit}
-                token={@token}
-                layout_target="#graph-layout"
-                compact={true}
-              />
+                <div class="hidden h-4 w-px bg-slate-200 sm:block"></div>
+
+                <.live_component
+                  module={DialecticWeb.DocumentMenuComp}
+                  id="document-menu"
+                  graph_id={@graph_id}
+                  graph_struct={@graph_struct}
+                  node={@node}
+                  can_edit={@can_edit}
+                  token={@token}
+                  layout_target="#graph-layout"
+                  compact={true}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -325,6 +345,10 @@
           if(@presentation_mode == :presenting, do: "border-l-0")
         ]}
         data-graph-id={@graph_id}
+        data-graph-view-mode={@appearance_preferences.graph_view_mode}
+        data-graph-direction={@appearance_preferences.graph_direction}
+        data-reduce-motion={if(@appearance_preferences.reduce_motion, do: "true", else: "false")}
+        data-high-contrast={if(@appearance_preferences.high_contrast, do: "true", else: "false")}
         data-graph={@f_graph}
         data-node={if @node, do: @node.id, else: nil}
         data-operation={@graph_operation}
@@ -406,7 +430,9 @@
             </div>
           </div>
         <% end %>
-        <div id="cy-inner" class="h-full w-full relative" phx-update="ignore"></div>
+        <div id="cy-render-boundary" class="relative h-full w-full" phx-update="ignore">
+          <div id="cy-inner" class="relative h-full w-full"></div>
+        </div>
       </div>
 
       <%= if @graph_id do %>
@@ -569,9 +595,9 @@
         <div class="p-2">
           <div class="mb-2 flex items-start justify-between px-1">
             <div>
-              <h2 class="text-sm font-semibold text-gray-900">Workspace settings</h2>
+              <h2 class="text-sm font-semibold text-gray-900">Grid tools</h2>
               <p class="text-[11px] text-gray-500">
-                Display, export, sharing, and language tools.
+                Answers, collaboration, history, export, and translation.
               </p>
             </div>
             <button
@@ -580,8 +606,8 @@
                 JS.dispatch("toggle-panel", to: "#graph-layout", detail: %{id: "right-panel"})
               }
               class="inline-flex items-center justify-center w-8 h-8 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50"
-              aria-label="Close right panel"
-              title="Close panel"
+              aria-label="Close grid tools"
+              title="Close grid tools"
             >
               <.icon name="hero-x-mark" class="w-4 h-4" />
             </button>
@@ -723,7 +749,7 @@
                   phx-debounce="200"
                 />
               </form>
-              <kbd class="hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium text-gray-400 bg-gray-100 rounded border border-gray-200">
+              <kbd class="hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium text-gray-600 bg-gray-100 rounded border border-gray-200">
                 esc
               </kbd>
             </div>
@@ -788,7 +814,7 @@
               </div>
             <% else %>
               <div class="px-4 py-4 text-center">
-                <p class="text-xs text-gray-400">Type to search across all topics</p>
+                <p class="text-xs text-gray-600">Type to search across all topics</p>
               </div>
             <% end %>
           </div>

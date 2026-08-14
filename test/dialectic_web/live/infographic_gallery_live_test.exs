@@ -8,7 +8,7 @@ defmodule DialecticWeb.InfographicGalleryLiveTest do
       {:ok, _view, html} = live(conn, ~p"/gallery")
 
       assert html =~ "Infographic Gallery"
-      assert html =~ "Visual explorations of complex ideas"
+      assert html =~ "Complex ideas, drawn from RationalGrid maps."
       assert html =~ "Consciousness in AI"
       assert html =~ "Utopia"
       assert html =~ "Collective Subconscious"
@@ -24,11 +24,12 @@ defmodule DialecticWeb.InfographicGalleryLiveTest do
       assert html =~ "/images/infographics/morality_of_ai_for_lesson_planning.jpg"
     end
 
-    test "gallery cards are keyboard accessible", %{conn: conn} do
-      {:ok, _view, html} = live(conn, ~p"/gallery")
+    test "gallery cards use native button semantics", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/gallery")
 
-      assert html =~ ~s(role="button")
-      assert html =~ ~s(tabindex="0")
+      assert has_element?(view, "button[phx-click='open_infographic']")
+      refute has_element?(view, "button[phx-click='open_infographic'][role]")
+      refute has_element?(view, "button[phx-click='open_infographic'][tabindex]")
     end
 
     test "opens modal when clicking an infographic", %{conn: conn} do
@@ -57,8 +58,8 @@ defmodule DialecticWeb.InfographicGalleryLiveTest do
         |> render_click()
 
       assert html =~ "Utopia"
-      assert html =~ "An exploration of utopian ideals and their implications"
-      assert html =~ "Explore Interactive Grid"
+      assert html =~ "Utopian ideals and their consequences."
+      assert html =~ "Explore grid"
     end
 
     test "closes modal when clicking close button", %{conn: conn} do
@@ -127,13 +128,13 @@ defmodule DialecticWeb.InfographicGalleryLiveTest do
     test "back to home link is present", %{conn: conn} do
       {:ok, view, _html} = live(conn, ~p"/gallery")
 
-      assert has_element?(view, "a[href='/']", "Back to Home")
+      assert has_element?(view, "a[href='/']", "Back to home")
     end
 
     test "shows infographic contact CTA", %{conn: conn} do
       {:ok, view, _html} = live(conn, ~p"/gallery")
 
-      assert has_element?(view, "#gallery-infographic-cta", "Want an infographic for your idea?")
+      assert has_element?(view, "#gallery-infographic-cta", "Turn a grid into a visual.")
       assert has_element?(view, "#gallery-infographic-contact-link", "Contact us")
 
       assert has_element?(

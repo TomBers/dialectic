@@ -86,7 +86,11 @@ defmodule DialecticWeb.GraphHelpers do
       end
     end
 
-    request_context = {socket.assigns.live_view_topic, socket.assigns.llm_actor_id}
+    request_context = {
+      Map.get(socket.assigns, :live_view_topic),
+      Map.get(socket.assigns, :llm_actor_id)
+    }
+
     {graph_id, node_to_use, socket.assigns.user, request_context}
   end
 

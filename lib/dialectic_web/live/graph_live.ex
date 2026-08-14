@@ -194,6 +194,16 @@ defmodule DialecticWeb.GraphLive do
     {:noreply, GridChat.open(socket)}
   end
 
+  def handle_event("open_prompt_settings", _params, socket) do
+    send_update(
+      DialecticWeb.RightPanelComp,
+      id: "right-panel-comp",
+      open_section: "configure"
+    )
+
+    {:noreply, socket}
+  end
+
   def handle_event("set_prompt_mode", %{"prompt_mode" => mode}, socket) do
     graph_id = socket.assigns.graph_id
 
@@ -2482,6 +2492,7 @@ defmodule DialecticWeb.GraphLive do
       graph_topic: "graph_update:#{graph_id}",
       graph_struct: graph_struct,
       graph_id: graph_id,
+      appearance_preferences: User.appearance_preferences(socket.assigns[:current_user]),
       following_graph?: following_graph?(socket.assigns[:current_user], graph_struct),
       f_graph: GraphManager.format_graph_json(graph_id),
       node: node,

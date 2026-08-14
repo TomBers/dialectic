@@ -36,6 +36,8 @@ defmodule DialecticWeb.SitemapControllerTest do
       body = conn.resp_body
       assert body =~ "#{base_url}/"
       assert body =~ "#{base_url}/intro/how"
+      assert body =~ "#{base_url}/intro/ai"
+      assert body =~ "#{base_url}/community"
       assert body =~ "#{base_url}/inspiration"
     end
 
@@ -47,6 +49,19 @@ defmodule DialecticWeb.SitemapControllerTest do
 
       body = conn.resp_body
       assert body =~ "/g/#{graph.slug}"
+    end
+
+    test "lists exactly one canonical reader URL for each graph", %{conn: conn} do
+      graph =
+        insert_graph(%{title: "Single Canonical Graph", is_public: true, is_published: true})
+
+      conn = get(conn, "/sitemap.xml")
+      body = conn.resp_body
+      reader_url = DialecticWeb.Endpoint.url() <> "/g/#{graph.slug}"
+
+      assert length(Regex.scan(~r/#{Regex.escape(reader_url)}/, body)) == 1
+      refute body =~ reader_url <> "/graph"
+      refute body =~ reader_url <> "?node="
     end
 
     test "excludes private graphs", %{conn: conn} do
