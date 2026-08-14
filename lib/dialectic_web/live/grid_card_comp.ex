@@ -218,6 +218,7 @@ defmodule DialecticWeb.GridCardComp do
       |> assign(:primary_tag, primary_tag)
       |> assign(:border_style, card_border_style(tags))
       |> assign(:title, graph_title(assigns.graph))
+      |> assign(:created_label, graph_created_label(assigns.graph))
 
     if assigns.variant in [:compact, :community, :community_compact] do
       standard_grid_card(assigns)
@@ -246,8 +247,8 @@ defmodule DialecticWeb.GridCardComp do
               {grid_visibility_label(@graph)}
             </span>
           <% else %>
-            <span class="shrink-0" aria-label={"Created " <> graph_created_label(@graph)}>
-              {graph_created_label(@graph)}
+            <span class="shrink-0" aria-label={"Created " <> @created_label}>
+              {@created_label}
             </span>
           <% end %>
         </div>
@@ -344,9 +345,9 @@ defmodule DialecticWeb.GridCardComp do
             <% else %>
               <span
                 class="shrink-0 text-[11px] font-medium text-slate-500"
-                aria-label={"Created " <> graph_created_label(@graph)}
+                aria-label={"Created " <> @created_label}
               >
-                {graph_created_label(@graph)}
+                {@created_label}
               </span>
             <% end %>
           </div>
