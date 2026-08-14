@@ -4,7 +4,7 @@ defmodule Dialectic.LLM.GoogleProviderTest do
   alias Dialectic.LLM.Providers.Google
 
   test "uses Gemini Flash with minimal thinking and search grounding" do
-    assert Google.model() == "gemini-3.6-flash"
+    assert Google.model() == "gemini-3.7-flash"
 
     assert Google.provider_options() == [
              google_thinking_level: "MINIMAL",
