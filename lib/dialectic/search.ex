@@ -6,11 +6,11 @@ defmodule Dialectic.Search do
   alias Dialectic.Accounts.Graph
   alias Dialectic.Accounts.User
   alias Dialectic.Repo
+  alias Dialectic.Search.Document
   alias DialecticWeb.NodeSearch
 
   @default_limit 12
   @matches_per_graph 3
-  @candidate_multiplier 12
   @max_query_length 100
 
   def search_public(query, opts \\ []) do
@@ -21,12 +21,12 @@ defmodule Dialectic.Search do
     else
       limit = Keyword.get(opts, :limit, @default_limit)
       pattern = contains_pattern(query)
+      graph_titles = candidate_graph_titles(pattern, query, limit)
 
-      pattern
-      |> title_matches(query)
-      |> add_node_matches(node_matches(pattern, limit), query)
+      graph_titles
+      |> graph_results(query)
+      |> add_node_matches(node_matches(pattern, query, graph_titles), query)
       |> prepare_results(query)
-      |> Enum.take(limit)
     end
   end
 
@@ -38,25 +38,41 @@ defmodule Dialectic.Search do
     |> String.slice(0, @max_query_length)
   end
 
-  defp title_matches(pattern, query) do
-    from(g in Graph,
+  defp candidate_graph_titles(pattern, query, limit) do
+    from(document in Document,
+      join: graph in Graph,
+      on: graph.title == document.graph_title,
+      where: graph.is_public == true,
+      where: graph.is_published == true,
+      where: graph.is_deleted == false or is_nil(graph.is_deleted),
+      where: fragment("? ILIKE ? ESCAPE E'\\\\'", document.search_text, ^pattern),
+      group_by: document.graph_title,
+      order_by: [
+        asc: fragment("min(CASE WHEN ? = 'graph' THEN 0 ELSE 1 END)", document.kind),
+        desc: fragment("max(similarity(?, ?))", document.search_text, ^query),
+        asc: document.graph_title
+      ],
+      limit: ^limit,
+      select: document.graph_title
+    )
+    |> Repo.all()
+  end
+
+  defp graph_results([], _query), do: %{}
+
+  defp graph_results(graph_titles, query) do
+    from(graph in Graph,
       left_join: author in User,
-      on: author.id == g.user_id,
-      where: g.is_public == true,
-      where: g.is_published == true,
-      where: g.is_deleted == false or is_nil(g.is_deleted),
-      where:
-        fragment("? ILIKE ? ESCAPE E'\\\\'", g.title, ^pattern) or
-          fragment(
-            "EXISTS (SELECT 1 FROM unnest(?) AS graph_tag(value) WHERE graph_tag.value ILIKE ? ESCAPE E'\\\\')",
-            g.tags,
-            ^pattern
-          ),
+      on: author.id == graph.user_id,
+      where: graph.title in ^graph_titles,
+      where: graph.is_public == true,
+      where: graph.is_published == true,
+      where: graph.is_deleted == false or is_nil(graph.is_deleted),
       select: %{
-        graph_title: g.title,
-        graph_slug: g.slug,
-        graph_tags: g.tags,
-        graph_is_public: g.is_public,
+        graph_title: graph.title,
+        graph_slug: graph.slug,
+        graph_tags: graph.tags,
+        graph_is_public: graph.is_public,
         author_name: author.username
       }
     )
@@ -74,39 +90,40 @@ defmodule Dialectic.Search do
     end)
   end
 
-  defp node_matches(pattern, limit) do
-    candidate_limit = max(limit * @candidate_multiplier, 100)
+  defp node_matches(_pattern, _query, []), do: []
 
-    from(g in Graph,
-      inner_lateral_join:
-        node in fragment(
-          "jsonb_array_elements(CASE WHEN jsonb_typeof(?->'nodes') = 'array' THEN ?->'nodes' ELSE '[]'::jsonb END)",
-          g.data,
-          g.data
-        ),
-      on: true,
-      left_join: author in User,
-      on: author.id == g.user_id,
-      where: g.is_public == true,
-      where: g.is_published == true,
-      where: g.is_deleted == false or is_nil(g.is_deleted),
-      where: fragment("COALESCE((?->>'deleted')::boolean, false) = false", node),
-      where:
-        fragment("COALESCE(?->>'content', '') ILIKE ? ESCAPE E'\\\\'", node, ^pattern) or
-          fragment(
-            "COALESCE(?->>'source_text', '') ILIKE ? ESCAPE E'\\\\'",
-            node,
-            ^pattern
-          ),
-      order_by: [desc: g.updated_at],
-      limit: ^candidate_limit,
+  defp node_matches(pattern, query, graph_titles) do
+    ranked_documents =
+      from(document in Document,
+        where: document.graph_title in ^graph_titles,
+        where: document.kind == "node",
+        where: fragment("? ILIKE ? ESCAPE E'\\\\'", document.search_text, ^pattern),
+        windows: [
+          per_graph: [
+            partition_by: document.graph_title,
+            order_by: [
+              desc: fragment("similarity(?, ?)", document.search_text, ^query),
+              asc: document.node_id
+            ]
+          ]
+        ],
+        select: %{
+          graph_title: document.graph_title,
+          node_id: document.node_id,
+          content: document.content,
+          source_text: document.source_text,
+          row_number: over(row_number(), :per_graph)
+        }
+      )
+
+    from(document in subquery(ranked_documents),
+      where: document.row_number <= ^@matches_per_graph,
+      order_by: [asc: document.graph_title, asc: document.row_number],
       select: %{
-        graph_title: g.title,
-        graph_slug: g.slug,
-        graph_tags: g.tags,
-        graph_is_public: g.is_public,
-        author_name: author.username,
-        node: fragment("?::jsonb", node)
+        graph_title: document.graph_title,
+        node_id: document.node_id,
+        content: document.content,
+        source_text: document.source_text
       }
     )
     |> Repo.all()
@@ -114,22 +131,26 @@ defmodule Dialectic.Search do
 
   defp add_node_matches(results, rows, query) do
     Enum.reduce(rows, results, fn row, acc ->
-      case NodeSearch.annotate_result(row.node, query) do
+      node = %{
+        "id" => row.node_id,
+        "content" => row.content,
+        "source_text" => row.source_text,
+        "class" => "default",
+        "deleted" => false
+      }
+
+      case NodeSearch.annotate_result(node, query) do
         nil ->
           acc
 
         match ->
-          Map.update(
-            acc,
-            row.graph_title,
-            %{
-              graph: graph_from_row(row),
-              author_name: row.author_name,
-              match_reason: nil,
-              matches: [match]
-            },
-            fn result -> %{result | matches: [match | result.matches]} end
-          )
+          case Map.fetch(acc, row.graph_title) do
+            {:ok, result} ->
+              Map.put(acc, row.graph_title, %{result | matches: [match | result.matches]})
+
+            :error ->
+              acc
+          end
       end
     end)
   end
@@ -142,10 +163,10 @@ defmodule Dialectic.Search do
         result.matches
         |> Enum.uniq_by(&node_id/1)
         |> Enum.sort_by(&Map.get(&1, :search_rank, {9, 9}))
-        |> Enum.take(@matches_per_graph)
 
       %{result | matches: matches}
     end)
+    |> Enum.reject(fn result -> is_nil(result.match_reason) and result.matches == [] end)
     |> Enum.sort_by(&result_rank(&1, query))
   end
 
@@ -180,6 +201,8 @@ defmodule Dialectic.Search do
     end
   end
 
+  defp node_id(node), do: Map.get(node, :id) || Map.get(node, "id")
+
   defp graph_from_row(row) do
     %{
       title: row.graph_title,
@@ -188,8 +211,6 @@ defmodule Dialectic.Search do
       is_public: row.graph_is_public
     }
   end
-
-  defp node_id(node), do: Map.get(node, :id) || Map.get(node, "id")
 
   defp contains_pattern(query), do: "%" <> escape_like(query) <> "%"
 

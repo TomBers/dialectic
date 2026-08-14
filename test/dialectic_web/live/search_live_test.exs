@@ -9,6 +9,7 @@ defmodule DialecticWeb.SearchLiveTest do
     {:ok, view, _html} = live(conn, ~p"/search")
 
     assert has_element?(view, "#global-search-form")
+    assert has_element?(view, "label[for='global-search-input']")
     assert has_element?(view, "#global-search-prompt")
   end
 

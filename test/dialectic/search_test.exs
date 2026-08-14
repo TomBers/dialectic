@@ -82,6 +82,57 @@ defmodule Dialectic.SearchTest do
     assert Search.search_public("ai") == []
   end
 
+  test "limits node matches per graph before selecting graph candidates" do
+    term = "balanced-results-#{System.unique_integer([:positive])}"
+
+    many_matching_nodes =
+      for id <- 1..20 do
+        node(Integer.to_string(id), "# Match #{id}\n\n#{term} appears here.")
+      end
+
+    GraphFixtures.insert_graph(%{
+      title: "A graph with many matching nodes",
+      slug: "many-global-matches-#{System.unique_integer([:positive])}",
+      data: %{"nodes" => many_matching_nodes, "edges" => []}
+    })
+
+    for position <- 1..3 do
+      GraphFixtures.insert_graph(%{
+        title: "Separate graph #{position} #{System.unique_integer([:positive])}",
+        slug: "separate-global-match-#{position}-#{System.unique_integer([:positive])}",
+        data: %{
+          "nodes" => [node("1", "# Separate match\n\n#{term} appears here.")],
+          "edges" => []
+        }
+      })
+    end
+
+    results = Search.search_public(term, limit: 3)
+
+    assert length(results) == 3
+    assert results |> Enum.map(& &1.graph.title) |> Enum.uniq() |> length() == 3
+    assert Enum.all?(results, &(length(&1.matches) <= 3))
+  end
+
+  test "removes a graph from the index when it becomes private" do
+    term = "privacy-sync-#{System.unique_integer([:positive])}"
+
+    graph =
+      GraphFixtures.insert_graph(%{
+        title: "Search privacy sync",
+        slug: "search-privacy-sync-#{System.unique_integer([:positive])}",
+        data: graph_data(term)
+      })
+
+    assert [%{graph: %{title: "Search privacy sync"}}] = Search.search_public(term)
+
+    graph
+    |> Ecto.Changeset.change(%{is_public: false})
+    |> Dialectic.Repo.update!()
+
+    assert Search.search_public(term) == []
+  end
+
   defp graph_data(term, opts \\ []) do
     deleted = Keyword.get(opts, :deleted, false)
 

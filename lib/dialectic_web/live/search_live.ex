@@ -59,6 +59,9 @@ defmodule DialecticWeb.SearchLive do
             phx-submit="search"
             class="relative mt-6 max-w-3xl"
           >
+            <label for="global-search-input" class="sr-only">
+              Search public ideas, explanations, and sources
+            </label>
             <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-500">
               <.icon name="hero-magnifying-glass" class="h-5 w-5" />
             </span>
