@@ -12,7 +12,8 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
       assert prompt =~ "Technical terms, nuance, and more primary material"
       assert prompt =~ "Assume advanced subject knowledge"
       assert prompt =~ "formalism, models, and methodological detail"
-      assert prompt =~ "roughly 200-350 words"
+      assert prompt =~ "sustained analysis rather than a compressed overview"
+      assert prompt =~ "roughly 350-600 words"
     end
 
     test "returns simple-level complexity" do
@@ -26,7 +27,8 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
       assert prompt =~ "Plain language, everyday examples, and metaphors"
       assert prompt =~ "Assume no prior subject knowledge"
       assert prompt =~ "common words and short, direct sentences"
-      assert prompt =~ "roughly 100-160 words"
+      assert prompt =~ "one central takeaway and the most useful concrete example"
+      assert prompt =~ "roughly 150-250 words"
     end
 
     test "returns high-school-level complexity" do
@@ -40,7 +42,8 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
       assert prompt =~ "Clear concepts with a little subject vocabulary"
       assert prompt =~ "broad high-school education but no specialist coursework"
       assert prompt =~ "define each unfamiliar term on first use"
-      assert prompt =~ "roughly 120-200 words"
+      assert prompt =~ "central explanation, its most important cause-and-effect relationship"
+      assert prompt =~ "roughly 200-350 words"
     end
 
     test "returns university-level complexity by default" do
@@ -54,7 +57,8 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
       assert prompt =~ "More precise terminology and broader context"
       assert prompt =~ "educated reader who is new to this specific field"
       assert prompt =~ "broad consensus from live debate"
-      assert prompt =~ "roughly 150-250 words"
+      assert prompt =~ "Develop multiple relevant dimensions"
+      assert prompt =~ "roughly 250-500 words"
     end
 
     test "returns university-level complexity for :university mode" do
@@ -76,6 +80,14 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
 
       assert prompt =~ "Complexity level: University"
       assert prompt =~ "More precise terminology and broader context"
+    end
+
+    test "increases output budgets with the requested depth" do
+      assert PromptsStructured.max_output_tokens(:simple) == 2_048
+      assert PromptsStructured.max_output_tokens(:high_school) == 4_096
+      assert PromptsStructured.max_output_tokens(:university) == 6_144
+      assert PromptsStructured.max_output_tokens(:expert) == 8_192
+      assert PromptsStructured.max_output_tokens(:unknown) == 6_144
     end
 
     test "includes common structure" do

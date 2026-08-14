@@ -5,7 +5,7 @@ defmodule Dialectic.Responses.RequestQueueWorkerTest do
   import Ecto.Query
 
   alias Dialectic.Repo
-  alias Dialectic.Responses.RequestQueue
+  alias Dialectic.Responses.{ModeServer, PromptsStructured, RequestQueue}
   alias Dialectic.Workers.{LLMWorker, LocalWorker}
 
   setup do
@@ -49,6 +49,28 @@ defmodule Dialectic.Responses.RequestQueueWorkerTest do
 
       assert is_binary(job.args["actor_key"])
       refute job.args["actor_key"] =~ "reader@example.com"
+    end
+
+    test "snapshots a progressively larger output budget for each answer level" do
+      request_id = System.unique_integer([:positive])
+
+      for mode <- ModeServer.supported_modes() do
+        graph = "BudgetGraph-#{request_id}-#{mode}"
+        :ok = ModeServer.set_mode(graph, mode)
+        on_exit(fn -> ModeServer.delete_mode(graph) end)
+
+        assert {:ok, job} =
+                 RequestQueue.add(
+                   "Explain this",
+                   "SYSTEM",
+                   %Dialectic.Graph.Vertex{id: "node-#{mode}", user: "anonymous"},
+                   graph,
+                   "topic-#{mode}"
+                 )
+
+        persisted_job = Repo.get!(Oban.Job, job.id)
+        assert persisted_job.args["max_tokens"] == PromptsStructured.max_output_tokens(mode)
+      end
     end
 
     test "uses the stable anonymous session actor instead of the PubSub topic" do

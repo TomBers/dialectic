@@ -214,6 +214,7 @@ defmodule Dialectic.Workers.LLMWorker do
       {_connect_timeout, receive_timeout} = Dialectic.LLM.Provider.timeouts(provider_mod)
       finch_name = Dialectic.LLM.Provider.finch_name(provider_mod)
       provider_options = provider_mod.provider_options()
+      max_tokens = request_max_tokens(args, graph)
       request_started_at = System.monotonic_time()
 
       case ReqLLM.stream_text(
@@ -221,7 +222,7 @@ defmodule Dialectic.Workers.LLMWorker do
              ctx,
              api_key: api_key_val,
              finch_name: finch_name,
-             max_tokens: 4096,
+             max_tokens: max_tokens,
              provider_options: provider_options,
              receive_timeout: receive_timeout
            ) do
@@ -349,6 +350,19 @@ defmodule Dialectic.Workers.LLMWorker do
 
   def skip_existing_response?(1, content) when is_binary(content), do: byte_size(content) > 50
   def skip_existing_response?(_attempt, _content), do: false
+
+  @doc false
+  def request_max_tokens(args, graph) do
+    case Map.get(args, "max_tokens") do
+      max_tokens when is_integer(max_tokens) and max_tokens > 0 ->
+        max_tokens
+
+      _other ->
+        graph
+        |> ModeServer.get_mode()
+        |> PromptsStructured.max_output_tokens()
+    end
+  end
 
   def should_flush_stream?(first_chunk?, buffered_bytes, elapsed_ms) do
     first_chunk? or

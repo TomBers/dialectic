@@ -8,6 +8,7 @@ defmodule Dialectic.Responses.RequestQueue do
   import Ecto.Query
 
   alias Dialectic.Repo
+  alias Dialectic.Responses.{ModeServer, PromptsStructured}
   alias Dialectic.Workers.LLMWorker
   alias Dialectic.Workers.LocalWorker
 
@@ -143,6 +144,7 @@ defmodule Dialectic.Responses.RequestQueue do
   defp build_params(instruction, system_prompt, to_node, graph, request_context) do
     node_id = if is_map(to_node), do: to_node.id, else: to_node
     {live_view_topic, anonymous_actor_id} = split_request_context(request_context)
+    mode = ModeServer.get_mode(graph)
 
     %{
       instruction: instruction,
@@ -152,7 +154,8 @@ defmodule Dialectic.Responses.RequestQueue do
       graph: graph,
       module: nil,
       live_view_topic: live_view_topic,
-      actor_key: actor_key(to_node, graph, anonymous_actor_id)
+      actor_key: actor_key(to_node, graph, anonymous_actor_id),
+      max_tokens: PromptsStructured.max_output_tokens(mode)
     }
   end
 

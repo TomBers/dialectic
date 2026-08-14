@@ -192,11 +192,14 @@ defmodule Dialectic.Responses.PromptsTest do
       assert result =~ topic
     end
 
-    test "targets a shorter response for faster graph exploration" do
+    test "defers response depth and length to the selected complexity level" do
       result = Prompts.explain("Background", "Ethics")
 
-      assert result =~ "Aim for 140-220 words"
+      assert result =~
+               "Match the response depth and length specified by the selected complexity level"
+
       assert result =~ "Prioritize the strongest new insights"
+      refute result =~ "140-220 words"
     end
 
     test "emphasizes adding new insights" do
@@ -222,7 +225,8 @@ defmodule Dialectic.Responses.PromptsTest do
       assert result =~ "exact heading `## Follow-up questions`"
       assert result =~ "Include exactly 3 numbered questions"
       assert result =~ "single, self-contained question ending with a question mark"
-      assert result =~ "main answer to roughly 140-220 words"
+      assert result =~ "Match the main answer's depth and length to the selected complexity level"
+      refute result =~ "140-220 words"
       assert result =~ "Build on the Foundation"
     end
   end

@@ -163,7 +163,7 @@ defmodule Dialectic.Responses.Prompts do
       - Unexpected connections to other fields or ideas
       - Different perspectives or frameworks, especially ones that create productive tension
 
-      Aim for 140-220 words. Prioritize the strongest new insights rather than covering every possible angle.
+      Match the response depth and length specified by the selected complexity level. Prioritize the strongest new insights rather than covering every possible angle.
       """,
       citation_encouragement(),
       anti_repetition_footer()
@@ -187,7 +187,7 @@ defmodule Dialectic.Responses.Prompts do
       2. A clear, substantive answer that rewards the reader's attention
       3. A final section with the exact heading `## Follow-up questions`
 
-      Keep the main answer to roughly 140-220 words so there is always room for the final `## Follow-up questions` section.
+      Match the main answer's depth and length to the selected complexity level, while always leaving room for the final `## Follow-up questions` section.
 
       In the `## Follow-up questions` section:
       - Include exactly 3 numbered questions

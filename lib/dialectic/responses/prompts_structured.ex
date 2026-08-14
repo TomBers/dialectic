@@ -4,6 +4,20 @@ defmodule Dialectic.Responses.PromptsStructured do
   Minimal prompts favoring short, structured answers.
   """
 
+  @response_profiles %{
+    simple: %{target_length: "150-250 words", max_output_tokens: 2_048},
+    high_school: %{target_length: "200-350 words", max_output_tokens: 4_096},
+    university: %{target_length: "250-500 words", max_output_tokens: 6_144},
+    expert: %{target_length: "350-600 words", max_output_tokens: 8_192}
+  }
+
+  @doc false
+  def max_output_tokens(mode) do
+    mode
+    |> response_profile()
+    |> Map.fetch!(:max_output_tokens)
+  end
+
   def system_preamble(mode \\ :university) do
     persona =
       case mode do
@@ -31,7 +45,8 @@ defmodule Dialectic.Responses.PromptsStructured do
           - Prioritize analytical depth: surface assumptions, boundary conditions, uncertainty, tradeoffs, and second-order implications.
           - Evaluate evidence quality and methods, engage the strongest objections, and identify unresolved scholarly or professional debates.
           - Prefer primary literature and authoritative technical material over introductory summaries.
-          - Follow any task-specific length instruction. Otherwise, aim for roughly 200-350 words.
+          - Build a sustained analysis rather than a compressed overview, developing the relevant methods, evidence, objections, and limitations.
+          - Follow any task-specific length instruction. Otherwise, aim for roughly #{target_length(mode)}.
           """
 
         :simple ->
@@ -42,8 +57,9 @@ defmodule Dialectic.Responses.PromptsStructured do
           - Use common words and short, direct sentences. Avoid jargon; when a technical term is unavoidable, explain it immediately in plain language.
           - Explain one idea at a time with concrete everyday examples, analogies, or metaphors.
           - Focus on the central takeaway instead of exhaustive detail or layers of caveats. State essential uncertainty plainly.
+          - Keep the scope narrow: explain one central takeaway and the most useful concrete example.
           - Use short paragraphs and simple lists that are easy to scan.
-          - Follow any task-specific length instruction. Otherwise, aim for roughly 100-160 words.
+          - Follow any task-specific length instruction. Otherwise, aim for roughly #{target_length(mode)}.
           """
 
         :high_school ->
@@ -54,8 +70,9 @@ defmodule Dialectic.Responses.PromptsStructured do
           - Introduce a small amount of useful subject vocabulary and define each unfamiliar term on first use.
           - Explain cause and effect clearly, using familiar examples before moving to abstract ideas.
           - Include meaningful nuance or a competing perspective, but avoid specialist methodological detail unless the question requires it.
+          - Cover the central explanation, its most important cause-and-effect relationship, and one meaningful nuance or limitation.
           - Keep the structure clear enough for a motivated student to follow independently.
-          - Follow any task-specific length instruction. Otherwise, aim for roughly 120-200 words.
+          - Follow any task-specific length instruction. Otherwise, aim for roughly #{target_length(mode)}.
           """
 
         _ ->
@@ -67,7 +84,8 @@ defmodule Dialectic.Responses.PromptsStructured do
           - Explain relevant mechanisms, evidence, assumptions, historical or theoretical context, and practical implications.
           - Distinguish broad consensus from live debate and compare serious competing interpretations when relevant.
           - Connect the topic to broader frameworks or adjacent fields without losing focus.
-          - Follow any task-specific length instruction. Otherwise, aim for roughly 150-250 words.
+          - Develop multiple relevant dimensions, connecting mechanisms, evidence, context, competing interpretations, and implications where useful.
+          - Follow any task-specific length instruction. Otherwise, aim for roughly #{target_length(mode)}.
           """
       end
 
@@ -154,5 +172,15 @@ defmodule Dialectic.Responses.PromptsStructured do
     - Each response should contribute something genuinely new to the exploration.
 
     """
+  end
+
+  defp target_length(mode) do
+    mode
+    |> response_profile()
+    |> Map.fetch!(:target_length)
+  end
+
+  defp response_profile(mode) do
+    Map.get(@response_profiles, mode, Map.fetch!(@response_profiles, :university))
   end
 end
