@@ -389,7 +389,7 @@ defmodule DialecticWeb.CommunityLive do
             </.link>
             <span aria-hidden="true">·</span>
           <% end %>
-          <span>{updated_label(@graph)}</span>
+          <span aria-label={"Created " <> created_label(@graph)}>{created_label(@graph)}</span>
           <span aria-hidden="true">·</span>
           <span>{idea_count_label(@node_count)}</span>
         </div>

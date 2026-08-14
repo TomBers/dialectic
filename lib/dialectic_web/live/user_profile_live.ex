@@ -515,7 +515,7 @@ defmodule DialecticWeb.UserProfileLive do
           data-role="profile-public-grid-meta"
           class="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500"
         >
-          <span>{updated_label(@graph)}</span>
+          <span aria-label={"Created " <> created_label(@graph)}>{created_label(@graph)}</span>
           <span aria-hidden="true">·</span>
           <span>{profile_idea_count_label(@node_count)}</span>
         </div>
