@@ -244,29 +244,40 @@
       </div>
       <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <article class="border-t-4 border-sky-600 bg-white p-5 shadow-sm">
-          <.icon name="hero-question-mark-circle" class="h-5 w-5 text-sky-600" />
-          <h3 class="mt-3 text-base font-semibold">Ask AI</h3>
+          <div class="flex items-center gap-2">
+            <.icon name="hero-question-mark-circle" class="h-5 w-5 shrink-0 text-sky-600" />
+            <h3 class="text-base font-semibold">Ask AI</h3>
+          </div>
           <p class="mt-2 text-sm leading-6 text-slate-600">
             Create an answer connected to the idea you selected.
           </p>
         </article>
         <article class="border-t-4 border-teal-600 bg-white p-5 shadow-sm">
-          <.icon name="hero-chat-bubble-bottom-center-text" class="h-5 w-5 text-teal-600" />
-          <h3 class="mt-3 text-base font-semibold">Comment</h3>
+          <div class="flex items-center gap-2">
+            <.icon
+              name="hero-chat-bubble-bottom-center-text"
+              class="h-5 w-5 shrink-0 text-teal-600"
+            />
+            <h3 class="text-base font-semibold">Comment</h3>
+          </div>
           <p class="mt-2 text-sm leading-6 text-slate-600">
             Add your own point, concern, example, or question.
           </p>
         </article>
         <article class="border-t-4 border-amber-600 bg-white p-5 shadow-sm">
-          <.icon name="hero-cursor-arrow-rays" class="h-5 w-5 text-amber-600" />
-          <h3 class="mt-3 text-base font-semibold">Select a phrase</h3>
+          <div class="flex items-center gap-2">
+            <.icon name="hero-cursor-arrow-rays" class="h-5 w-5 shrink-0 text-amber-600" />
+            <h3 class="text-base font-semibold">Select a phrase</h3>
+          </div>
           <p class="mt-2 text-sm leading-6 text-slate-600">
             Open focused actions for one sentence or idea.
           </p>
         </article>
         <article class="border-t-4 border-indigo-600 bg-white p-5 shadow-sm">
-          <.icon name="hero-squares-plus" class="h-5 w-5 text-indigo-600" />
-          <h3 class="mt-3 text-base font-semibold">Find related ideas</h3>
+          <div class="flex items-center gap-2">
+            <.icon name="hero-squares-plus" class="h-5 w-5 shrink-0 text-indigo-600" />
+            <h3 class="text-base font-semibold">Find related ideas</h3>
+          </div>
           <p class="mt-2 text-sm leading-6 text-slate-600">
             Explore nearby topics and new directions.
           </p>
@@ -329,8 +340,10 @@
           {"hero-question-mark-circle", "What if", "What could change?", "Try the idea in a different situation."}
         ] do %>
           <article class="border-l-2 border-teal-300 bg-white/[0.06] p-4">
-            <.icon name={icon} class="h-5 w-5 text-teal-300" />
-            <h3 class="mt-3 text-sm font-semibold">{title}</h3>
+            <div class="flex items-center gap-2">
+              <.icon name={icon} class="h-5 w-5 shrink-0 text-teal-300" />
+              <h3 class="text-sm font-semibold">{title}</h3>
+            </div>
             <p class="mt-0.5 text-xs font-medium text-teal-200">{question}</p>
             <p class="mt-1 text-xs leading-5 text-slate-300">{copy}</p>
           </article>
@@ -384,15 +397,19 @@
         </p>
         <div class="mt-5 grid gap-3">
           <div id="guide-bookmark-nodes" class="border-t-2 border-amber-600 bg-white p-4">
-            <.icon name="hero-bookmark" class="h-5 w-5 text-amber-600" />
-            <h3 class="mt-2 text-sm font-semibold">Bookmark an idea</h3>
+            <div class="flex items-center gap-2">
+              <.icon name="hero-bookmark" class="h-5 w-5 shrink-0 text-amber-600" />
+              <h3 class="text-sm font-semibold">Bookmark an idea</h3>
+            </div>
             <p class="mt-1 text-xs leading-5 text-slate-600">
               Select the bookmark beside an idea. It appears with that grid in your <strong>saved thinking</strong>, where you can jump back to it.
             </p>
           </div>
           <div id="guide-save-highlights" class="border-t-2 border-indigo-600 bg-white p-4">
-            <.icon name="hero-bookmark-square" class="h-5 w-5 text-indigo-600" />
-            <h3 class="mt-2 text-sm font-semibold">Highlight a passage</h3>
+            <div class="flex items-center gap-2">
+              <.icon name="hero-bookmark-square" class="h-5 w-5 shrink-0 text-indigo-600" />
+              <h3 class="text-sm font-semibold">Highlight a passage</h3>
+            </div>
             <p class="mt-1 text-xs leading-5 text-slate-600">
               Select text and choose <strong>Save as a highlight</strong>. The quote, source, and any note are stored under
               <strong>Quotes and notes</strong>
@@ -400,8 +417,10 @@
             </p>
           </div>
           <div id="guide-export-grid" class="border-t-2 border-sky-600 bg-white p-4">
-            <.icon name="hero-arrow-down-tray" class="h-5 w-5 text-sky-700" />
-            <h3 class="mt-2 text-sm font-semibold">Export the grid</h3>
+            <div class="flex items-center gap-2">
+              <.icon name="hero-arrow-down-tray" class="h-5 w-5 shrink-0 text-sky-700" />
+              <h3 class="text-sm font-semibold">Export the grid</h3>
+            </div>
             <p class="mt-1 text-xs leading-5 text-slate-600">
               Under <strong>Settings → Export</strong>, download the grid for your notes, as an image to share, or as data for other tools.
             </p>
@@ -451,8 +470,10 @@
           {"03", "Share", "Present the path live or send its presentation link."}
         ] do %>
           <li class="bg-slate-950 p-4">
-            <p class="font-mono text-xs font-bold text-indigo-300">{number}</p>
-            <h3 class="mt-2 text-sm font-semibold text-white">{title}</h3>
+            <div class="flex items-center gap-2">
+              <p class="font-mono text-xs font-bold text-indigo-300">{number}</p>
+              <h3 class="text-sm font-semibold text-white">{title}</h3>
+            </div>
             <p class="mt-1 text-xs leading-5 text-slate-300">{copy}</p>
           </li>
         <% end %>
@@ -481,18 +502,22 @@
 
       <div class="mt-6 grid gap-px overflow-hidden border border-stone-300 bg-stone-300 lg:grid-cols-3">
         <article id="guide-live-editing" class="bg-[#f8f6f0] p-5">
-          <.icon name="hero-users" class="h-5 w-5 text-emerald-700" />
-          <h3 class="mt-3 text-base font-semibold text-slate-950">
-            Edit and talk together live
-          </h3>
+          <div class="flex items-center gap-2">
+            <.icon name="hero-users" class="h-5 w-5 shrink-0 text-emerald-700" />
+            <h3 class="text-base font-semibold text-slate-950">
+              Edit and talk together live
+            </h3>
+          </div>
           <p class="mt-2 text-sm leading-6 text-slate-600">
             Share an editable link so people can branch and comment in the same grid. See who is viewing and use live chat to coordinate. Chat is temporary; add a comment when an idea should remain in the grid.
           </p>
         </article>
 
         <article id="guide-grid-visibility" class="bg-[#f8f6f0] p-5">
-          <.icon name="hero-lock-closed" class="h-5 w-5 text-sky-700" />
-          <h3 class="mt-3 text-base font-semibold text-slate-950">Choose public or private</h3>
+          <div class="flex items-center gap-2">
+            <.icon name="hero-lock-closed" class="h-5 w-5 shrink-0 text-sky-700" />
+            <h3 class="text-base font-semibold text-slate-950">Choose public or private</h3>
+          </div>
           <p class="mt-2 text-sm leading-6 text-slate-600">
             Under <strong>Settings → Collaboration</strong>, set <strong>Visibility</strong>
             to <strong>Public</strong>
@@ -501,18 +526,22 @@
         </article>
 
         <article id="guide-public-profile" class="bg-[#f8f6f0] p-5">
-          <.icon name="hero-identification" class="h-5 w-5 text-indigo-700" />
-          <h3 class="mt-3 text-base font-semibold text-slate-950">
-            Publish through your profile
-          </h3>
+          <div class="flex items-center gap-2">
+            <.icon name="hero-identification" class="h-5 w-5 shrink-0 text-indigo-700" />
+            <h3 class="text-base font-semibold text-slate-950">
+              Publish through your profile
+            </h3>
+          </div>
           <p class="mt-2 text-sm leading-6 text-slate-600">
             Your public profile shows your bio and public grids. Share it as a growing record of your work. Private grids and saved ideas remain visible only to you.
           </p>
         </article>
 
         <article id="guide-contribution-history" class="bg-[#f8f6f0] p-5">
-          <.icon name="hero-clipboard-document-list" class="h-5 w-5 text-emerald-700" />
-          <h3 class="mt-3 text-base font-semibold text-slate-950">See who added what</h3>
+          <div class="flex items-center gap-2">
+            <.icon name="hero-clipboard-document-list" class="h-5 w-5 shrink-0 text-emerald-700" />
+            <h3 class="text-base font-semibold text-slate-950">See who added what</h3>
+          </div>
           <p class="mt-2 text-sm leading-6 text-slate-600">
             Open <strong>Settings → Activity</strong>
             to see who added each question, branch, comment, or check. This helps teachers and teams see each person's work.
@@ -520,8 +549,10 @@
         </article>
 
         <article id="guide-follow-updates" class="bg-[#f8f6f0] p-5">
-          <.icon name="hero-bell" class="h-5 w-5 text-amber-700" />
-          <h3 class="mt-3 text-base font-semibold text-slate-950">Follow future updates</h3>
+          <div class="flex items-center gap-2">
+            <.icon name="hero-bell" class="h-5 w-5 shrink-0 text-amber-700" />
+            <h3 class="text-base font-semibold text-slate-950">Follow future updates</h3>
+          </div>
           <p class="mt-2 text-sm leading-6 text-slate-600">
             Select <strong>Follow</strong>
             at the top of a public grid. New changes appear in <strong>Activity</strong>. Use the
@@ -531,10 +562,12 @@
         </article>
 
         <article id="guide-focused-sharing" class="bg-[#f8f6f0] p-5">
-          <.icon name="hero-cursor-arrow-rays" class="h-5 w-5 text-rose-700" />
-          <h3 class="mt-3 text-base font-semibold text-slate-950">
-            Share or question exact text
-          </h3>
+          <div class="flex items-center gap-2">
+            <.icon name="hero-cursor-arrow-rays" class="h-5 w-5 shrink-0 text-rose-700" />
+            <h3 class="text-base font-semibold text-slate-950">
+              Share or question exact text
+            </h3>
+          </div>
           <p class="mt-2 text-sm leading-6 text-slate-600">
             Select a word or passage to save it with its own link. You can also ask about an unfamiliar word, book, or topic. The full passage stays attached to your question.
           </p>

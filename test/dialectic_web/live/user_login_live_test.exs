@@ -6,11 +6,12 @@ defmodule DialecticWeb.UserLoginLiveTest do
 
   describe "Log in page" do
     test "renders log in page", %{conn: conn} do
-      {:ok, _lv, html} = live(conn, ~p"/users/log_in")
+      {:ok, lv, html} = live(conn, ~p"/users/log_in")
 
       assert html =~ "Log in"
       assert html =~ "Register"
       assert html =~ "Forgot password?"
+      assert has_element?(lv, "#user_remember_me[checked]")
     end
 
     test "redirects if already logged in", %{conn: conn} do

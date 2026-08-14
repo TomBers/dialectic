@@ -23,7 +23,7 @@ defmodule DialecticWeb.AuthController do
       {:ok, user} ->
         conn
         |> put_flash(:info, "Successfully authenticated with Google.")
-        |> UserAuth.log_in_user(user)
+        |> UserAuth.log_in_user(user, %{"remember_me" => "true"})
 
       {:error, %Ecto.Changeset{} = changeset} ->
         errors =
