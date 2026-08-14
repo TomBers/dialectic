@@ -328,30 +328,48 @@ defmodule DialecticWeb.HomeLive do
         >
         </div>
         <div class="mx-auto w-full max-w-3xl px-5 py-12 sm:px-8 sm:py-16">
-          <div class="text-center">
-            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">Try it</p>
-            <h2 class="mt-3 font-serif text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
-              Start with a question.
+          <div id="home-mobile-community-start" class="text-center md:hidden">
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
+              Start here
+            </p>
+            <h2 class="mt-3 font-serif text-4xl font-semibold leading-tight tracking-tight">
+              Choose a question.
             </h2>
+            <p class="mx-auto mt-4 max-w-md text-base leading-7 text-slate-600">
+              Browse public grids and follow the ideas that interest you.
+            </p>
+            <.link
+              id="home-mobile-community-link"
+              navigate={~p"/community"}
+              class="mt-6 inline-flex min-h-11 items-center gap-2 rounded-md bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+            >
+              Browse community grids <.icon name="hero-arrow-right" class="h-4 w-4" />
+            </.link>
           </div>
 
-          <div
-            id="home-start-panel"
-            class="mt-7 rounded-xl bg-[linear-gradient(120deg,#2dd4bf_0%,#818cf8_52%,#fbbf24_100%)] p-[1px] shadow-[0_24px_60px_-38px_rgba(15,23,42,0.55)]"
-          >
-            <div class="rounded-[calc(0.75rem-1px)] bg-white p-4 sm:p-6">
-              <.live_component
-                module={DialecticWeb.NewIdeaFormComp}
-                id="new-idea-form"
-                form={@form}
-                placeholder="Ask a question or name a topic"
-                submit_label="Continue"
-                autofocus={@focus_new_grid}
-                minimal={true}
-              />
-              <p id="home-public-grid-note" class="mt-3 text-xs leading-5 text-slate-500">
-                New grids are public and editable by default. Anyone can read them and, while editing is on, add to them. Sign in first if you want to control access in Settings; never include sensitive information.
-              </p>
+          <div id="home-start-panel" class="hidden md:block">
+            <div class="text-center">
+              <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">Try it</p>
+              <h2 class="mt-3 font-serif text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
+                Start with a question.
+              </h2>
+            </div>
+
+            <div class="mt-7 rounded-xl bg-[linear-gradient(120deg,#2dd4bf_0%,#818cf8_52%,#fbbf24_100%)] p-[1px] shadow-[0_24px_60px_-38px_rgba(15,23,42,0.55)]">
+              <div class="rounded-[calc(0.75rem-1px)] bg-white p-4 sm:p-6">
+                <.live_component
+                  module={DialecticWeb.NewIdeaFormComp}
+                  id="new-idea-form"
+                  form={@form}
+                  placeholder="Ask a question or name a topic"
+                  submit_label="Continue"
+                  autofocus={@focus_new_grid}
+                  minimal={true}
+                />
+                <p id="home-public-grid-note" class="mt-3 text-xs leading-5 text-slate-500">
+                  New grids are public and editable by default. Anyone can read them and, while editing is on, add to them. Sign in first if you want to control access in Settings; never include sensitive information.
+                </p>
+              </div>
             </div>
           </div>
         </div>
