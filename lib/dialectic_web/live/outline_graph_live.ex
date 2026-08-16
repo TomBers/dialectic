@@ -671,6 +671,7 @@ defmodule DialecticWeb.OutlineGraphLive do
         title: display_title(node),
         full_title: display_title(node, max_length: :infinity),
         class: Map.get(node, :class, "default"),
+        response_level: Map.get(node, :response_level),
         branch?: length(children) > 1
       }
     end)
@@ -1046,6 +1047,24 @@ defmodule DialecticWeb.OutlineGraphLive do
       Keyword.put(socket.assigns.nav_params, :highlight, highlight_id)
     )
   end
+
+  defp response_level_label("simple"), do: "Plain"
+  defp response_level_label("high_school"), do: "Standard"
+  defp response_level_label("university"), do: "Detailed"
+  defp response_level_label("expert"), do: "Expert"
+  defp response_level_label(_response_level), do: nil
+
+  defp response_level_badge_class("simple"), do: "bg-slate-100 text-slate-700 ring-slate-600/10"
+  defp response_level_badge_class("high_school"), do: "bg-sky-50 text-sky-700 ring-sky-600/15"
+
+  defp response_level_badge_class("university"),
+    do: "bg-indigo-50 text-indigo-700 ring-indigo-600/15"
+
+  defp response_level_badge_class("expert"),
+    do: "bg-amber-50 text-amber-800 ring-amber-600/20"
+
+  defp response_level_badge_class(_response_level),
+    do: "bg-slate-100 text-slate-700 ring-slate-600/10"
 
   defp outline_indent_style(indent, step \\ 0.45) do
     visible_indent = min(max(indent, 0), @max_outline_indent)

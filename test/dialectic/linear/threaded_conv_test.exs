@@ -133,6 +133,16 @@ defmodule Dialectic.Linear.ThreadedConvTest do
       assert Map.has_key?(first, :content)
       assert Map.has_key?(first, :class)
       assert Map.has_key?(first, :user)
+      assert Map.has_key?(first, :response_level)
+    end
+
+    test "supports in-memory vertices created before response levels were added" do
+      legacy_vertex =
+        %Vertex{id: "legacy", content: "Older response", class: "answer"}
+        |> Map.delete(:response_level)
+
+      assert [%{response_level: nil}] =
+               ThreadedConv.format_for_rendering([{"legacy", 0, legacy_vertex}])
     end
   end
 

@@ -155,6 +155,7 @@ defmodule Dialectic.Responses.RequestQueue do
       module: nil,
       live_view_topic: live_view_topic,
       actor_key: actor_key(to_node, graph, anonymous_actor_id),
+      response_level: mode |> PromptsStructured.response_profile() |> Map.fetch!(:key),
       max_tokens: PromptsStructured.max_output_tokens(mode)
     }
   end

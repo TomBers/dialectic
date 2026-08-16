@@ -139,6 +139,7 @@
           <%= for row <- @outline_nodes do %>
             <% selected? = @selected_node_id == row.id %>
             <% in_path? = MapSet.member?(@selected_path_ids, row.id) %>
+            <% row_response_level = Map.get(row, :response_level) %>
             <.link
               id={"outline-node-#{row.id}"}
               patch={graph_path(@graph_struct, row.id, @nav_params)}
@@ -183,6 +184,21 @@
                 </div>
 
                 <div class="flex items-center gap-2 text-[11px]">
+                  <span
+                    :if={response_level_label(row_response_level)}
+                    id={"outline-response-level-#{row.id}"}
+                    data-response-level={row_response_level}
+                    class={[
+                      "rounded-full px-2 py-0.5 font-semibold ring-1 ring-inset",
+                      response_level_badge_class(row_response_level)
+                    ]}
+                    title={
+                      "Generated using the #{response_level_label(row_response_level)} answer level"
+                    }
+                  >
+                    {response_level_label(row_response_level)}
+                  </span>
+
                   <%= cond do %>
                     <% selected? -> %>
                       <span class="rounded-full bg-blue-100 px-2 py-0.5 font-semibold text-blue-700">
@@ -236,6 +252,7 @@
                     <%= for row <- @outline_nodes do %>
                       <% selected? = @selected_node_id == row.id %>
                       <% in_path? = MapSet.member?(@selected_path_ids, row.id) %>
+                      <% row_response_level = Map.get(row, :response_level) %>
                       <.link
                         id={"outline-mobile-node-#{row.id}"}
                         patch={graph_path(@graph_struct, row.id, @nav_params)}
@@ -281,6 +298,21 @@
                           </div>
 
                           <div class="flex items-center gap-2 text-[11px]">
+                            <span
+                              :if={response_level_label(row_response_level)}
+                              id={"outline-mobile-response-level-#{row.id}"}
+                              data-response-level={row_response_level}
+                              class={[
+                                "rounded-full px-2 py-0.5 font-semibold ring-1 ring-inset",
+                                response_level_badge_class(row_response_level)
+                              ]}
+                              title={
+                                "Generated using the #{response_level_label(row_response_level)} answer level"
+                              }
+                            >
+                              {response_level_label(row_response_level)}
+                            </span>
+
                             <%= cond do %>
                               <% selected? -> %>
                                 <span class="rounded-full bg-blue-100 px-2 py-0.5 font-semibold text-blue-700">
@@ -307,6 +339,7 @@
           <% last_reading_index = length(@reading_chain) - 1 %>
           <section id="outline-reading-flow" class="-mx-5 space-y-0 sm:mx-0 sm:space-y-5">
             <%= for {reading_node, index} <- Enum.with_index(@reading_chain) do %>
+              <% reading_response_level = Map.get(reading_node, :response_level) %>
               <article
                 id={"reading-node-#{reading_node.id}"}
                 class={[
@@ -326,6 +359,21 @@
                       DialecticWeb.ColUtils.badge_class(reading_node.class)
                     ]}>
                       {DialecticWeb.ColUtils.node_type_label(reading_node.class)}
+                    </span>
+                    <span
+                      :if={response_level_label(reading_response_level)}
+                      id={"reader-response-level-#{reading_node.id}"}
+                      data-response-level={reading_response_level}
+                      class={[
+                        "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ring-inset",
+                        response_level_badge_class(reading_response_level)
+                      ]}
+                      title={
+                        "Generated using the #{response_level_label(reading_response_level)} answer level"
+                      }
+                    >
+                      <.icon name="hero-adjustments-horizontal" class="h-3 w-3" />
+                      {response_level_label(reading_response_level)} level
                     </span>
                   </div>
                   <% bookmarked? = MapSet.member?(@bookmarked_node_ids, reading_node.id) %>

@@ -61,7 +61,7 @@ defmodule Dialectic.Graph.Creator do
         callback.("Preparing response...")
 
         # Create the empty answer node connected to origin
-        answer_node = create_answer_node_struct(title, updated_origin, user_identity)
+        answer_node = create_answer_node_struct(title, updated_origin, user_identity, mode)
 
         queue_result =
           queue_streaming_response(title, updated_origin, answer_node, mode, actor_id)
@@ -117,13 +117,14 @@ defmodule Dialectic.Graph.Creator do
     "AI generation could not be queued. Please regenerate this answer shortly."
   end
 
-  defp create_answer_node_struct(title, parent, user_identity) do
+  defp create_answer_node_struct(title, parent, user_identity, mode) do
     vertex = %Vertex{
       content: "",
       class: "answer",
       user: user_identity,
       parent: nil,
-      prompt_kind: "initial_explainer"
+      prompt_kind: "initial_explainer",
+      response_level: Atom.to_string(mode)
     }
 
     node = GraphManager.add_node(title, vertex)

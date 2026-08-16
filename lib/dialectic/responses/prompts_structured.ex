@@ -5,16 +5,43 @@ defmodule Dialectic.Responses.PromptsStructured do
   """
 
   @response_profiles %{
-    simple: %{target_length: "150-250 words", max_output_tokens: 2_048},
-    high_school: %{target_length: "200-350 words", max_output_tokens: 4_096},
-    university: %{target_length: "250-500 words", max_output_tokens: 6_144},
-    expert: %{target_length: "350-600 words", max_output_tokens: 8_192}
+    simple: %{
+      key: "simple",
+      label: "Plain",
+      min_words: 150,
+      max_words: 250,
+      max_output_tokens: 2_048
+    },
+    high_school: %{
+      key: "high_school",
+      label: "Standard",
+      min_words: 200,
+      max_words: 350,
+      max_output_tokens: 4_096
+    },
+    university: %{
+      key: "university",
+      label: "Detailed",
+      min_words: 250,
+      max_words: 500,
+      max_output_tokens: 6_144
+    },
+    expert: %{
+      key: "expert",
+      label: "Expert",
+      min_words: 350,
+      max_words: 600,
+      max_output_tokens: 8_192
+    }
   }
+
+  @doc false
+  def response_profile(mode), do: profile_for(mode)
 
   @doc false
   def max_output_tokens(mode) do
     mode
-    |> response_profile()
+    |> profile_for()
     |> Map.fetch!(:max_output_tokens)
   end
 
@@ -46,7 +73,7 @@ defmodule Dialectic.Responses.PromptsStructured do
           - Evaluate evidence quality and methods, engage the strongest objections, and identify unresolved scholarly or professional debates.
           - Prefer primary literature and authoritative technical material over introductory summaries.
           - Build a sustained analysis rather than a compressed overview, developing the relevant methods, evidence, objections, and limitations.
-          - Follow any task-specific length instruction. Otherwise, aim for roughly #{target_length(mode)}.
+          - #{length_requirement(mode)}
           """
 
         :simple ->
@@ -59,7 +86,7 @@ defmodule Dialectic.Responses.PromptsStructured do
           - Focus on the central takeaway instead of exhaustive detail or layers of caveats. State essential uncertainty plainly.
           - Keep the scope narrow: explain one central takeaway and the most useful concrete example.
           - Use short paragraphs and simple lists that are easy to scan.
-          - Follow any task-specific length instruction. Otherwise, aim for roughly #{target_length(mode)}.
+          - #{length_requirement(mode)}
           """
 
         :high_school ->
@@ -72,7 +99,7 @@ defmodule Dialectic.Responses.PromptsStructured do
           - Include meaningful nuance or a competing perspective, but avoid specialist methodological detail unless the question requires it.
           - Cover the central explanation, its most important cause-and-effect relationship, and one meaningful nuance or limitation.
           - Keep the structure clear enough for a motivated student to follow independently.
-          - Follow any task-specific length instruction. Otherwise, aim for roughly #{target_length(mode)}.
+          - #{length_requirement(mode)}
           """
 
         _ ->
@@ -85,7 +112,7 @@ defmodule Dialectic.Responses.PromptsStructured do
           - Distinguish broad consensus from live debate and compare serious competing interpretations when relevant.
           - Connect the topic to broader frameworks or adjacent fields without losing focus.
           - Develop multiple relevant dimensions, connecting mechanisms, evidence, context, competing interpretations, and implications where useful.
-          - Follow any task-specific length instruction. Otherwise, aim for roughly #{target_length(mode)}.
+          - #{length_requirement(mode)}
           """
       end
 
@@ -160,6 +187,20 @@ defmodule Dialectic.Responses.PromptsStructured do
     - Stick to the user's scope; avoid digressions.
     - Keep the response concise and focused within the selected complexity level and any task-specific length instruction.
 
+    Source output requirement
+    - When the answer makes material externally checkable factual claims, include a `## Sources` section with 1-4 bullets that support the most important claims.
+    - Each source bullet must identify the author or organization, title, and year when known. Add a URL only when search grounding verified the exact destination.
+    - Connect sources to claims through clear attribution in the answer. A bare list of names or vague phrases such as "critics say" is not sufficient.
+    - If a reliable source cannot be identified, qualify or omit the claim instead of guessing a citation or presenting it as established fact.
+    - For an initial answer that requires `## Follow-up questions`, place `## Sources` immediately before that section. Otherwise, make `## Sources` the final section.
+    - The title, `## Sources`, and required follow-up questions do not count toward the response-body word range.
+
+    Final compliance check
+    - Before returning the answer, silently check the response-body word count and revise it to stay within the selected range. The upper bound is a hard maximum.
+    - Remove any fenced block, ASCII-art or box-drawing diagram, plain-text arrow diagram, or redundant formatting.
+    - Check that important factual claims have specific attribution and that a required `## Sources` section is present.
+    - Return only the corrected final answer; do not describe this check.
+
     #{source_integrity_contract}
     #{citation_guidelines}
     Graph-based exploration context
@@ -174,13 +215,15 @@ defmodule Dialectic.Responses.PromptsStructured do
     """
   end
 
-  defp target_length(mode) do
-    mode
-    |> response_profile()
-    |> Map.fetch!(:target_length)
+  defp length_requirement(mode) do
+    profile = profile_for(mode)
+
+    "Required response-body length: #{profile.min_words}-#{profile.max_words} words. " <>
+      "Treat #{profile.max_words} words as a hard maximum and plan the depth to fit; " <>
+      "follow a narrower task-specific limit when one is provided."
   end
 
-  defp response_profile(mode) do
+  defp profile_for(mode) do
     Map.get(@response_profiles, mode, Map.fetch!(@response_profiles, :university))
   end
 end

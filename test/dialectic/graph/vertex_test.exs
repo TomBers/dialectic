@@ -8,14 +8,27 @@ defmodule Dialectic.Graph.VertexTest do
   end
 
   describe "prompt provenance serialization" do
-    test "round-trips prompt_kind and remains compatible with older nodes" do
-      vertex = %Vertex{id: "1", class: "answer", prompt_kind: "initial_explainer"}
+    test "round-trips prompt provenance and remains compatible with older nodes" do
+      vertex = %Vertex{
+        id: "1",
+        class: "answer",
+        prompt_kind: "initial_explainer",
+        response_level: "expert"
+      }
 
-      assert %Vertex{prompt_kind: "initial_explainer"} =
+      assert %Vertex{prompt_kind: "initial_explainer", response_level: "expert"} =
                vertex |> Vertex.serialize() |> stringify_keys() |> Vertex.deserialize()
 
-      legacy_data = vertex |> Vertex.serialize() |> Map.delete(:prompt_kind) |> stringify_keys()
-      assert %Vertex{prompt_kind: nil} = Vertex.deserialize(legacy_data)
+      legacy_data =
+        vertex
+        |> Vertex.serialize()
+        |> Map.drop([:prompt_kind, :response_level])
+        |> stringify_keys()
+
+      assert %Vertex{prompt_kind: nil, response_level: nil} = Vertex.deserialize(legacy_data)
+
+      in_memory_legacy_vertex = Map.delete(vertex, :response_level)
+      assert Vertex.serialize(in_memory_legacy_vertex).response_level == nil
     end
   end
 

@@ -13,7 +13,8 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
       assert prompt =~ "Assume advanced subject knowledge"
       assert prompt =~ "formalism, models, and methodological detail"
       assert prompt =~ "sustained analysis rather than a compressed overview"
-      assert prompt =~ "roughly 350-600 words"
+      assert prompt =~ "Required response-body length: 350-600 words"
+      assert prompt =~ "Treat 600 words as a hard maximum"
     end
 
     test "returns simple-level complexity" do
@@ -28,7 +29,8 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
       assert prompt =~ "Assume no prior subject knowledge"
       assert prompt =~ "common words and short, direct sentences"
       assert prompt =~ "one central takeaway and the most useful concrete example"
-      assert prompt =~ "roughly 150-250 words"
+      assert prompt =~ "Required response-body length: 150-250 words"
+      assert prompt =~ "Treat 250 words as a hard maximum"
     end
 
     test "returns high-school-level complexity" do
@@ -43,7 +45,8 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
       assert prompt =~ "broad high-school education but no specialist coursework"
       assert prompt =~ "define each unfamiliar term on first use"
       assert prompt =~ "central explanation, its most important cause-and-effect relationship"
-      assert prompt =~ "roughly 200-350 words"
+      assert prompt =~ "Required response-body length: 200-350 words"
+      assert prompt =~ "Treat 350 words as a hard maximum"
     end
 
     test "returns university-level complexity by default" do
@@ -58,7 +61,8 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
       assert prompt =~ "educated reader who is new to this specific field"
       assert prompt =~ "broad consensus from live debate"
       assert prompt =~ "Develop multiple relevant dimensions"
-      assert prompt =~ "roughly 250-500 words"
+      assert prompt =~ "Required response-body length: 250-500 words"
+      assert prompt =~ "Treat 500 words as a hard maximum"
     end
 
     test "returns university-level complexity for :university mode" do
@@ -88,6 +92,12 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
       assert PromptsStructured.max_output_tokens(:university) == 6_144
       assert PromptsStructured.max_output_tokens(:expert) == 8_192
       assert PromptsStructured.max_output_tokens(:unknown) == 6_144
+
+      assert PromptsStructured.response_profile(:simple).label == "Plain"
+      assert PromptsStructured.response_profile(:high_school).label == "Standard"
+      assert PromptsStructured.response_profile(:university).label == "Detailed"
+      assert PromptsStructured.response_profile(:expert).label == "Expert"
+      assert PromptsStructured.response_profile(:unknown).key == "university"
     end
 
     test "includes common structure" do
@@ -99,6 +109,12 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
       assert prompt =~ "Use a table only for a genuine comparison"
       refute prompt =~ "Tables are welcome"
       assert prompt =~ "Style for structured mode"
+      assert prompt =~ "Source output requirement"
+      assert prompt =~ "include a `## Sources` section with 1-4 bullets"
+      assert prompt =~ "vague phrases such as \"critics say\" is not sufficient"
+      assert prompt =~ "place `## Sources` immediately before that section"
+      assert prompt =~ "Final compliance check"
+      assert prompt =~ "The upper bound is a hard maximum"
       assert prompt =~ "Graph-based exploration context"
     end
 

@@ -278,6 +278,20 @@ defmodule Dialectic.Workers.LLMWorker do
               stream_updates
             end
 
+          {final_full_text, stream_updates} =
+            case sanitize_response(final_full_text) do
+              ^final_full_text ->
+                {final_full_text, stream_updates}
+
+              sanitized_text ->
+                Logger.warning(
+                  "[LLMWorker] job_id=#{job_id} removed forbidden fenced content from the completed response"
+                )
+
+                Utils.set_node_content(graph, to_node, sanitized_text, live_view_topic)
+                {sanitized_text, stream_updates + 1}
+            end
+
           finish_reason = ReqLLM.StreamResponse.finish_reason(stream_resp)
 
           cond do
@@ -361,6 +375,19 @@ defmodule Dialectic.Workers.LLMWorker do
         graph
         |> ModeServer.get_mode()
         |> PromptsStructured.max_output_tokens()
+    end
+  end
+
+  @doc false
+  def sanitize_response(text) when is_binary(text) do
+    if String.contains?(text, "```") do
+      text
+      |> String.replace(~r/^[ \t]*```[^\n]*\n.*?^[ \t]*```[ \t]*$/ms, "")
+      |> String.replace(~r/^[ \t]*```[^\n]*$/m, "")
+      |> String.replace(~r/\n{3,}/, "\n\n")
+      |> String.trim()
+    else
+      text
     end
   end
 

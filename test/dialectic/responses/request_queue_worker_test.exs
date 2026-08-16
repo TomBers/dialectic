@@ -69,6 +69,7 @@ defmodule Dialectic.Responses.RequestQueueWorkerTest do
                  )
 
         persisted_job = Repo.get!(Oban.Job, job.id)
+        assert persisted_job.args["response_level"] == Atom.to_string(mode)
         assert persisted_job.args["max_tokens"] == PromptsStructured.max_output_tokens(mode)
       end
     end

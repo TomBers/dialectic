@@ -2,7 +2,17 @@ defmodule Dialectic.Graph.Vertex do
   require Logger
 
   @derive {Jason.Encoder,
-           only: [:id, :content, :class, :user, :noted_by, :deleted, :source_text, :prompt_kind]}
+           only: [
+             :id,
+             :content,
+             :class,
+             :user,
+             :noted_by,
+             :deleted,
+             :source_text,
+             :prompt_kind,
+             :response_level
+           ]}
   @valid_classes [
     "thesis",
     "antithesis",
@@ -41,7 +51,8 @@ defmodule Dialectic.Graph.Vertex do
             deleted: false,
             compound: false,
             source_text: nil,
-            prompt_kind: nil
+            prompt_kind: nil,
+            response_level: nil
 
   # Add a function to validate the class
   def validate_class(class) when class in @valid_classes, do: {:ok, class}
@@ -62,7 +73,8 @@ defmodule Dialectic.Graph.Vertex do
       deleted: vertex.deleted,
       compound: vertex.compound,
       source_text: source_text_value,
-      prompt_kind: vertex.prompt_kind
+      prompt_kind: vertex.prompt_kind,
+      response_level: Map.get(vertex, :response_level)
     }
   end
 
@@ -82,7 +94,8 @@ defmodule Dialectic.Graph.Vertex do
       deleted: data["deleted"],
       compound: data["compound"],
       source_text: source_text_value,
-      prompt_kind: data["prompt_kind"]
+      prompt_kind: data["prompt_kind"],
+      response_level: data["response_level"]
     }
   end
 
