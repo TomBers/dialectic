@@ -111,7 +111,7 @@ defmodule Dialectic.Responses.Prompts do
 
   defp diagram_output_constraint do
     """
-    **Output constraint:** Do not produce ASCII art, box-drawing diagrams, plain-text arrow diagrams, or conceptual diagrams inside fenced code blocks. Explain relationships with concise prose or an ordinary list instead. Use fenced blocks only for literal code, data, or syntax whose whitespace must be preserved.
+    **Formatting:** Follow the system Markdown structure. Do not use ASCII art, box-drawing, arrow, or conceptual code-block diagrams.
     """
   end
 
@@ -134,13 +134,13 @@ defmodule Dialectic.Responses.Prompts do
 
   defp citation_encouragement do
     """
-    **Source policy:** Follow the selected complexity level's source policy. When that level requires sources, use the specified number and type of sources and ensure they genuinely support the answer's most important claims. When it does not require sources, do not perform source research or add a `## Sources` section unless the user explicitly asks. Never use vague attribution such as "critics say."
+    **Evidence:** Follow the selected level's source and quotation requirements. Use specific attribution rather than vague phrases such as "critics say."
     """
   end
 
   defp citation_encouragement_for_arguments do
     """
-    **Evidence and sources:** Follow the selected complexity level's source policy. Clearly separate evidence from examples and analogies, which may illustrate a claim but do not establish it. When the selected level requires sources, ground key premises in the strongest relevant primary sources or empirical evidence and include the required `## Sources` section.
+    **Evidence:** Follow the selected level's source and quotation requirements. Separate documented evidence from examples or analogies, which illustrate a claim but do not establish it.
     """
   end
 
@@ -190,7 +190,7 @@ defmodule Dialectic.Responses.Prompts do
       1. A concise opening — lead with a well-supported fact, a counterintuitive insight, or a focused question that reframes the topic.
       2. An orienting foundation that defines the central concepts and explains the main mechanism, argument, or context a reader needs before branching further.
       3. One concrete example or case that makes the topic tangible without mistaking illustration for proof.
-      4. When the topic centers on an identifiable book, speech, law, paper, or other primary text and the selected source policy enables research, one brief verified direct quote (under 25 words) that preserves the author's voice, with specific attribution and a locator.
+      4. When the topic centers on an identifiable book, speech, law, paper, or other primary text and the selected source policy enables research, one brief verified direct quote (under 25 words) that preserves the author's voice. Render it as a Markdown blockquote and follow it with specific attribution and a locator.
       5. One meaningful tension, limitation, or competing perspective that prevents the foundation from feeling falsely settled and creates curiosity.
       6. A final section with the exact heading `## Follow-up questions`.
 

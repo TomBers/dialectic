@@ -220,10 +220,10 @@ defmodule Dialectic.Responses.PromptsTest do
                "opening-answer range of 250-350 words"
 
       assert Prompts.initial_explainer("", "Topic", :university) =~
-               "opening-answer range of 350-500 words"
+               "opening-answer range of 400-650 words"
 
       assert Prompts.initial_explainer("", "Topic", :expert) =~
-               "opening-answer range of 450-650 words"
+               "opening-answer range of 550-850 words"
     end
 
     test "generates initial answer prompt with exploration suggestions" do
@@ -236,9 +236,10 @@ defmodule Dialectic.Responses.PromptsTest do
       assert result =~ "exact heading `## Follow-up questions`"
       assert result =~ "Include exactly 3 numbered questions"
       assert result =~ "single, self-contained question ending with a question mark"
-      assert result =~ "opening-answer range of 350-500 words"
+      assert result =~ "opening-answer range of 400-650 words"
       assert result =~ "defines the central concepts and explains the main mechanism"
       assert result =~ "one brief verified direct quote (under 25 words)"
+      assert result =~ "Render it as a Markdown blockquote"
       assert result =~ "One meaningful tension, limitation, or competing perspective"
       assert result =~ "If the selected complexity level requires sources"
       refute result =~ "140-220 words"
@@ -403,9 +404,10 @@ defmodule Dialectic.Responses.PromptsTest do
             Prompts.clarify("Context", "Claim"),
             Prompts.what_if_selection("Context", "Selection")
           ] do
-        assert prompt =~ "Do not produce ASCII art, box-drawing diagrams"
-        assert prompt =~ "Explain relationships with concise prose or an ordinary list instead"
-        assert prompt =~ "Use fenced blocks only for literal code, data, or syntax"
+        assert prompt =~ "Follow the system Markdown structure"
+
+        assert prompt =~
+                 "Do not use ASCII art, box-drawing, arrow, or conceptual code-block diagrams"
       end
     end
   end

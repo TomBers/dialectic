@@ -193,11 +193,11 @@ defmodule DialecticWeb.HomeLiveTest do
     |> render_submit()
 
     refute has_element?(view, "#new-idea-mode-simple")
-    assert has_element?(view, "#new-idea-mode-high_school", "Clear concepts")
+    assert has_element?(view, "#new-idea-mode-high_school", "Simple language")
     assert has_element?(view, "#new-idea-mode-high_school", "Standard")
-    assert has_element?(view, "#new-idea-mode-university", "More precise terminology")
+    assert has_element?(view, "#new-idea-mode-university", "broader context")
     assert has_element?(view, "#new-idea-mode-university", "Detailed")
-    assert has_element?(view, "#new-idea-mode-expert", "Technical terms")
+    assert has_element?(view, "#new-idea-mode-expert", "Rigorous analysis")
   end
 
   test "logged in users see profile entry in the header without a settings link", %{conn: conn} do

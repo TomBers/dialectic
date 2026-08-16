@@ -296,9 +296,9 @@ defmodule DialecticWeb.RightPanelComp do
             </div>
             <div class="grid grid-cols-3 border border-stone-300 bg-white p-0.5 shadow-inner">
               <%= for {mode, label, description} <- [
-                {"high_school", "Standard", "Clear ideas with some key terms."},
-                {"university", "Detailed", "Precise terms and wider context."},
-                {"expert", "Expert", "Technical detail and primary material."}
+                {"high_school", "Standard", "Simple language and concrete examples."},
+                {"university", "Detailed", "Useful terminology, context, and nuance."},
+                {"expert", "Expert", "Rigorous evidence and competing views."}
               ] do %>
                 <button
                   type="button"
