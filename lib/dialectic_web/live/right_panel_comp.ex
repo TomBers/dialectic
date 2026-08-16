@@ -303,7 +303,13 @@ defmodule DialecticWeb.RightPanelComp do
                 <button
                   type="button"
                   id={"answer-level-#{mode}"}
-                  phx-click="set_prompt_mode"
+                  phx-click={
+                    Phoenix.LiveView.JS.push("set_prompt_mode")
+                    |> Phoenix.LiveView.JS.dispatch("toggle-panel",
+                      to: "#graph-layout",
+                      detail: %{id: "right-panel"}
+                    )
+                  }
                   phx-value-prompt_mode={mode}
                   aria-pressed={if(@prompt_mode == mode, do: "true", else: "false")}
                   class={[

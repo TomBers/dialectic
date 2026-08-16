@@ -212,6 +212,7 @@ defmodule DialecticWeb.GraphLiveTest do
 
       assert has_element?(view, "#graph-workspace-bar-level", "Standard")
       assert has_element?(view, "#answer-level-high_school[aria-pressed='true']")
+      assert has_element?(view, "#answer-level-high_school[phx-click*='toggle-panel']")
       refute has_element?(view, "#answer-level-simple")
     end
 

@@ -171,7 +171,7 @@ defmodule DialecticWeb.NewIdeaFormComp do
               </button>
             </div>
 
-            <div class="mt-3 w-full sm:w-auto">
+            <div class="mt-3 flex w-full justify-center">
               <div class="mx-auto flex w-full border border-stone-300 bg-white p-0.5 shadow-inner sm:inline-flex sm:w-auto">
                 <%= for {mode, label, description} <- [
                   {"high_school", "Standard", "Clear concepts with a little subject vocabulary."},
