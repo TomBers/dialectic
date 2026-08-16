@@ -10,6 +10,8 @@ defmodule Dialectic.Responses.PromptsStructured do
       label: "Standard",
       min_words: 150,
       max_words: 250,
+      initial_min_words: 250,
+      initial_max_words: 350,
       min_sources: 0,
       max_sources: 0,
       max_output_tokens: 2_048
@@ -19,6 +21,8 @@ defmodule Dialectic.Responses.PromptsStructured do
       label: "Detailed",
       min_words: 250,
       max_words: 500,
+      initial_min_words: 350,
+      initial_max_words: 500,
       min_sources: 2,
       max_sources: 4,
       max_output_tokens: 4_096
@@ -28,6 +32,8 @@ defmodule Dialectic.Responses.PromptsStructured do
       label: "Expert",
       min_words: 350,
       max_words: 600,
+      initial_min_words: 450,
+      initial_max_words: 650,
       min_sources: 4,
       max_sources: 6,
       max_output_tokens: 8_192
@@ -46,6 +52,12 @@ defmodule Dialectic.Responses.PromptsStructured do
       String.contains?(prompt, "Complexity level: University") -> {:ok, :university}
       true -> :error
     end
+  end
+
+  @doc false
+  def initial_word_range(mode) do
+    profile = profile_for(mode)
+    "#{profile.initial_min_words}-#{profile.initial_max_words} words"
   end
 
   @doc false
@@ -119,7 +131,8 @@ defmodule Dialectic.Responses.PromptsStructured do
           Citation and source referencing
           - Cite the primary sources, original research or data, official records, and strongest scholarly syntheses that bear directly on material claims.
           - Attribute competing views to specific authors, works, or schools when those details are known.
-          - Prefer precise paraphrase. Use a direct quote only under the source-integrity contract below.
+          - When analyzing an identifiable book, speech, law, paper, or other primary text, include 1-2 brief, high-value direct quotes when the exact wording materially advances the analysis.
+          - Keep each quote under 25 words and provide specific attribution plus a page, section, chapter, passage, or stable source locator.
           - Provide stable DOI, publisher, repository, or official links only when confident they are accurate.
           """
 
@@ -127,6 +140,7 @@ defmodule Dialectic.Responses.PromptsStructured do
           """
           Source handling
           - Do not perform source research or add a `## Sources` section unless the user explicitly asks for sources.
+          - Do not supply direct quotations unless the user provided the exact quoted text or explicitly requested source research.
           - Answer from established knowledge, qualify uncertainty plainly, and avoid unsupported specificity.
           """
 
@@ -135,7 +149,8 @@ defmodule Dialectic.Responses.PromptsStructured do
           Citation and source referencing
           - Reference primary sources, original research or data, official records, and strong scholarly syntheses when relevant.
           - Attribute debated positions to specific authors or works when those details are known.
-          - Prefer precise paraphrase. Use a direct quote only under the source-integrity contract below.
+          - When analyzing an identifiable book, speech, law, paper, or other primary text, include one brief direct quote when exact wording materially improves understanding.
+          - Keep the quote under 25 words and provide specific attribution plus a page, section, chapter, passage, or stable source locator.
           - Include stable DOI, publisher, repository, or official links only when confident they are accurate; quality matters more than quantity.
           """
       end
@@ -212,7 +227,7 @@ defmodule Dialectic.Responses.PromptsStructured do
     - Match the source to the claim and prioritize relevance and methodological strength: use primary sources, original data/research, and official records for original wording, events, and direct findings; use high-quality systematic reviews, consensus reports, and authoritative scholarly syntheses for the overall state of evidence; use reputable reporting for documented current events. Wikipedia, encyclopedias, and other reference sources are for orientation, not primary evidence.
     - Clearly distinguish documented fact, interpretation, inference, and speculation. Label hypothetical examples as hypothetical, not documented evidence.
     - Never invent or guess quotes, sources, study details (including methods or findings), publication details, or URLs. Prefer accurate paraphrase.
-    - Quote directly only when confident of the exact wording and able to provide a locator such as page, section, chapter, or stable passage reference.
+    - Use brief direct quotes when an author's exact wording materially advances understanding, but only when confident of the wording and able to provide a page, section, chapter, passage, or stable source locator.
     - Verify every linked destination through available search grounding and use the exact grounded URL. If search grounding does not verify a link, omit the URL and provide only a qualified bibliographic lead that states what needs verification.
     """
   end

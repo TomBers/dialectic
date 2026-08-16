@@ -67,7 +67,7 @@ defmodule DialecticWeb.HomeLive do
         {:noreply, put_flash(socket, :error, "Grid not found after creation")}
 
       graph ->
-        {:noreply, redirect(socket, to: graph_editor_path(graph))}
+        {:noreply, redirect(socket, to: graph_path(graph))}
     end
   end
 
@@ -114,8 +114,19 @@ defmodule DialecticWeb.HomeLive do
     loading = socket.assigns.loading_graph
 
     if loading do
-      new_steps = loading.steps ++ [status]
-      {:noreply, assign(socket, :loading_graph, %{loading | status: status, steps: new_steps})}
+      completed_steps =
+        if loading.status in ["Initializing...", status] do
+          loading.steps
+        else
+          loading.steps ++ [loading.status]
+        end
+
+      {:noreply,
+       assign(socket, :loading_graph, %{
+         loading
+         | status: status,
+           steps: completed_steps
+       })}
     else
       {:noreply, socket}
     end
@@ -142,6 +153,7 @@ defmodule DialecticWeb.HomeLive do
       mode: mode,
       title: title,
       actor_id: actor_id,
+      await_response: not Application.get_env(:dialectic, :sync_tasks_for_testing, false),
       progress_callback: fn status -> send(parent_pid, {:graph_creation_update, status}) end
     )
   end
@@ -172,7 +184,7 @@ defmodule DialecticWeb.HomeLive do
             end)
 
           existing_graph ->
-            redirect(socket, to: graph_editor_path(existing_graph))
+            redirect(socket, to: graph_path(existing_graph))
         end
     end
   end

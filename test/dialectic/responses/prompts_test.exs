@@ -214,7 +214,18 @@ defmodule Dialectic.Responses.PromptsTest do
     end
   end
 
-  describe "initial_explainer/2" do
+  describe "initial_explainer/3" do
+    test "uses a larger opening range for each answer level" do
+      assert Prompts.initial_explainer("", "Topic", :high_school) =~
+               "opening-answer range of 250-350 words"
+
+      assert Prompts.initial_explainer("", "Topic", :university) =~
+               "opening-answer range of 350-500 words"
+
+      assert Prompts.initial_explainer("", "Topic", :expert) =~
+               "opening-answer range of 450-650 words"
+    end
+
     test "generates initial answer prompt with exploration suggestions" do
       context = "Background context"
       topic = "What is quantum entanglement?"
@@ -225,7 +236,10 @@ defmodule Dialectic.Responses.PromptsTest do
       assert result =~ "exact heading `## Follow-up questions`"
       assert result =~ "Include exactly 3 numbered questions"
       assert result =~ "single, self-contained question ending with a question mark"
-      assert result =~ "Match the main answer's depth and length to the selected complexity level"
+      assert result =~ "opening-answer range of 350-500 words"
+      assert result =~ "defines the central concepts and explains the main mechanism"
+      assert result =~ "one brief verified direct quote (under 25 words)"
+      assert result =~ "One meaningful tension, limitation, or competing perspective"
       assert result =~ "If the selected complexity level requires sources"
       refute result =~ "140-220 words"
       assert result =~ "Build on the Foundation"

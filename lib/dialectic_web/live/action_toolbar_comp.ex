@@ -246,18 +246,18 @@ defmodule DialecticWeb.ActionToolbarComp do
             </span>
           </div>
 
-          <div class="divide-y divide-slate-200/80 rounded-xl border border-slate-200/80 bg-white/55 px-3">
+          <div class="grid gap-2 rounded-xl border border-slate-200 bg-slate-100/80 p-2 shadow-inner">
             <button
               id={"node-tool-pro-con-#{@graph_id}-#{@node && @node.id}"}
               type="button"
-              class="group grid w-full min-w-0 grid-cols-[1.75rem_minmax(0,1fr)_auto] items-start gap-3 py-3.5 text-left transition active:scale-[0.995] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              class="group grid w-full min-w-0 cursor-pointer grid-cols-[2.25rem_minmax(0,1fr)_auto] items-start gap-3 rounded-lg border border-slate-200 bg-white px-3 py-3 text-left shadow-sm transition hover:-translate-y-px hover:border-emerald-300 hover:bg-emerald-50/50 hover:shadow-md active:translate-y-0 active:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 disabled:cursor-not-allowed disabled:opacity-50"
               phx-click="node_branch"
               phx-value-id={@node && @node.id}
               disabled={is_nil(@graph_id)}
               title="Create supporting and opposing branches from this point"
             >
-              <span class="mt-0.5 inline-flex h-7 w-7 items-center justify-center rounded-lg bg-white text-emerald-700 ring-1 ring-slate-200/90">
-                <.icon name="hero-scale" class="h-4 w-4" />
+              <span class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-100 text-emerald-800 shadow-sm ring-1 ring-inset ring-emerald-300/80">
+                <.icon name="hero-scale" class="h-[18px] w-[18px]" />
               </span>
               <span class="min-w-0">
                 <span class="block text-[15px] font-semibold leading-5 text-slate-900">
@@ -276,7 +276,7 @@ defmodule DialecticWeb.ActionToolbarComp do
             <button
               id={"node-tool-connect-#{@graph_id}-#{@node && @node.id}"}
               type="button"
-              class="group grid w-full min-w-0 grid-cols-[1.75rem_minmax(0,1fr)_auto] items-start gap-3 py-3.5 text-left transition active:scale-[0.995] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-200 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              class="group grid w-full min-w-0 cursor-pointer grid-cols-[2.25rem_minmax(0,1fr)_auto] items-start gap-3 rounded-lg border border-slate-200 bg-white px-3 py-3 text-left shadow-sm transition hover:-translate-y-px hover:border-violet-300 hover:bg-violet-50/50 hover:shadow-md active:translate-y-0 active:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300 disabled:cursor-not-allowed disabled:opacity-50"
               phx-click={
                 Phoenix.LiveView.JS.dispatch("toggle-panel",
                   to: "#graph-layout",
@@ -290,8 +290,8 @@ defmodule DialecticWeb.ActionToolbarComp do
               aria-label="Connect this idea with another"
               title="Connect this idea with another"
             >
-              <span class="mt-0.5 inline-flex h-7 w-7 items-center justify-center rounded-lg bg-white text-violet-700 ring-1 ring-slate-200/90">
-                <.icon name="hero-arrows-pointing-in" class="h-4 w-4" />
+              <span class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-violet-100 text-violet-800 shadow-sm ring-1 ring-inset ring-violet-300/80">
+                <.icon name="hero-arrows-pointing-in" class="h-[18px] w-[18px]" />
               </span>
               <span class="min-w-0">
                 <span class="block text-[15px] font-semibold leading-5 text-slate-900">
@@ -310,15 +310,15 @@ defmodule DialecticWeb.ActionToolbarComp do
             <button
               id={"node-tool-related-#{@graph_id}-#{@node && @node.id}"}
               type="button"
-              class="group grid w-full min-w-0 grid-cols-[1.75rem_minmax(0,1fr)_auto] items-start gap-3 py-3.5 text-left transition active:scale-[0.995] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-200 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              class="group grid w-full min-w-0 cursor-pointer grid-cols-[2.25rem_minmax(0,1fr)_auto] items-start gap-3 rounded-lg border border-slate-200 bg-white px-3 py-3 text-left shadow-sm transition hover:-translate-y-px hover:border-orange-300 hover:bg-orange-50/50 hover:shadow-md active:translate-y-0 active:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 disabled:cursor-not-allowed disabled:opacity-50"
               phx-click="node_related_ideas"
               phx-value-id={@node && @node.id}
               disabled={is_nil(@graph_id)}
               title="Find related ideas"
               data-action="related-ideas"
             >
-              <span class="mt-0.5 inline-flex h-7 w-7 items-center justify-center rounded-lg bg-white text-orange-700 ring-1 ring-slate-200/90">
-                <.icon name="hero-light-bulb" class="h-4 w-4" />
+              <span class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-orange-100 text-orange-800 shadow-sm ring-1 ring-inset ring-orange-300/80">
+                <.icon name="hero-light-bulb" class="h-[18px] w-[18px]" />
               </span>
               <span class="min-w-0">
                 <span class="block text-[15px] font-semibold leading-5 text-slate-900">
@@ -370,25 +370,28 @@ defmodule DialecticWeb.ActionToolbarComp do
                 <h4 class="px-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
                   {section.title}
                 </h4>
-                <div class="grid min-w-0 gap-1 sm:grid-cols-2">
+                <div class="grid min-w-0 gap-2 sm:grid-cols-2">
                   <button
                     :for={tool <- section.tools}
                     id={"node-tool-#{tool.key}-#{@graph_id}-#{@node && @node.id}"}
                     type="button"
-                    class="group flex min-w-0 items-start gap-2.5 rounded-xl border border-transparent px-2.5 py-2.5 text-left transition hover:border-slate-200 hover:bg-white active:scale-[0.995] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 disabled:cursor-not-allowed disabled:opacity-50"
+                    class={[
+                      "group flex min-w-0 cursor-pointer items-start gap-3 rounded-lg px-3 py-3 text-left shadow-sm transition hover:-translate-y-px hover:shadow-md active:translate-y-0 active:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 disabled:cursor-not-allowed disabled:opacity-50",
+                      ColUtils.advanced_tool_surface_class(tool.key)
+                    ]}
                     phx-click={tool.event}
                     phx-value-id={@node && @node.id}
                     disabled={is_nil(@graph_id)}
                     title={tool.title}
                   >
                     <span class={[
-                      "mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-white ring-1 ring-slate-200/80",
-                      ColUtils.advanced_tool_text_class(tool.key)
+                      "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg shadow-sm ring-1 ring-inset ring-black/5",
+                      ColUtils.advanced_tool_icon_class(tool.key)
                     ]}>
-                      <.icon name={tool.icon} class="h-3.5 w-3.5" />
+                      <.icon name={tool.icon} class="h-[18px] w-[18px]" />
                     </span>
                     <span class="min-w-0">
-                      <span class="block text-xs font-semibold leading-4 text-slate-900">
+                      <span class="block text-sm font-semibold leading-5 text-slate-900">
                         {tool.label}
                       </span>
                       <span class="mt-0.5 block text-xs leading-4 text-slate-500">

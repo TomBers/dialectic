@@ -19,6 +19,8 @@ defmodule Dialectic.Responses.Prompts do
   3. Tasks are framed as continuations, not standalone answers
   """
 
+  alias Dialectic.Responses.PromptsStructured
+
   # Maximum character length for context in minimal context prompts.
   # Longer contexts are truncated to this length to keep prompts focused
   # while still providing grounding from the immediate parent node.
@@ -173,8 +175,10 @@ defmodule Dialectic.Responses.Prompts do
   @doc """
   Initial answer to a question, with suggestions for further exploration.
   """
-  @spec initial_explainer(String.t(), String.t()) :: String.t()
-  def initial_explainer(context, topic) do
+  @spec initial_explainer(String.t(), String.t(), atom() | String.t()) :: String.t()
+  def initial_explainer(context, topic, mode \\ :university) do
+    opening_word_range = PromptsStructured.initial_word_range(mode)
+
     join_blocks([
       frame_context(context),
       """
@@ -183,11 +187,14 @@ defmodule Dialectic.Responses.Prompts do
       **Your task:** Answer **#{sanitize_title(topic)}** in a way that sparks genuine curiosity.
 
       Include:
-      1. A concise opening — lead with a well-supported fact, a counterintuitive insight, or a focused question that reframes the topic
-      2. A clear, substantive answer that rewards the reader's attention
-      3. A final section with the exact heading `## Follow-up questions`
+      1. A concise opening — lead with a well-supported fact, a counterintuitive insight, or a focused question that reframes the topic.
+      2. An orienting foundation that defines the central concepts and explains the main mechanism, argument, or context a reader needs before branching further.
+      3. One concrete example or case that makes the topic tangible without mistaking illustration for proof.
+      4. When the topic centers on an identifiable book, speech, law, paper, or other primary text and the selected source policy enables research, one brief verified direct quote (under 25 words) that preserves the author's voice, with specific attribution and a locator.
+      5. One meaningful tension, limitation, or competing perspective that prevents the foundation from feeling falsely settled and creates curiosity.
+      6. A final section with the exact heading `## Follow-up questions`.
 
-      Match the main answer's depth and length to the selected complexity level, while always leaving room for the final `## Follow-up questions` section.
+      Keep the main answer within the opening-answer range of #{opening_word_range}. This task-specific range replaces the shorter follow-up response range. Always leave room for the final `## Follow-up questions` section.
 
       If the selected complexity level requires sources, place its required `## Sources` section immediately before `## Follow-up questions` so the follow-up section remains last.
 

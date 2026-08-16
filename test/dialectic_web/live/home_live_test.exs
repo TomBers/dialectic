@@ -117,6 +117,18 @@ defmodule DialecticWeb.HomeLiveTest do
     refute has_element?(view, "#home-profile-section")
   end
 
+  test "opens existing grids in the reader view", %{conn: conn} do
+    graph =
+      insert_graph(%{
+        title: "Existing Reader Grid #{System.unique_integer([:positive])}"
+      })
+
+    {:ok, view, _html} = live(conn, ~p"/")
+    render_submit(view, "reply-and-answer", %{"vertex" => %{"content" => graph.title}})
+
+    assert_redirect(view, ~p"/g/#{graph.slug}")
+  end
+
   test "renders a minimal start section", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/")
 

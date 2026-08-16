@@ -128,7 +128,8 @@ defmodule Dialectic.Responses.LlmInterface do
   @spec gen_initial_response(map(), map(), String.t(), String.t()) :: request_result()
   def gen_initial_response(node, child, graph_id, live_view_topic) do
     context = GraphManager.build_context(graph_id, node)
-    instruction = Prompts.initial_explainer(context, node.content || "")
+    mode = response_mode(child, graph_id)
+    instruction = Prompts.initial_explainer(context, node.content || "", mode)
     queue_response("initial_explainer", instruction, child, graph_id, live_view_topic)
   end
 

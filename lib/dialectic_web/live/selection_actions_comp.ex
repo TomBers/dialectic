@@ -231,7 +231,7 @@ defmodule DialecticWeb.SelectionActionsComp do
             </div>
 
             <div class={[
-              "mt-3 grid gap-px overflow-hidden rounded-xl border border-slate-200/80 bg-slate-200/80",
+              "mt-3 grid gap-2 rounded-xl border border-slate-200 bg-slate-100/80 p-2 shadow-inner",
               if(@highlight_only, do: "grid-cols-1", else: "grid-cols-1 sm:grid-cols-2")
             ]}>
               <%= if !@highlight_only do %>
@@ -242,10 +242,10 @@ defmodule DialecticWeb.SelectionActionsComp do
                   data-disable-if-links="explain"
                   disabled={!@can_edit}
                   title="Create an AI explanation"
-                  class="group grid w-full min-w-0 grid-cols-[1.5rem_minmax(0,1fr)_auto] items-start gap-2.5 bg-white/90 px-3 py-2.5 text-left transition hover:bg-white active:scale-[0.995] focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-200 disabled:cursor-not-allowed disabled:opacity-50"
+                  class="group grid w-full min-w-0 cursor-pointer grid-cols-[2.25rem_minmax(0,1fr)_auto] items-start gap-3 rounded-lg border border-slate-200 bg-white px-3 py-3 text-left shadow-sm transition hover:-translate-y-px hover:border-sky-300 hover:bg-sky-50/50 hover:shadow-md active:translate-y-0 active:shadow-sm focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  <span class="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-md bg-white text-sky-700 ring-1 ring-slate-200/90">
-                    <.icon name="hero-question-mark-circle" class="h-3.5 w-3.5" />
+                  <span class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-sky-100 text-sky-800 shadow-sm ring-1 ring-inset ring-sky-300/80">
+                    <.icon name="hero-question-mark-circle" class="h-[18px] w-[18px]" />
                   </span>
                   <span class="min-w-0">
                     <span class="block text-sm font-semibold leading-5 text-slate-900">
@@ -269,10 +269,10 @@ defmodule DialecticWeb.SelectionActionsComp do
                 data-disable-if-highlight="true"
                 disabled={!@can_edit}
                 title="Save this text selection as a highlight"
-                class="group grid w-full min-w-0 grid-cols-[1.5rem_minmax(0,1fr)_auto] items-start gap-2.5 bg-white/90 px-3 py-2.5 text-left transition hover:bg-white active:scale-[0.995] focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200 disabled:cursor-not-allowed disabled:opacity-50"
+                class="group grid w-full min-w-0 cursor-pointer grid-cols-[2.25rem_minmax(0,1fr)_auto] items-start gap-3 rounded-lg border border-slate-200 bg-white px-3 py-3 text-left shadow-sm transition hover:-translate-y-px hover:border-amber-300 hover:bg-amber-50/50 hover:shadow-md active:translate-y-0 active:shadow-sm focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <span class="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-md bg-white text-amber-700 ring-1 ring-slate-200/90">
-                  <.icon name="hero-bookmark" class="h-3.5 w-3.5" />
+                <span class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-amber-100 text-amber-800 shadow-sm ring-1 ring-inset ring-amber-300/80">
+                  <.icon name="hero-bookmark" class="h-[18px] w-[18px]" />
                 </span>
                 <span class="min-w-0">
                   <span class="block text-sm font-semibold leading-5 text-slate-900">
@@ -296,10 +296,10 @@ defmodule DialecticWeb.SelectionActionsComp do
                   data-disable-if-links="pro,con"
                   disabled={!@can_edit}
                   title="Analyze pros and cons"
-                  class="group grid w-full min-w-0 grid-cols-[1.5rem_minmax(0,1fr)_auto] items-start gap-2.5 bg-white/90 px-3 py-2.5 text-left transition hover:bg-white active:scale-[0.995] focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200 disabled:cursor-not-allowed disabled:opacity-50"
+                  class="group grid w-full min-w-0 cursor-pointer grid-cols-[2.25rem_minmax(0,1fr)_auto] items-start gap-3 rounded-lg border border-slate-200 bg-white px-3 py-3 text-left shadow-sm transition hover:-translate-y-px hover:border-emerald-300 hover:bg-emerald-50/50 hover:shadow-md active:translate-y-0 active:shadow-sm focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  <span class="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-md bg-white text-emerald-700 ring-1 ring-slate-200/90">
-                    <.icon name="hero-scale" class="h-3.5 w-3.5" />
+                  <span class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-100 text-emerald-800 shadow-sm ring-1 ring-inset ring-emerald-300/80">
+                    <.icon name="hero-scale" class="h-[18px] w-[18px]" />
                   </span>
                   <span class="min-w-0">
                     <span class="block text-sm font-semibold leading-5 text-slate-900">
@@ -322,10 +322,10 @@ defmodule DialecticWeb.SelectionActionsComp do
                   data-disable-if-links="related_idea"
                   disabled={!@can_edit}
                   title="Find related ideas"
-                  class="group grid w-full min-w-0 grid-cols-[1.5rem_minmax(0,1fr)_auto] items-start gap-2.5 bg-white/90 px-3 py-2.5 text-left transition hover:bg-white active:scale-[0.995] focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-200 disabled:cursor-not-allowed disabled:opacity-50"
+                  class="group grid w-full min-w-0 cursor-pointer grid-cols-[2.25rem_minmax(0,1fr)_auto] items-start gap-3 rounded-lg border border-slate-200 bg-white px-3 py-3 text-left shadow-sm transition hover:-translate-y-px hover:border-orange-300 hover:bg-orange-50/50 hover:shadow-md active:translate-y-0 active:shadow-sm focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  <span class="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-md bg-white text-orange-700 ring-1 ring-slate-200/90">
-                    <.icon name="hero-light-bulb" class="h-3.5 w-3.5" />
+                  <span class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-orange-100 text-orange-800 shadow-sm ring-1 ring-inset ring-orange-300/80">
+                    <.icon name="hero-light-bulb" class="h-[18px] w-[18px]" />
                   </span>
                   <span class="min-w-0">
                     <span class="block text-sm font-semibold leading-5 text-slate-900">
@@ -374,7 +374,7 @@ defmodule DialecticWeb.SelectionActionsComp do
                     <div class="px-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
                       {section.title}
                     </div>
-                    <div class="grid gap-1 sm:grid-cols-2">
+                    <div class="grid gap-2 sm:grid-cols-2">
                       <button
                         :for={tool <- section.tools}
                         type="button"
@@ -383,16 +383,19 @@ defmodule DialecticWeb.SelectionActionsComp do
                         data-disable-if-links={tool.key}
                         disabled={!@can_edit}
                         title={tool.title}
-                        class="group flex min-w-0 items-start gap-2.5 rounded-xl border border-transparent px-2.5 py-2.5 text-left transition hover:border-slate-200 hover:bg-slate-50 active:scale-[0.995] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 disabled:cursor-not-allowed disabled:opacity-50"
+                        class={[
+                          "group flex min-w-0 cursor-pointer items-start gap-3 rounded-lg px-3 py-3 text-left shadow-sm transition hover:-translate-y-px hover:shadow-md active:translate-y-0 active:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 disabled:cursor-not-allowed disabled:opacity-50",
+                          ColUtils.advanced_tool_surface_class(tool.key)
+                        ]}
                       >
                         <span class={[
-                          "mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-white ring-1 ring-slate-200/80",
-                          ColUtils.advanced_tool_text_class(tool.key)
+                          "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg shadow-sm ring-1 ring-inset ring-black/5",
+                          ColUtils.advanced_tool_icon_class(tool.key)
                         ]}>
-                          <.icon name={tool.icon} class="h-3.5 w-3.5" />
+                          <.icon name={tool.icon} class="h-[18px] w-[18px]" />
                         </span>
                         <span class="min-w-0">
-                          <span class="block text-xs font-semibold leading-4 text-slate-900">
+                          <span class="block text-sm font-semibold leading-5 text-slate-900">
                             {tool.label}
                           </span>
                           <span class="mt-0.5 block text-xs leading-4 text-slate-500">

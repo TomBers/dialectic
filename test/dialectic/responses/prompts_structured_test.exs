@@ -87,6 +87,9 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
       assert PromptsStructured.max_output_tokens(:university) == 4_096
       assert PromptsStructured.max_output_tokens(:expert) == 8_192
       assert PromptsStructured.max_output_tokens(:unknown) == 4_096
+      assert PromptsStructured.initial_word_range(:high_school) == "250-350 words"
+      assert PromptsStructured.initial_word_range(:university) == "350-500 words"
+      assert PromptsStructured.initial_word_range(:expert) == "450-650 words"
 
       assert PromptsStructured.response_profile(:simple)
              |> Map.take([:label, :min_sources, :max_sources]) ==
@@ -138,6 +141,22 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
       assert PromptsStructured.mode_from_preamble("Custom system prompt") == :error
     end
 
+    test "adds progressively richer verified quotation guidance" do
+      standard_prompt = PromptsStructured.system_preamble(:high_school)
+      detailed_prompt = PromptsStructured.system_preamble(:university)
+      expert_prompt = PromptsStructured.system_preamble(:expert)
+
+      assert standard_prompt =~ "Do not supply direct quotations unless the user provided"
+      assert detailed_prompt =~ "include one brief direct quote"
+      assert detailed_prompt =~ "Keep the quote under 25 words"
+      assert expert_prompt =~ "include 1-2 brief, high-value direct quotes"
+      assert expert_prompt =~ "Keep each quote under 25 words"
+
+      for prompt <- [detailed_prompt, expert_prompt] do
+        assert prompt =~ "page, section, chapter, passage, or stable source locator"
+      end
+    end
+
     test "discourages decorative and redundant formatting across reading levels" do
       for mode <- [:expert, :university, :high_school] do
         prompt = PromptsStructured.system_preamble(mode)
@@ -172,7 +191,7 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
                "study details (including methods or findings), publication details, or URLs"
 
       assert prompt =~ "Prefer accurate paraphrase"
-      assert prompt =~ "locator such as page, section, chapter"
+      assert prompt =~ "page, section, chapter, passage, or stable source locator"
       assert prompt =~ "Verify every linked destination through available search grounding"
       assert prompt =~ "omit the URL"
     end
@@ -187,7 +206,7 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
       for mode <- [:expert, :university] do
         prompt = PromptsStructured.system_preamble(mode)
         assert prompt =~ "Epistemic and source-integrity contract"
-        assert prompt =~ "Quote directly only when confident of the exact wording"
+        assert prompt =~ "Use brief direct quotes when an author's exact wording"
         assert prompt =~ "Never invent or guess quotes, sources"
       end
     end
