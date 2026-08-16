@@ -17,20 +17,13 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
       assert prompt =~ "Treat 600 words as a hard maximum"
     end
 
-    test "returns simple-level complexity" do
+    test "maps the legacy simple level to Standard" do
       prompt = PromptsStructured.system_preamble(:simple)
-      assert prompt =~ "SYSTEM"
 
-      assert prompt =~
-               "Persona: A patient explainer using plain, concrete language for a curious non-specialist, without condescension"
-
-      assert prompt =~ "Complexity level: Simple"
-      assert prompt =~ "Plain language, everyday examples, and metaphors"
-      assert prompt =~ "Assume no prior subject knowledge"
-      assert prompt =~ "common words and short, direct sentences"
-      assert prompt =~ "one central takeaway and the most useful concrete example"
+      assert prompt =~ "Complexity level: High School"
       assert prompt =~ "Required response-body length: 150-250 words"
-      assert prompt =~ "Treat 250 words as a hard maximum"
+      refute prompt =~ "Complexity level: Simple"
+      refute prompt =~ "Source output requirement"
     end
 
     test "returns high-school-level complexity" do
@@ -45,8 +38,10 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
       assert prompt =~ "broad high-school education but no specialist coursework"
       assert prompt =~ "define each unfamiliar term on first use"
       assert prompt =~ "central explanation, its most important cause-and-effect relationship"
-      assert prompt =~ "Required response-body length: 200-350 words"
-      assert prompt =~ "Treat 350 words as a hard maximum"
+      assert prompt =~ "Required response-body length: 150-250 words"
+      assert prompt =~ "Treat 250 words as a hard maximum"
+      assert prompt =~ "Do not perform source research or add a `## Sources` section"
+      refute prompt =~ "Source output requirement"
     end
 
     test "returns university-level complexity by default" do
@@ -88,22 +83,22 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
 
     test "increases output budgets with the requested depth" do
       assert PromptsStructured.max_output_tokens(:simple) == 2_048
-      assert PromptsStructured.max_output_tokens(:high_school) == 4_096
-      assert PromptsStructured.max_output_tokens(:university) == 6_144
+      assert PromptsStructured.max_output_tokens(:high_school) == 2_048
+      assert PromptsStructured.max_output_tokens(:university) == 4_096
       assert PromptsStructured.max_output_tokens(:expert) == 8_192
-      assert PromptsStructured.max_output_tokens(:unknown) == 6_144
+      assert PromptsStructured.max_output_tokens(:unknown) == 4_096
 
       assert PromptsStructured.response_profile(:simple)
              |> Map.take([:label, :min_sources, :max_sources]) ==
-               %{label: "Plain", min_sources: 1, max_sources: 2}
+               %{label: "Standard", min_sources: 0, max_sources: 0}
 
       assert PromptsStructured.response_profile(:high_school)
              |> Map.take([:label, :min_sources, :max_sources]) ==
-               %{label: "Standard", min_sources: 2, max_sources: 3}
+               %{label: "Standard", min_sources: 0, max_sources: 0}
 
       assert PromptsStructured.response_profile(:university)
              |> Map.take([:label, :min_sources, :max_sources]) ==
-               %{label: "Detailed", min_sources: 3, max_sources: 5}
+               %{label: "Detailed", min_sources: 2, max_sources: 4}
 
       assert PromptsStructured.response_profile(:expert)
              |> Map.take([:label, :min_sources, :max_sources]) ==
@@ -132,16 +127,19 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
     end
 
     test "recovers the snapshotted mode from an application system prompt" do
-      for mode <- [:simple, :high_school, :university, :expert] do
+      for mode <- [:high_school, :university, :expert] do
         assert PromptsStructured.mode_from_preamble(PromptsStructured.system_preamble(mode)) ==
                  {:ok, mode}
       end
+
+      assert PromptsStructured.mode_from_preamble(PromptsStructured.system_preamble(:simple)) ==
+               {:ok, :high_school}
 
       assert PromptsStructured.mode_from_preamble("Custom system prompt") == :error
     end
 
     test "discourages decorative and redundant formatting across reading levels" do
-      for mode <- [:expert, :university, :high_school, :simple] do
+      for mode <- [:expert, :university, :high_school] do
         prompt = PromptsStructured.system_preamble(mode)
 
         assert prompt =~ "Every formatting device must add information"
@@ -179,13 +177,18 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
       assert prompt =~ "omit the URL"
     end
 
-    test "keeps source-integrity rules consistent across reading levels" do
-      for mode <- [:expert, :university, :high_school, :simple] do
-        prompt = PromptsStructured.system_preamble(mode)
+    test "keeps anti-fabrication rules while minimizing Standard source work" do
+      standard_prompt = PromptsStructured.system_preamble(:high_school)
+      assert standard_prompt =~ "Epistemic integrity"
+      assert standard_prompt =~ "Never invent or guess quotes, sources"
+      assert standard_prompt =~ "Do not perform source research unless the user explicitly asks"
+      refute standard_prompt =~ "Epistemic and source-integrity contract"
 
+      for mode <- [:expert, :university] do
+        prompt = PromptsStructured.system_preamble(mode)
         assert prompt =~ "Epistemic and source-integrity contract"
         assert prompt =~ "Quote directly only when confident of the exact wording"
-        assert prompt =~ "links only when confident they are accurate"
+        assert prompt =~ "Never invent or guess quotes, sources"
       end
     end
   end

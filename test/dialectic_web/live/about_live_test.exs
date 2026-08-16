@@ -50,7 +50,7 @@ defmodule DialecticWeb.AboutLiveTest do
       assert has_element?(view, "#about-tools", "Explore freely. Keep what matters.")
       assert has_element?(view, "#about-tools", "Philosophy for All and Peter Worley")
       assert has_element?(view, "#about-explore-question", "Question any part")
-      assert has_element?(view, "#about-explore-level", "Plain, Standard, Detailed")
+      assert has_element?(view, "#about-explore-level", "Standard, Detailed, or Expert")
       assert has_element?(view, "#about-explore-branches", "separate branches")
 
       assert has_element?(

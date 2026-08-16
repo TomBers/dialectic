@@ -224,6 +224,18 @@ defmodule Dialectic.Workers.LLMWorker do
         receive_timeout: receive_timeout
       ]
 
+      thinking_level = Keyword.get(provider_options, :google_thinking_level, "default")
+
+      grounding? =
+        case Keyword.get(provider_options, :google_grounding) do
+          %{enable: enabled?} -> enabled?
+          _other -> false
+        end
+
+      Logger.info(
+        "[LLMWorker] job_id=#{job_id} response_level=#{Map.get(args, "response_level", "unknown")} max_tokens=#{max_tokens} thinking_level=#{thinking_level} grounding=#{grounding?}"
+      )
+
       request_started_at = System.monotonic_time()
 
       case ReqLLM.stream_text(model_spec, ctx, request_options) do
@@ -355,7 +367,7 @@ defmodule Dialectic.Workers.LLMWorker do
   defp provider_options(provider_mod, response_level) do
     mode =
       case response_level do
-        "simple" -> :simple
+        "simple" -> :high_school
         "high_school" -> :high_school
         "expert" -> :expert
         _other -> :university

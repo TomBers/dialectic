@@ -133,7 +133,7 @@ defmodule Dialectic.Graph.ImporterTest do
       assert updated.share_token == inserted.share_token
       assert updated.tags == ["updated"]
       refute updated.is_public
-      assert updated.prompt_mode == "simple"
+      assert updated.prompt_mode == "high_school"
       assert [%{"content" => "Updated"}] = updated.data["nodes"]
     end
   end

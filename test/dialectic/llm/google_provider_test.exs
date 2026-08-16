@@ -3,28 +3,27 @@ defmodule Dialectic.LLM.GoogleProviderTest do
 
   alias Dialectic.LLM.Providers.Google
 
-  test "uses Gemini Flash with low thinking and search grounding by default" do
-    assert Google.model() == "gemini-3.7-flash"
+  test "uses Gemini Flash with the fast Standard profile by default" do
+    assert Google.model() == "gemini-3.5-flash-lite"
 
     assert Google.provider_options() == [
-             google_thinking_level: "low",
-             google_grounding: %{enable: true}
+             google_thinking_level: "minimal",
+             google_grounding: %{enable: false}
            ]
   end
 
-  test "maps app modes to thinking levels while retaining search grounding" do
+  test "maps app modes to thinking and grounding profiles" do
     expectations = [
-      simple: "low",
-      high_school: "low",
-      university: "medium",
-      expert: "high",
-      unknown: "medium"
+      high_school: {"minimal", false},
+      university: {"low", true},
+      expert: {"medium", true},
+      unknown: {"low", false}
     ]
 
-    for {mode, thinking_level} <- expectations do
+    for {mode, {thinking_level, grounding?}} <- expectations do
       assert Google.provider_options(mode) == [
                google_thinking_level: thinking_level,
-               google_grounding: %{enable: true}
+               google_grounding: %{enable: grounding?}
              ]
     end
   end

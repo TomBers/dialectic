@@ -283,8 +283,7 @@ defmodule DialecticWeb.AdminGraphImportLive do
                 options={[
                   {"Expert", "expert"},
                   {"Detailed", "university"},
-                  {"Standard", "high_school"},
-                  {"Plain", "simple"}
+                  {"Standard", "high_school"}
                 ]}
               />
               <.input

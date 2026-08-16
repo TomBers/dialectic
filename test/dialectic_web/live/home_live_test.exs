@@ -180,8 +180,7 @@ defmodule DialecticWeb.HomeLiveTest do
     |> form("#new-idea-form", vertex: %{content: "Why do habits persist?"})
     |> render_submit()
 
-    assert has_element?(view, "#new-idea-mode-simple", "Plain language, everyday examples")
-    assert has_element?(view, "#new-idea-mode-simple", "Plain")
+    refute has_element?(view, "#new-idea-mode-simple")
     assert has_element?(view, "#new-idea-mode-high_school", "Clear concepts")
     assert has_element?(view, "#new-idea-mode-high_school", "Standard")
     assert has_element?(view, "#new-idea-mode-university", "More precise terminology")

@@ -27,6 +27,19 @@ defmodule Dialectic.Responses.RequestQueueWorkerTest do
     :ok
   end
 
+  describe "supported answer levels" do
+    test "exposes three levels and maps legacy Plain values to Standard" do
+      graph = "LegacyModeGraph-#{System.unique_integer([:positive])}"
+      on_exit(fn -> ModeServer.delete_mode(graph) end)
+
+      assert ModeServer.supported_modes() == [:expert, :university, :high_school]
+      assert :ok = ModeServer.set_mode(graph, :simple)
+      assert ModeServer.get_mode(graph) == :high_school
+      assert :ok = ModeServer.set_mode(graph, "simple")
+      assert ModeServer.get_mode(graph) == :high_school
+    end
+  end
+
   describe "RequestQueue.add/5 (test env)" do
     test "enqueues LocalWorker job with core args; optional prompt args are ignored" do
       vertex = %Elixir.Dialectic.Graph.Vertex{id: "1", user: "reader@example.com"}
@@ -76,7 +89,7 @@ defmodule Dialectic.Responses.RequestQueueWorkerTest do
 
     test "uses the supplied mode snapshot even if the graph mode changes" do
       graph = "SnapshotGraph-#{System.unique_integer([:positive])}"
-      :ok = ModeServer.set_mode(graph, :simple)
+      :ok = ModeServer.set_mode(graph, :high_school)
       on_exit(fn -> ModeServer.delete_mode(graph) end)
 
       assert {:ok, job} =
@@ -97,7 +110,7 @@ defmodule Dialectic.Responses.RequestQueueWorkerTest do
 
     test "infers the compatibility mode from the supplied application prompt" do
       graph = "PromptModeGraph-#{System.unique_integer([:positive])}"
-      :ok = ModeServer.set_mode(graph, :simple)
+      :ok = ModeServer.set_mode(graph, :high_school)
       on_exit(fn -> ModeServer.delete_mode(graph) end)
 
       assert {:ok, job} =

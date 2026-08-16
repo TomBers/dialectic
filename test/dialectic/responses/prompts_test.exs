@@ -226,7 +226,7 @@ defmodule Dialectic.Responses.PromptsTest do
       assert result =~ "Include exactly 3 numbered questions"
       assert result =~ "single, self-contained question ending with a question mark"
       assert result =~ "Match the main answer's depth and length to the selected complexity level"
-      assert result =~ "include the required `## Sources` section immediately before"
+      assert result =~ "If the selected complexity level requires sources"
       refute result =~ "140-220 words"
       assert result =~ "Build on the Foundation"
     end

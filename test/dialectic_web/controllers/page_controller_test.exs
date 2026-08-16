@@ -46,7 +46,7 @@ defmodule DialecticWeb.PageControllerTest do
     assert html =~ ~s(id="guide-grid-visibility")
     assert html =~ ~s(id="guide-public-profile")
     assert html =~ ~s(id="guide-explanation-level")
-    assert html =~ "Plain"
+    refute html =~ "Plain"
     assert html =~ "Standard"
     assert html =~ "Detailed"
     assert html =~ ~s(id="guide-translate-node")
@@ -78,7 +78,7 @@ defmodule DialecticWeb.PageControllerTest do
     assert html =~ "deserves your confidence"
     assert html =~ "basic or awkward to raise"
     assert html =~ ~s(id="ai-exploration-benefits")
-    assert html =~ "Choose Plain, Standard, Detailed, or Expert"
+    assert html =~ "Choose Standard, Detailed, or Expert"
     assert html =~ ~s(id="ai-benefit-evidence")
     assert html =~ "primary sources, original research, official records"
     assert html =~ ~s(id="ai-exploration-chat-comparison")

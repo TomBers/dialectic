@@ -50,7 +50,7 @@ defmodule Dialectic.Responses.LlmInterfaceTest do
   describe "response-level snapshot" do
     test "uses the level captured on the child even if the graph mode changes" do
       {graph_id, _containing_node, question_node} = setup_context_graph()
-      :ok = ModeServer.set_mode(graph_id, :simple)
+      :ok = ModeServer.set_mode(graph_id, :high_school)
       on_exit(fn -> ModeServer.delete_mode(graph_id) end)
 
       child = %{child_vertex("snapshotted") | response_level: "expert"}

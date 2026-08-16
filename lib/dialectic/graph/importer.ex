@@ -8,8 +8,9 @@ defmodule Dialectic.Graph.Importer do
   alias Dialectic.Repo
 
   @required_node_keys ~w(id content class user parent noted_by deleted compound)
-  @valid_prompt_modes ~w(expert university high_school simple)
+  @valid_prompt_modes ~w(expert university high_school)
   @prompt_mode_aliases %{
+    "simple" => "high_school",
     "structured" => "university",
     "creative" => "university",
     "essay" => "university"

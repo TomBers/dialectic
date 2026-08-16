@@ -18,7 +18,7 @@ defmodule Dialectic.LLM.Providers.Google do
 
   @impl true
   def model do
-    "gemini-3.7-flash"
+    "gemini-3.5-flash-lite"
   end
 
   @impl true
@@ -27,19 +27,19 @@ defmodule Dialectic.LLM.Providers.Google do
   end
 
   @impl true
-  def provider_options, do: provider_options(:simple)
+  def provider_options, do: provider_options(:high_school)
 
   def provider_options(mode) do
     thinking_level =
       case mode do
-        mode when mode in [:simple, :high_school] -> "low"
-        :expert -> "high"
-        _ -> "medium"
+        :high_school -> "minimal"
+        :expert -> "medium"
+        _ -> "low"
       end
 
     [
       google_thinking_level: thinking_level,
-      google_grounding: %{enable: true}
+      google_grounding: %{enable: mode in [:university, :expert]}
     ]
   end
 end

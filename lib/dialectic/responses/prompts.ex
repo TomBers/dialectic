@@ -132,13 +132,13 @@ defmodule Dialectic.Responses.Prompts do
 
   defp citation_encouragement do
     """
-    **Source requirement:** Support material externally checkable claims with specific attribution and the required `## Sources` section. Use the number and type of sources required by the selected complexity level, ensuring they genuinely support the answer's most important claims. Prefer primary sources and accurate paraphrase. Include a link only when its exact destination has been verified through available search grounding; otherwise provide precise bibliographic details without a URL. Never use vague attribution such as "critics say."
+    **Source policy:** Follow the selected complexity level's source policy. When that level requires sources, use the specified number and type of sources and ensure they genuinely support the answer's most important claims. When it does not require sources, do not perform source research or add a `## Sources` section unless the user explicitly asks. Never use vague attribution such as "critics say."
     """
   end
 
   defp citation_encouragement_for_arguments do
     """
-    **Evidence and sources:** Ground the argument's key premises in the strongest relevant primary sources or empirical evidence. Clearly separate evidence from examples and analogies, which may illustrate a claim but do not establish it. Include the required `## Sources` section for externally checkable claims, using exact grounded links only when verified.
+    **Evidence and sources:** Follow the selected complexity level's source policy. Clearly separate evidence from examples and analogies, which may illustrate a claim but do not establish it. When the selected level requires sources, ground key premises in the strongest relevant primary sources or empirical evidence and include the required `## Sources` section.
     """
   end
 
@@ -189,7 +189,7 @@ defmodule Dialectic.Responses.Prompts do
 
       Match the main answer's depth and length to the selected complexity level, while always leaving room for the final `## Follow-up questions` section.
 
-      If the answer makes externally checkable factual claims, include the required `## Sources` section immediately before `## Follow-up questions` so the follow-up section remains last.
+      If the selected complexity level requires sources, place its required `## Sources` section immediately before `## Follow-up questions` so the follow-up section remains last.
 
       In the `## Follow-up questions` section:
       - Include exactly 3 numbered questions

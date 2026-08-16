@@ -211,7 +211,7 @@ defmodule DialecticWeb.GraphLive do
       case String.downcase(to_string(mode)) do
         "expert" -> :expert
         "high_school" -> :high_school
-        "simple" -> :simple
+        "simple" -> :high_school
         _ -> :university
       end
 

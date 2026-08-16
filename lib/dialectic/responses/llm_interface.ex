@@ -432,7 +432,7 @@ defmodule Dialectic.Responses.LlmInterface do
 
   defp response_mode(child, graph_id) do
     case Map.get(child, :response_level) do
-      "simple" -> :simple
+      "simple" -> :high_school
       "high_school" -> :high_school
       "university" -> :university
       "expert" -> :expert

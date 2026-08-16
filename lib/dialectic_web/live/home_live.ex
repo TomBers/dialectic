@@ -128,7 +128,7 @@ defmodule DialecticWeb.HomeLive do
       case mode_str do
         "expert" -> :expert
         "high_school" -> :high_school
-        "simple" -> :simple
+        "simple" -> :high_school
         _ -> :university
       end
 

@@ -208,10 +208,11 @@ defmodule DialecticWeb.GraphLiveTest do
                "#document-menu-settings-document-menu[aria-label='Open grid tools']"
              )
 
-      render_click(view, "set_prompt_mode", %{"prompt_mode" => "simple"})
+      render_click(view, "set_prompt_mode", %{"prompt_mode" => "high_school"})
 
-      assert has_element?(view, "#graph-workspace-bar-level", "Plain")
-      assert has_element?(view, "#answer-level-simple[aria-pressed='true']")
+      assert has_element?(view, "#graph-workspace-bar-level", "Standard")
+      assert has_element?(view, "#answer-level-high_school[aria-pressed='true']")
+      refute has_element?(view, "#answer-level-simple")
     end
 
     test "can follow and unfollow the current grid", %{conn: conn} do

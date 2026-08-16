@@ -1048,13 +1048,13 @@ defmodule DialecticWeb.OutlineGraphLive do
     )
   end
 
-  defp response_level_label("simple"), do: "Plain"
+  defp response_level_label("simple"), do: "Standard"
   defp response_level_label("high_school"), do: "Standard"
   defp response_level_label("university"), do: "Detailed"
   defp response_level_label("expert"), do: "Expert"
   defp response_level_label(_response_level), do: nil
 
-  defp response_level_badge_class("simple"), do: "bg-slate-100 text-slate-700 ring-slate-600/10"
+  defp response_level_badge_class("simple"), do: "bg-sky-50 text-sky-700 ring-sky-600/15"
   defp response_level_badge_class("high_school"), do: "bg-sky-50 text-sky-700 ring-sky-600/15"
 
   defp response_level_badge_class("university"),
