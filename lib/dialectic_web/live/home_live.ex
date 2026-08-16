@@ -25,7 +25,7 @@ defmodule DialecticWeb.HomeLive do
       GraphActions.create_new_node(user)
       |> Vertex.changeset(if initial_content, do: %{content: initial_content}, else: %{})
 
-    prompt_mode = "university"
+    prompt_mode = "high_school"
 
     {:ok,
      assign(socket,
@@ -170,8 +170,18 @@ defmodule DialecticWeb.HomeLive do
   end
 
   defp submit_new_grid(socket, answer, mode_param) do
+    requested_mode = normalize_home_mode(mode_param || socket.assigns[:prompt_mode])
+
+    if is_nil(socket.assigns[:current_user]) and requested_mode in ["university", "expert"] do
+      assign(socket, :show_level_login_modal, true)
+    else
+      do_submit_new_grid(socket, answer, requested_mode)
+    end
+  end
+
+  defp do_submit_new_grid(socket, answer, mode_param) do
     title = Graphs.sanitize_title(answer)
-    socket = if mode_param, do: assign(socket, prompt_mode: mode_param), else: socket
+    socket = assign(socket, prompt_mode: mode_param)
 
     cond do
       socket.assigns.loading_graph != nil ->
@@ -197,6 +207,16 @@ defmodule DialecticWeb.HomeLive do
           existing_graph ->
             redirect(socket, to: graph_path(existing_graph))
         end
+    end
+  end
+
+  defp normalize_home_mode(mode) do
+    case String.downcase(to_string(mode || "high_school")) do
+      "expert" -> "expert"
+      "university" -> "university"
+      "high_school" -> "high_school"
+      "simple" -> "high_school"
+      _other -> "high_school"
     end
   end
 

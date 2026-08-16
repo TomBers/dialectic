@@ -201,9 +201,15 @@ defmodule Dialectic.Responses.PromptsStructured do
     """
   end
 
+  defp normalize_mode(:high_school), do: :high_school
+  defp normalize_mode(:university), do: :university
+  defp normalize_mode(:expert), do: :expert
   defp normalize_mode(:simple), do: :high_school
+  defp normalize_mode("high_school"), do: :high_school
+  defp normalize_mode("university"), do: :university
+  defp normalize_mode("expert"), do: :expert
   defp normalize_mode("simple"), do: :high_school
-  defp normalize_mode(mode), do: mode
+  defp normalize_mode(_mode), do: :university
 
   defp profile_for(:simple), do: profile_for(:high_school)
   defp profile_for("simple"), do: profile_for(:high_school)

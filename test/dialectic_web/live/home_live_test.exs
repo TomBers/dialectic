@@ -209,6 +209,19 @@ defmodule DialecticWeb.HomeLiveTest do
     assert has_element?(view, "#answer-level-login-modal", "Sign in to create grids")
   end
 
+  test "prompts signed-out users when a restricted mode is submitted directly", %{conn: conn} do
+    answer = "Restricted Home Grid #{System.unique_integer([:positive])}"
+    {:ok, view, _html} = live(conn, ~p"/")
+
+    render_submit(view, "reply-and-answer", %{
+      "vertex" => %{"content" => answer},
+      "mode" => "expert"
+    })
+
+    assert has_element?(view, "#answer-level-login-modal", "Unlock deeper answer levels")
+    assert is_nil(Graphs.get_graph_by_title(answer))
+  end
+
   test "logged in users see profile entry in the header without a settings link", %{conn: conn} do
     user = user_fixture()
     {:ok, user} = Accounts.update_user_profile(user, %{username: "headerprofile"})

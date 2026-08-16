@@ -98,6 +98,15 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
       assert PromptsStructured.max_output_tokens(:simple) == 2_048
     end
 
+    test "normalizes string and unsupported modes before building the prompt" do
+      assert PromptsStructured.system_preamble("high_school") =~ "Complexity level: Standard"
+      assert PromptsStructured.system_preamble("university") =~ "Complexity level: Detailed"
+      assert PromptsStructured.system_preamble("expert") =~ "Complexity level: Expert"
+      assert PromptsStructured.system_preamble("simple") =~ "Complexity level: Standard"
+      assert PromptsStructured.system_preamble(:unknown) =~ "Complexity level: Detailed"
+      assert PromptsStructured.system_preamble("unknown") =~ "Complexity level: Detailed"
+    end
+
     test "recovers the snapshotted mode from application and legacy prompts" do
       for mode <- [:high_school, :university, :expert] do
         prompt = PromptsStructured.system_preamble(mode)
