@@ -8,6 +8,7 @@ defmodule Dialectic.Responses.RequestQueue do
   import Ecto.Query
 
   alias Dialectic.Repo
+  alias Dialectic.Responses.{ModeServer, PromptsStructured}
   alias Dialectic.Workers.LLMWorker
   alias Dialectic.Workers.LocalWorker
 
@@ -18,19 +19,23 @@ defmodule Dialectic.Responses.RequestQueue do
   @default_max_requests_per_minute 10
   @rate_window_ms :timer.minutes(1)
 
+  def add(instruction, system_prompt, to_node, graph, live_view_topic) do
+    add(instruction, system_prompt, to_node, graph, live_view_topic, [])
+  end
+
   # Define the implementation based on compile-time environment
   if Mix.env() == :test do
     # Test environment uses local model
-    def add(instruction, system_prompt, to_node, graph, live_view_topic) do
+    def add(instruction, system_prompt, to_node, graph, live_view_topic, opts) do
       instruction
-      |> build_params(system_prompt, to_node, graph, live_view_topic)
+      |> build_params(system_prompt, to_node, graph, live_view_topic, opts)
       |> run_local()
     end
   else
     # Non-test environments use LLMWorker
-    def add(instruction, system_prompt, to_node, graph, live_view_topic) do
+    def add(instruction, system_prompt, to_node, graph, live_view_topic, opts) do
       instruction
-      |> build_params(system_prompt, to_node, graph, live_view_topic)
+      |> build_params(system_prompt, to_node, graph, live_view_topic, opts)
       |> run_llm()
     end
   end
@@ -140,9 +145,10 @@ defmodule Dialectic.Responses.RequestQueue do
     end
   end
 
-  defp build_params(instruction, system_prompt, to_node, graph, request_context) do
+  defp build_params(instruction, system_prompt, to_node, graph, request_context, opts) do
     node_id = if is_map(to_node), do: to_node.id, else: to_node
     {live_view_topic, anonymous_actor_id} = split_request_context(request_context)
+    mode = request_mode(opts, system_prompt, graph)
 
     %{
       instruction: instruction,
@@ -152,8 +158,23 @@ defmodule Dialectic.Responses.RequestQueue do
       graph: graph,
       module: nil,
       live_view_topic: live_view_topic,
-      actor_key: actor_key(to_node, graph, anonymous_actor_id)
+      actor_key: actor_key(to_node, graph, anonymous_actor_id),
+      response_level: mode |> PromptsStructured.response_profile() |> Map.fetch!(:key),
+      max_tokens: PromptsStructured.max_output_tokens(mode)
     }
+  end
+
+  defp request_mode(opts, system_prompt, graph) do
+    case Keyword.fetch(opts, :mode) do
+      {:ok, mode} ->
+        mode
+
+      :error ->
+        case PromptsStructured.mode_from_preamble(system_prompt) do
+          {:ok, mode} -> mode
+          :error -> ModeServer.get_mode(graph)
+        end
+    end
   end
 
   defp ensure_actor_key(params) do

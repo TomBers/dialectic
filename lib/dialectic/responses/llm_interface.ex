@@ -121,19 +121,16 @@ defmodule Dialectic.Responses.LlmInterface do
 
     instruction = Prompts.explain(context, node.content)
 
-    system_prompt = get_system_prompt(graph_id)
-    log_prompt("explain", graph_id, system_prompt, instruction)
-    ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
+    queue_response("explain", instruction, child, graph_id, live_view_topic)
   end
 
   @doc false
   @spec gen_initial_response(map(), map(), String.t(), String.t()) :: request_result()
   def gen_initial_response(node, child, graph_id, live_view_topic) do
     context = GraphManager.build_context(graph_id, node)
-    instruction = Prompts.initial_explainer(context, node.content || "")
-    system_prompt = get_system_prompt(graph_id)
-    log_prompt("initial_explainer", graph_id, system_prompt, instruction)
-    ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
+    mode = response_mode(child, graph_id)
+    instruction = Prompts.initial_explainer(context, node.content || "", mode)
+    queue_response("initial_explainer", instruction, child, graph_id, live_view_topic)
   end
 
   @doc """
@@ -163,9 +160,7 @@ defmodule Dialectic.Responses.LlmInterface do
           Prompts.selection_question(context, selection, question)
       end
 
-    system_prompt = get_system_prompt(graph_id)
-    log_prompt("selection_minimal", graph_id, system_prompt, instruction)
-    ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
+    queue_response("selection_minimal", instruction, child, graph_id, live_view_topic)
   end
 
   @doc """
@@ -189,9 +184,7 @@ defmodule Dialectic.Responses.LlmInterface do
 
     instruction = Prompts.selection(context, selection)
 
-    system_prompt = get_system_prompt(graph_id)
-    log_prompt("selection", graph_id, system_prompt, instruction)
-    ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
+    queue_response("selection", instruction, child, graph_id, live_view_topic)
   end
 
   @doc """
@@ -216,9 +209,7 @@ defmodule Dialectic.Responses.LlmInterface do
     instruction =
       Prompts.synthesis(context1, context2, n1.content, n2.content)
 
-    system_prompt = get_system_prompt(graph_id)
-    log_prompt("synthesis", graph_id, system_prompt, instruction)
-    ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
+    queue_response("synthesis", instruction, child, graph_id, live_view_topic)
   end
 
   @doc """
@@ -245,9 +236,7 @@ defmodule Dialectic.Responses.LlmInterface do
         Prompts.thesis(context, content)
       end
 
-    system_prompt = get_system_prompt(graph_id)
-    log_prompt("thesis", graph_id, system_prompt, instruction)
-    ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
+    queue_response("thesis", instruction, child, graph_id, live_view_topic)
   end
 
   @doc """
@@ -274,9 +263,7 @@ defmodule Dialectic.Responses.LlmInterface do
         Prompts.antithesis(context, content)
       end
 
-    system_prompt = get_system_prompt(graph_id)
-    log_prompt("antithesis", graph_id, system_prompt, instruction)
-    ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
+    queue_response("antithesis", instruction, child, graph_id, live_view_topic)
   end
 
   @doc """
@@ -311,9 +298,7 @@ defmodule Dialectic.Responses.LlmInterface do
         Prompts.related_ideas(context, node.content)
       end
 
-    system_prompt = get_system_prompt(graph_id)
-    log_prompt("related_ideas", graph_id, system_prompt, instruction)
-    ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
+    queue_response("related_ideas", instruction, child, graph_id, live_view_topic)
   end
 
   # Private Functions
@@ -341,9 +326,7 @@ defmodule Dialectic.Responses.LlmInterface do
 
     instruction = build_instruction(tool_metadata, context, content, content_override)
 
-    system_prompt = get_system_prompt(graph_id)
-    log_prompt(to_string(tool_name), graph_id, system_prompt, instruction)
-    ask_model(instruction, system_prompt, child, graph_id, live_view_topic)
+    queue_response(to_string(tool_name), instruction, child, graph_id, live_view_topic)
   end
 
   # Build the instruction for a thinking tool based on whether we have a content override
@@ -441,16 +424,25 @@ defmodule Dialectic.Responses.LlmInterface do
     |> String.trim()
   end
 
-  @spec get_system_prompt(String.t()) :: String.t()
-  defp get_system_prompt(graph_id) do
-    mode = ModeServer.get_mode(graph_id)
-    PromptsStructured.system_preamble(mode)
+  defp queue_response(action, instruction, child, graph_id, live_view_topic) do
+    mode = response_mode(child, graph_id)
+    system_prompt = PromptsStructured.system_preamble(mode)
+    log_prompt(action, graph_id, mode, system_prompt, instruction)
+    ask_model(instruction, system_prompt, child, graph_id, live_view_topic, mode)
   end
 
-  @spec log_prompt(String.t(), String.t(), String.t(), String.t()) :: :ok
-  defp log_prompt(action, graph_id, system_prompt, instruction) do
-    mode = ModeServer.get_mode(graph_id)
+  defp response_mode(child, graph_id) do
+    case Map.get(child, :response_level) do
+      "simple" -> :high_school
+      "high_school" -> :high_school
+      "university" -> :university
+      "expert" -> :expert
+      _other -> ModeServer.get_mode(graph_id)
+    end
+  end
 
+  @spec log_prompt(String.t(), String.t(), ModeServer.mode(), String.t(), String.t()) :: :ok
+  defp log_prompt(action, graph_id, mode, system_prompt, instruction) do
     Logger.debug(fn ->
       "[LlmInterface] action=#{action} mode=#{mode} graph_id=#{inspect(graph_id)}\nSYSTEM_PROMPT_START\n#{system_prompt}\nSYSTEM_PROMPT_END\nINSTRUCTION_START\n#{instruction}\nINSTRUCTION_END"
     end)
@@ -471,12 +463,30 @@ defmodule Dialectic.Responses.LlmInterface do
   """
   @spec ask_model(String.t(), String.t(), map(), String.t(), String.t()) :: request_result()
   def ask_model(instruction, system_prompt, to_node, graph_id, live_view_topic) do
+    mode =
+      case PromptsStructured.mode_from_preamble(system_prompt) do
+        {:ok, prompt_mode} -> prompt_mode
+        :error -> ModeServer.get_mode(graph_id)
+      end
+
+    ask_model(instruction, system_prompt, to_node, graph_id, live_view_topic, mode)
+  end
+
+  @doc false
+  @spec ask_model(String.t(), String.t(), map(), String.t(), String.t(), ModeServer.mode()) ::
+          request_result()
+  def ask_model(instruction, system_prompt, to_node, graph_id, live_view_topic, mode) do
+    node_id = if is_map(to_node), do: to_node.id, else: to_node
+    response_level = mode |> PromptsStructured.response_profile() |> Map.fetch!(:key)
+    GraphManager.update_vertex_fields(graph_id, node_id, %{response_level: response_level})
+
     RequestQueue.add(
       instruction,
       system_prompt,
       to_node,
       graph_id,
-      live_view_topic
+      live_view_topic,
+      mode: mode
     )
   end
 end

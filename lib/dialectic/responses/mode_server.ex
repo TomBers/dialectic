@@ -20,11 +20,11 @@ defmodule Dialectic.Responses.ModeServer do
   @type graph_id :: String.t()
 
   @typedoc "Current UI/LLM mode selection."
-  @type mode :: :expert | :university | :high_school | :simple
+  @type mode :: :expert | :university | :high_school
 
   @table :dialectic_mode_store
   @default_mode :university
-  @modes [:expert, :university, :high_school, :simple]
+  @modes [:expert, :university, :high_school]
 
   # -- Public API --------------------------------------------------------------
 
@@ -95,6 +95,7 @@ defmodule Dialectic.Responses.ModeServer do
 
     mode =
       case :ets.lookup(@table, graph_id) do
+        [{^graph_id, :simple}] -> :high_school
         [{^graph_id, m}] when m in @modes -> m
         _ -> @default_mode
       end
@@ -151,7 +152,8 @@ defmodule Dialectic.Responses.ModeServer do
     end
   end
 
-  @spec normalize_mode(mode | String.t()) :: {:ok, mode} | {:error, :invalid_mode}
+  @spec normalize_mode(mode | :simple | String.t()) :: {:ok, mode} | {:error, :invalid_mode}
+  defp normalize_mode(:simple), do: {:ok, :high_school}
   defp normalize_mode(value) when value in @modes, do: {:ok, value}
 
   defp normalize_mode(value) when is_binary(value) do
@@ -159,7 +161,7 @@ defmodule Dialectic.Responses.ModeServer do
       "expert" -> {:ok, :expert}
       "university" -> {:ok, :university}
       "high_school" -> {:ok, :high_school}
-      "simple" -> {:ok, :simple}
+      "simple" -> {:ok, :high_school}
       # Backwards compatibility: "structured" was the previous name for :university mode.
       # TODO: Remove this fallback once all clients no longer send "structured".
       "structured" -> {:ok, :university}

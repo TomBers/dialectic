@@ -98,7 +98,8 @@ defmodule Dialectic.Linear.ThreadedConv do
         class: (data && data.class) || "default",
         user: data && data.user,
         deleted: data && data.deleted,
-        compound: data && data.compound
+        compound: data && data.compound,
+        response_level: data && Map.get(data, :response_level)
       }
     end)
   end

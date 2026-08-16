@@ -19,6 +19,8 @@ defmodule Dialectic.Responses.Prompts do
   3. Tasks are framed as continuations, not standalone answers
   """
 
+  alias Dialectic.Responses.PromptsStructured
+
   # Maximum character length for context in minimal context prompts.
   # Longer contexts are truncated to this length to keep prompts focused
   # while still providing grounding from the immediate parent node.
@@ -109,7 +111,7 @@ defmodule Dialectic.Responses.Prompts do
 
   defp diagram_output_constraint do
     """
-    **Output constraint:** Do not produce ASCII art, box-drawing diagrams, plain-text arrow diagrams, or conceptual diagrams inside fenced code blocks. Explain relationships with concise prose or an ordinary list instead. Never use fenced code blocks.
+    **Formatting:** Follow the system Markdown structure. Do not use ASCII art, box-drawing, arrow, or conceptual code-block diagrams.
     """
   end
 
@@ -126,19 +128,19 @@ defmodule Dialectic.Responses.Prompts do
 
   defp critical_focus_instruction do
     """
-    Select the 2-4 most consequential dimensions or tests from the menu below; do not mechanically cover every item. Favor depth and decision-relevance over checklist completion.
+    Select only the most consequential dimensions or tests from the menu below. Do not mechanically cover every item; favor depth and decision-relevance over checklist completion.
     """
   end
 
   defp citation_encouragement do
     """
-    **Source references:** When externally checkable claims matter, use a small number of high-quality sources that genuinely support them. Prefer primary sources and accurate paraphrase. Include a link only when its exact destination has been verified through available search grounding; otherwise provide bibliographic details without a URL.
+    **Evidence:** Follow the selected level's source and quotation requirements. Use specific attribution rather than vague phrases such as "critics say."
     """
   end
 
   defp citation_encouragement_for_arguments do
     """
-    **Evidence:** Ground the argument's key premises in the strongest relevant primary sources or empirical evidence. Clearly separate evidence from examples and analogies, which may illustrate a claim but do not establish it.
+    **Evidence:** Follow the selected level's source and quotation requirements. Separate documented evidence from examples or analogies, which illustrate a claim but do not establish it.
     """
   end
 
@@ -163,7 +165,7 @@ defmodule Dialectic.Responses.Prompts do
       - Unexpected connections to other fields or ideas
       - Different perspectives or frameworks, especially ones that create productive tension
 
-      Aim for 140-220 words. Prioritize the strongest new insights rather than covering every possible angle.
+      Match the response depth and length specified by the selected complexity level. Prioritize the strongest new insights rather than covering every possible angle.
       """,
       citation_encouragement(),
       anti_repetition_footer()
@@ -173,8 +175,10 @@ defmodule Dialectic.Responses.Prompts do
   @doc """
   Initial answer to a question, with suggestions for further exploration.
   """
-  @spec initial_explainer(String.t(), String.t()) :: String.t()
-  def initial_explainer(context, topic) do
+  @spec initial_explainer(String.t(), String.t(), atom() | String.t()) :: String.t()
+  def initial_explainer(context, topic, mode \\ :university) do
+    opening_word_range = PromptsStructured.initial_word_range(mode)
+
     join_blocks([
       frame_context(context),
       """
@@ -183,11 +187,16 @@ defmodule Dialectic.Responses.Prompts do
       **Your task:** Answer **#{sanitize_title(topic)}** in a way that sparks genuine curiosity.
 
       Include:
-      1. A concise opening — lead with a well-supported fact, a counterintuitive insight, or a focused question that reframes the topic
-      2. A clear, substantive answer that rewards the reader's attention
-      3. A final section with the exact heading `## Follow-up questions`
+      1. A concise opening — lead with a well-supported fact, a counterintuitive insight, or a focused question that reframes the topic.
+      2. An orienting foundation that defines the central concepts and explains the main mechanism, argument, or context a reader needs before branching further.
+      3. One concrete example or case that makes the topic tangible without mistaking illustration for proof.
+      4. When the topic centers on an identifiable book, speech, law, paper, or other primary text and the selected source policy enables research, a brief verified excerpt when it genuinely preserves the author's voice or sharpens the explanation. Quote enough to preserve its meaning, but no more than the answer needs. Render it as a Markdown blockquote and follow it with specific attribution and a locator.
+      5. One meaningful tension, limitation, or competing perspective that prevents the foundation from feeling falsely settled and creates curiosity.
+      6. A final section with the exact heading `## Follow-up questions`.
 
-      Keep the main answer to roughly 140-220 words so there is always room for the final `## Follow-up questions` section.
+      Aim for an opening answer of roughly #{opening_word_range}. Treat this as an editorial target: prioritize a compelling and complete foundation over hitting an exact count. Always leave room for the final `## Follow-up questions` section.
+
+      If a `## Sources` section adds value under the selected source policy, place it immediately before `## Follow-up questions` so the follow-up section remains last.
 
       In the `## Follow-up questions` section:
       - Include exactly 3 numbered questions
@@ -444,7 +453,7 @@ defmodule Dialectic.Responses.Prompts do
 
       Ask "What do we mean?" Examine this claim through the lens of "What do you mean by...?" — the most fundamental move in philosophical inquiry. Focus on:
 
-      - **Key terms:** Identify 2-4 terms or phrases that carry significant conceptual weight. For each, explore: How is it being used here? What alternative definitions exist? What does each definition include or exclude?
+      - **Key terms:** Identify the small number of terms or phrases that carry the most conceptual weight. For each, explore: How is it being used here? What alternative definitions exist? What does each definition include or exclude?
       - **Hidden ambiguities:** Surface places where the same word might be doing double duty, or where vagueness masks important distinctions
       - **Conceptual boundaries:** Where does this concept end and neighboring concepts begin? What's the difference between this and closely related ideas?
       - **Operational definitions:** How would we actually recognize or measure what's being claimed? What would count as evidence?
@@ -470,7 +479,7 @@ defmodule Dialectic.Responses.Prompts do
       **Your task:** Use **Clarify Terms** on the selected text — ask "What do we mean?" and "What do you mean by...?"
 
       Focus on:
-      - **Key terms:** Identify 2-4 terms or phrases that carry significant conceptual weight. For each, explore: How is it being used here? What alternative definitions exist? What does each definition include or exclude?
+      - **Key terms:** Identify the small number of terms or phrases that carry the most conceptual weight. For each, explore: How is it being used here? What alternative definitions exist? What does each definition include or exclude?
       - **Hidden ambiguities:** Surface places where the same word might be doing double duty, or where vagueness masks important distinctions
       - **Conceptual boundaries:** Where does this concept end and neighboring concepts begin? What's the difference between this and closely related ideas?
       - **Operational definitions:** How would we actually recognize or measure what's being claimed? What would count as evidence?

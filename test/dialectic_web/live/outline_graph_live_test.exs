@@ -41,7 +41,8 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
           "parent" => nil,
           "noted_by" => [],
           "deleted" => false,
-          "compound" => false
+          "compound" => false,
+          "response_level" => "expert"
         },
         %{
           "id" => "4",
@@ -445,7 +446,22 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert assigns.compare_context.root.id == "2"
     assert Enum.find(assigns.compare_branches, &(&1.id == "3")).active?
     assert has_element?(view, "#outline-node-3")
+    assert has_element?(view, "#outline-response-level-3[data-response-level='expert']", "Expert")
+
+    assert has_element?(
+             view,
+             "#outline-mobile-response-level-3[data-response-level='expert']",
+             "Expert"
+           )
+
     assert has_element?(view, "#reading-node-3")
+
+    assert has_element?(
+             view,
+             "#reader-response-level-3[data-response-level='expert']",
+             "Expert level"
+           )
+
     assert has_element?(view, "#outline-end-state")
     assert has_element?(view, "#branch-compare-card-4")
     assert has_element?(view, "#branch-compare-card-4", "Switch to this path")

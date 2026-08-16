@@ -192,11 +192,14 @@ defmodule Dialectic.Responses.PromptsTest do
       assert result =~ topic
     end
 
-    test "targets a shorter response for faster graph exploration" do
+    test "defers response depth and length to the selected complexity level" do
       result = Prompts.explain("Background", "Ethics")
 
-      assert result =~ "Aim for 140-220 words"
+      assert result =~
+               "Match the response depth and length specified by the selected complexity level"
+
       assert result =~ "Prioritize the strongest new insights"
+      refute result =~ "140-220 words"
     end
 
     test "emphasizes adding new insights" do
@@ -211,7 +214,18 @@ defmodule Dialectic.Responses.PromptsTest do
     end
   end
 
-  describe "initial_explainer/2" do
+  describe "initial_explainer/3" do
+    test "uses a larger opening range for each answer level" do
+      assert Prompts.initial_explainer("", "Topic", :high_school) =~
+               "opening answer of roughly 250-350 words"
+
+      assert Prompts.initial_explainer("", "Topic", :university) =~
+               "opening answer of roughly 400-650 words"
+
+      assert Prompts.initial_explainer("", "Topic", :expert) =~
+               "opening answer of roughly 550-850 words"
+    end
+
     test "generates initial answer prompt with exploration suggestions" do
       context = "Background context"
       topic = "What is quantum entanglement?"
@@ -222,7 +236,14 @@ defmodule Dialectic.Responses.PromptsTest do
       assert result =~ "exact heading `## Follow-up questions`"
       assert result =~ "Include exactly 3 numbered questions"
       assert result =~ "single, self-contained question ending with a question mark"
-      assert result =~ "main answer to roughly 140-220 words"
+      assert result =~ "opening answer of roughly 400-650 words"
+      assert result =~ "defines the central concepts and explains the main mechanism"
+      assert result =~ "a brief verified excerpt"
+      assert result =~ "Quote enough to preserve its meaning"
+      assert result =~ "Render it as a Markdown blockquote"
+      assert result =~ "One meaningful tension, limitation, or competing perspective"
+      assert result =~ "If a `## Sources` section adds value"
+      refute result =~ "140-220 words"
       assert result =~ "Build on the Foundation"
     end
   end
@@ -360,8 +381,8 @@ defmodule Dialectic.Responses.PromptsTest do
             Prompts.steel_man(context, claim),
             Prompts.what_if(context, claim)
           ] do
-        assert prompt =~ "Select the 2-4 most consequential dimensions or tests"
-        assert prompt =~ "do not mechanically cover every item"
+        assert prompt =~ "Select only the most consequential dimensions or tests"
+        assert prompt =~ "Do not mechanically cover every item"
       end
     end
 
@@ -384,9 +405,10 @@ defmodule Dialectic.Responses.PromptsTest do
             Prompts.clarify("Context", "Claim"),
             Prompts.what_if_selection("Context", "Selection")
           ] do
-        assert prompt =~ "Do not produce ASCII art, box-drawing diagrams"
-        assert prompt =~ "Explain relationships with concise prose or an ordinary list instead"
-        assert prompt =~ "Never use fenced code blocks"
+        assert prompt =~ "Follow the system Markdown structure"
+
+        assert prompt =~
+                 "Do not use ASCII art, box-drawing, arrow, or conceptual code-block diagrams"
       end
     end
   end

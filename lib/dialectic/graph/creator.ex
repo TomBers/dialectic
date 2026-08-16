@@ -9,9 +9,13 @@ defmodule Dialectic.Graph.Creator do
   """
   require Logger
   alias Dialectic.DbActions.Graphs
-  alias GraphManager
   alias Dialectic.Graph.Vertex
+  alias Dialectic.Repo
   alias Dialectic.Responses.{ModeServer, Prompts, PromptsStructured, RequestQueue}
+  alias GraphManager
+
+  @response_poll_interval_ms 100
+  @response_wait_timeout_ms 120_000
 
   @doc """
   Creates a graph, adds the initial question, queues LLM generation, and saves it.
@@ -34,17 +38,39 @@ defmodule Dialectic.Graph.Creator do
     title = Keyword.get(opts, :title) || Graphs.sanitize_title(question)
     mode = Keyword.get(opts, :mode, :university)
     actor_id = Keyword.get(opts, :actor_id)
+    await_response? = Keyword.get(opts, :await_response, false)
+    response_timeout = Keyword.get(opts, :response_timeout, @response_wait_timeout_ms)
 
     callback.("Creating grid structure...")
 
     if Graphs.get_graph_by_title(title) do
       {:ok, title}
     else
-      do_create(title, question, user, user_identity, mode, actor_id, callback)
+      do_create(
+        title,
+        question,
+        user,
+        user_identity,
+        mode,
+        actor_id,
+        callback,
+        await_response?,
+        response_timeout
+      )
     end
   end
 
-  defp do_create(title, question, user, user_identity, mode, actor_id, callback) do
+  defp do_create(
+         title,
+         question,
+         user,
+         user_identity,
+         mode,
+         actor_id,
+         callback,
+         await_response?,
+         response_timeout
+       ) do
     case Graphs.create_new_graph(title, user, Atom.to_string(mode)) do
       {:ok, _} ->
         ModeServer.set_mode(title, mode)
@@ -61,7 +87,7 @@ defmodule Dialectic.Graph.Creator do
         callback.("Preparing response...")
 
         # Create the empty answer node connected to origin
-        answer_node = create_answer_node_struct(title, updated_origin, user_identity)
+        answer_node = create_answer_node_struct(title, updated_origin, user_identity, mode)
 
         queue_result =
           queue_streaming_response(title, updated_origin, answer_node, mode, actor_id)
@@ -83,6 +109,14 @@ defmodule Dialectic.Graph.Creator do
         case GraphManager.save_graph(title) do
           {:ok, _job} ->
             Logger.info("Successfully queued graph #{title} for persistence after creation")
+
+            maybe_await_response(
+              queue_result,
+              await_response?,
+              response_timeout,
+              callback
+            )
+
             {:ok, title}
 
           {:error, save_reason} ->
@@ -95,6 +129,33 @@ defmodule Dialectic.Graph.Creator do
 
       {:error, reason} ->
         {:error, reason}
+    end
+  end
+
+  defp maybe_await_response({:ok, %{id: job_id}}, true, timeout, callback) do
+    callback.("Writing opening answer...")
+
+    case await_response_job(job_id, System.monotonic_time(:millisecond) + timeout) do
+      :ok -> callback.("Opening answer ready.")
+      :timeout -> callback.("Opening answer is taking longer than expected.")
+    end
+  end
+
+  defp maybe_await_response(_queue_result, _await_response?, _timeout, _callback), do: :ok
+
+  defp await_response_job(job_id, deadline) do
+    case Repo.get(Oban.Job, job_id) do
+      %{state: state} when state in ["completed", "discarded", "cancelled"] ->
+        :ok
+
+      _job ->
+        if System.monotonic_time(:millisecond) >= deadline do
+          Logger.warning("Timed out waiting for opening answer job_id=#{job_id}")
+          :timeout
+        else
+          Process.sleep(@response_poll_interval_ms)
+          await_response_job(job_id, deadline)
+        end
     end
   end
 
@@ -117,13 +178,14 @@ defmodule Dialectic.Graph.Creator do
     "AI generation could not be queued. Please regenerate this answer shortly."
   end
 
-  defp create_answer_node_struct(title, parent, user_identity) do
+  defp create_answer_node_struct(title, parent, user_identity, mode) do
     vertex = %Vertex{
       content: "",
       class: "answer",
       user: user_identity,
       parent: nil,
-      prompt_kind: "initial_explainer"
+      prompt_kind: "initial_explainer",
+      response_level: Atom.to_string(mode)
     }
 
     node = GraphManager.add_node(title, vertex)
@@ -139,7 +201,7 @@ defmodule Dialectic.Graph.Creator do
   """
   def queue_streaming_response(title, origin_node, answer_node, mode, actor_id \\ nil) do
     context = GraphManager.build_context(title, origin_node)
-    instruction = Prompts.initial_explainer(context, origin_node.content)
+    instruction = Prompts.initial_explainer(context, origin_node.content, mode)
     system_prompt = PromptsStructured.system_preamble(mode)
 
     # Use the shared graph topic so all viewers (including the user who just created
@@ -153,7 +215,8 @@ defmodule Dialectic.Graph.Creator do
            system_prompt,
            answer_node,
            title,
-           {live_view_topic, actor_id}
+           {live_view_topic, actor_id},
+           mode: mode
          ) do
       {:ok, job} ->
         Logger.debug(

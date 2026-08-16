@@ -310,8 +310,14 @@ defmodule DialecticWeb.NodeComp do
                       <p class="text-sm font-semibold uppercase tracking-[0.18em] text-indigo-500">
                         Generating response
                       </p>
-                      <h3 class="mt-1 text-lg font-semibold tracking-tight text-slate-950 sm:text-xl">
-                        Thinking this through
+                      <h3
+                        id={"generation-status-#{@node.id}"}
+                        phx-hook="GenerationStatus"
+                        phx-update="ignore"
+                        data-response-level={Map.get(@node, :response_level, "")}
+                        class="mt-1 text-lg font-semibold tracking-tight text-slate-950 sm:text-xl"
+                      >
+                        <span data-generation-status>Preparing response</span>
                       </h3>
                     </div>
                   </div>

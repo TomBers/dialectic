@@ -1,5 +1,6 @@
 defmodule GraphManager do
   alias Dialectic.Graph.{Vertex, Serialise, Siblings}
+  alias Dialectic.Responses.ModeServer
 
   require Logger
 
@@ -566,7 +567,10 @@ defmodule GraphManager do
         end
       end)
 
-    node_fields = Keyword.get(opts, :fields, %{})
+    node_fields =
+      opts
+      |> Keyword.get(:fields, %{})
+      |> put_response_level(graph_id, class)
 
     node =
       add_node(
@@ -597,6 +601,13 @@ defmodule GraphManager do
     end
 
     result
+  end
+
+  defp put_response_level(fields, _graph_id, class) when class in ["user", "question", "origin"],
+    do: fields
+
+  defp put_response_level(fields, graph_id, _class) do
+    Map.put_new(fields, :response_level, graph_id |> ModeServer.get_mode() |> Atom.to_string())
   end
 
   def update_vertex(path, node_id, data) do

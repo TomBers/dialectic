@@ -30,7 +30,7 @@ defmodule Dialectic.Workers.LLMWorker do
   require Logger
 
   alias Dialectic.Responses.Utils
-  alias Dialectic.Responses.{PromptsStructured, ModeServer}
+  alias Dialectic.Responses.{ModeServer, PromptsStructured}
 
   @buffer_size 200
   @stream_flush_min_interval_ms 100
@@ -213,18 +213,32 @@ defmodule Dialectic.Workers.LLMWorker do
 
       {_connect_timeout, receive_timeout} = Dialectic.LLM.Provider.timeouts(provider_mod)
       finch_name = Dialectic.LLM.Provider.finch_name(provider_mod)
-      provider_options = provider_mod.provider_options()
+      provider_options = provider_options(provider_mod, Map.get(args, "response_level"))
+      max_tokens = request_max_tokens(args, graph)
+
+      request_options = [
+        api_key: api_key_val,
+        finch_name: finch_name,
+        max_tokens: max_tokens,
+        provider_options: provider_options,
+        receive_timeout: receive_timeout
+      ]
+
+      thinking_level = Keyword.get(provider_options, :google_thinking_level, "default")
+
+      grounding? =
+        case Keyword.get(provider_options, :google_grounding) do
+          %{enable: enabled?} -> enabled?
+          _other -> false
+        end
+
+      Logger.info(
+        "[LLMWorker] job_id=#{job_id} response_level=#{Map.get(args, "response_level", "unknown")} max_tokens=#{max_tokens} thinking_level=#{thinking_level} grounding=#{grounding?}"
+      )
+
       request_started_at = System.monotonic_time()
 
-      case ReqLLM.stream_text(
-             model_spec,
-             ctx,
-             api_key: api_key_val,
-             finch_name: finch_name,
-             max_tokens: 4096,
-             provider_options: provider_options,
-             receive_timeout: receive_timeout
-           ) do
+      case ReqLLM.stream_text(model_spec, ctx, request_options) do
         {:ok, stream_resp} ->
           # Stream tokens to UI (and persisted vertex content) as they arrive.
           # We accumulate the *full* response text in the worker to ensure
@@ -349,6 +363,35 @@ defmodule Dialectic.Workers.LLMWorker do
 
   def skip_existing_response?(1, content) when is_binary(content), do: byte_size(content) > 50
   def skip_existing_response?(_attempt, _content), do: false
+
+  defp provider_options(provider_mod, response_level) do
+    mode =
+      case response_level do
+        "simple" -> :high_school
+        "high_school" -> :high_school
+        "expert" -> :expert
+        _other -> :university
+      end
+
+    if function_exported?(provider_mod, :provider_options, 1) do
+      provider_mod.provider_options(mode)
+    else
+      provider_mod.provider_options()
+    end
+  end
+
+  @doc false
+  def request_max_tokens(args, graph) do
+    case Map.get(args, "max_tokens") do
+      max_tokens when is_integer(max_tokens) and max_tokens > 0 ->
+        max_tokens
+
+      _other ->
+        graph
+        |> ModeServer.get_mode()
+        |> PromptsStructured.max_output_tokens()
+    end
+  end
 
   def should_flush_stream?(first_chunk?, buffered_bytes, elapsed_ms) do
     first_chunk? or

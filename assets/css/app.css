@@ -401,8 +401,8 @@ html.mode-switch-enter #outline-layout {
     opacity: 1;
     transform: translateY(0) scale(1);
     transition:
-        opacity 220ms ease-out 2s,
-        transform 220ms ease-out 2s;
+        opacity 220ms ease-out 12s,
+        transform 220ms ease-out 12s;
 }
 
 @starting-style {
@@ -415,7 +415,7 @@ html.mode-switch-enter #outline-layout {
 @media (prefers-reduced-motion: reduce) {
     .thinking-regenerate-cta {
         transform: none;
-        transition: opacity 1ms linear 2s;
+        transition: opacity 1ms linear 12s;
     }
 }
 

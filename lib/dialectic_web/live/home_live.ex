@@ -14,6 +14,7 @@ defmodule DialecticWeb.HomeLive do
     socket =
       assign(socket,
         loading_graph: nil,
+        show_level_login_modal: false,
         llm_actor_id: session["llm_actor_id"] || "home:#{socket.id}"
       )
 
@@ -24,7 +25,7 @@ defmodule DialecticWeb.HomeLive do
       GraphActions.create_new_node(user)
       |> Vertex.changeset(if initial_content, do: %{content: initial_content}, else: %{})
 
-    prompt_mode = "university"
+    prompt_mode = "high_school"
 
     {:ok,
      assign(socket,
@@ -59,6 +60,11 @@ defmodule DialecticWeb.HomeLive do
   end
 
   @impl true
+  def handle_event("close_login_modal", _params, socket) do
+    {:noreply, assign(socket, :show_level_login_modal, false)}
+  end
+
+  @impl true
   def handle_async(:create_graph_flow, {:ok, {:ok, title}}, socket) do
     # Fetch the newly created graph to get its slug
     case Graphs.get_graph_by_title(title) do
@@ -67,7 +73,7 @@ defmodule DialecticWeb.HomeLive do
         {:noreply, put_flash(socket, :error, "Grid not found after creation")}
 
       graph ->
-        {:noreply, redirect(socket, to: graph_editor_path(graph))}
+        {:noreply, redirect(socket, to: graph_path(graph))}
     end
   end
 
@@ -105,6 +111,11 @@ defmodule DialecticWeb.HomeLive do
   end
 
   @impl true
+  def handle_info({:answer_level_login_required, _mode}, socket) do
+    {:noreply, assign(socket, :show_level_login_modal, true)}
+  end
+
+  @impl true
   def handle_info({:submit_new_grid, answer, mode_param}, socket) do
     {:noreply, submit_new_grid(socket, answer, mode_param)}
   end
@@ -114,8 +125,19 @@ defmodule DialecticWeb.HomeLive do
     loading = socket.assigns.loading_graph
 
     if loading do
-      new_steps = loading.steps ++ [status]
-      {:noreply, assign(socket, :loading_graph, %{loading | status: status, steps: new_steps})}
+      completed_steps =
+        if loading.status in ["Initializing...", status] do
+          loading.steps
+        else
+          loading.steps ++ [loading.status]
+        end
+
+      {:noreply,
+       assign(socket, :loading_graph, %{
+         loading
+         | status: status,
+           steps: completed_steps
+       })}
     else
       {:noreply, socket}
     end
@@ -128,7 +150,7 @@ defmodule DialecticWeb.HomeLive do
       case mode_str do
         "expert" -> :expert
         "high_school" -> :high_school
-        "simple" -> :simple
+        "simple" -> :high_school
         _ -> :university
       end
 
@@ -142,13 +164,24 @@ defmodule DialecticWeb.HomeLive do
       mode: mode,
       title: title,
       actor_id: actor_id,
+      await_response: not Application.get_env(:dialectic, :sync_tasks_for_testing, false),
       progress_callback: fn status -> send(parent_pid, {:graph_creation_update, status}) end
     )
   end
 
   defp submit_new_grid(socket, answer, mode_param) do
+    requested_mode = normalize_home_mode(mode_param || socket.assigns[:prompt_mode])
+
+    if is_nil(socket.assigns[:current_user]) and requested_mode in ["university", "expert"] do
+      assign(socket, :show_level_login_modal, true)
+    else
+      do_submit_new_grid(socket, answer, requested_mode)
+    end
+  end
+
+  defp do_submit_new_grid(socket, answer, mode_param) do
     title = Graphs.sanitize_title(answer)
-    socket = if mode_param, do: assign(socket, prompt_mode: mode_param), else: socket
+    socket = assign(socket, prompt_mode: mode_param)
 
     cond do
       socket.assigns.loading_graph != nil ->
@@ -172,8 +205,18 @@ defmodule DialecticWeb.HomeLive do
             end)
 
           existing_graph ->
-            redirect(socket, to: graph_editor_path(existing_graph))
+            redirect(socket, to: graph_path(existing_graph))
         end
+    end
+  end
+
+  defp normalize_home_mode(mode) do
+    case String.downcase(to_string(mode || "high_school")) do
+      "expert" -> "expert"
+      "university" -> "university"
+      "high_school" -> "high_school"
+      "simple" -> "high_school"
+      _other -> "high_school"
     end
   end
 
@@ -181,6 +224,13 @@ defmodule DialecticWeb.HomeLive do
   def render(assigns) do
     ~H"""
     <div class="min-h-screen bg-[#f4f1e9] font-sans text-slate-950 antialiased">
+      <.login_required_modal
+        id="answer-level-login-modal"
+        show={@show_level_login_modal}
+        title="Unlock deeper answer levels"
+        description="Sign in to create grids with Detailed or Expert answers, grounded sources, and deeper analysis."
+      />
+
       <%= if @loading_graph do %>
         <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/95 px-4">
           <div class="w-full max-w-md border border-slate-700 bg-slate-900 p-6 text-white shadow-2xl sm:p-8">
@@ -365,6 +415,7 @@ defmodule DialecticWeb.HomeLive do
                   submit_label="Continue"
                   autofocus={@focus_new_grid}
                   minimal={true}
+                  authenticated={!is_nil(@current_user)}
                 />
                 <p id="home-public-grid-note" class="mt-3 text-xs leading-5 text-slate-500">
                   New grids are public and editable by default. Anyone can read them and, while editing is on, add to them. Sign in first if you want to control access in Settings; never include sensitive information.

@@ -5,7 +5,7 @@ defmodule Dialectic.Responses.RequestQueueWorkerTest do
   import Ecto.Query
 
   alias Dialectic.Repo
-  alias Dialectic.Responses.RequestQueue
+  alias Dialectic.Responses.{ModeServer, PromptsStructured, RequestQueue}
   alias Dialectic.Workers.{LLMWorker, LocalWorker}
 
   setup do
@@ -25,6 +25,19 @@ defmodule Dialectic.Responses.RequestQueueWorkerTest do
     end)
 
     :ok
+  end
+
+  describe "supported answer levels" do
+    test "exposes three levels and maps legacy Plain values to Standard" do
+      graph = "LegacyModeGraph-#{System.unique_integer([:positive])}"
+      on_exit(fn -> ModeServer.delete_mode(graph) end)
+
+      assert ModeServer.supported_modes() == [:expert, :university, :high_school]
+      assert :ok = ModeServer.set_mode(graph, :simple)
+      assert ModeServer.get_mode(graph) == :high_school
+      assert :ok = ModeServer.set_mode(graph, "simple")
+      assert ModeServer.get_mode(graph) == :high_school
+    end
   end
 
   describe "RequestQueue.add/5 (test env)" do
@@ -49,6 +62,69 @@ defmodule Dialectic.Responses.RequestQueueWorkerTest do
 
       assert is_binary(job.args["actor_key"])
       refute job.args["actor_key"] =~ "reader@example.com"
+    end
+
+    test "snapshots a progressively larger output budget for each answer level" do
+      request_id = System.unique_integer([:positive])
+
+      for mode <- ModeServer.supported_modes() do
+        graph = "BudgetGraph-#{request_id}-#{mode}"
+        :ok = ModeServer.set_mode(graph, mode)
+        on_exit(fn -> ModeServer.delete_mode(graph) end)
+
+        assert {:ok, job} =
+                 RequestQueue.add(
+                   "Explain this",
+                   "SYSTEM",
+                   %Dialectic.Graph.Vertex{id: "node-#{mode}", user: "anonymous"},
+                   graph,
+                   "topic-#{mode}"
+                 )
+
+        persisted_job = Repo.get!(Oban.Job, job.id)
+        assert persisted_job.args["response_level"] == Atom.to_string(mode)
+        assert persisted_job.args["max_tokens"] == PromptsStructured.max_output_tokens(mode)
+      end
+    end
+
+    test "uses the supplied mode snapshot even if the graph mode changes" do
+      graph = "SnapshotGraph-#{System.unique_integer([:positive])}"
+      :ok = ModeServer.set_mode(graph, :high_school)
+      on_exit(fn -> ModeServer.delete_mode(graph) end)
+
+      assert {:ok, job} =
+               RequestQueue.add(
+                 "Explain this",
+                 PromptsStructured.system_preamble(:expert),
+                 %Dialectic.Graph.Vertex{id: "snapshot-node", user: "anonymous"},
+                 graph,
+                 "snapshot-topic",
+                 mode: :expert
+               )
+
+      persisted_job = Repo.get!(Oban.Job, job.id)
+      assert persisted_job.args["system_prompt"] =~ "Complexity level: Expert"
+      assert persisted_job.args["response_level"] == "expert"
+      assert persisted_job.args["max_tokens"] == PromptsStructured.max_output_tokens(:expert)
+    end
+
+    test "infers the compatibility mode from the supplied application prompt" do
+      graph = "PromptModeGraph-#{System.unique_integer([:positive])}"
+      :ok = ModeServer.set_mode(graph, :high_school)
+      on_exit(fn -> ModeServer.delete_mode(graph) end)
+
+      assert {:ok, job} =
+               RequestQueue.add(
+                 "Explain this",
+                 PromptsStructured.system_preamble(:expert),
+                 %Dialectic.Graph.Vertex{id: "prompt-mode-node", user: "anonymous"},
+                 graph,
+                 "prompt-mode-topic"
+               )
+
+      persisted_job = Repo.get!(Oban.Job, job.id)
+      assert persisted_job.args["response_level"] == "expert"
+      assert persisted_job.args["max_tokens"] == PromptsStructured.max_output_tokens(:expert)
     end
 
     test "uses the stable anonymous session actor instead of the PubSub topic" do

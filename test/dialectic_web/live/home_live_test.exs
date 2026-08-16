@@ -117,6 +117,18 @@ defmodule DialecticWeb.HomeLiveTest do
     refute has_element?(view, "#home-profile-section")
   end
 
+  test "opens existing grids in the reader view", %{conn: conn} do
+    graph =
+      insert_graph(%{
+        title: "Existing Reader Grid #{System.unique_integer([:positive])}"
+      })
+
+    {:ok, view, _html} = live(conn, ~p"/")
+    render_submit(view, "reply-and-answer", %{"vertex" => %{"content" => graph.title}})
+
+    assert_redirect(view, ~p"/g/#{graph.slug}")
+  end
+
   test "renders a minimal start section", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/")
 
@@ -180,13 +192,34 @@ defmodule DialecticWeb.HomeLiveTest do
     |> form("#new-idea-form", vertex: %{content: "Why do habits persist?"})
     |> render_submit()
 
-    assert has_element?(view, "#new-idea-mode-simple", "Plain language, everyday examples")
-    assert has_element?(view, "#new-idea-mode-simple", "Plain")
-    assert has_element?(view, "#new-idea-mode-high_school", "Clear concepts")
+    refute has_element?(view, "#new-idea-mode-simple")
+    assert has_element?(view, "#new-idea-mode-high_school", "Simple language")
     assert has_element?(view, "#new-idea-mode-high_school", "Standard")
-    assert has_element?(view, "#new-idea-mode-university", "More precise terminology")
+    assert has_element?(view, "#new-idea-mode-university", "broader context")
     assert has_element?(view, "#new-idea-mode-university", "Detailed")
-    assert has_element?(view, "#new-idea-mode-expert", "Technical terms")
+    assert has_element?(view, "#new-idea-mode-expert", "Rigorous analysis")
+    assert has_element?(view, "#new-idea-mode-university[data-requires-login='true']")
+    assert has_element?(view, "#new-idea-mode-expert[data-requires-login='true']")
+
+    view
+    |> element("#new-idea-mode-university")
+    |> render_click()
+
+    assert has_element?(view, "#answer-level-login-modal", "Unlock deeper answer levels")
+    assert has_element?(view, "#answer-level-login-modal", "Sign in to create grids")
+  end
+
+  test "prompts signed-out users when a restricted mode is submitted directly", %{conn: conn} do
+    answer = "Restricted Home Grid #{System.unique_integer([:positive])}"
+    {:ok, view, _html} = live(conn, ~p"/")
+
+    render_submit(view, "reply-and-answer", %{
+      "vertex" => %{"content" => answer},
+      "mode" => "expert"
+    })
+
+    assert has_element?(view, "#answer-level-login-modal", "Unlock deeper answer levels")
+    assert is_nil(Graphs.get_graph_by_title(answer))
   end
 
   test "logged in users see profile entry in the header without a settings link", %{conn: conn} do

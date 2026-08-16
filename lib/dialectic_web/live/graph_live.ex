@@ -211,33 +211,37 @@ defmodule DialecticWeb.GraphLive do
       case String.downcase(to_string(mode)) do
         "expert" -> :expert
         "high_school" -> :high_school
-        "simple" -> :simple
+        "simple" -> :high_school
         _ -> :university
       end
 
     mode_str = Atom.to_string(normalized)
 
-    if is_binary(graph_id) do
-      _ = Dialectic.Responses.ModeServer.set_mode(graph_id, normalized)
+    if normalized in [:university, :expert] and is_nil(socket.assigns[:current_user]) do
+      {:noreply, assign(socket, show_login_modal: true)}
+    else
+      if is_binary(graph_id) do
+        _ = Dialectic.Responses.ModeServer.set_mode(graph_id, normalized)
 
-      case Dialectic.DbActions.Graphs.get_graph_by_title(graph_id) do
-        nil ->
-          :noop
+        case Dialectic.DbActions.Graphs.get_graph_by_title(graph_id) do
+          nil ->
+            :noop
 
-        graph ->
-          graph
-          |> Dialectic.Accounts.Graph.changeset(%{prompt_mode: mode_str})
-          |> Dialectic.Repo.update()
+          graph ->
+            graph
+            |> Dialectic.Accounts.Graph.changeset(%{prompt_mode: mode_str})
+            |> Dialectic.Repo.update()
+        end
       end
+
+      send_update(
+        DialecticWeb.RightPanelComp,
+        id: "right-panel-comp",
+        prompt_mode: mode_str
+      )
+
+      {:noreply, assign(socket, prompt_mode: mode_str)}
     end
-
-    send_update(
-      DialecticWeb.RightPanelComp,
-      id: "right-panel-comp",
-      prompt_mode: mode_str
-    )
-
-    {:noreply, assign(socket, prompt_mode: mode_str)}
   end
 
   def handle_event("node:join_group", %{"node" => nid, "parent" => gid}, socket) do

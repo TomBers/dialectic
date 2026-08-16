@@ -656,6 +656,11 @@ defmodule DialecticWeb.CoreComponents do
   """
   attr :id, :string, required: true
   attr :show, :boolean, default: false
+  attr :title, :string, default: "Login Required"
+
+  attr :description, :string,
+    default:
+      "You need to be signed in to perform this action. Please log in or create a new account to continue."
 
   def login_required_modal(assigns) do
     ~H"""
@@ -665,11 +670,10 @@ defmodule DialecticWeb.CoreComponents do
           <.icon name="hero-lock-closed" class="h-6 w-6 text-zinc-600" />
         </div>
         <h3 class="text-lg font-semibold leading-6 text-zinc-900 mb-2">
-          Login Required
+          {@title}
         </h3>
         <p class="text-sm text-zinc-500 mb-6">
-          You need to be signed in to perform this action.
-          Please log in or create a new account to continue.
+          {@description}
         </p>
         <div class="flex flex-col sm:flex-row justify-center gap-3">
           <.link

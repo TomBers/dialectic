@@ -1,6 +1,7 @@
 defmodule Dialectic.Responses.LLMWorkerTelemetryTest do
   use ExUnit.Case, async: true
 
+  alias Dialectic.Responses.{ModeServer, PromptsStructured}
   alias Dialectic.Workers.LLMWorker
   alias DialecticWeb.Telemetry, as: WebTelemetry
 
@@ -61,6 +62,17 @@ defmodule Dialectic.Responses.LLMWorkerTelemetryTest do
     assert LLMWorker.skip_existing_response?(1, partial_response)
     refute LLMWorker.skip_existing_response?(2, partial_response)
     refute LLMWorker.skip_existing_response?(1, "short")
+  end
+
+  test "uses the queued output budget and falls back to the graph answer level" do
+    graph = "worker-budget-#{System.unique_integer([:positive])}"
+    :ok = ModeServer.set_mode(graph, :expert)
+    on_exit(fn -> ModeServer.delete_mode(graph) end)
+
+    assert LLMWorker.request_max_tokens(%{"max_tokens" => 3_072}, graph) == 3_072
+
+    assert LLMWorker.request_max_tokens(%{}, graph) ==
+             PromptsStructured.max_output_tokens(:expert)
   end
 
   test "batches stream updates while flushing the first chunk immediately" do

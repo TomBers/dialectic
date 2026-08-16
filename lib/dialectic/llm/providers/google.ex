@@ -4,7 +4,7 @@ defmodule Dialectic.LLM.Providers.Google do
 
   Default Gemini provider configuration:
   - Required: `GOOGLE_API_KEY`
-  - Model: `gemini-3.6-flash`
+  - Model: `gemini-3.7-flash`
   - Minimal thinking for lower latency
   - Google Search grounding for current, verifiable sources and links
   """
@@ -18,7 +18,7 @@ defmodule Dialectic.LLM.Providers.Google do
 
   @impl true
   def model do
-    "gemini-3.6-flash"
+    "gemini-3.5-flash-lite"
   end
 
   @impl true
@@ -27,10 +27,19 @@ defmodule Dialectic.LLM.Providers.Google do
   end
 
   @impl true
-  def provider_options do
+  def provider_options, do: provider_options(:high_school)
+
+  def provider_options(mode) do
+    thinking_level =
+      case mode do
+        :high_school -> "minimal"
+        :expert -> "medium"
+        _ -> "low"
+      end
+
     [
-      google_thinking_level: "MINIMAL",
-      google_grounding: %{enable: true}
+      google_thinking_level: thinking_level,
+      google_grounding: %{enable: mode in [:university, :expert]}
     ]
   end
 end

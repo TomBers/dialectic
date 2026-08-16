@@ -7,7 +7,7 @@ defmodule Dialectic.Graph.IntegrationGraphActionsTest do
   alias Dialectic.Graph.GraphActions
   alias Dialectic.Graph.Vertex
   alias Dialectic.Repo
-  alias Dialectic.Responses.Prompts
+  alias Dialectic.Responses.{ModeServer, Prompts}
   alias Dialectic.Workers.LocalWorker
 
   @graph_id "TestGraph"
@@ -16,6 +16,8 @@ defmodule Dialectic.Graph.IntegrationGraphActionsTest do
   setup do
     GraphManager.reset_graph(@graph_id)
     Dialectic.GraphFixtures.insert_graph_fixture(@graph_id)
+    :ok = ModeServer.set_mode(@graph_id, :university)
+    on_exit(fn -> ModeServer.delete_mode(@graph_id) end)
 
     graph = GraphManager.get_graph(@graph_id)
     {:ok, graph: graph}
@@ -118,6 +120,7 @@ defmodule Dialectic.Graph.IntegrationGraphActionsTest do
 
     assert answer_node.class == "answer"
     assert answer_node.prompt_kind == "answer"
+    assert answer_node.response_level == "university"
     assert List.first(answer_node.parents).prompt_kind == "question"
 
     assert_receive {:trace, ^graph_manager, :receive,
@@ -132,6 +135,8 @@ defmodule Dialectic.Graph.IntegrationGraphActionsTest do
     assert snapshot["nodes"] |> Enum.map(& &1["class"]) |> Enum.sort() ==
              ["answer", "origin", "question"]
 
+    answer_snapshot = Enum.find(snapshot["nodes"], &(&1["class"] == "answer"))
+    assert answer_snapshot["response_level"] == "university"
     assert length(snapshot["edges"]) == 2
   end
 

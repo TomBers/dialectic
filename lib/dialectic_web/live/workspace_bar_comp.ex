@@ -195,7 +195,7 @@ defmodule DialecticWeb.WorkspaceBarComp do
   defp normalize_node_id(nil), do: nil
   defp normalize_node_id(value), do: to_string(value)
 
-  defp prompt_mode_label("simple"), do: "Plain"
+  defp prompt_mode_label("simple"), do: "Standard"
   defp prompt_mode_label("high_school"), do: "Standard"
   defp prompt_mode_label("expert"), do: "Expert"
   defp prompt_mode_label(_mode), do: "Detailed"
