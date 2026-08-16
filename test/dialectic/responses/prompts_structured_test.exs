@@ -93,11 +93,24 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
       assert PromptsStructured.max_output_tokens(:expert) == 8_192
       assert PromptsStructured.max_output_tokens(:unknown) == 6_144
 
-      assert PromptsStructured.response_profile(:simple).label == "Plain"
-      assert PromptsStructured.response_profile(:high_school).label == "Standard"
-      assert PromptsStructured.response_profile(:university).label == "Detailed"
-      assert PromptsStructured.response_profile(:expert).label == "Expert"
+      assert PromptsStructured.response_profile(:simple)
+             |> Map.take([:label, :min_sources, :max_sources]) ==
+               %{label: "Plain", min_sources: 1, max_sources: 2}
+
+      assert PromptsStructured.response_profile(:high_school)
+             |> Map.take([:label, :min_sources, :max_sources]) ==
+               %{label: "Standard", min_sources: 2, max_sources: 3}
+
+      assert PromptsStructured.response_profile(:university)
+             |> Map.take([:label, :min_sources, :max_sources]) ==
+               %{label: "Detailed", min_sources: 3, max_sources: 5}
+
+      assert PromptsStructured.response_profile(:expert)
+             |> Map.take([:label, :min_sources, :max_sources]) ==
+               %{label: "Expert", min_sources: 4, max_sources: 6}
+
       assert PromptsStructured.response_profile(:unknown).key == "university"
+      assert PromptsStructured.response_profile("expert").key == "expert"
     end
 
     test "includes common structure" do
@@ -110,12 +123,21 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
       refute prompt =~ "Tables are welcome"
       assert prompt =~ "Style for structured mode"
       assert prompt =~ "Source output requirement"
-      assert prompt =~ "include a `## Sources` section with 1-4 bullets"
+      assert prompt =~ "include a `## Sources` section with 4-6 bullets"
       assert prompt =~ "vague phrases such as \"critics say\" is not sufficient"
       assert prompt =~ "place `## Sources` immediately before that section"
       assert prompt =~ "Final compliance check"
       assert prompt =~ "The upper bound is a hard maximum"
       assert prompt =~ "Graph-based exploration context"
+    end
+
+    test "recovers the snapshotted mode from an application system prompt" do
+      for mode <- [:simple, :high_school, :university, :expert] do
+        assert PromptsStructured.mode_from_preamble(PromptsStructured.system_preamble(mode)) ==
+                 {:ok, mode}
+      end
+
+      assert PromptsStructured.mode_from_preamble("Custom system prompt") == :error
     end
 
     test "discourages decorative and redundant formatting across reading levels" do

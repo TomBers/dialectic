@@ -95,6 +95,25 @@ defmodule Dialectic.Responses.RequestQueueWorkerTest do
       assert persisted_job.args["max_tokens"] == PromptsStructured.max_output_tokens(:expert)
     end
 
+    test "infers the compatibility mode from the supplied application prompt" do
+      graph = "PromptModeGraph-#{System.unique_integer([:positive])}"
+      :ok = ModeServer.set_mode(graph, :simple)
+      on_exit(fn -> ModeServer.delete_mode(graph) end)
+
+      assert {:ok, job} =
+               RequestQueue.add(
+                 "Explain this",
+                 PromptsStructured.system_preamble(:expert),
+                 %Dialectic.Graph.Vertex{id: "prompt-mode-node", user: "anonymous"},
+                 graph,
+                 "prompt-mode-topic"
+               )
+
+      persisted_job = Repo.get!(Oban.Job, job.id)
+      assert persisted_job.args["response_level"] == "expert"
+      assert persisted_job.args["max_tokens"] == PromptsStructured.max_output_tokens(:expert)
+    end
+
     test "uses the stable anonymous session actor instead of the PubSub topic" do
       actor_id = "session-#{System.unique_integer([:positive])}"
 

@@ -148,7 +148,7 @@ defmodule Dialectic.Responses.RequestQueue do
   defp build_params(instruction, system_prompt, to_node, graph, request_context, opts) do
     node_id = if is_map(to_node), do: to_node.id, else: to_node
     {live_view_topic, anonymous_actor_id} = split_request_context(request_context)
-    mode = Keyword.get_lazy(opts, :mode, fn -> ModeServer.get_mode(graph) end)
+    mode = request_mode(opts, system_prompt, graph)
 
     %{
       instruction: instruction,
@@ -162,6 +162,19 @@ defmodule Dialectic.Responses.RequestQueue do
       response_level: mode |> PromptsStructured.response_profile() |> Map.fetch!(:key),
       max_tokens: PromptsStructured.max_output_tokens(mode)
     }
+  end
+
+  defp request_mode(opts, system_prompt, graph) do
+    case Keyword.fetch(opts, :mode) do
+      {:ok, mode} ->
+        mode
+
+      :error ->
+        case PromptsStructured.mode_from_preamble(system_prompt) do
+          {:ok, mode} -> mode
+          :error -> ModeServer.get_mode(graph)
+        end
+    end
   end
 
   defp ensure_actor_key(params) do

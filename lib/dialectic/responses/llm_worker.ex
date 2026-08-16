@@ -30,7 +30,7 @@ defmodule Dialectic.Workers.LLMWorker do
   require Logger
 
   alias Dialectic.Responses.Utils
-  alias Dialectic.Responses.{PromptsStructured, ModeServer}
+  alias Dialectic.Responses.{ModeServer, PromptsStructured}
 
   @buffer_size 200
   @stream_flush_min_interval_ms 100
@@ -213,19 +213,20 @@ defmodule Dialectic.Workers.LLMWorker do
 
       {_connect_timeout, receive_timeout} = Dialectic.LLM.Provider.timeouts(provider_mod)
       finch_name = Dialectic.LLM.Provider.finch_name(provider_mod)
-      provider_options = provider_mod.provider_options()
+      provider_options = provider_options(provider_mod, Map.get(args, "response_level"))
       max_tokens = request_max_tokens(args, graph)
+
+      request_options = [
+        api_key: api_key_val,
+        finch_name: finch_name,
+        max_tokens: max_tokens,
+        provider_options: provider_options,
+        receive_timeout: receive_timeout
+      ]
+
       request_started_at = System.monotonic_time()
 
-      case ReqLLM.stream_text(
-             model_spec,
-             ctx,
-             api_key: api_key_val,
-             finch_name: finch_name,
-             max_tokens: max_tokens,
-             provider_options: provider_options,
-             receive_timeout: receive_timeout
-           ) do
+      case ReqLLM.stream_text(model_spec, ctx, request_options) do
         {:ok, stream_resp} ->
           # Stream tokens to UI (and persisted vertex content) as they arrive.
           # We accumulate the *full* response text in the worker to ensure
@@ -276,20 +277,6 @@ defmodule Dialectic.Workers.LLMWorker do
               stream_updates + 1
             else
               stream_updates
-            end
-
-          {final_full_text, stream_updates} =
-            case sanitize_response(final_full_text) do
-              ^final_full_text ->
-                {final_full_text, stream_updates}
-
-              sanitized_text ->
-                Logger.warning(
-                  "[LLMWorker] job_id=#{job_id} removed forbidden fenced content from the completed response"
-                )
-
-                Utils.set_node_content(graph, to_node, sanitized_text, live_view_topic)
-                {sanitized_text, stream_updates + 1}
             end
 
           finish_reason = ReqLLM.StreamResponse.finish_reason(stream_resp)
@@ -365,6 +352,22 @@ defmodule Dialectic.Workers.LLMWorker do
   def skip_existing_response?(1, content) when is_binary(content), do: byte_size(content) > 50
   def skip_existing_response?(_attempt, _content), do: false
 
+  defp provider_options(provider_mod, response_level) do
+    mode =
+      case response_level do
+        "simple" -> :simple
+        "high_school" -> :high_school
+        "expert" -> :expert
+        _other -> :university
+      end
+
+    if function_exported?(provider_mod, :provider_options, 1) do
+      provider_mod.provider_options(mode)
+    else
+      provider_mod.provider_options()
+    end
+  end
+
   @doc false
   def request_max_tokens(args, graph) do
     case Map.get(args, "max_tokens") do
@@ -375,19 +378,6 @@ defmodule Dialectic.Workers.LLMWorker do
         graph
         |> ModeServer.get_mode()
         |> PromptsStructured.max_output_tokens()
-    end
-  end
-
-  @doc false
-  def sanitize_response(text) when is_binary(text) do
-    if String.contains?(text, "```") do
-      text
-      |> String.replace(~r/^[ \t]*```[^\n]*\n.*?^[ \t]*```[ \t]*$/ms, "")
-      |> String.replace(~r/^[ \t]*```[^\n]*$/m, "")
-      |> String.replace(~r/\n{3,}/, "\n\n")
-      |> String.trim()
-    else
-      text
     end
   end
 

@@ -75,28 +75,6 @@ defmodule Dialectic.Responses.LLMWorkerTelemetryTest do
              PromptsStructured.max_output_tokens(:expert)
   end
 
-  test "removes fenced content that violates the response contract" do
-    response = """
-    # Answer
-
-    Keep this explanation.
-
-    ```text
-    Political leaders + International lenders + Corporate interests
-    ```
-
-    Continue with useful prose.
-    """
-
-    sanitized = LLMWorker.sanitize_response(response)
-
-    assert sanitized =~ "Keep this explanation."
-    assert sanitized =~ "Continue with useful prose."
-    refute sanitized =~ "```"
-    refute sanitized =~ "Political leaders + International lenders"
-    assert LLMWorker.sanitize_response("# Answer\n\nNo fences.") == "# Answer\n\nNo fences."
-  end
-
   test "batches stream updates while flushing the first chunk immediately" do
     assert LLMWorker.should_flush_stream?(true, 1, 0)
     refute LLMWorker.should_flush_stream?(false, 199, 499)

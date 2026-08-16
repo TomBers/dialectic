@@ -27,9 +27,18 @@ defmodule Dialectic.LLM.Providers.Google do
   end
 
   @impl true
-  def provider_options do
+  def provider_options, do: provider_options(:simple)
+
+  def provider_options(mode) do
+    thinking_level =
+      case mode do
+        mode when mode in [:simple, :high_school] -> "low"
+        :expert -> "high"
+        _ -> "medium"
+      end
+
     [
-      google_thinking_level: "low",
+      google_thinking_level: thinking_level,
       google_grounding: %{enable: true}
     ]
   end

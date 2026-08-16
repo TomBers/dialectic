@@ -109,7 +109,7 @@ defmodule Dialectic.Responses.Prompts do
 
   defp diagram_output_constraint do
     """
-    **Output constraint:** Do not produce ASCII art, box-drawing diagrams, plain-text arrow diagrams, or conceptual diagrams inside fenced code blocks. Explain relationships with concise prose or an ordinary list instead. Never use fenced code blocks.
+    **Output constraint:** Do not produce ASCII art, box-drawing diagrams, plain-text arrow diagrams, or conceptual diagrams inside fenced code blocks. Explain relationships with concise prose or an ordinary list instead. Use fenced blocks only for literal code, data, or syntax whose whitespace must be preserved.
     """
   end
 
@@ -132,7 +132,7 @@ defmodule Dialectic.Responses.Prompts do
 
   defp citation_encouragement do
     """
-    **Source requirement:** Support material externally checkable claims with specific attribution and the required `## Sources` section. Use 1-4 high-quality sources that genuinely support the answer's most important claims, preferring primary sources and accurate paraphrase. Include a link only when its exact destination has been verified through available search grounding; otherwise provide precise bibliographic details without a URL. Never use vague attribution such as "critics say."
+    **Source requirement:** Support material externally checkable claims with specific attribution and the required `## Sources` section. Use the number and type of sources required by the selected complexity level, ensuring they genuinely support the answer's most important claims. Prefer primary sources and accurate paraphrase. Include a link only when its exact destination has been verified through available search grounding; otherwise provide precise bibliographic details without a URL. Never use vague attribution such as "critics say."
     """
   end
 

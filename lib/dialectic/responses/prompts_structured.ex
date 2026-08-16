@@ -10,6 +10,8 @@ defmodule Dialectic.Responses.PromptsStructured do
       label: "Plain",
       min_words: 150,
       max_words: 250,
+      min_sources: 1,
+      max_sources: 2,
       max_output_tokens: 2_048
     },
     high_school: %{
@@ -17,6 +19,8 @@ defmodule Dialectic.Responses.PromptsStructured do
       label: "Standard",
       min_words: 200,
       max_words: 350,
+      min_sources: 2,
+      max_sources: 3,
       max_output_tokens: 4_096
     },
     university: %{
@@ -24,6 +28,8 @@ defmodule Dialectic.Responses.PromptsStructured do
       label: "Detailed",
       min_words: 250,
       max_words: 500,
+      min_sources: 3,
+      max_sources: 5,
       max_output_tokens: 6_144
     },
     expert: %{
@@ -31,12 +37,25 @@ defmodule Dialectic.Responses.PromptsStructured do
       label: "Expert",
       min_words: 350,
       max_words: 600,
+      min_sources: 4,
+      max_sources: 6,
       max_output_tokens: 8_192
     }
   }
 
   @doc false
   def response_profile(mode), do: profile_for(mode)
+
+  @doc false
+  def mode_from_preamble(prompt) when is_binary(prompt) do
+    cond do
+      String.contains?(prompt, "Complexity level: Expert") -> {:ok, :expert}
+      String.contains?(prompt, "Complexity level: High School") -> {:ok, :high_school}
+      String.contains?(prompt, "Complexity level: Simple") -> {:ok, :simple}
+      String.contains?(prompt, "Complexity level: University") -> {:ok, :university}
+      true -> :error
+    end
+  end
 
   @doc false
   def max_output_tokens(mode) do
@@ -188,7 +207,7 @@ defmodule Dialectic.Responses.PromptsStructured do
     - Keep the response concise and focused within the selected complexity level and any task-specific length instruction.
 
     Source output requirement
-    - When the answer makes material externally checkable factual claims, include a `## Sources` section with 1-4 bullets that support the most important claims.
+    - #{source_requirement(mode)}
     - Each source bullet must identify the author or organization, title, and year when known. Add a URL only when search grounding verified the exact destination.
     - Connect sources to claims through clear attribution in the answer. A bare list of names or vague phrases such as "critics say" is not sufficient.
     - If a reliable source cannot be identified, qualify or omit the claim instead of guessing a citation or presenting it as established fact.
@@ -197,7 +216,7 @@ defmodule Dialectic.Responses.PromptsStructured do
 
     Final compliance check
     - Before returning the answer, silently check the response-body word count and revise it to stay within the selected range. The upper bound is a hard maximum.
-    - Remove any fenced block, ASCII-art or box-drawing diagram, plain-text arrow diagram, or redundant formatting.
+    - Remove any ASCII-art, box-drawing, plain-text arrow, or conceptual fenced diagram. Preserve fenced blocks only for literal code, data, or syntax whose whitespace matters.
     - Check that important factual claims have specific attribution and that a required `## Sources` section is present.
     - Return only the corrected final answer; do not describe this check.
 
@@ -222,6 +241,17 @@ defmodule Dialectic.Responses.PromptsStructured do
       "Treat #{profile.max_words} words as a hard maximum and plan the depth to fit; " <>
       "follow a narrower task-specific limit when one is provided."
   end
+
+  defp source_requirement(mode) do
+    profile = profile_for(mode)
+
+    "When the answer makes material externally checkable factual claims, include a `## Sources` section with #{profile.min_sources}-#{profile.max_sources} bullets that support the most important claims."
+  end
+
+  defp profile_for("simple"), do: profile_for(:simple)
+  defp profile_for("high_school"), do: profile_for(:high_school)
+  defp profile_for("university"), do: profile_for(:university)
+  defp profile_for("expert"), do: profile_for(:expert)
 
   defp profile_for(mode) do
     Map.get(@response_profiles, mode, Map.fetch!(@response_profiles, :university))

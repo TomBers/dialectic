@@ -6,7 +6,7 @@ defmodule Dialectic.Responses.LlmInterfaceTest do
 
   alias Dialectic.Graph.Vertex
   alias Dialectic.Repo
-  alias Dialectic.Responses.{LlmInterface, Prompts}
+  alias Dialectic.Responses.{LlmInterface, ModeServer, Prompts, PromptsStructured}
   alias Dialectic.Workers.LocalWorker
 
   describe "LlmInterface API" do
@@ -44,6 +44,23 @@ defmodule Dialectic.Responses.LlmInterfaceTest do
         assert function_exported?(LlmInterface, tool, 5),
                "Function #{tool}/5 not exported (with content_override)"
       end
+    end
+  end
+
+  describe "response-level snapshot" do
+    test "uses the level captured on the child even if the graph mode changes" do
+      {graph_id, _containing_node, question_node} = setup_context_graph()
+      :ok = ModeServer.set_mode(graph_id, :simple)
+      on_exit(fn -> ModeServer.delete_mode(graph_id) end)
+
+      child = %{child_vertex("snapshotted") | response_level: "expert"}
+
+      assert {:ok, job} = LlmInterface.gen_response(question_node, child, graph_id, "topic")
+
+      persisted_job = Repo.get!(Oban.Job, job.id)
+      assert persisted_job.args["system_prompt"] =~ "Complexity level: Expert"
+      assert persisted_job.args["response_level"] == "expert"
+      assert persisted_job.args["max_tokens"] == PromptsStructured.max_output_tokens(:expert)
     end
   end
 

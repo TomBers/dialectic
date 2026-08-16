@@ -424,10 +424,20 @@ defmodule Dialectic.Responses.LlmInterface do
   end
 
   defp queue_response(action, instruction, child, graph_id, live_view_topic) do
-    mode = ModeServer.get_mode(graph_id)
+    mode = response_mode(child, graph_id)
     system_prompt = PromptsStructured.system_preamble(mode)
     log_prompt(action, graph_id, mode, system_prompt, instruction)
     ask_model(instruction, system_prompt, child, graph_id, live_view_topic, mode)
+  end
+
+  defp response_mode(child, graph_id) do
+    case Map.get(child, :response_level) do
+      "simple" -> :simple
+      "high_school" -> :high_school
+      "university" -> :university
+      "expert" -> :expert
+      _other -> ModeServer.get_mode(graph_id)
+    end
   end
 
   @spec log_prompt(String.t(), String.t(), ModeServer.mode(), String.t(), String.t()) :: :ok
@@ -452,7 +462,12 @@ defmodule Dialectic.Responses.LlmInterface do
   """
   @spec ask_model(String.t(), String.t(), map(), String.t(), String.t()) :: request_result()
   def ask_model(instruction, system_prompt, to_node, graph_id, live_view_topic) do
-    mode = ModeServer.get_mode(graph_id)
+    mode =
+      case PromptsStructured.mode_from_preamble(system_prompt) do
+        {:ok, prompt_mode} -> prompt_mode
+        :error -> ModeServer.get_mode(graph_id)
+      end
+
     ask_model(instruction, system_prompt, to_node, graph_id, live_view_topic, mode)
   end
 
