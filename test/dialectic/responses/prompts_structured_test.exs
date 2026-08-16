@@ -10,9 +10,9 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
       assert prompt =~ "Complexity level: Standard"
       assert prompt =~ "curious seven-year-old"
       assert prompt =~ "everyday words, short sentences, concrete examples"
-      assert prompt =~ "Normal response body: 150-250 words"
-      assert prompt =~ "2-4 short paragraphs"
-      assert prompt =~ "no more than 60 words each"
+      assert prompt =~ "Aim for a normal response body of roughly 150-250 words"
+      assert prompt =~ "a few short, focused paragraphs"
+      assert prompt =~ "Split a paragraph whenever it starts carrying more than one main idea"
       assert prompt =~ "Do not perform source research"
       assert prompt =~ "Do not supply direct quotations"
       refute prompt =~ "## Sources` containing"
@@ -23,12 +23,18 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
 
       assert prompt =~ "Complexity level: Detailed"
       assert prompt =~ "motivated high-school reader"
-      assert prompt =~ "Normal response body: 300-550 words"
-      assert prompt =~ "2-4 descriptive `##` sections"
-      assert prompt =~ "paragraphs normally below 70 words"
+      assert prompt =~ "Aim for a normal response body of roughly 300-550 words"
+      assert prompt =~ "enough descriptive `##` sections"
+      assert prompt =~ "Keep each paragraph focused on one idea"
       assert prompt =~ "compact list, a verified blockquote, or a comparison table"
-      assert prompt =~ "`## Sources` containing 2-4 useful sources"
-      assert prompt =~ "include exactly one brief verified direct quote"
+      assert prompt =~ "Add `## Sources` only when grounded sources materially improve the answer"
+      assert prompt =~ "Use a small, carefully selected set"
+
+      assert prompt =~
+               "use a brief verified excerpt only when its exact wording materially improves"
+
+      assert prompt =~
+               "Every source bullet must contain a Markdown link to the exact grounded URL"
     end
 
     test "defines the university-level Expert contract" do
@@ -37,11 +43,17 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
       assert prompt =~ "Complexity level: Expert"
       assert prompt =~ "university level for an undergraduate reader"
       assert prompt =~ "do not assume postgraduate expertise"
-      assert prompt =~ "Normal response body: 450-750 words"
-      assert prompt =~ "3-5 descriptive `##` sections"
-      assert prompt =~ "paragraphs normally below 80 words"
-      assert prompt =~ "`## Sources` containing 4-6 strong sources"
-      assert prompt =~ "include 1-2 brief verified direct quotes"
+      assert prompt =~ "Aim for a normal response body of roughly 450-750 words"
+      assert prompt =~ "several descriptive `##` sections"
+      assert prompt =~ "Keep each paragraph focused on one analytical move"
+      assert prompt =~ "Add `## Sources` only when grounded sources materially improve the answer"
+      assert prompt =~ "Use a small set of the strongest sources"
+
+      assert prompt =~
+               "use brief verified excerpts only when their exact wording materially improves"
+
+      assert prompt =~
+               "Every source bullet must contain a Markdown link to the exact grounded URL"
     end
 
     test "keeps common integrity, Markdown, and graph-continuity rules" do
@@ -49,12 +61,13 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
         prompt = PromptsStructured.system_preamble(mode)
 
         assert prompt =~ "Never invent or guess quotations"
+        assert prompt =~ "Never provide a memory-only bibliography entry"
         assert prompt =~ "Return only valid GitHub Flavored Markdown"
         assert prompt =~ "Start with one concise `#` title"
         assert prompt =~ "Use descriptive `##` headings"
         assert prompt =~ "Never produce ASCII art"
         assert prompt =~ "Add genuinely new information"
-        assert prompt =~ "Verify body length, required section count, paragraph length"
+        assert prompt =~ "Check that the answer is proportionate, readable, complete"
       end
     end
 

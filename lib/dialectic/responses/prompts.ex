@@ -128,7 +128,7 @@ defmodule Dialectic.Responses.Prompts do
 
   defp critical_focus_instruction do
     """
-    Select the 2-4 most consequential dimensions or tests from the menu below; do not mechanically cover every item. Favor depth and decision-relevance over checklist completion.
+    Select only the most consequential dimensions or tests from the menu below. Do not mechanically cover every item; favor depth and decision-relevance over checklist completion.
     """
   end
 
@@ -190,13 +190,13 @@ defmodule Dialectic.Responses.Prompts do
       1. A concise opening — lead with a well-supported fact, a counterintuitive insight, or a focused question that reframes the topic.
       2. An orienting foundation that defines the central concepts and explains the main mechanism, argument, or context a reader needs before branching further.
       3. One concrete example or case that makes the topic tangible without mistaking illustration for proof.
-      4. When the topic centers on an identifiable book, speech, law, paper, or other primary text and the selected source policy enables research, one brief verified direct quote (under 25 words) that preserves the author's voice. Render it as a Markdown blockquote and follow it with specific attribution and a locator.
+      4. When the topic centers on an identifiable book, speech, law, paper, or other primary text and the selected source policy enables research, a brief verified excerpt when it genuinely preserves the author's voice or sharpens the explanation. Quote enough to preserve its meaning, but no more than the answer needs. Render it as a Markdown blockquote and follow it with specific attribution and a locator.
       5. One meaningful tension, limitation, or competing perspective that prevents the foundation from feeling falsely settled and creates curiosity.
       6. A final section with the exact heading `## Follow-up questions`.
 
-      Keep the main answer within the opening-answer range of #{opening_word_range}. This task-specific range replaces the shorter follow-up response range. Always leave room for the final `## Follow-up questions` section.
+      Aim for an opening answer of roughly #{opening_word_range}. Treat this as an editorial target: prioritize a compelling and complete foundation over hitting an exact count. Always leave room for the final `## Follow-up questions` section.
 
-      If the selected complexity level requires sources, place its required `## Sources` section immediately before `## Follow-up questions` so the follow-up section remains last.
+      If a `## Sources` section adds value under the selected source policy, place it immediately before `## Follow-up questions` so the follow-up section remains last.
 
       In the `## Follow-up questions` section:
       - Include exactly 3 numbered questions
@@ -453,7 +453,7 @@ defmodule Dialectic.Responses.Prompts do
 
       Ask "What do we mean?" Examine this claim through the lens of "What do you mean by...?" — the most fundamental move in philosophical inquiry. Focus on:
 
-      - **Key terms:** Identify 2-4 terms or phrases that carry significant conceptual weight. For each, explore: How is it being used here? What alternative definitions exist? What does each definition include or exclude?
+      - **Key terms:** Identify the small number of terms or phrases that carry the most conceptual weight. For each, explore: How is it being used here? What alternative definitions exist? What does each definition include or exclude?
       - **Hidden ambiguities:** Surface places where the same word might be doing double duty, or where vagueness masks important distinctions
       - **Conceptual boundaries:** Where does this concept end and neighboring concepts begin? What's the difference between this and closely related ideas?
       - **Operational definitions:** How would we actually recognize or measure what's being claimed? What would count as evidence?
@@ -479,7 +479,7 @@ defmodule Dialectic.Responses.Prompts do
       **Your task:** Use **Clarify Terms** on the selected text — ask "What do we mean?" and "What do you mean by...?"
 
       Focus on:
-      - **Key terms:** Identify 2-4 terms or phrases that carry significant conceptual weight. For each, explore: How is it being used here? What alternative definitions exist? What does each definition include or exclude?
+      - **Key terms:** Identify the small number of terms or phrases that carry the most conceptual weight. For each, explore: How is it being used here? What alternative definitions exist? What does each definition include or exclude?
       - **Hidden ambiguities:** Surface places where the same word might be doing double duty, or where vagueness masks important distinctions
       - **Conceptual boundaries:** Where does this concept end and neighboring concepts begin? What's the difference between this and closely related ideas?
       - **Operational definitions:** How would we actually recognize or measure what's being claimed? What would count as evidence?

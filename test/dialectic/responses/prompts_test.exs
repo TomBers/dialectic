@@ -217,13 +217,13 @@ defmodule Dialectic.Responses.PromptsTest do
   describe "initial_explainer/3" do
     test "uses a larger opening range for each answer level" do
       assert Prompts.initial_explainer("", "Topic", :high_school) =~
-               "opening-answer range of 250-350 words"
+               "opening answer of roughly 250-350 words"
 
       assert Prompts.initial_explainer("", "Topic", :university) =~
-               "opening-answer range of 400-650 words"
+               "opening answer of roughly 400-650 words"
 
       assert Prompts.initial_explainer("", "Topic", :expert) =~
-               "opening-answer range of 550-850 words"
+               "opening answer of roughly 550-850 words"
     end
 
     test "generates initial answer prompt with exploration suggestions" do
@@ -236,12 +236,13 @@ defmodule Dialectic.Responses.PromptsTest do
       assert result =~ "exact heading `## Follow-up questions`"
       assert result =~ "Include exactly 3 numbered questions"
       assert result =~ "single, self-contained question ending with a question mark"
-      assert result =~ "opening-answer range of 400-650 words"
+      assert result =~ "opening answer of roughly 400-650 words"
       assert result =~ "defines the central concepts and explains the main mechanism"
-      assert result =~ "one brief verified direct quote (under 25 words)"
+      assert result =~ "a brief verified excerpt"
+      assert result =~ "Quote enough to preserve its meaning"
       assert result =~ "Render it as a Markdown blockquote"
       assert result =~ "One meaningful tension, limitation, or competing perspective"
-      assert result =~ "If the selected complexity level requires sources"
+      assert result =~ "If a `## Sources` section adds value"
       refute result =~ "140-220 words"
       assert result =~ "Build on the Foundation"
     end
@@ -380,8 +381,8 @@ defmodule Dialectic.Responses.PromptsTest do
             Prompts.steel_man(context, claim),
             Prompts.what_if(context, claim)
           ] do
-        assert prompt =~ "Select the 2-4 most consequential dimensions or tests"
-        assert prompt =~ "do not mechanically cover every item"
+        assert prompt =~ "Select only the most consequential dimensions or tests"
+        assert prompt =~ "Do not mechanically cover every item"
       end
     end
 
