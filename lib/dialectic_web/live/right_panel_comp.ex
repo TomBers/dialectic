@@ -55,6 +55,7 @@ defmodule DialecticWeb.RightPanelComp do
       |> assign_new(:search_results, fn -> [] end)
       |> assign_new(:group_states, fn -> %{} end)
       |> assign_new(:prompt_mode, fn -> "university" end)
+      |> assign_new(:current_user, fn -> nil end)
       |> assign_new(:highlights, fn -> [] end)
       |> assign_new(:activity_logs, fn -> load_activity_logs(graph_id) end)
       |> assign_new(:editing_highlight_id, fn -> nil end)
@@ -321,7 +322,14 @@ defmodule DialecticWeb.RightPanelComp do
                     end
                   ]}
                 >
-                  <span class="text-xs font-semibold">{label}</span>
+                  <span class="inline-flex items-center gap-1 text-xs font-semibold">
+                    {label}
+                    <.icon
+                      :if={is_nil(@current_user) && mode in ["university", "expert"]}
+                      name="hero-lock-closed"
+                      class="h-3 w-3"
+                    />
+                  </span>
                   <span class={[
                     "mt-0.5 text-[10px] leading-4",
                     if(@prompt_mode == mode, do: "text-slate-300", else: "text-slate-500")

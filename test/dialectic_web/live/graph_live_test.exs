@@ -216,6 +216,23 @@ defmodule DialecticWeb.GraphLiveTest do
       refute has_element?(view, "#answer-level-simple")
     end
 
+    test "prompts signed-out users before changing to a restricted level", %{conn: conn} do
+      graph =
+        Dialectic.GraphFixtures.insert_graph(%{
+          title: "Restricted Level Graph #{System.unique_integer([:positive])}",
+          prompt_mode: "high_school"
+        })
+
+      {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}/graph?node=1")
+
+      render_click(view, "set_prompt_mode", %{"prompt_mode" => "expert"})
+
+      assert has_element?(view, "#login-modal", "Login Required")
+
+      assert Dialectic.DbActions.Graphs.get_graph_by_title(graph.title).prompt_mode ==
+               "high_school"
+    end
+
     test "can follow and unfollow the current grid", %{conn: conn} do
       {:ok, view, _html} = setup_live(conn)
       assigns = :sys.get_state(view.pid).socket.assigns

@@ -198,6 +198,15 @@ defmodule DialecticWeb.HomeLiveTest do
     assert has_element?(view, "#new-idea-mode-university", "broader context")
     assert has_element?(view, "#new-idea-mode-university", "Detailed")
     assert has_element?(view, "#new-idea-mode-expert", "Rigorous analysis")
+    assert has_element?(view, "#new-idea-mode-university[data-requires-login='true']")
+    assert has_element?(view, "#new-idea-mode-expert[data-requires-login='true']")
+
+    view
+    |> element("#new-idea-mode-university")
+    |> render_click()
+
+    assert has_element?(view, "#answer-level-login-modal", "Unlock deeper answer levels")
+    assert has_element?(view, "#answer-level-login-modal", "Sign in to create grids")
   end
 
   test "logged in users see profile entry in the header without a settings link", %{conn: conn} do

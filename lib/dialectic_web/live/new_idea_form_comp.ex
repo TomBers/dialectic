@@ -23,6 +23,7 @@ defmodule DialecticWeb.NewIdeaFormComp do
       |> assign_new(:submit_label, fn -> "Next" end)
       |> assign_new(:autofocus, fn -> false end)
       |> assign_new(:minimal, fn -> false end)
+      |> assign_new(:authenticated, fn -> false end)
       |> assign_new(:selected_mode, fn -> "high_school" end)
       |> assign_new(:show_level_prompt, fn -> false end)
       |> assign_new(:content, fn %{form: form} ->
@@ -34,7 +35,12 @@ defmodule DialecticWeb.NewIdeaFormComp do
 
   @impl true
   def handle_event("select_mode", %{"mode" => mode}, socket) do
-    {:noreply, assign(socket, selected_mode: mode)}
+    if restricted_mode?(mode) and not socket.assigns.authenticated do
+      send(self(), {:answer_level_login_required, mode})
+      {:noreply, socket}
+    else
+      {:noreply, assign(socket, selected_mode: mode)}
+    end
   end
 
   @impl true
@@ -184,6 +190,13 @@ defmodule DialecticWeb.NewIdeaFormComp do
                     phx-click="select_mode"
                     phx-value-mode={mode}
                     phx-target={@myself}
+                    data-requires-login={to_string(!@authenticated && restricted_mode?(mode))}
+                    title={
+                      if(!@authenticated && restricted_mode?(mode),
+                        do: "Sign in to unlock #{label}",
+                        else: label
+                      )
+                    }
                     class={[
                       "group flex flex-1 flex-col items-center px-2 py-2 text-center transition-colors duration-150 sm:flex-initial sm:px-3 sm:py-2",
                       if(@selected_mode == mode,
@@ -192,7 +205,14 @@ defmodule DialecticWeb.NewIdeaFormComp do
                       )
                     ]}
                   >
-                    <span class="text-xs font-semibold">{label}</span>
+                    <span class="inline-flex items-center gap-1 text-xs font-semibold">
+                      {label}
+                      <.icon
+                        :if={!@authenticated && restricted_mode?(mode)}
+                        name="hero-lock-closed"
+                        class="h-3 w-3"
+                      />
+                    </span>
                     <span class={[
                       "mt-0.5 hidden max-w-40 text-[10px] leading-4 sm:block",
                       if(@selected_mode == mode, do: "text-slate-300", else: "text-slate-500")
@@ -220,4 +240,6 @@ defmodule DialecticWeb.NewIdeaFormComp do
     </div>
     """
   end
+
+  defp restricted_mode?(mode), do: mode in ["university", "expert"]
 end

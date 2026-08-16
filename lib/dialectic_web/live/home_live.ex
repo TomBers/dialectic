@@ -14,6 +14,7 @@ defmodule DialecticWeb.HomeLive do
     socket =
       assign(socket,
         loading_graph: nil,
+        show_level_login_modal: false,
         llm_actor_id: session["llm_actor_id"] || "home:#{socket.id}"
       )
 
@@ -56,6 +57,11 @@ defmodule DialecticWeb.HomeLive do
   def handle_event("reply-and-answer", %{"vertex" => %{"content" => answer}} = params, socket) do
     mode_param = Map.get(params, "mode")
     {:noreply, submit_new_grid(socket, answer, mode_param)}
+  end
+
+  @impl true
+  def handle_event("close_login_modal", _params, socket) do
+    {:noreply, assign(socket, :show_level_login_modal, false)}
   end
 
   @impl true
@@ -102,6 +108,11 @@ defmodule DialecticWeb.HomeLive do
      socket
      |> put_flash(:error, "Grid creation failed unexpectedly. Please try again.")
      |> assign(:loading_graph, nil)}
+  end
+
+  @impl true
+  def handle_info({:answer_level_login_required, _mode}, socket) do
+    {:noreply, assign(socket, :show_level_login_modal, true)}
   end
 
   @impl true
@@ -193,6 +204,13 @@ defmodule DialecticWeb.HomeLive do
   def render(assigns) do
     ~H"""
     <div class="min-h-screen bg-[#f4f1e9] font-sans text-slate-950 antialiased">
+      <.login_required_modal
+        id="answer-level-login-modal"
+        show={@show_level_login_modal}
+        title="Unlock deeper answer levels"
+        description="Sign in to create grids with Detailed or Expert answers, grounded sources, and deeper analysis."
+      />
+
       <%= if @loading_graph do %>
         <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/95 px-4">
           <div class="w-full max-w-md border border-slate-700 bg-slate-900 p-6 text-white shadow-2xl sm:p-8">
@@ -377,6 +395,7 @@ defmodule DialecticWeb.HomeLive do
                   submit_label="Continue"
                   autofocus={@focus_new_grid}
                   minimal={true}
+                  authenticated={!is_nil(@current_user)}
                 />
                 <p id="home-public-grid-note" class="mt-3 text-xs leading-5 text-slate-500">
                   New grids are public and editable by default. Anyone can read them and, while editing is on, add to them. Sign in first if you want to control access in Settings; never include sensitive information.
