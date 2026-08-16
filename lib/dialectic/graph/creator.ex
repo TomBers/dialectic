@@ -154,7 +154,8 @@ defmodule Dialectic.Graph.Creator do
            system_prompt,
            answer_node,
            title,
-           {live_view_topic, actor_id}
+           {live_view_topic, actor_id},
+           mode: mode
          ) do
       {:ok, job} ->
         Logger.debug(

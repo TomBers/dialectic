@@ -74,6 +74,27 @@ defmodule Dialectic.Responses.RequestQueueWorkerTest do
       end
     end
 
+    test "uses the supplied mode snapshot even if the graph mode changes" do
+      graph = "SnapshotGraph-#{System.unique_integer([:positive])}"
+      :ok = ModeServer.set_mode(graph, :simple)
+      on_exit(fn -> ModeServer.delete_mode(graph) end)
+
+      assert {:ok, job} =
+               RequestQueue.add(
+                 "Explain this",
+                 PromptsStructured.system_preamble(:expert),
+                 %Dialectic.Graph.Vertex{id: "snapshot-node", user: "anonymous"},
+                 graph,
+                 "snapshot-topic",
+                 mode: :expert
+               )
+
+      persisted_job = Repo.get!(Oban.Job, job.id)
+      assert persisted_job.args["system_prompt"] =~ "Complexity level: Expert"
+      assert persisted_job.args["response_level"] == "expert"
+      assert persisted_job.args["max_tokens"] == PromptsStructured.max_output_tokens(:expert)
+    end
+
     test "uses the stable anonymous session actor instead of the PubSub topic" do
       actor_id = "session-#{System.unique_integer([:positive])}"
 

@@ -19,19 +19,23 @@ defmodule Dialectic.Responses.RequestQueue do
   @default_max_requests_per_minute 10
   @rate_window_ms :timer.minutes(1)
 
+  def add(instruction, system_prompt, to_node, graph, live_view_topic) do
+    add(instruction, system_prompt, to_node, graph, live_view_topic, [])
+  end
+
   # Define the implementation based on compile-time environment
   if Mix.env() == :test do
     # Test environment uses local model
-    def add(instruction, system_prompt, to_node, graph, live_view_topic) do
+    def add(instruction, system_prompt, to_node, graph, live_view_topic, opts) do
       instruction
-      |> build_params(system_prompt, to_node, graph, live_view_topic)
+      |> build_params(system_prompt, to_node, graph, live_view_topic, opts)
       |> run_local()
     end
   else
     # Non-test environments use LLMWorker
-    def add(instruction, system_prompt, to_node, graph, live_view_topic) do
+    def add(instruction, system_prompt, to_node, graph, live_view_topic, opts) do
       instruction
-      |> build_params(system_prompt, to_node, graph, live_view_topic)
+      |> build_params(system_prompt, to_node, graph, live_view_topic, opts)
       |> run_llm()
     end
   end
@@ -141,10 +145,10 @@ defmodule Dialectic.Responses.RequestQueue do
     end
   end
 
-  defp build_params(instruction, system_prompt, to_node, graph, request_context) do
+  defp build_params(instruction, system_prompt, to_node, graph, request_context, opts) do
     node_id = if is_map(to_node), do: to_node.id, else: to_node
     {live_view_topic, anonymous_actor_id} = split_request_context(request_context)
-    mode = ModeServer.get_mode(graph)
+    mode = Keyword.get_lazy(opts, :mode, fn -> ModeServer.get_mode(graph) end)
 
     %{
       instruction: instruction,
