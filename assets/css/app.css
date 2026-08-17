@@ -1466,8 +1466,8 @@ button[type="submit"]:active {
     box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.2);
 }
 
-/* Editorial reading measure and hierarchy for the outline reader. */
-#outline-layout .outline-reader-prose {
+/* Shared editorial reading measure and hierarchy for reader and graph views. */
+.reader-prose {
     width: min(100%, var(--rg-read-max-width, 62ch));
     max-width: var(--rg-read-max-width, 62ch);
     color: #1e293b;
@@ -1480,9 +1480,7 @@ button[type="submit"]:active {
     word-spacing: var(--rg-read-word-spacing, 0.02em);
 }
 
-#outline-layout .outline-reader-prose :where(p),
-#graph-layout
-    .selection-content
+.reader-prose
     [phx-hook="Markdown"][data-body-only="true"]
     :where(p) {
     margin-block: var(--rg-read-para-margin, 0.88em);
@@ -1490,20 +1488,17 @@ button[type="submit"]:active {
     line-height: inherit;
 }
 
-#outline-layout
-    .outline-reader-prose
+.reader-prose
     [phx-hook="Markdown"][data-body-only="true"]
     > p:first-of-type {
     margin-top: 0;
     color: #0f172a;
-    font-size: 1.06em;
+    font-size: var(--rg-read-lead-size, 1.06em);
     font-weight: 450;
-    line-height: 1.62;
+    line-height: var(--rg-read-lead-line-height, 1.62);
 }
 
-#outline-layout .outline-reader-prose :where(h2),
-#graph-layout
-    .selection-content
+.reader-prose
     [phx-hook="Markdown"][data-body-only="true"]
     :where(h2) {
     margin-top: 1.9em;
@@ -1517,9 +1512,7 @@ button[type="submit"]:active {
     padding-left: 0;
 }
 
-#outline-layout .outline-reader-prose :where(h3),
-#graph-layout
-    .selection-content
+.reader-prose
     [phx-hook="Markdown"][data-body-only="true"]
     :where(h3) {
     margin-top: 1.65em;
@@ -1531,17 +1524,13 @@ button[type="submit"]:active {
     line-height: 1.3;
 }
 
-#outline-layout .outline-reader-prose :where(ul, ol),
-#graph-layout
-    .selection-content
+.reader-prose
     [phx-hook="Markdown"][data-body-only="true"]
     :where(ul, ol) {
     margin-block: 1em;
 }
 
-#outline-layout .outline-reader-prose :where(li),
-#graph-layout
-    .selection-content
+.reader-prose
     [phx-hook="Markdown"][data-body-only="true"]
     :where(li) {
     margin-block: 0.48em;
@@ -1549,27 +1538,21 @@ button[type="submit"]:active {
     line-height: 1.62;
 }
 
-#outline-layout .outline-reader-prose :where(li)::marker,
-#graph-layout
-    .selection-content
+.reader-prose
     [phx-hook="Markdown"][data-body-only="true"]
     :where(li)::marker {
     color: #64748b;
     font-weight: 600;
 }
 
-#outline-layout .outline-reader-prose :where(strong),
-#graph-layout
-    .selection-content
+.reader-prose
     [phx-hook="Markdown"][data-body-only="true"]
     :where(strong) {
     color: #0f172a;
     font-weight: 700;
 }
 
-#outline-layout .outline-reader-prose :where(a),
-#graph-layout
-    .selection-content
+.reader-prose
     [phx-hook="Markdown"][data-body-only="true"]
     :where(a) {
     color: #0f766e;
@@ -1579,17 +1562,14 @@ button[type="submit"]:active {
     text-underline-offset: 0.2em;
 }
 
-#outline-layout .outline-reader-prose :where(blockquote),
-#graph-layout
-    .selection-content
+.reader-prose
     [phx-hook="Markdown"][data-body-only="true"]
     :where(blockquote) {
     border-color: #cbd5e1;
     color: #475569;
 }
 
-#outline-layout .outline-reader-prose [phx-hook="Markdown"] :where(pre),
-#graph-layout .selection-content [phx-hook="Markdown"] :where(pre) {
+.reader-prose [phx-hook="Markdown"] :where(pre) {
     display: none;
 }
 
@@ -1632,85 +1612,6 @@ button[type="submit"]:active {
     color: #111827; /* gray-900 */
     font-weight: 700;
     letter-spacing: -0.01em;
-}
-
-/* First rendered markdown paragraph acts as the graph drawer's Essence block. */
-#graph-layout
-    .selection-content
-    [phx-hook="Markdown"][data-body-only="true"]
-    > p:first-of-type {
-    margin: 0 0 1.05rem;
-    border: 1px solid rgba(203, 213, 225, 0.72);
-    border-radius: 0.625rem;
-    background: rgba(248, 250, 252, 0.82);
-    padding: 0.8rem 0.9rem;
-    color: #475569;
-    font-size: var(--rg-read-lead-size, 1.06em);
-    font-weight: 450;
-    line-height: var(--rg-read-lead-line-height, 1.62);
-    box-shadow: inset 3px 0 0 rgba(20, 184, 166, 0.42);
-}
-
-#graph-layout
-    .selection-content
-    [phx-hook="Markdown"][data-body-only="true"]
-    > p:first-of-type::before {
-    content: "Essence";
-    display: block;
-    margin-bottom: 0.35rem;
-    color: #64748b;
-    font-family: var(--rg-read-heading-font-family);
-    font-size: 0.625rem;
-    font-weight: 650;
-    letter-spacing: 0.12em;
-    line-height: 1;
-    text-transform: uppercase;
-}
-
-#graph-layout
-    .selection-content
-    [phx-hook="Markdown"][data-body-only="true"]
-    > p:first-of-type
-    + h2 {
-    margin-top: 0.65em;
-}
-
-#graph-layout
-    .selection-content
-    [phx-hook="Markdown"][data-body-only="true"]
-    > p:first-of-type
-    strong {
-    color: #0f172a;
-    font-weight: 700;
-}
-
-#graph-layout
-    .selection-content
-    [phx-hook="Markdown"][data-body-only="true"]
-    > p:first-of-type
-    a[href] {
-    color: #0f766e;
-    text-decoration-color: rgba(45, 212, 191, 0.65);
-}
-
-#graph-layout
-    .selection-content
-    [phx-hook="Markdown"][data-body-only="true"]
-    > p:first-of-type
-    a[href]:hover {
-    color: #115e59;
-    background-color: rgba(204, 251, 241, 0.5);
-    text-decoration-color: rgba(20, 184, 166, 0.8);
-}
-
-#graph-layout
-    .selection-content
-    [phx-hook="Markdown"][data-body-only="true"]
-    > p:first-of-type
-    code {
-    border-color: rgba(226, 232, 240, 0.18);
-    background: rgba(15, 23, 42, 0.62);
-    color: #e2e8f0;
 }
 
 .selection-content h1 {

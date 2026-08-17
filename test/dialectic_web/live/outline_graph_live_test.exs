@@ -805,6 +805,8 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
              "#reading-highlight-5[phx-hook='TextSelectionHook'][data-highlights-only='false']"
            )
 
+    assert has_element?(view, "#reading-highlight-5 article.reader-prose")
+
     assert has_element?(view, "#reader-selection-actions-hook[phx-hook='SelectionActions']")
 
     assert has_element?(
