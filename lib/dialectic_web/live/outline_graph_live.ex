@@ -1002,10 +1002,10 @@ defmodule DialecticWeb.OutlineGraphLive do
     )
   end
 
-  defp response_level_label("simple"), do: "Standard"
-  defp response_level_label("high_school"), do: "Standard"
-  defp response_level_label("university"), do: "Detailed"
-  defp response_level_label("expert"), do: "Expert"
+  defp response_level_label("simple"), do: "Essential"
+  defp response_level_label("high_school"), do: "Essential"
+  defp response_level_label("university"), do: "In-depth"
+  defp response_level_label("expert"), do: "Scholarly"
   defp response_level_label(_response_level), do: nil
 
   defp response_level_badge_class("simple"), do: "bg-sky-50 text-sky-700 ring-sky-600/15"

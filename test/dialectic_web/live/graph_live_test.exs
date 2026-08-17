@@ -193,7 +193,7 @@ defmodule DialecticWeb.GraphLiveTest do
     test "surfaces the explanation level and opens its settings", %{conn: conn} do
       {:ok, view, _html} = setup_live(conn)
 
-      assert has_element?(view, "#graph-workspace-bar-level", "Detailed")
+      assert has_element?(view, "#graph-workspace-bar-level", "In-depth")
 
       view
       |> element("#graph-workspace-bar-level")
@@ -210,7 +210,7 @@ defmodule DialecticWeb.GraphLiveTest do
 
       render_click(view, "set_prompt_mode", %{"prompt_mode" => "high_school"})
 
-      assert has_element?(view, "#graph-workspace-bar-level", "Standard")
+      assert has_element?(view, "#graph-workspace-bar-level", "Essential")
       assert has_element?(view, "#answer-level-high_school[aria-pressed='true']")
       assert has_element?(view, "#answer-level-high_school[phx-click*='toggle-panel']")
       refute has_element?(view, "#answer-level-simple")

@@ -447,12 +447,17 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert assigns.compare_context.root.id == "2"
     assert Enum.find(assigns.compare_branches, &(&1.id == "3")).active?
     assert has_element?(view, "#outline-node-3")
-    assert has_element?(view, "#outline-response-level-3[data-response-level='expert']", "Expert")
+
+    assert has_element?(
+             view,
+             "#outline-response-level-3[data-response-level='expert']",
+             "Scholarly"
+           )
 
     assert has_element?(
              view,
              "#outline-mobile-response-level-3[data-response-level='expert']",
-             "Expert"
+             "Scholarly"
            )
 
     assert has_element?(view, "#reading-node-3")
@@ -460,7 +465,7 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert has_element?(
              view,
              "#reader-response-level-3[data-response-level='expert']",
-             "Expert level"
+             "Scholarly level"
            )
 
     assert has_element?(view, "#outline-end-state")

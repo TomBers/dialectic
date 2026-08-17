@@ -180,9 +180,9 @@ defmodule DialecticWeb.NewIdeaFormComp do
             <div class="mt-3 flex w-full justify-center">
               <div class="mx-auto flex w-full border border-stone-300 bg-white p-0.5 shadow-inner sm:inline-flex sm:w-auto">
                 <%= for {mode, label, description} <- [
-                  {"high_school", "Standard", "Simple language, concrete examples, and clear takeaways."},
-                  {"university", "Detailed", "Useful terminology, broader context, and meaningful nuance."},
-                  {"expert", "Expert", "Rigorous analysis, evidence, competing views, and primary sources."}
+                  {"high_school", "Essential", "Plain language, concrete examples, and key ideas."},
+                  {"university", "In-depth", "Defined terminology, wider context, and sourced evidence."},
+                  {"expert", "Scholarly", "Rigorous analysis, primary sources, and competing interpretations."}
                 ] do %>
                   <button
                     type="button"

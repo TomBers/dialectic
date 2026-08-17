@@ -58,7 +58,7 @@ defmodule Dialectic.Responses.LlmInterfaceTest do
       assert {:ok, job} = LlmInterface.gen_response(question_node, child, graph_id, "topic")
 
       persisted_job = Repo.get!(Oban.Job, job.id)
-      assert persisted_job.args["system_prompt"] =~ "Complexity level: Expert"
+      assert persisted_job.args["system_prompt"] =~ "Complexity level: Scholarly"
       assert persisted_job.args["response_level"] == "expert"
       assert persisted_job.args["max_tokens"] == PromptsStructured.max_output_tokens(:expert)
     end

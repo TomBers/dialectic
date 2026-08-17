@@ -4,10 +4,10 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
   alias Dialectic.Responses.PromptsStructured
 
   describe "system_preamble/1" do
-    test "defines the fast, child-accessible Standard contract" do
+    test "defines the fast, child-accessible Essential contract" do
       prompt = PromptsStructured.system_preamble(:high_school)
 
-      assert prompt =~ "Complexity level: Standard"
+      assert prompt =~ "Complexity level: Essential"
       assert prompt =~ "curious seven-year-old"
       assert prompt =~ "everyday words, short sentences, concrete examples"
       assert prompt =~ "Aim for a normal response body of roughly 150-250 words"
@@ -18,10 +18,10 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
       refute prompt =~ "## Sources` containing"
     end
 
-    test "defines the high-school-level Detailed contract" do
+    test "defines the high-school-level In-depth contract" do
       prompt = PromptsStructured.system_preamble(:university)
 
-      assert prompt =~ "Complexity level: Detailed"
+      assert prompt =~ "Complexity level: In-depth"
       assert prompt =~ "motivated high-school reader"
       assert prompt =~ "Aim for a normal response body of roughly 300-550 words"
       assert prompt =~ "enough descriptive `##` sections"
@@ -44,10 +44,10 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
       assert prompt =~ "Do not add a sources or references section"
     end
 
-    test "defines the university-level Expert contract" do
+    test "defines the university-level Scholarly contract" do
       prompt = PromptsStructured.system_preamble(:expert)
 
-      assert prompt =~ "Complexity level: Expert"
+      assert prompt =~ "Complexity level: Scholarly"
       assert prompt =~ "university level for an undergraduate reader"
       assert prompt =~ "do not assume postgraduate expertise"
       assert prompt =~ "Aim for a normal response body of roughly 450-750 words"
@@ -110,21 +110,21 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
       assert PromptsStructured.initial_word_range(:expert) == "550-850 words"
     end
 
-    test "maps legacy simple values to Standard" do
+    test "maps legacy simple values to Essential" do
       prompt = PromptsStructured.system_preamble(:simple)
 
-      assert prompt =~ "Complexity level: Standard"
+      assert prompt =~ "Complexity level: Essential"
       assert PromptsStructured.response_profile(:simple).key == "high_school"
       assert PromptsStructured.max_output_tokens(:simple) == 2_048
     end
 
     test "normalizes string and unsupported modes before building the prompt" do
-      assert PromptsStructured.system_preamble("high_school") =~ "Complexity level: Standard"
-      assert PromptsStructured.system_preamble("university") =~ "Complexity level: Detailed"
-      assert PromptsStructured.system_preamble("expert") =~ "Complexity level: Expert"
-      assert PromptsStructured.system_preamble("simple") =~ "Complexity level: Standard"
-      assert PromptsStructured.system_preamble(:unknown) =~ "Complexity level: Detailed"
-      assert PromptsStructured.system_preamble("unknown") =~ "Complexity level: Detailed"
+      assert PromptsStructured.system_preamble("high_school") =~ "Complexity level: Essential"
+      assert PromptsStructured.system_preamble("university") =~ "Complexity level: In-depth"
+      assert PromptsStructured.system_preamble("expert") =~ "Complexity level: Scholarly"
+      assert PromptsStructured.system_preamble("simple") =~ "Complexity level: Essential"
+      assert PromptsStructured.system_preamble(:unknown) =~ "Complexity level: In-depth"
+      assert PromptsStructured.system_preamble("unknown") =~ "Complexity level: In-depth"
     end
 
     test "recovers the snapshotted mode from application and legacy prompts" do
@@ -141,6 +141,15 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
 
       assert PromptsStructured.mode_from_preamble("Complexity level: University") ==
                {:ok, :university}
+
+      assert PromptsStructured.mode_from_preamble("Complexity level: Standard") ==
+               {:ok, :high_school}
+
+      assert PromptsStructured.mode_from_preamble("Complexity level: Detailed") ==
+               {:ok, :university}
+
+      assert PromptsStructured.mode_from_preamble("Complexity level: Expert") ==
+               {:ok, :expert}
 
       assert PromptsStructured.mode_from_preamble("Custom system prompt") == :error
     end

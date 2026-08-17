@@ -6,7 +6,7 @@ defmodule Dialectic.Responses.PromptsStructured do
   @response_profiles %{
     high_school: %{
       key: "high_school",
-      label: "Standard",
+      label: "Essential",
       min_words: 150,
       max_words: 250,
       initial_min_words: 250,
@@ -15,7 +15,7 @@ defmodule Dialectic.Responses.PromptsStructured do
     },
     university: %{
       key: "university",
-      label: "Detailed",
+      label: "In-depth",
       min_words: 300,
       max_words: 550,
       initial_min_words: 400,
@@ -24,7 +24,7 @@ defmodule Dialectic.Responses.PromptsStructured do
     },
     expert: %{
       key: "expert",
-      label: "Expert",
+      label: "Scholarly",
       min_words: 450,
       max_words: 750,
       initial_min_words: 550,
@@ -39,6 +39,9 @@ defmodule Dialectic.Responses.PromptsStructured do
   @doc false
   def mode_from_preamble(prompt) when is_binary(prompt) do
     cond do
+      String.contains?(prompt, "Complexity level: Scholarly") -> {:ok, :expert}
+      String.contains?(prompt, "Complexity level: In-depth") -> {:ok, :university}
+      String.contains?(prompt, "Complexity level: Essential") -> {:ok, :high_school}
       String.contains?(prompt, "Complexity level: Expert") -> {:ok, :expert}
       String.contains?(prompt, "Complexity level: Detailed") -> {:ok, :university}
       String.contains?(prompt, "Complexity level: Standard") -> {:ok, :high_school}
