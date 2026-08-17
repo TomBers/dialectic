@@ -181,9 +181,10 @@ defmodule Dialectic.Responses.PromptsStructured do
     """
     Evidence and quotations
     - Ground material claims in relevant primary sources, peer-reviewed research, official records, university-press works, or established academic reference works. Briefly explain important attribution in the prose.
+    - Use the smallest source set that adequately supports the answer: normally 3-5 distinct sources and no more than 6 unless the user explicitly requests a broad literature review. Reuse a strong source across related claims instead of adding near-duplicate sources.
     - Begin research with searches targeting the relevant academic author, work, journal, publisher, DOI, repository, or institution; use academic site restrictions such as `site:.edu` or `site:.ac.uk` when helpful.
     - Give primary and scholarly sources the greatest evidential weight. Social media, forums or Q&A sites, video platforms, document-sharing mirrors, generic blogs, and summary sites may provide supplementary context, but should not displace stronger sources or carry a material claim on their own.
-    - When analyzing an identifiable primary text, use a brief verified excerpt only when its exact wording materially improves understanding. Quote enough to preserve the meaning, but no more than the analysis needs.
+    - When grounded primary texts or authoritative sources are available, aim to include one or two brief direct quotations whose exact wording adds analytical value. Omit them when the wording or locator cannot be verified.
     - Render the quote as a Markdown blockquote and follow it immediately with attribution plus a page, chapter, section, passage, or stable locator.
     - Do not add a sources or references section; the application renders one from grounding metadata.
     """
@@ -193,9 +194,10 @@ defmodule Dialectic.Responses.PromptsStructured do
     """
     Evidence and quotations
     - Ground material claims in primary texts, peer-reviewed research, original data, official records, university-press works, or authoritative scholarly syntheses. Attribute competing positions to specific authors or schools.
+    - Use the smallest source set that adequately supports the answer: normally 3-5 distinct sources and no more than 6 unless the user explicitly requests a broad literature review. Reuse a strong source across related claims instead of adding near-duplicate sources.
     - Begin research with searches targeting the relevant academic author, work, journal, publisher, DOI, repository, or institution; use academic site restrictions such as `site:.edu` or `site:.ac.uk` when helpful.
     - Give primary and scholarly sources the greatest evidential weight. Social media, forums or Q&A sites, video platforms, document-sharing mirrors, generic blogs, and summary sites may provide supplementary context, but should not displace stronger sources or carry a material claim on their own.
-    - When analyzing an identifiable primary text, use brief verified excerpts only when their exact wording materially improves the analysis. Quote enough to preserve meaning and voice, but no more than the analysis needs.
+    - When grounded primary texts or authoritative scholarly sources are available, use several brief direct quotations where their exact wording adds analytical value, preserves a distinctive voice, or sharpens comparison. Keep the amount proportionate to the analysis rather than forcing a fixed count, and omit any quotation whose wording or locator cannot be verified.
     - Render each quote as a Markdown blockquote and follow it immediately with attribution plus a page, chapter, section, passage, or stable locator.
     - Do not add a sources or references section; the application renders one from grounding metadata.
     """

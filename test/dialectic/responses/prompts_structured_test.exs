@@ -29,12 +29,16 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
       assert prompt =~ "compact list, a verified blockquote, or a comparison table"
       assert prompt =~ "renders citations directly from provider grounding metadata"
       assert prompt =~ "peer-reviewed research"
+      assert prompt =~ "normally 3-5 distinct sources and no more than 6"
+      assert prompt =~ "instead of adding near-duplicate sources"
       assert prompt =~ "Begin research with searches targeting the relevant academic"
       assert prompt =~ "may provide supplementary context"
       assert prompt =~ "site:.edu"
 
       assert prompt =~
-               "use a brief verified excerpt only when its exact wording materially improves"
+               "aim to include one or two brief direct quotations whose exact wording adds analytical value"
+
+      assert prompt =~ "Omit them when the wording or locator cannot be verified"
 
       assert prompt =~ "Do not add a sources or references section"
     end
@@ -50,12 +54,17 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
       assert prompt =~ "Keep each paragraph focused on one analytical move"
       assert prompt =~ "renders citations directly from provider grounding metadata"
       assert prompt =~ "university-press works"
+      assert prompt =~ "smallest source set that adequately supports the answer"
+      assert prompt =~ "unless the user explicitly requests a broad literature review"
       assert prompt =~ "Give primary and scholarly sources the greatest evidential weight"
       assert prompt =~ "should not displace stronger sources"
       assert prompt =~ "carry a material claim on their own"
 
       assert prompt =~
-               "use brief verified excerpts only when their exact wording materially improves"
+               "use several brief direct quotations where their exact wording adds analytical value"
+
+      assert prompt =~ "rather than forcing a fixed count"
+      assert prompt =~ "omit any quotation whose wording or locator cannot be verified"
 
       assert prompt =~ "Do not add a sources or references section"
     end
