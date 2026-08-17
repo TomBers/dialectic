@@ -689,11 +689,10 @@ defmodule DialecticWeb.GraphLive do
   def handle_event("node_related_ideas", %{"id" => node_id}, socket) do
     case GraphHelpers.handle_related_ideas(socket, node_id) do
       {:ok, {_graph, node}, operation} ->
-        begin_background_generation(
+        begin_foreground_generation(
           socket,
           node,
-          operation,
-          "Finding related ideas from this node"
+          operation
         )
 
       {:error, :locked} ->
@@ -1028,10 +1027,11 @@ defmodule DialecticWeb.GraphLive do
       {:ok, {_graph, node}, operation} ->
         socket
         |> reset_ask_form()
-        |> begin_background_generation(
+        |> begin_query_generation(
           node,
           operation,
-          "Answering #{quoted_selection(answer)}"
+          "Answering #{quoted_selection(answer)}",
+          params
         )
 
       {:error, :locked} ->
@@ -1048,10 +1048,11 @@ defmodule DialecticWeb.GraphLive do
       {:ok, {_graph, node}, operation} ->
         socket
         |> reset_ask_form()
-        |> begin_background_generation(
+        |> begin_query_generation(
           node,
           operation,
-          "Answering #{quoted_selection(answer)}"
+          "Answering #{quoted_selection(answer)}",
+          params
         )
 
       {:error, :locked} ->
@@ -1985,11 +1986,10 @@ defmodule DialecticWeb.GraphLive do
          {:ok, node} <- find_node_safe(socket.assigns.graph_id, node_id),
          {:ok, tool_config} <- get_tool_config(tool),
          {:ok, result_node} <- apply_graph_action(tool_config, socket, node) do
-      begin_background_generation(
+      begin_foreground_generation(
         socket,
         result_node,
-        Atom.to_string(tool),
-        "Applying #{humanize_tool(tool)} to this node"
+        Atom.to_string(tool)
       )
     else
       {:error, :locked} ->
@@ -2157,10 +2157,35 @@ defmodule DialecticWeb.GraphLive do
   defp explore_target_node_id([node], _parent_node_id), do: node.id
   defp explore_target_node_id(_nodes, parent_node_id), do: parent_node_id
 
-  defp humanize_tool(tool) do
-    tool
-    |> Atom.to_string()
-    |> String.replace("_", " ")
+  defp begin_query_generation(
+         socket,
+         node,
+         operation,
+         _label,
+         %{"query_origin" => "node_action_bar"}
+       ) do
+    begin_foreground_generation(socket, node, operation)
+  end
+
+  defp begin_query_generation(socket, node, operation, label, _params) do
+    begin_background_generation(socket, node, operation, label)
+  end
+
+  defp begin_foreground_generation(socket, node, operation) do
+    nodes = Enum.filter([node], &is_map/1)
+
+    case nodes do
+      [] ->
+        {:noreply, put_flash(socket, :error, "The response could not be started")}
+
+      [target_node] ->
+        socket
+        |> assign(
+          streaming_nodes: MapSet.put(socket.assigns.streaming_nodes, target_node.id),
+          work_streams: list_streams(socket.assigns.graph_id)
+        )
+        |> update_graph({nil, target_node}, operation)
+    end
   end
 
   defp begin_background_generation(socket, node, operation, label) do

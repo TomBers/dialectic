@@ -44,6 +44,7 @@ defmodule DialecticWeb.AskFormComp do
       |> assign_new(:tools_open, fn -> false end)
       |> assign_new(:tools_target, fn -> nil end)
       |> assign_new(:tools_button_id, fn -> nil end)
+      |> assign_new(:query_origin, fn -> nil end)
       |> assign_new(:disabled, fn -> false end)
       |> then(fn s ->
         cond do
@@ -72,6 +73,13 @@ defmodule DialecticWeb.AskFormComp do
         class="w-full min-w-0"
         aria-disabled={@disabled}
       >
+        <input
+          :if={@query_origin}
+          id={"#{@id}-query-origin"}
+          type="hidden"
+          name="query_origin"
+          value={@query_origin}
+        />
         <%!-- Compact Replying-to indicator --%>
         <%= if @show_context && @node && @node.id do %>
           <button

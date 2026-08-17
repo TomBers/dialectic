@@ -200,6 +200,12 @@ defmodule DialecticWeb.GraphLiveTest do
       assert has_element?(view, "#node-content-2 article.reader-prose")
       refute has_element?(view, "#node-content-2 .selection-content")
       assert has_element?(view, "#node-inquiry-actions-2-content #global-chat-form")
+
+      assert has_element?(
+               view,
+               "#global-chat-form-query-origin[name='query_origin'][value='node_action_bar']"
+             )
+
       refute has_element?(view, "#bottom-menu")
 
       assert has_element?(view, "#node-suggestions-2 [id^='node-tool-pros-cons-']")
@@ -622,7 +628,7 @@ defmodule DialecticWeb.GraphLiveTest do
   end
 
   describe "background generation" do
-    test "composer questions preserve the current reader and graph", %{conn: conn} do
+    test "questions outside the action bar preserve the current reader and graph", %{conn: conn} do
       {:ok, view, _html} = setup_live_with_data(conn, source_text_graph_data())
       initial_assigns = :sys.get_state(view.pid).socket.assigns
 
@@ -642,7 +648,28 @@ defmodule DialecticWeb.GraphLiveTest do
       assert has_element?(view, "#background-generations", "Answering")
     end
 
-    test "node tools generate without replacing the current reader", %{conn: conn} do
+    test "action bar questions move directly to the new answer", %{conn: conn} do
+      {:ok, view, _html} = setup_live_with_data(conn, source_text_graph_data())
+      initial_assigns = :sys.get_state(view.pid).socket.assigns
+
+      render_click(view, "reply-and-answer", %{
+        "vertex" => %{"content" => "How does this change the argument?"},
+        "query_origin" => "node_action_bar"
+      })
+
+      assigns = :sys.get_state(view.pid).socket.assigns
+
+      refute assigns.node.id == initial_assigns.node.id
+      refute assigns.f_graph == initial_assigns.f_graph
+      assert assigns.node.class == "answer"
+      assert MapSet.member?(assigns.streaming_nodes, assigns.node.id)
+      assert assigns.background_generations == %{}
+
+      answer_node_id = assigns.node.id
+      assert_push_event(view, "center_node", %{id: ^answer_node_id})
+    end
+
+    test "single-result node tools move directly to the new node", %{conn: conn} do
       {:ok, view, _html} = setup_live_with_data(conn, source_text_graph_data())
       render_click(view, "node_clicked", %{"id" => "2"})
       initial_assigns = :sys.get_state(view.pid).socket.assigns
@@ -652,10 +679,11 @@ defmodule DialecticWeb.GraphLiveTest do
       |> render_click()
 
       assigns = :sys.get_state(view.pid).socket.assigns
-      assert assigns.node.id == initial_assigns.node.id
-      assert assigns.f_graph == initial_assigns.f_graph
-      assert map_size(assigns.background_generations) == 1
-      assert has_element?(view, "#background-generations", "Finding related ideas")
+      refute assigns.node.id == initial_assigns.node.id
+      refute assigns.f_graph == initial_assigns.f_graph
+      assert assigns.node.class == "ideas"
+      assert MapSet.member?(assigns.streaming_nodes, assigns.node.id)
+      assert assigns.background_generations == %{}
     end
 
     test "pro and con branches share one notification that waits for both responses", %{

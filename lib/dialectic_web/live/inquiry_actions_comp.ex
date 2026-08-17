@@ -115,6 +115,7 @@ defmodule DialecticWeb.InquiryActionsComp do
               tools_open={@advanced_tools_open}
               tools_target={@myself}
               tools_button_id={advanced_toggle_id(assigns)}
+              query_origin="node_action_bar"
               placeholder="Ask anything about this response..."
               disabled={!@can_edit}
             />
