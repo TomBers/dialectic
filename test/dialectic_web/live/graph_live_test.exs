@@ -438,6 +438,7 @@ defmodule DialecticWeb.GraphLiveTest do
       {:ok, view, _html} = setup_live_with_data(conn, source_text_graph_data())
       assigns = :sys.get_state(view.pid).socket.assigns
       graph_id = assigns.graph_id
+      initial_f_graph = assigns.f_graph
 
       assert assigns.node.id == "1"
 
@@ -452,7 +453,7 @@ defmodule DialecticWeb.GraphLiveTest do
         }
       })
 
-      :sys.get_state(view.pid)
+      state = :sys.get_state(view.pid)
 
       event_node = GraphManager.find_node_by_id(graph_id, "2")
       stale_node = GraphManager.find_node_by_id(graph_id, "1")
@@ -465,9 +466,51 @@ defmodule DialecticWeb.GraphLiveTest do
       assert question_node
       assert question_node.source_text == "synaptic tagging"
 
+      answer_node =
+        graph_id
+        |> GraphManager.vertices()
+        |> Enum.map(&GraphManager.vertex_label(graph_id, &1))
+        |> Enum.find(fn
+          %{class: "answer", source_text: "synaptic tagging"} -> true
+          _other -> false
+        end)
+
+      assert answer_node
+
+      assert state.socket.assigns.node.id == "1"
+      assert state.socket.assigns.f_graph == initial_f_graph
+      assert state.socket.assigns.background_generations[answer_node.id].status == :generating
+
+      assert has_element?(
+               view,
+               "#background-generation-#{answer_node.id}",
+               "Working in the background"
+             )
+
       refute Enum.any?(stale_node.children, fn child ->
                child.content == "Please explain: synaptic tagging"
              end)
+
+      send(view.pid, {:llm_request_complete, answer_node.id})
+      :sys.get_state(view.pid)
+
+      assert has_element?(
+               view,
+               "#open-background-answer-#{answer_node.id}",
+               "View"
+             )
+
+      answer_node_id = answer_node.id
+
+      view
+      |> element("#open-background-answer-#{answer_node_id}")
+      |> render_click()
+
+      assert_push_event(view, "reflow_layout", %{id: ^answer_node_id})
+
+      viewed_state = :sys.get_state(view.pid)
+      assert viewed_state.socket.assigns.node.id == answer_node.id
+      refute Map.has_key?(viewed_state.socket.assigns.background_generations, answer_node.id)
     end
 
     test "custom question uses the selection event node when the current node is stale", %{
