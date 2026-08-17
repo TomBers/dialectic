@@ -52,6 +52,10 @@ describe("renderGroundingReferences", () => {
     );
     expect(root.querySelector(".link-domain")).toBeNull();
     expect(root.querySelectorAll(".markdown-source-support")).toHaveLength(2);
+    expect(root.querySelector(".markdown-source-details").open).toBe(false);
+    expect(root.querySelector(".markdown-source-summary").textContent).toBe(
+      "2 supported claims",
+    );
   });
 
   it("links Markdown-formatted supported text to its metadata references", () => {
@@ -79,6 +83,12 @@ describe("renderGroundingReferences", () => {
     expect(links[0].getAttribute("href")).toBe("#markdown-answer-source-1");
     expect(links[1].getAttribute("href")).toBe("#markdown-answer-source-2");
     expect(citation.textContent).toBe("");
+
+    links[0].dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    expect(
+      root.querySelector("#markdown-answer-source-1 .markdown-source-details")
+        .open,
+    ).toBe(true);
   });
 
   it("places a citation after sentence-ending punctuation beyond the support text", () => {
@@ -96,6 +106,27 @@ describe("renderGroundingReferences", () => {
     expect(citation.previousSibling.textContent).toBe(
       "A sufficiently long supported claim continues to its conclusion.",
     );
+  });
+
+  it("does not move a citation into the next Markdown block", () => {
+    const quote =
+      '"A sufficiently long supported quotation ends here." (Research report, 2025)';
+    const claim =
+      "A separate sufficiently long supported claim appears in the next paragraph.";
+    const root = render(
+      `<blockquote><p>${quote}</p></blockquote><p>${claim} More analysis follows.</p>`,
+      metadata({
+        chunks: [web("Research", "https://example.com/research")],
+        supports: [support(quote, [0]), support(claim, [0])],
+      }),
+    );
+
+    expect(root.querySelectorAll("[data-source-citation='1']")).toHaveLength(2);
+    expect(
+      root.querySelector("blockquote [data-source-citation='1']"),
+    ).not.toBeNull();
+    expect(root.querySelector("p [data-source-citation] + [data-source-citation]"))
+      .toBeNull();
   });
 
   it("places references before follow-up questions", () => {

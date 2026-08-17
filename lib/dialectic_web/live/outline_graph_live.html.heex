@@ -117,7 +117,7 @@
 
   <div
     id="outline-scroll-shell"
-    class="relative flex flex-1 min-h-0 flex-col overflow-x-hidden overflow-y-auto lg:grid lg:grid-cols-[20rem_minmax(0,1fr)] lg:overflow-hidden xl:grid-cols-[22rem_minmax(0,1fr)]"
+    class="relative flex flex-1 min-h-0 flex-col overflow-x-hidden overflow-y-auto lg:grid lg:grid-cols-[20rem_minmax(0,1fr)] lg:overflow-clip xl:grid-cols-[22rem_minmax(0,1fr)]"
     phx-hook="ScrollReset"
   >
     <aside
@@ -492,49 +492,12 @@
 
               <div class="mt-5 grid gap-3 sm:grid-cols-2">
                 <%= for choice <- @next_choices do %>
-                  <.link
+                  <DialecticWeb.PathActionCardComp.path_action_card
                     id={"next-choice-#{choice.id}"}
                     patch={graph_path(@graph_struct, choice.id, @nav_params)}
-                    class="group relative flex h-full flex-col overflow-hidden rounded-[1.35rem] border border-slate-200 bg-white p-5 shadow-sm ring-1 ring-slate-950/[0.025] transition duration-200 active:scale-[0.995] hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_20px_38px_-28px_rgba(15,23,42,0.45)] hover:text-slate-950 sm:rounded-2xl"
-                  >
-                    <div class={[
-                      "absolute inset-x-0 top-0 h-1",
-                      DialecticWeb.ColUtils.dot_class(choice.class)
-                    ]}>
-                    </div>
-
-                    <div class="min-w-0 flex-1">
-                      <span class={[
-                        "inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold",
-                        DialecticWeb.ColUtils.badge_class(choice.class)
-                      ]}>
-                        {DialecticWeb.ColUtils.node_type_label(choice.class)}
-                      </span>
-
-                      <p class="mt-4 font-serif text-xl font-semibold leading-6 tracking-tight text-slate-950">
-                        {choice.title}
-                      </p>
-                      <%= if choice.leaf_title do %>
-                        <p class="mt-2 text-sm leading-6 text-slate-600">
-                          This path eventually reaches {choice.leaf_title}.
-                        </p>
-                      <% else %>
-                        <p class="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">
-                          {choice.content_preview}
-                        </p>
-                      <% end %>
-                    </div>
-
-                    <div class="mt-5 flex items-center justify-between border-t border-slate-100 pt-3">
-                      <span class="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                        Continue along this path
-                      </span>
-
-                      <span class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-50 text-slate-500 ring-1 ring-slate-200 transition group-hover:translate-x-0.5 group-hover:bg-slate-950 group-hover:text-white">
-                        <.icon name="hero-arrow-right" class="h-3.5 w-3.5" />
-                      </span>
-                    </div>
-                  </.link>
+                    title={choice.title}
+                    node_class={choice.class}
+                  />
                 <% end %>
               </div>
             </section>
@@ -609,49 +572,12 @@
 
               <div class="mt-5 grid gap-3 sm:grid-cols-2">
                 <%= for branch <- inactive_branches do %>
-                  <.link
+                  <DialecticWeb.PathActionCardComp.path_action_card
                     id={"branch-compare-card-#{branch.id}"}
                     patch={graph_path(@graph_struct, branch.id, @nav_params)}
-                    class="group relative flex h-full flex-col overflow-hidden rounded-[1.35rem] border border-slate-200 bg-white p-5 shadow-sm ring-1 ring-slate-950/[0.025] transition duration-200 active:scale-[0.995] hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_20px_38px_-28px_rgba(15,23,42,0.45)] hover:text-slate-950 sm:rounded-2xl"
-                  >
-                    <div class={[
-                      "absolute inset-x-0 top-0 h-1",
-                      DialecticWeb.ColUtils.dot_class(branch.lead.class)
-                    ]}>
-                    </div>
-
-                    <div class="min-w-0 flex-1">
-                      <span class={[
-                        "inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold",
-                        DialecticWeb.ColUtils.badge_class(branch.lead.class)
-                      ]}>
-                        {DialecticWeb.ColUtils.node_type_label(branch.lead.class)}
-                      </span>
-
-                      <p class="mt-4 font-serif text-xl font-semibold leading-6 tracking-tight text-slate-950">
-                        {branch.lead.title}
-                      </p>
-                      <%= if branch.leaf && branch.leaf.id != branch.lead.id do %>
-                        <p class="mt-2 text-sm leading-6 text-slate-600">
-                          This path eventually reaches {branch.leaf.title}.
-                        </p>
-                      <% else %>
-                        <p class="mt-2 text-sm leading-6 text-slate-600">
-                          Start reading from this branch instead.
-                        </p>
-                      <% end %>
-                    </div>
-
-                    <div class="mt-5 flex items-center justify-between border-t border-slate-100 pt-3">
-                      <span class="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                        Switch to this path
-                      </span>
-
-                      <span class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-50 text-slate-500 ring-1 ring-slate-200 transition group-hover:translate-x-0.5 group-hover:bg-slate-950 group-hover:text-white">
-                        <.icon name="hero-arrow-right" class="h-3.5 w-3.5" />
-                      </span>
-                    </div>
-                  </.link>
+                    title={branch.lead.full_title}
+                    node_class={branch.lead.class}
+                  />
                 <% end %>
               </div>
             </section>

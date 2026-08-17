@@ -430,6 +430,12 @@ function uniqueSupportMatch(text, supportText) {
   return null;
 }
 
+function citationBlock(node) {
+  return node.parentElement?.closest(
+    "p, li, td, th, h1, h2, h3, h4, h5, h6, blockquote",
+  );
+}
+
 function insertSourceCitation(root, sourceHeading, support, references) {
   const supportText = normalizedSupportReferenceText(support.text);
   if (supportText.length < 32) return;
@@ -439,15 +445,29 @@ function insertSourceCitation(root, sourceHeading, support, references) {
   if (!match) return;
 
   let matchEnd = match.matchStart + match.length - 1;
+  const block = citationBlock(index.positions[matchEnd]?.node);
   while (
     matchEnd + 1 < index.text.length &&
+    block?.contains(index.positions[matchEnd + 1].node) &&
     /[\p{L}\p{N}]/u.test(index.text[matchEnd + 1])
   ) {
     matchEnd += 1;
   }
 
   if (!/[.!?]/.test(index.text[matchEnd])) {
-    const sentenceTail = index.text.slice(matchEnd + 1, matchEnd + 482);
+    let blockEnd = matchEnd;
+
+    while (
+      blockEnd + 1 < index.positions.length &&
+      block?.contains(index.positions[blockEnd + 1].node)
+    ) {
+      blockEnd += 1;
+    }
+
+    const sentenceTail = index.text.slice(
+      matchEnd + 1,
+      Math.min(blockEnd + 1, matchEnd + 482),
+    );
     const sentenceEnd = sentenceTail.search(/[.!?](?=\s|$)/);
     if (sentenceEnd >= 0) {
       matchEnd += sentenceEnd + 1;
@@ -470,6 +490,9 @@ function insertSourceCitation(root, sourceHeading, support, references) {
     link.dataset.citationNumber = String(number);
     link.setAttribute("aria-label", `See source ${number}`);
     link.title = `See source ${number}`;
+    link.addEventListener("click", () => {
+      if (reference.supportsDetails) reference.supportsDetails.open = true;
+    });
     citation.appendChild(link);
   });
 
@@ -485,10 +508,6 @@ function supportElement(markdown) {
   const support = document.createElement("blockquote");
   support.className = "markdown-source-support";
 
-  const label = document.createElement("p");
-  label.className = "markdown-source-support-label";
-  label.textContent = "Supports";
-
   const body = document.createElement("div");
   body.className = "markdown-source-support-body";
   const normalized = normalizeTableFragmentMarkdown(markdown, ": ");
@@ -496,7 +515,7 @@ function supportElement(markdown) {
     USE_PROFILES: { html: true, mathMl: true },
   });
 
-  support.append(label, body);
+  support.appendChild(body);
   return support;
 }
 
@@ -525,12 +544,23 @@ export function renderGroundingReferences(root, metadata) {
     item.appendChild(link);
 
     if (reference.supports.length > 0) {
+      const details = document.createElement("details");
+      details.className = "markdown-source-details";
+      reference.supportsDetails = details;
+
+      const summary = document.createElement("summary");
+      summary.className = "markdown-source-summary";
+      summary.textContent = `${reference.supports.length} supported ${
+        reference.supports.length === 1 ? "claim" : "claims"
+      }`;
+
       const supports = document.createElement("div");
       supports.className = "markdown-source-supports";
       reference.supports.forEach((support) => {
         supports.appendChild(supportElement(support));
       });
-      item.appendChild(supports);
+      details.append(summary, supports);
+      item.appendChild(details);
     }
 
     list.appendChild(item);

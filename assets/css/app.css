@@ -1217,13 +1217,13 @@ button[type="submit"]:active {
 }
 
 .markdown-source-references {
-    margin-top: 0.85rem !important;
+    margin-top: 0.65rem !important;
     padding-left: 1.65rem !important;
 }
 
 .markdown-source-reference {
     margin: 0 -0.5rem !important;
-    padding: 0.85rem 0.75rem 0.95rem;
+    padding: 0.55rem 0.75rem 0.6rem;
     border-bottom: 1px solid #e2e8f0;
     border-radius: 0.55rem;
     scroll-margin-top: 1rem;
@@ -1255,6 +1255,7 @@ button[type="submit"]:active {
 .markdown-source-link {
     color: #0f172a !important;
     font-weight: 650 !important;
+    font-size: 0.9em;
     text-decoration-color: #94a3b8 !important;
 }
 
@@ -1288,15 +1289,34 @@ button[type="submit"]:active {
     text-underline-offset: 0.15em;
 }
 
+.markdown-source-details {
+    margin-top: 0.2rem;
+}
+
+.markdown-source-summary {
+    width: fit-content;
+    cursor: pointer;
+    color: #64748b;
+    font-family:
+        ui-sans-serif, system-ui, sans-serif;
+    font-size: 0.72rem;
+    font-weight: 650;
+    line-height: 1.45;
+}
+
+.markdown-source-summary:hover {
+    color: #0f766e;
+}
+
 .markdown-source-supports {
-    margin: 0.55rem 0 0 !important;
+    margin: 0.4rem 0 0 !important;
     padding: 0 !important;
     list-style: none !important;
 }
 
 .markdown-source-support {
-    margin: 0.55rem 0 0 !important;
-    padding: 0.65rem 0.8rem !important;
+    margin: 0.4rem 0 0 !important;
+    padding: 0.5rem 0.7rem !important;
     border: 0 !important;
     border-left: 2px solid #cbd5e1 !important;
     background: #f8fafc;
@@ -1304,19 +1324,6 @@ button[type="submit"]:active {
     font-size: 0.82em;
     font-style: normal !important;
     line-height: 1.55 !important;
-}
-
-.markdown-source-support-label {
-    display: block;
-    margin: 0 0 0.3rem !important;
-    color: #64748b !important;
-    font-family:
-        ui-sans-serif, system-ui, sans-serif !important;
-    font-size: 0.68rem !important;
-    font-weight: 700 !important;
-    letter-spacing: 0.08em;
-    line-height: 1.3 !important;
-    text-transform: uppercase;
 }
 
 .markdown-source-support-body {

@@ -428,8 +428,9 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert has_element?(view, "#reading-node-1 span.bg-gray-900.text-gray-100", "Origin")
     assert has_element?(view, "#reading-node-2 span.bg-sky-50.text-sky-700", "Question")
     assert has_element?(view, "#outline-next-choices")
-    assert has_element?(view, "#next-choice-3")
-    assert has_element?(view, "#next-choice-4")
+    assert has_element?(view, "#next-choice-3[data-path-action-card]")
+    assert has_element?(view, "#next-choice-4[data-path-action-card]")
+    assert has_element?(view, "#next-choice-3 [data-path-title]")
     refute has_element?(view, "#outline-branch-compare")
   end
 
@@ -464,7 +465,7 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
 
     assert has_element?(view, "#outline-end-state")
     assert has_element?(view, "#branch-compare-card-4")
-    assert has_element?(view, "#branch-compare-card-4", "Switch to this path")
+    assert has_element?(view, "#branch-compare-card-4", "Read this path")
     refute has_element?(view, "#branch-compare-card-4", "Read instead")
     refute has_element?(view, "#branch-compare-card-3")
     refute has_element?(view, "#outline-next-choices")
@@ -481,9 +482,9 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert assigns.compare_context.root.id == "2"
     assert Enum.map(assigns.next_choices, & &1.id) == ["3", "4"]
     assert has_element?(view, "#outline-next-choices")
-    assert has_element?(view, "#next-choice-3")
-    assert has_element?(view, "#next-choice-4")
-    assert has_element?(view, "#next-choice-3", "Continue along this path")
+    assert has_element?(view, "#next-choice-3[data-path-action-card]")
+    assert has_element?(view, "#next-choice-4[data-path-action-card]")
+    assert has_element?(view, "#next-choice-3 [data-path-action]", "Read this path")
     refute has_element?(view, "#outline-branch-compare")
     refute has_element?(view, "#outline-end-state")
   end
@@ -510,7 +511,9 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
            )
 
     assert has_element?(view, "#outline-branch-compare")
-    assert has_element?(view, "#branch-compare-card-3")
+    assert has_element?(view, "#branch-compare-card-3[data-path-action-card]")
+    assert has_element?(view, "#branch-compare-card-3[data-phx-link='patch']")
+    assert has_element?(view, "#branch-compare-card-3 [data-path-action]", "Read this path")
     refute has_element?(view, "#outline-next-choices")
   end
 
