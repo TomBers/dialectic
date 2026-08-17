@@ -26,7 +26,7 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
       assert prompt =~ "Aim for a normal response body of roughly 300-550 words"
       assert prompt =~ "enough descriptive `##` sections"
       assert prompt =~ "Keep each paragraph focused on one idea"
-      assert prompt =~ "compact list, a verified blockquote, or a comparison table"
+      assert prompt =~ "compact list, a brief blockquote, or a comparison table"
       assert prompt =~ "renders citations directly from provider grounding metadata"
       assert prompt =~ "peer-reviewed research"
       assert prompt =~ "normally 3-5 distinct sources and no more than 6"
@@ -38,7 +38,8 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
       assert prompt =~
                "aim to include one or two brief direct quotations whose exact wording adds analytical value"
 
-      assert prompt =~ "Omit them when the wording or locator cannot be verified"
+      assert prompt =~ "quotations do not need matching provider-grounded URLs"
+      assert prompt =~ "omit an uncertain locator rather than inventing one"
 
       assert prompt =~ "Do not add a sources or references section"
     end
@@ -64,7 +65,8 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
                "use several brief direct quotations where their exact wording adds analytical value"
 
       assert prompt =~ "rather than forcing a fixed count"
-      assert prompt =~ "omit any quotation whose wording or locator cannot be verified"
+      assert prompt =~ "quotations do not need matching provider-grounded URLs"
+      assert prompt =~ "author and work"
 
       assert prompt =~ "Do not add a sources or references section"
     end
@@ -74,6 +76,9 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
         prompt = PromptsStructured.system_preamble(mode)
 
         assert prompt =~ "Never invent or guess quotations"
+        assert prompt =~ "Direct quotations and provider-grounded source links are separate"
+        assert prompt =~ "does not need a matching grounded URL"
+        assert prompt =~ "If the wording is uncertain, paraphrase it"
         assert prompt =~ "Do not add a sources or references section"
         assert prompt =~ "If grounded evidence is unavailable, do not invent"
         assert prompt =~ "Return only valid GitHub Flavored Markdown"

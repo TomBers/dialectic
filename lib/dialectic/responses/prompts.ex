@@ -190,7 +190,7 @@ defmodule Dialectic.Responses.Prompts do
       1. A concise opening — lead with a well-supported fact, a counterintuitive insight, or a focused question that reframes the topic.
       2. An orienting foundation that defines the central concepts and explains the main mechanism, argument, or context a reader needs before branching further.
       3. One concrete example or case that makes the topic tangible without mistaking illustration for proof.
-      4. When the topic centers on an identifiable book, speech, law, paper, or other primary text and the selected source policy enables research, a brief verified excerpt when it genuinely preserves the author's voice or sharpens the explanation. Quote enough to preserve its meaning, but no more than the answer needs. Render it as a Markdown blockquote and follow it with specific attribution and a locator.
+      4. When the topic centers on an identifiable book, speech, law, paper, or other primary text and the selected quotation policy permits it, a brief direct excerpt when you can reproduce its exact wording with high confidence and it genuinely preserves the author's voice or sharpens the explanation. Quote enough to preserve its meaning, but no more than the answer needs. Render it as a Markdown blockquote, attribute the author and work, and add a locator only when confidently known.
       5. One meaningful tension, limitation, or competing perspective that prevents the foundation from feeling falsely settled and creates curiosity.
       6. A final section with the exact heading `## Follow-up questions`.
 
