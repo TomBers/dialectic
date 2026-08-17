@@ -450,7 +450,7 @@ function insertSourceCitation(root, sourceHeading, support, references) {
     const sentenceTail = index.text.slice(matchEnd + 1, matchEnd + 482);
     const sentenceEnd = sentenceTail.search(/[.!?](?=\s|$)/);
     if (sentenceEnd >= 0) {
-      matchEnd += sentenceEnd;
+      matchEnd += sentenceEnd + 1;
     }
   }
 

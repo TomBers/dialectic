@@ -81,6 +81,23 @@ describe("renderGroundingReferences", () => {
     expect(citation.textContent).toBe("");
   });
 
+  it("places a citation after sentence-ending punctuation beyond the support text", () => {
+    const root = render(
+      "<p>A sufficiently long supported claim continues to its conclusion.</p>",
+      metadata({
+        chunks: [web("Research", "https://example.com/research")],
+        supports: [support("A sufficiently long supported claim", [0])],
+      }),
+    );
+
+    const citation = root.querySelector("[data-source-citation='1']");
+
+    expect(citation).not.toBeNull();
+    expect(citation.previousSibling.textContent).toBe(
+      "A sufficiently long supported claim continues to its conclusion.",
+    );
+  });
+
   it("places references before follow-up questions", () => {
     const root = render(
       "<p>A sufficiently long uniquely supported claim appears here.</p><h2>Follow-up questions</h2><ol><li>What next?</li></ol>",

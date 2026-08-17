@@ -56,25 +56,27 @@ defmodule Dialectic.LLM.GroundingTest do
              "<div>Search</div>"
   end
 
-  test "strips a model-authored sources section from persisted answer content" do
-    markdown = """
-    # Answer
+  test "strips model-authored sources and references sections from persisted answer content" do
+    for heading <- ["Sources", "References"] do
+      markdown = """
+      # Answer
 
-    Body.
+      Body.
 
-    ## Sources
+      ## #{heading}
 
-    - A model-authored source
+      - A model-authored source
 
-    ## Follow-up questions
+      ## Follow-up questions
 
-    1. What next?
-    """
+      1. What next?
+      """
 
-    result = Grounding.strip_sources(markdown)
+      result = Grounding.strip_sources(markdown)
 
-    refute result =~ "## Sources"
-    refute result =~ "model-authored source"
-    assert result =~ "## Follow-up questions"
+      refute result =~ "## #{heading}"
+      refute result =~ "model-authored source"
+      assert result =~ "## Follow-up questions"
+    end
   end
 end

@@ -1,7 +1,7 @@
 defmodule Dialectic.LLM.Grounding do
   @moduledoc false
 
-  @sources_section ~r/^## Sources[ \t]*\n.*?(?=^##[ \t]|\z)/ims
+  @sources_section ~r/^## (?:Sources|References)[ \t]*\n.*?(?=^##[ \t]|\z)/ims
 
   @spec merge(map() | nil, map()) :: map() | nil
   def merge(current, metadata) when is_map(metadata) do
