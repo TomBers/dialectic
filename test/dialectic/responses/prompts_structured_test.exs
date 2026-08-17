@@ -33,8 +33,8 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
       assert prompt =~
                "use a brief verified excerpt only when its exact wording materially improves"
 
-      assert prompt =~
-               "Every source bullet must contain a Markdown link to the exact grounded URL"
+      assert prompt =~ "Do not add a Markdown link or reconstruct a URL"
+      assert prompt =~ "the application inserts the exact provider-supplied link"
     end
 
     test "defines the university-level Expert contract" do
@@ -52,8 +52,8 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
       assert prompt =~
                "use brief verified excerpts only when their exact wording materially improves"
 
-      assert prompt =~
-               "Every source bullet must contain a Markdown link to the exact grounded URL"
+      assert prompt =~ "Do not add a Markdown link or reconstruct a URL"
+      assert prompt =~ "the application inserts the exact provider-supplied link"
     end
 
     test "keeps common integrity, Markdown, and graph-continuity rules" do
@@ -61,6 +61,7 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
         prompt = PromptsStructured.system_preamble(mode)
 
         assert prompt =~ "Never invent or guess quotations"
+        assert prompt =~ "do not write or reconstruct its URL"
         assert prompt =~ "Never provide a memory-only bibliography entry"
         assert prompt =~ "Return only valid GitHub Flavored Markdown"
         assert prompt =~ "Start with one concise `#` title"

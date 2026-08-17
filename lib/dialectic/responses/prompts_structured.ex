@@ -85,8 +85,8 @@ defmodule Dialectic.Responses.PromptsStructured do
     - Clearly distinguish documented fact, interpretation, inference, and speculation. Label hypothetical examples as hypothetical.
     - Never invent or guess quotations, study details, publication details, locators, or URLs.
     - Use a direct quote only when search grounding verified the exact wording and the grounded source provides a page, chapter, section, passage, or stable locator.
-    - Every item in `## Sources` must come from the current request's search-grounding results and include the exact verified URL.
-    - If an exact grounded URL is unavailable, omit that source entirely. Never provide a memory-only bibliography entry or invent sources to meet a target count.
+    - Every item in `## Sources` must come from the current request's search-grounding results. Identify it accurately by title, author, publisher, or organization, but do not write or reconstruct its URL; the application attaches the exact link from provider metadata after generation.
+    - If a grounded source is unavailable, omit it entirely. Never provide a memory-only bibliography entry or invent sources to meet a target count.
 
     Markdown output
     - Return only valid GitHub Flavored Markdown.
@@ -182,7 +182,7 @@ defmodule Dialectic.Responses.PromptsStructured do
     Evidence and quotations
     - Add `## Sources` only when grounded sources materially improve the answer. Use a small, carefully selected set and never add sources merely to fill space.
     - Prefer relevant primary sources, research or data, official records, and reliable scholarly summaries. Briefly explain important attribution in the prose.
-    - Every source bullet must contain a Markdown link to the exact grounded URL and enough author, title, publisher, or organization detail to identify it.
+    - Every source bullet must accurately identify a grounded source by author, title, publisher, or organization. Do not add a Markdown link or reconstruct a URL; the application inserts the exact provider-supplied link.
     - When analyzing an identifiable primary text, use a brief verified excerpt only when its exact wording materially improves understanding. Quote enough to preserve the meaning, but no more than the analysis needs.
     - Render the quote as a Markdown blockquote and follow it immediately with attribution plus a page, chapter, section, passage, or stable locator. Include the quote's grounded source in `## Sources`.
     - For an initial answer, place `## Sources` immediately before `## Follow-up questions`; otherwise make it the final section.
@@ -194,7 +194,7 @@ defmodule Dialectic.Responses.PromptsStructured do
     Evidence and quotations
     - Add `## Sources` only when grounded sources materially improve the answer. Use a small set of the strongest sources and never add sources merely to fill space.
     - Prioritize primary texts, original research or data, official records, and authoritative scholarly syntheses. Attribute competing positions to specific authors or schools.
-    - Every source bullet must contain a Markdown link to the exact grounded URL and enough author, title, publisher, or organization detail to identify it.
+    - Every source bullet must accurately identify a grounded source by author, title, publisher, or organization. Do not add a Markdown link or reconstruct a URL; the application inserts the exact provider-supplied link.
     - When analyzing an identifiable primary text, use brief verified excerpts only when their exact wording materially improves the analysis. Quote enough to preserve meaning and voice, but no more than the analysis needs.
     - Render each quote as a Markdown blockquote and follow it immediately with attribution plus a page, chapter, section, passage, or stable locator. Include each quote's grounded source in `## Sources`.
     - For an initial answer, place `## Sources` immediately before `## Follow-up questions`; otherwise make it the final section.
