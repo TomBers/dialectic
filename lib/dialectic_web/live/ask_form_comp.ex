@@ -38,6 +38,12 @@ defmodule DialecticWeb.AskFormComp do
       |> assign_new(:show_hint, fn -> true end)
       |> assign_new(:prompt_mode, fn -> "structured" end)
       |> assign_new(:node, fn -> nil end)
+      |> assign_new(:show_context, fn -> true end)
+      |> assign_new(:embedded, fn -> false end)
+      |> assign_new(:show_tools, fn -> false end)
+      |> assign_new(:tools_open, fn -> false end)
+      |> assign_new(:tools_target, fn -> nil end)
+      |> assign_new(:tools_button_id, fn -> nil end)
       |> assign_new(:disabled, fn -> false end)
       |> then(fn s ->
         cond do
@@ -67,7 +73,7 @@ defmodule DialecticWeb.AskFormComp do
         aria-disabled={@disabled}
       >
         <%!-- Compact Replying-to indicator --%>
-        <%= if @node && @node.id do %>
+        <%= if @show_context && @node && @node.id do %>
           <button
             type="button"
             phx-click="node_clicked"
@@ -87,7 +93,7 @@ defmodule DialecticWeb.AskFormComp do
 
         <div class="flex items-center gap-2 w-full">
           <%!-- Input Field --%>
-          <div class="relative min-w-0 flex-1 rounded-3xl shadow-sm transition-all focus-within:shadow-md">
+          <div class="relative min-w-0 flex-1">
             <textarea
               name={@form[:content].name}
               id={@input_id}
@@ -96,62 +102,97 @@ defmodule DialecticWeb.AskFormComp do
               phx-hook="AutoExpandTextarea"
               disabled={@disabled}
               class={[
-                "box-border w-full h-10 min-h-[2.5rem] rounded-3xl border py-2.5 pl-4 pr-[11.25rem] text-sm focus:outline-none focus:ring-0 resize-none",
+                "box-border w-full text-sm focus:outline-none focus:ring-0 resize-none",
+                if(@embedded,
+                  do: "min-h-[4.5rem] border-0 bg-transparent px-2.5 py-2 pr-2.5",
+                  else: "h-10 min-h-[2.5rem] rounded-3xl border py-2.5 pl-4 pr-[11.25rem]"
+                ),
                 if(@disabled,
                   do:
                     "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-500 placeholder:text-slate-400",
-                  else: "border-gray-300 bg-white focus:border-indigo-500"
+                  else:
+                    if(@embedded,
+                      do: "text-slate-800 placeholder:text-slate-400",
+                      else: "border-gray-300 bg-white focus:border-indigo-500"
+                    )
                 )
               ]}
             >{Phoenix.HTML.Form.normalize_value("text", @form[:content].value)}</textarea>
 
             <%!-- Two submit buttons inside the input --%>
-            <div class="absolute right-1.5 top-0 bottom-1.5 flex items-center gap-1">
-              <%!-- Post button — adds submit_action=post to form params --%>
-              <button
-                type="submit"
-                name="submit_action"
-                value="post"
-                disabled={@disabled}
-                class={[
-                  "inline-flex h-7 items-center gap-1 rounded-full border px-3 text-xs font-semibold leading-none transition-all disabled:cursor-not-allowed disabled:opacity-50",
-                  if(@disabled,
-                    do: "border-slate-200 bg-slate-100 text-slate-400",
-                    else:
-                      "border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300 hover:bg-emerald-100"
-                  )
-                ]}
-                title={
-                  if(@disabled,
-                    do: "Choose an existing response to continue",
-                    else: "Add your comment without an AI reply"
-                  )
-                }
-              >
-                <.icon name="hero-chat-bubble-left-ellipsis" class="h-3.5 w-3.5" />
-                <span>Comment</span>
-              </button>
-              <%!-- Ask button — default submit (no name, so no submit_action param) --%>
-              <button
-                type="submit"
-                disabled={@disabled}
-                class={[
-                  "inline-flex h-7 items-center gap-1 rounded-full px-3 text-xs font-semibold leading-none shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-50",
-                  if(@disabled,
-                    do: "bg-slate-300 text-white shadow-none",
-                    else: "bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-md"
-                  )
-                ]}
-                title={
-                  if(@disabled,
-                    do: "Choose an existing response to continue",
-                    else: "Ask and get an AI response"
-                  )
-                }
-              >
-                <.icon name="hero-sparkles" class="h-3.5 w-3.5" />
-                <span>Ask AI</span>
-              </button>
+            <div class={[
+              "flex items-center gap-1.5",
+              if(@embedded,
+                do: "mt-1 border-t border-slate-100 px-1 pt-2",
+                else: "absolute right-1.5 top-0 bottom-1.5 justify-end"
+              )
+            ]}>
+              <div :if={@show_tools} class="flex min-w-0 items-center gap-1">
+                <button
+                  id={@tools_button_id}
+                  type="button"
+                  phx-click="toggle_advanced_tools"
+                  phx-target={@tools_target}
+                  aria-expanded={to_string(@tools_open)}
+                  class={[
+                    "inline-flex h-8 shrink-0 items-center gap-1 rounded-full px-2.5 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300",
+                    if(@tools_open,
+                      do: "bg-indigo-100 text-indigo-800",
+                      else: "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                    )
+                  ]}
+                >
+                  <.icon name="hero-plus" class="h-3.5 w-3.5" />
+                  <span>Tools</span>
+                </button>
+              </div>
+
+              <div class="ml-auto flex items-center gap-1">
+                <%!-- Post button — adds submit_action=post to form params --%>
+                <button
+                  type="submit"
+                  name="submit_action"
+                  value="post"
+                  disabled={@disabled}
+                  class={[
+                    "inline-flex h-8 items-center gap-1 rounded-full px-2.5 text-xs font-semibold leading-none transition-all disabled:cursor-not-allowed disabled:opacity-50",
+                    if(@disabled,
+                      do: "bg-slate-100 text-slate-400",
+                      else: "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                    )
+                  ]}
+                  title={
+                    if(@disabled,
+                      do: "Choose an existing response to continue",
+                      else: "Add your comment without an AI reply"
+                    )
+                  }
+                >
+                  <.icon name="hero-chat-bubble-left-ellipsis" class="h-3.5 w-3.5" />
+                  <span>Comment</span>
+                </button>
+                <%!-- Ask button — default submit (no name, so no submit_action param) --%>
+                <button
+                  type="submit"
+                  disabled={@disabled}
+                  class={[
+                    "inline-flex h-8 items-center gap-1 rounded-full px-3 text-xs font-semibold leading-none shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-50",
+                    if(@disabled,
+                      do: "bg-slate-300 text-white shadow-none",
+                      else: "bg-slate-950 text-white hover:bg-slate-800 hover:shadow-md"
+                    )
+                  ]}
+                  title={
+                    if(@disabled,
+                      do: "Choose an existing response to continue",
+                      else: "Ask and get an AI response"
+                    )
+                  }
+                >
+                  <span>Ask</span>
+                  <.icon name="hero-arrow-up" class="h-3.5 w-3.5" />
+                </button>
+              </div>
             </div>
           </div>
         </div>

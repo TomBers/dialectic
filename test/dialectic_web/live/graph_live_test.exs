@@ -190,6 +190,37 @@ defmodule DialecticWeb.GraphLiveTest do
              )
     end
 
+    test "keeps whole-node and selected-passage inquiries in the shared action surface", %{
+      conn: conn
+    } do
+      {:ok, view, _html} = setup_live_with_data(conn, source_text_graph_data())
+
+      render_click(view, "node_clicked", %{"id" => "2"})
+
+      assert has_element?(view, "#node-inquiry-actions-2-content #global-chat-form")
+      refute has_element?(view, "#bottom-menu")
+
+      assert has_element?(view, "#node-suggestions-2 [id^='node-tool-pros-cons-']")
+      assert has_element?(view, "[id^='delete-node-'][phx-value-node='2']", "Delete node")
+
+      view
+      |> element("#global-chat-form [id^='node-tools-more-']")
+      |> render_click()
+
+      assert has_element?(view, "#node-tools-popover-2")
+
+      view
+      |> element("#global-chat-form [id^='node-tools-more-']")
+      |> render_click()
+
+      refute has_element?(view, "#node-tools-popover-2")
+
+      assert has_element?(
+               view,
+               "#selection-inquiry-actions-selection-actions-content #selection-action-explain-selection-actions"
+             )
+    end
+
     test "surfaces the explanation level and opens its settings", %{conn: conn} do
       {:ok, view, _html} = setup_live(conn)
 
@@ -611,9 +642,12 @@ defmodule DialecticWeb.GraphLiveTest do
 
     test "node tools generate without replacing the current reader", %{conn: conn} do
       {:ok, view, _html} = setup_live_with_data(conn, source_text_graph_data())
+      render_click(view, "node_clicked", %{"id" => "2"})
       initial_assigns = :sys.get_state(view.pid).socket.assigns
 
-      render_click(view, "node_related_ideas", %{"id" => "2"})
+      view
+      |> element("#node-suggestions-2 [id^='node-tool-related-']")
+      |> render_click()
 
       assigns = :sys.get_state(view.pid).socket.assigns
       assert assigns.node.id == initial_assigns.node.id

@@ -30,6 +30,7 @@ defmodule DialecticWeb.NodeComp do
        form: Map.get(assigns, :form, nil),
        cut_off: Map.get(assigns, :cut_off, 500),
        ask_question: Map.get(assigns, :ask_question, true),
+       prompt_mode: Map.get(assigns, :prompt_mode, "university"),
        graph_id: Map.get(assigns, :graph_id, ""),
        graph_struct: Map.get(assigns, :graph_struct, nil),
        graph_owner_id: Map.get(assigns, :graph_owner_id, nil),
@@ -287,6 +288,9 @@ defmodule DialecticWeb.NodeComp do
                       current_user={@current_user}
                       graph_id={@graph_id}
                       can_edit={@can_edit}
+                      form={@form}
+                      prompt_mode={@prompt_mode}
+                      ask_question={@ask_question}
                     />
                   <% end %>
                 </div>

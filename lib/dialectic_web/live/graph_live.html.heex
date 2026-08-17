@@ -232,6 +232,7 @@
             graph_owner_id={@graph_struct && @graph_struct.user_id}
             current_user={@current_user}
             ask_question={@ask_question}
+            prompt_mode={@prompt_mode}
             can_edit={@can_edit}
             presentation_mode={@presentation_mode}
             token={@token}
@@ -742,40 +743,6 @@
         </div>
       </div>
     <% end %>
-    
-<!-- Chat input bar (hidden during presentation) -->
-    <div
-      :if={@presentation_mode != :presenting}
-      id="bottom-menu"
-      class="fixed bottom-0 z-30 transform origin-bottom scale-100 opacity-100 visible transition-all duration-200 ease-out px-1 pb-3 pointer-events-none shift-with-panel transition-[right] duration-300 ease-in-out left-0 right-0 md:left-[var(--desktop-side-drawer-width)]"
-      style="padding-bottom: calc(env(safe-area-inset-bottom) + 0.75rem);"
-    >
-      <div class="mx-auto w-full max-w-4xl">
-        <div class="relative">
-          <div class="pointer-events-auto transform-gpu rounded-t-[1.75rem] rounded-2xl bg-[linear-gradient(135deg,rgba(45,212,191,0.86),rgba(255,255,255,0.96)_36%,rgba(251,191,36,0.72)_70%,rgba(99,102,241,0.84))] p-[1px] shadow-[0_28px_74px_-48px_rgba(20,184,166,0.85)] transition-all duration-200 ease-out translate-y-0">
-            <div class="relative overflow-hidden rounded-t-[calc(1.75rem-1px)] rounded-[calc(1rem-1px)] bg-white/95 px-1.5 pt-2 pb-2 shadow-xl ring-1 ring-white/80 backdrop-blur">
-              <div
-                class="pointer-events-none absolute inset-x-6 top-0 h-px bg-[linear-gradient(90deg,rgba(45,212,191,0),rgba(45,212,191,0.9),rgba(251,191,36,0.7),rgba(99,102,241,0.85),rgba(56,189,248,0))]"
-                aria-hidden="true"
-              >
-              </div>
-              <div class="px-1.5">
-                <.live_component
-                  module={DialecticWeb.AskFormComp}
-                  id="global-chat-form"
-                  form={@form}
-                  ask_question={@ask_question}
-                  prompt_mode={@prompt_mode}
-                  graph_id={@graph_id}
-                  node={@node}
-                  disabled={GraphHelpers.origin_branching_disabled?(@node)}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
     <!-- Right side: Chat (Drawer) -->
   </div>
 

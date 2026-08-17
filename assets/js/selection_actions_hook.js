@@ -1,5 +1,4 @@
 const ASK_MODE = "ask_question";
-const COMMENT_MODE = "comment";
 
 const SelectionActionsHook = {
   mounted() {
@@ -10,7 +9,6 @@ const SelectionActionsHook = {
 
     this.refreshElements();
     this.selectionData = null;
-    this.inputMode = ASK_MODE;
 
     window.addEventListener("selection:show", this.handleSelectionShow);
     window.addEventListener("keydown", this.handleKeydown);
@@ -64,7 +62,7 @@ const SelectionActionsHook = {
 
     this.modalEl
       ?.querySelectorAll(
-        "[data-selection-input], [data-selection-input-submit], [data-selection-mode]",
+        "[data-selection-input], [data-selection-input-submit]",
       )
       .forEach((control) => {
         control.disabled = disabled;
@@ -131,15 +129,17 @@ const SelectionActionsHook = {
     const advancedToggle = this.modalEl?.querySelector(
       "[data-selection-advanced-toggle]",
     );
+    const dialog = this.modalEl?.querySelector("[data-selection-dialog]");
     const input = this.modalEl?.querySelector("[data-selection-input]");
 
     advancedTools?.classList.add("hidden");
     advancedToggle?.setAttribute("aria-expanded", "false");
+    dialog?.classList.remove("max-w-[760px]");
+    dialog?.classList.add("max-w-[620px]");
     advancedToggle?.querySelector("[class*='hero-chevron-down']")?.classList.remove(
       "rotate-180",
     );
     if (input) input.value = "";
-    this.setInputMode(ASK_MODE);
   },
 
   showModal() {
@@ -178,12 +178,6 @@ const SelectionActionsHook = {
       return;
     }
 
-    const modeEl = event.target.closest("[data-selection-mode]");
-    if (modeEl && this.el.contains(modeEl)) {
-      this.setInputMode(modeEl.dataset.selectionMode);
-      return;
-    }
-
     const actionEl = event.target.closest("[data-selection-action]");
     if (
       !actionEl ||
@@ -199,69 +193,17 @@ const SelectionActionsHook = {
 
   toggleAdvancedTools(toggle) {
     const tools = this.modalEl?.querySelector("[data-selection-advanced-tools]");
+    const dialog = this.modalEl?.querySelector("[data-selection-dialog]");
     if (!tools) return;
 
     const expanded = tools.classList.contains("hidden");
     tools.classList.toggle("hidden", !expanded);
     toggle.setAttribute("aria-expanded", expanded.toString());
+    dialog?.classList.toggle("max-w-[760px]", expanded);
+    dialog?.classList.toggle("max-w-[620px]", !expanded);
     toggle
       .querySelector("[class*='hero-chevron-down']")
       ?.classList.toggle("rotate-180", expanded);
-  },
-
-  setInputMode(mode) {
-    if (![ASK_MODE, COMMENT_MODE].includes(mode)) return;
-
-    this.inputMode = mode;
-    const askButton = this.modalEl?.querySelector(
-      `[data-selection-mode="${ASK_MODE}"]`,
-    );
-    const commentButton = this.modalEl?.querySelector(
-      `[data-selection-mode="${COMMENT_MODE}"]`,
-    );
-    const input = this.modalEl?.querySelector("[data-selection-input]");
-    const label = this.modalEl?.querySelector("[data-selection-input-label]");
-    const description = this.modalEl?.querySelector(
-      "[data-selection-input-description]",
-    );
-    const submit = this.modalEl?.querySelector("[data-selection-input-submit]");
-
-    this.syncModeButton(askButton, mode === ASK_MODE, "indigo");
-    this.syncModeButton(commentButton, mode === COMMENT_MODE, "emerald");
-
-    if (label) {
-      label.textContent =
-        mode === ASK_MODE ? "Ask a custom question" : "Add a comment";
-    }
-    if (description) {
-      description.textContent =
-        mode === ASK_MODE
-          ? "Use the selected passage as context."
-          : "Save your interpretation with this passage.";
-    }
-    if (input) {
-      input.placeholder =
-        mode === ASK_MODE
-          ? "What do you want to ask about this passage?"
-          : "Add your thought about this passage...";
-    }
-    if (submit) {
-      submit.textContent = mode === ASK_MODE ? "Ask" : "Post";
-      submit.classList.toggle("from-indigo-500", mode === ASK_MODE);
-      submit.classList.toggle("to-sky-500", mode === ASK_MODE);
-      submit.classList.toggle("from-emerald-500", mode === COMMENT_MODE);
-      submit.classList.toggle("to-teal-500", mode === COMMENT_MODE);
-    }
-  },
-
-  syncModeButton(button, active, color) {
-    if (!button) return;
-
-    button.classList.toggle(`bg-${color}-500`, active);
-    button.classList.toggle("text-white", active);
-    button.classList.toggle("shadow-sm", active);
-    button.classList.toggle("text-slate-600", !active);
-    button.classList.toggle("hover:text-slate-900", !active);
   },
 
   handleSubmit(event) {
@@ -270,7 +212,8 @@ const SelectionActionsHook = {
 
     event.preventDefault();
     const input = form.querySelector('[name="question"]');
-    this.submitAction(this.inputMode, { input: input?.value || "" });
+    const action = event.submitter?.dataset.selectionSubmitAction || ASK_MODE;
+    this.submitAction(action, { input: input?.value || "" });
   },
 
   submitAction(action, extra = {}) {
