@@ -62,11 +62,12 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
       assert prompt =~ "carry a material claim on their own"
 
       assert prompt =~
-               "use several brief direct quotations where their exact wording adds analytical value"
+               "normally aim for two to four distinct brief direct quotations"
 
-      assert prompt =~ "rather than forcing a fixed count"
+      assert prompt =~ "Use fewer when additional quotations would be uncertain"
       assert prompt =~ "quotations do not need matching provider-grounded URLs"
       assert prompt =~ "author and work"
+      assert prompt =~ "matches the quoted edition or translation"
 
       assert prompt =~ "Do not add a sources or references section"
     end

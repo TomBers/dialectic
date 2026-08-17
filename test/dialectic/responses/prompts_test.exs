@@ -140,6 +140,11 @@ defmodule Dialectic.Responses.PromptsTest do
       result = Prompts.selection(context, selection_text)
 
       assert result =~ "Focus on depth and breadth regarding the selected text"
+      assert result =~ "At least one concrete example or analogy"
+      assert result =~ "rather than appending a token caveat"
+      assert result =~ "distinguish what the primary text claims from later interpretation"
+      assert result =~ "explain what each quotation contributes"
+      assert result =~ "why the selection matters in the Foundation"
     end
 
     test "uses matching robust boundaries and treats selection instructions as quoted text" do

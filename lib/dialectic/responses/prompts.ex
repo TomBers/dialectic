@@ -221,9 +221,11 @@ defmodule Dialectic.Responses.Prompts do
 
       Focus on:
       - What the selected concept or claim means and why it matters
-      - Concrete examples or analogies, clearly identified as illustration rather than evidence
-      - The strongest relevant perspectives, including material disagreement where it exists
+      - At least one concrete example or analogy, clearly identified as illustration rather than evidence
+      - The strongest relevant perspectives, giving a serious objection or competing interpretation enough space to be understood rather than appending a token caveat
       - Important questions, scope conditions, or connections that invite further exploration
+
+      When the selection names a thinker or work, distinguish what the primary text claims from later interpretation or explanatory shorthand. Follow the selected complexity level's quotation policy, and explain what each quotation contributes to the analysis. Connect the explanation back to why the selection matters in the Foundation without repeating the Foundation.
 
       Use the Foundation only for context. Focus on depth and breadth regarding the selected text.
       """,
