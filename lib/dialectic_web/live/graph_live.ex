@@ -542,8 +542,8 @@ defmodule DialecticWeb.GraphLive do
         {:noreply, put_explore_limit_flash(socket)}
 
       true ->
-        last_result =
-          Enum.reduce(items, nil, fn item, _acc ->
+        nodes =
+          Enum.map(items, fn item ->
             GraphActions.answer_selection(
               graph_action_params(socket, socket.assigns.node),
               "Please explain: #{item}",
@@ -551,13 +551,13 @@ defmodule DialecticWeb.GraphLive do
             )
           end)
 
-        case last_result do
-          node when is_map(node) ->
-            update_graph(socket, {nil, node}, "explain")
-
-          _ ->
-            {:noreply, socket}
-        end
+        begin_background_generations(
+          socket,
+          nodes,
+          "explain",
+          explore_generation_label(items),
+          target_node_id: explore_target_node_id(nodes, socket.assigns.node.id)
+        )
     end
   end
 
@@ -589,8 +589,8 @@ defmodule DialecticWeb.GraphLive do
           {:noreply, put_explore_limit_flash(socket)}
 
         true ->
-          last_result =
-            Enum.reduce(selected, nil, fn item, _acc ->
+          nodes =
+            Enum.map(selected, fn item ->
               GraphActions.answer_selection(
                 graph_action_params(socket, socket.assigns.node),
                 "Please explain: #{item}",
@@ -598,28 +598,42 @@ defmodule DialecticWeb.GraphLive do
               )
             end)
 
-          case last_result do
-            nil ->
-              {:noreply, socket}
+          socket =
+            assign(socket,
+              show_explore_modal: false,
+              explore_items: [],
+              explore_selected: []
+            )
 
-            node ->
-              {:noreply, updated_socket} = update_graph(socket, {nil, node}, "explain")
-
-              {:noreply,
-               assign(updated_socket,
-                 show_explore_modal: false,
-                 explore_items: [],
-                 explore_selected: []
-               )}
-          end
+          begin_background_generations(
+            socket,
+            nodes,
+            "explain",
+            explore_generation_label(selected),
+            target_node_id: explore_target_node_id(nodes, socket.assigns.node.id)
+          )
       end
     end
   end
 
   def handle_event("node_branch", %{"id" => node_id}, socket) do
-    case GraphHelpers.handle_branch(socket, node_id) do
-      {:ok, graph_result, operation} -> update_graph(socket, graph_result, operation)
-      {:error, :locked} -> {:noreply, socket |> put_flash(:error, "This graph is locked")}
+    cond do
+      !socket.assigns.can_edit ->
+        {:noreply, put_flash(socket, :error, "This graph is locked")}
+
+      parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id) ->
+        nodes = create_branch_nodes(socket, parent_node)
+
+        begin_background_generations(
+          socket,
+          nodes,
+          "branch",
+          "Building the strongest case for and against this idea",
+          target_node_id: parent_node.id
+        )
+
+      true ->
+        {:noreply, put_flash(socket, :error, "Node not found")}
     end
   end
 
@@ -674,8 +688,16 @@ defmodule DialecticWeb.GraphLive do
 
   def handle_event("node_related_ideas", %{"id" => node_id}, socket) do
     case GraphHelpers.handle_related_ideas(socket, node_id) do
-      {:ok, graph_result, operation} -> update_graph(socket, graph_result, operation)
-      {:error, :locked} -> {:noreply, socket |> put_flash(:error, "This graph is locked")}
+      {:ok, {_graph, node}, operation} ->
+        begin_background_generation(
+          socket,
+          node,
+          operation,
+          "Finding related ideas from this node"
+        )
+
+      {:error, :locked} ->
+        {:noreply, socket |> put_flash(:error, "This graph is locked")}
     end
   end
 
@@ -760,11 +782,18 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  def handle_event("open_background_answer", %{"id" => node_id}, socket) do
+  def handle_event("open_background_answer", %{"id" => generation_id}, socket) do
+    generation = Map.get(socket.assigns.background_generations, generation_id)
+    node_id = if generation, do: generation.target_node_id, else: generation_id
     node = GraphActions.find_node(socket.assigns.graph_id, node_id)
 
     if node do
-      socket = clear_background_generation(socket, node_id)
+      socket =
+        assign(
+          socket,
+          :background_generations,
+          Map.delete(socket.assigns.background_generations, generation_id)
+        )
 
       {:noreply, updated_socket} = update_graph(socket, {nil, node}, "node_clicked")
 
@@ -996,8 +1025,14 @@ defmodule DialecticWeb.GraphLive do
            minimal_context: minimal_context,
            highlight_context: highlight_context
          ) do
-      {:ok, graph_result, operation} ->
-        update_graph(socket, graph_result, operation)
+      {:ok, {_graph, node}, operation} ->
+        socket
+        |> reset_ask_form()
+        |> begin_background_generation(
+          node,
+          operation,
+          "Answering #{quoted_selection(answer)}"
+        )
 
       {:error, :locked} ->
         {:noreply, socket |> put_flash(:error, "This graph is locked")}
@@ -1010,8 +1045,14 @@ defmodule DialecticWeb.GraphLive do
     case GraphHelpers.handle_reply_and_answer(socket, answer,
            highlight_context: highlight_context
          ) do
-      {:ok, graph_result, operation} ->
-        update_graph(socket, graph_result, operation)
+      {:ok, {_graph, node}, operation} ->
+        socket
+        |> reset_ask_form()
+        |> begin_background_generation(
+          node,
+          operation,
+          "Answering #{quoted_selection(answer)}"
+        )
 
       {:error, :locked} ->
         {:noreply, socket |> put_flash(:error, "This graph is locked")}
@@ -1548,10 +1589,12 @@ defmodule DialecticWeb.GraphLive do
       |> assign(work_streams: list_streams(socket.assigns.graph_id))
 
     socket =
-      if Map.has_key?(socket.assigns.background_generations, node_id) do
-        mark_background_generation_ready(socket, node_id)
-      else
-        assign(socket, f_graph: GraphManager.format_graph_json(socket.assigns.graph_id))
+      case background_generation_for_node(socket, node_id) do
+        nil ->
+          assign(socket, f_graph: GraphManager.format_graph_json(socket.assigns.graph_id))
+
+        {_generation_id, _generation} ->
+          mark_background_generation_complete(socket, node_id)
       end
 
     # Don't broadcast or call update_graph - the streaming already updated the node content
@@ -1652,25 +1695,23 @@ defmodule DialecticWeb.GraphLive do
          socket
        ) do
     highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
-
-    # Create pros/cons branches
     parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
-    GraphActions.branch(graph_action_params(socket, parent_node), content_override: selected_text)
+    nodes = create_branch_nodes(socket, parent_node, content_override: selected_text)
 
-    # Store highlight ID for linking after graph updates
-    socket =
-      if highlight do
-        assign(socket,
-          pending_link_highlight_id: highlight.id,
-          pending_link_parent_id: node_id,
-          pending_link_selected_text: selected_text
-        )
-      else
-        socket
-      end
+    if highlight do
+      Enum.each(nodes, fn node ->
+        link_type = if node.class == "thesis", do: "pro", else: "con"
+        Highlights.add_link(highlight.id, node.id, link_type)
+      end)
+    end
 
-    {:noreply, updated_socket} = update_graph(socket, {nil, parent_node}, "branch")
-    {:noreply, create_pending_highlight_links(updated_socket)}
+    begin_background_generations(
+      socket,
+      nodes,
+      "branch",
+      "Testing both sides of #{quoted_selection(selected_text)}",
+      target_node_id: parent_node.id
+    )
   end
 
   defp handle_selection_action(
@@ -1819,73 +1860,6 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  defp create_pending_highlight_links(socket) do
-    highlight_id = socket.assigns[:pending_link_highlight_id]
-    parent_id = socket.assigns[:pending_link_parent_id]
-    selected_text = normalize_selection_text(socket.assigns[:pending_link_selected_text])
-
-    if highlight_id && parent_id do
-      parent_node = GraphActions.find_node(socket.assigns.graph_id, parent_id)
-
-      if selected_text && parent_node && parent_node.children do
-        parent_node.children
-        |> Enum.filter(fn child_node ->
-          child_node.class in ["thesis", "antithesis"] and
-            normalize_selection_text(Map.get(child_node, :source_text)) == selected_text
-        end)
-        |> newest_child_by_class()
-        |> Enum.each(fn {child_node, link_type} ->
-          _ = Highlights.add_link(highlight_id, child_node.id, link_type)
-        end)
-      end
-
-      assign(socket,
-        pending_link_highlight_id: nil,
-        pending_link_parent_id: nil,
-        pending_link_selected_text: nil
-      )
-    else
-      socket
-    end
-  end
-
-  defp newest_child_by_class(children) do
-    children
-    |> Enum.group_by(& &1.class)
-    |> Enum.flat_map(fn
-      {"thesis", class_children} -> newest_link(class_children, "pro")
-      {"antithesis", class_children} -> newest_link(class_children, "con")
-      _other -> []
-    end)
-  end
-
-  defp newest_link(children, link_type) do
-    case Enum.max_by(children, &node_id_sort_value/1, fn -> nil end) do
-      nil -> []
-      child -> [{child, link_type}]
-    end
-  end
-
-  defp node_id_sort_value(%{id: id}) when is_binary(id) do
-    case Integer.parse(id) do
-      {int, ""} -> int
-      _ -> 0
-    end
-  end
-
-  defp node_id_sort_value(_node), do: 0
-
-  defp normalize_selection_text(text) when is_binary(text) do
-    text
-    |> String.trim()
-    |> case do
-      "" -> nil
-      normalized -> normalized
-    end
-  end
-
-  defp normalize_selection_text(_text), do: nil
-
   defp create_highlight(socket, node_id, offsets, selected_text) do
     highlight_attrs = %{
       mudg_id: socket.assigns.graph_id,
@@ -2011,7 +1985,12 @@ defmodule DialecticWeb.GraphLive do
          {:ok, node} <- find_node_safe(socket.assigns.graph_id, node_id),
          {:ok, tool_config} <- get_tool_config(tool),
          {:ok, result_node} <- apply_graph_action(tool_config, socket, node) do
-      update_graph(socket, {nil, result_node}, Atom.to_string(tool))
+      begin_background_generation(
+        socket,
+        result_node,
+        Atom.to_string(tool),
+        "Applying #{humanize_tool(tool)} to this node"
+      )
     else
       {:error, :locked} ->
         {:noreply, put_flash(socket, :error, "This graph is locked")}
@@ -2139,22 +2118,90 @@ defmodule DialecticWeb.GraphLive do
     GraphHelpers.graph_action_params(socket, node)
   end
 
-  defp begin_background_generation(socket, nil, _operation, _label) do
-    {:noreply, put_flash(socket, :error, "The response could not be started")}
+  defp create_branch_nodes(socket, parent_node, opts \\ [])
+  defp create_branch_nodes(_socket, nil, _opts), do: []
+
+  defp create_branch_nodes(socket, parent_node, opts) do
+    graph_id = socket.assigns.graph_id
+    existing_ids = MapSet.new(GraphManager.vertices(graph_id))
+
+    GraphActions.branch(graph_action_params(socket, parent_node), opts)
+
+    graph_id
+    |> GraphManager.vertices()
+    |> Enum.reject(&MapSet.member?(existing_ids, &1))
+    |> Enum.filter(fn node_id ->
+      case GraphManager.vertex_label(graph_id, node_id) do
+        %{class: class} when class in ["thesis", "antithesis"] ->
+          parent_node.id in GraphManager.in_neighbours(graph_id, node_id)
+
+        _other ->
+          false
+      end
+    end)
+    |> Enum.map(&GraphActions.find_node(graph_id, &1))
+    |> Enum.sort_by(fn node -> if node.class == "thesis", do: 0, else: 1 end)
+  end
+
+  defp reset_ask_form(socket) do
+    new_node = GraphActions.create_new_node(socket.assigns.user)
+    assign(socket, form: to_form(Vertex.changeset(new_node), id: new_node.id))
+  end
+
+  defp explore_generation_label([item]), do: "Explaining #{quoted_selection(item)}"
+
+  defp explore_generation_label(items) do
+    "Exploring #{length(items)} selected points"
+  end
+
+  defp explore_target_node_id([node], _parent_node_id), do: node.id
+  defp explore_target_node_id(_nodes, parent_node_id), do: parent_node_id
+
+  defp humanize_tool(tool) do
+    tool
+    |> Atom.to_string()
+    |> String.replace("_", " ")
   end
 
   defp begin_background_generation(socket, node, operation, label) do
+    begin_background_generations(socket, [node], operation, label)
+  end
+
+  defp begin_background_generations(socket, nodes, operation, label, opts \\ []) do
+    nodes = Enum.filter(nodes, &is_map/1)
+
+    if nodes == [] do
+      {:noreply, put_flash(socket, :error, "The response could not be started")}
+    else
+      register_background_generation(socket, nodes, operation, label, opts)
+    end
+  end
+
+  defp register_background_generation(socket, nodes, operation, label, opts) do
     sequence = socket.assigns.background_generation_sequence + 1
+    node_ids = Enum.map(nodes, & &1.id)
+    target_node_id = Keyword.get(opts, :target_node_id, List.last(node_ids))
+
+    generation_id =
+      Keyword.get(
+        opts,
+        :generation_id,
+        if(length(node_ids) == 1, do: hd(node_ids), else: "batch-#{Enum.join(node_ids, "-")}")
+      )
 
     generation = %{
-      node_id: node.id,
+      id: generation_id,
+      node_ids: node_ids,
+      target_node_id: target_node_id,
+      pending_node_ids: MapSet.new(node_ids),
+      failed_node_ids: MapSet.new(),
       label: label,
       title: nil,
       status: :generating,
       sequence: sequence
     }
 
-    maybe_record_activity(socket, operation, node)
+    maybe_record_activity(socket, operation, List.last(nodes))
 
     if operation in @structural_graph_operations do
       PubSub.broadcast(
@@ -2168,51 +2215,76 @@ defmodule DialecticWeb.GraphLive do
      assign(socket,
        background_generation_sequence: sequence,
        background_generations:
-         Map.put(socket.assigns.background_generations, node.id, generation),
-       streaming_nodes: MapSet.put(socket.assigns.streaming_nodes, node.id),
+         Map.put(socket.assigns.background_generations, generation_id, generation),
+       streaming_nodes:
+         Enum.reduce(node_ids, socket.assigns.streaming_nodes, &MapSet.put(&2, &1)),
        work_streams: list_streams(socket.assigns.graph_id)
      )}
   end
 
-  defp mark_background_generation_ready(socket, node_id) do
-    update_background_generation(socket, node_id, fn generation ->
-      if generation.status == :failed do
-        generation
-      else
-        node = GraphActions.find_node(socket.assigns.graph_id, node_id)
-        title = if node, do: NodeTitleHelper.extract_node_title(node), else: ""
+  defp mark_background_generation_complete(socket, node_id) do
+    update_background_generation_for_node(socket, node_id, fn generation ->
+      pending_node_ids = MapSet.delete(generation.pending_node_ids, node_id)
+
+      if MapSet.size(pending_node_ids) == 0 do
+        failed? = MapSet.size(generation.failed_node_ids) > 0
+
+        title =
+          if length(generation.node_ids) == 1 and not failed? do
+            node = GraphActions.find_node(socket.assigns.graph_id, node_id)
+            if node, do: NodeTitleHelper.extract_node_title(node), else: ""
+          else
+            ""
+          end
 
         generation
-        |> Map.put(:status, :ready)
+        |> Map.put(:pending_node_ids, pending_node_ids)
+        |> Map.put(:status, if(failed?, do: :failed, else: :ready))
         |> Map.put(:title, title)
+      else
+        Map.put(generation, :pending_node_ids, pending_node_ids)
       end
     end)
   end
 
   defp mark_background_generation_failed(socket, node_id) do
-    update_background_generation(socket, node_id, &Map.put(&1, :status, :failed))
+    update_background_generation_for_node(socket, node_id, fn generation ->
+      Map.update!(generation, :failed_node_ids, &MapSet.put(&1, node_id))
+    end)
   end
 
-  defp update_background_generation(socket, node_id, update_fun) do
-    case Map.fetch(socket.assigns.background_generations, node_id) do
-      {:ok, generation} ->
+  defp update_background_generation_for_node(socket, node_id, update_fun) do
+    case background_generation_for_node(socket, node_id) do
+      {generation_id, generation} ->
         assign(
           socket,
           :background_generations,
-          Map.put(socket.assigns.background_generations, node_id, update_fun.(generation))
+          Map.put(socket.assigns.background_generations, generation_id, update_fun.(generation))
         )
 
-      :error ->
+      nil ->
         socket
     end
   end
 
   defp clear_background_generation(socket, node_id) do
+    generation_id =
+      case background_generation_for_node(socket, node_id) do
+        {id, _generation} -> id
+        nil -> node_id
+      end
+
     assign(
       socket,
       :background_generations,
-      Map.delete(socket.assigns.background_generations, node_id)
+      Map.delete(socket.assigns.background_generations, generation_id)
     )
+  end
+
+  defp background_generation_for_node(socket, node_id) do
+    Enum.find(socket.assigns.background_generations, fn {_generation_id, generation} ->
+      node_id in generation.node_ids
+    end)
   end
 
   defp quoted_selection(text) do

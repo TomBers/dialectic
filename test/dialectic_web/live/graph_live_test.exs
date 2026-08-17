@@ -588,6 +588,82 @@ defmodule DialecticWeb.GraphLiveTest do
     end
   end
 
+  describe "background generation" do
+    test "composer questions preserve the current reader and graph", %{conn: conn} do
+      {:ok, view, _html} = setup_live_with_data(conn, source_text_graph_data())
+      initial_assigns = :sys.get_state(view.pid).socket.assigns
+
+      render_click(view, "reply-and-answer", %{
+        "vertex" => %{"content" => "How does this change the argument?"}
+      })
+
+      assigns = :sys.get_state(view.pid).socket.assigns
+
+      assert assigns.node.id == initial_assigns.node.id
+      assert assigns.f_graph == initial_assigns.f_graph
+      assert map_size(assigns.background_generations) == 1
+
+      {_generation_id, generation} = Enum.at(assigns.background_generations, 0)
+      assert generation.status == :generating
+      assert length(generation.node_ids) == 1
+      assert has_element?(view, "#background-generations", "Answering")
+    end
+
+    test "node tools generate without replacing the current reader", %{conn: conn} do
+      {:ok, view, _html} = setup_live_with_data(conn, source_text_graph_data())
+      initial_assigns = :sys.get_state(view.pid).socket.assigns
+
+      render_click(view, "node_related_ideas", %{"id" => "2"})
+
+      assigns = :sys.get_state(view.pid).socket.assigns
+      assert assigns.node.id == initial_assigns.node.id
+      assert assigns.f_graph == initial_assigns.f_graph
+      assert map_size(assigns.background_generations) == 1
+      assert has_element?(view, "#background-generations", "Finding related ideas")
+    end
+
+    test "pro and con branches share one notification that waits for both responses", %{
+      conn: conn
+    } do
+      {:ok, view, _html} = setup_live_with_data(conn, source_text_graph_data())
+      initial_assigns = :sys.get_state(view.pid).socket.assigns
+
+      render_click(view, "node_branch", %{"id" => "2"})
+
+      assigns = :sys.get_state(view.pid).socket.assigns
+      assert assigns.node.id == initial_assigns.node.id
+      assert assigns.f_graph == initial_assigns.f_graph
+      assert map_size(assigns.background_generations) == 1
+
+      {generation_id, generation} = Enum.at(assigns.background_generations, 0)
+      assert generation.status == :generating
+      assert length(generation.node_ids) == 2
+
+      [first_node_id, second_node_id] = generation.node_ids
+      send(view.pid, {:llm_request_complete, first_node_id})
+
+      first_complete =
+        :sys.get_state(view.pid).socket.assigns.background_generations[generation_id]
+
+      assert first_complete.status == :generating
+
+      send(view.pid, {:llm_request_complete, second_node_id})
+      :sys.get_state(view.pid)
+
+      assert has_element?(
+               view,
+               "#background-generation-#{generation_id}",
+               "Responses ready"
+             )
+
+      view
+      |> element("#open-background-answer-#{generation_id}")
+      |> render_click()
+
+      assert_push_event(view, "reflow_layout", %{id: "2"})
+    end
+  end
+
   describe "search" do
     test "grid search matches source text and renders a preview snippet", %{conn: conn} do
       {:ok, view, _html} = setup_live_with_data(conn, source_text_graph_data())
