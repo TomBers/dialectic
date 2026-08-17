@@ -2122,24 +2122,8 @@ defmodule DialecticWeb.GraphLive do
   defp create_branch_nodes(_socket, nil, _opts), do: []
 
   defp create_branch_nodes(socket, parent_node, opts) do
-    graph_id = socket.assigns.graph_id
-    existing_ids = MapSet.new(GraphManager.vertices(graph_id))
-
     GraphActions.branch(graph_action_params(socket, parent_node), opts)
-
-    graph_id
-    |> GraphManager.vertices()
-    |> Enum.reject(&MapSet.member?(existing_ids, &1))
-    |> Enum.filter(fn node_id ->
-      case GraphManager.vertex_label(graph_id, node_id) do
-        %{class: class} when class in ["thesis", "antithesis"] ->
-          parent_node.id in GraphManager.in_neighbours(graph_id, node_id)
-
-        _other ->
-          false
-      end
-    end)
-    |> Enum.map(&GraphActions.find_node(graph_id, &1))
+    |> Enum.filter(&is_map/1)
     |> Enum.sort_by(fn node -> if node.class == "thesis", do: 0, else: 1 end)
   end
 

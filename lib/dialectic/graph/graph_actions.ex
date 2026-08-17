@@ -159,34 +159,38 @@ defmodule Dialectic.Graph.GraphActions do
     - opts: Optional keyword list with :content_override
 
   ## Returns
-    nil (both child nodes are created as side effects)
+    The exact thesis and antithesis nodes created by this call, in that order
   """
   def branch({graph_id, node, user, live_view_topic}, opts \\ []) do
     content_override = opts |> Keyword.get(:content_override) |> normalize_source_text()
 
     child_opts = source_text_opts(content_override)
 
-    GraphManager.add_child(
-      graph_id,
-      [node],
-      fn n ->
-        LlmInterface.gen_thesis(node, n, graph_id, live_view_topic, content_override)
-      end,
-      "thesis",
-      user,
-      child_opts
-    )
+    thesis_node =
+      GraphManager.add_child(
+        graph_id,
+        [node],
+        fn n ->
+          LlmInterface.gen_thesis(node, n, graph_id, live_view_topic, content_override)
+        end,
+        "thesis",
+        user,
+        child_opts
+      )
 
-    GraphManager.add_child(
-      graph_id,
-      [node],
-      fn n ->
-        LlmInterface.gen_antithesis(node, n, graph_id, live_view_topic, content_override)
-      end,
-      "antithesis",
-      user,
-      child_opts
-    )
+    antithesis_node =
+      GraphManager.add_child(
+        graph_id,
+        [node],
+        fn n ->
+          LlmInterface.gen_antithesis(node, n, graph_id, live_view_topic, content_override)
+        end,
+        "antithesis",
+        user,
+        child_opts
+      )
+
+    [thesis_node, antithesis_node]
   end
 
   @doc """

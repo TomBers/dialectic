@@ -165,7 +165,8 @@ defmodule Dialectic.Graph.IntegrationGraphActionsTest do
 
   test "branch creates thesis and antithesis nodes", %{graph: _} do
     {_graph, answer_node} = inital_qa()
-    _ = GraphActions.branch(graph_param(answer_node))
+
+    assert [thesis_node, antithesis_node] = GraphActions.branch(graph_param(answer_node))
 
     {_, updated_graph} = GraphManager.get_graph(@graph_id)
     vertices = :digraph.vertices(updated_graph)
@@ -173,11 +174,10 @@ defmodule Dialectic.Graph.IntegrationGraphActionsTest do
     assert length(vertices) == 4
 
     # Verify thesis and antithesis nodes
-    thesis_node = GraphActions.find_node(@graph_id, "3")
-    antithesis_node = GraphActions.find_node(@graph_id, "4")
-
     assert thesis_node.class == "thesis"
     assert antithesis_node.class == "antithesis"
+    assert Enum.map(thesis_node.parents, & &1.id) == [answer_node.id]
+    assert Enum.map(antithesis_node.parents, & &1.id) == [answer_node.id]
   end
 
   test "regenerating a legacy initial answer infers and preserves its prompt contract", %{
@@ -256,10 +256,8 @@ defmodule Dialectic.Graph.IntegrationGraphActionsTest do
     selected_text = "This specific excerpt should stay in focus"
     {_graph, answer_node} = inital_qa()
 
-    _ = GraphActions.branch(graph_param(answer_node), content_override: selected_text)
-
-    thesis_node = GraphActions.find_node(@graph_id, "3")
-    antithesis_node = GraphActions.find_node(@graph_id, "4")
+    assert [thesis_node, antithesis_node] =
+             GraphActions.branch(graph_param(answer_node), content_override: selected_text)
 
     assert thesis_node.source_text == selected_text
     assert antithesis_node.source_text == selected_text
