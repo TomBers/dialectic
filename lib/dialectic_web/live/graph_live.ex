@@ -2267,6 +2267,7 @@ defmodule DialecticWeb.GraphLive do
 
   defp update_streaming_node(socket, updated_vertex, node_id) do
     new_content = Map.get(updated_vertex, :content, "")
+    new_grounding_metadata = Map.get(updated_vertex, :grounding_metadata)
 
     # Check if we've already set the title for this node on this socket
     already_titled = MapSet.member?(socket.assigns.titled_nodes, node_id)
@@ -2286,13 +2287,17 @@ defmodule DialecticWeb.GraphLive do
     # If this user is currently viewing the streaming node, update their assigns
     if socket.assigns.node && node_id == Map.get(socket.assigns.node, :id) do
       current_content = Map.get(socket.assigns.node, :content, "")
+      current_grounding_metadata = Map.get(socket.assigns.node, :grounding_metadata)
 
-      # Skip assign update if content hasn't changed
-      if current_content == new_content do
+      if current_content == new_content and
+           current_grounding_metadata == new_grounding_metadata do
         socket
       else
-        # Merge content update while preserving relatives (parents/children)
-        node = %{socket.assigns.node | content: new_content}
+        node =
+          socket.assigns.node
+          |> Map.put(:content, new_content)
+          |> Map.put(:grounding_metadata, new_grounding_metadata)
+
         assign(socket, node: node)
       end
     else

@@ -242,7 +242,7 @@ defmodule Dialectic.Responses.PromptsTest do
       assert result =~ "Quote enough to preserve its meaning"
       assert result =~ "Render it as a Markdown blockquote"
       assert result =~ "One meaningful tension, limitation, or competing perspective"
-      assert result =~ "If a `## Sources` section adds value"
+      refute result =~ "## Sources"
       refute result =~ "140-220 words"
       assert result =~ "Build on the Foundation"
     end

@@ -39,4 +39,45 @@ describe("Markdown hook LiveView updates", () => {
     expect(element.querySelector("h2").textContent).toBe("A section");
     expect(element.textContent).not.toContain("## A section");
   });
+
+  it("rerenders when grounding metadata arrives after streamed content", () => {
+    const element = markdownElement();
+    const hook = { el: element, pushEvent: vi.fn() };
+
+    Markdown.mounted.call(hook);
+    expect(element.querySelector(".markdown-source-reference")).toBeNull();
+
+    element.setAttribute(
+      "data-grounding",
+      JSON.stringify({
+        google: {
+          groundingChunks: [
+            {
+              web: {
+                title: "Research",
+                uri: "https://example.com/research",
+              },
+            },
+          ],
+          groundingSupports: [
+            {
+              groundingChunkIndices: [0],
+              segment: {
+                text: "Opening paragraph. A section Rendered text.",
+                startIndex: 14,
+                endIndex: 58,
+              },
+            },
+          ],
+        },
+      }),
+    );
+
+    Markdown.updated.call(hook);
+
+    expect(element.querySelector(".markdown-source-reference")).not.toBeNull();
+    expect(element.querySelector(".markdown-source-link").textContent).toContain(
+      "Research",
+    );
+  });
 });

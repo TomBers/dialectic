@@ -142,6 +142,7 @@ defmodule DialecticWeb.PresentationStageComp do
                     phx-hook="Markdown"
                     id={"presentation-markdown-body-#{@active_slide.id}"}
                     data-md={body_markdown(@active_slide)}
+                    data-grounding={DialecticWeb.MarkdownGrounding.encode(@active_slide)}
                   >
                   </div>
                 </article>

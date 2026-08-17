@@ -29,7 +29,7 @@ defmodule Dialectic.Workers.LLMWorker do
 
   require Logger
 
-  alias Dialectic.LLM.GroundedSources
+  alias Dialectic.LLM.Grounding
   alias Dialectic.Responses.Utils
   alias Dialectic.Responses.{ModeServer, PromptsStructured}
 
@@ -135,7 +135,10 @@ defmodule Dialectic.Workers.LLMWorker do
 
       {:ok, :skipped}
     else
-      GraphManager.set_node_content(graph, to_node, "")
+      GraphManager.update_vertex_fields(graph, to_node, %{
+        content: "",
+        grounding_metadata: nil
+      })
 
       result =
         do_llm_request(
@@ -247,13 +250,13 @@ defmodule Dialectic.Workers.LLMWorker do
           # lost partial updates or GraphManager restarts).
           flush_started_at = System.monotonic_time(:millisecond)
 
-          {final_full_text, final_buf, _, _last_flush_at, stream_updates, grounded_sources} =
+          {final_full_text, final_buf, _, _last_flush_at, stream_updates, grounding_metadata} =
             Enum.reduce(
               stream_resp.stream,
-              {"", "", false, flush_started_at, 0, []},
+              {"", "", false, flush_started_at, 0, nil},
               fn
                 %ReqLLM.StreamChunk{type: :content, text: token},
-                {full_text, buf, ttft_logged?, last_flush_at, stream_updates, sources} ->
+                {full_text, buf, ttft_logged?, last_flush_at, stream_updates, grounding_metadata} ->
                   chunk =
                     case token do
                       t when is_binary(t) -> t
@@ -279,16 +282,18 @@ defmodule Dialectic.Workers.LLMWorker do
 
                   if should_flush_stream?(full_text == "", byte_size(new_buf), elapsed_ms) do
                     Utils.set_node_content(graph, to_node, new_full_text, live_view_topic)
-                    {new_full_text, "", ttft_logged?, now, stream_updates + 1, sources}
+                    {new_full_text, "", ttft_logged?, now, stream_updates + 1, grounding_metadata}
                   else
-                    {new_full_text, new_buf, ttft_logged?, last_flush_at, stream_updates, sources}
+                    {new_full_text, new_buf, ttft_logged?, last_flush_at, stream_updates,
+                     grounding_metadata}
                   end
 
                 %ReqLLM.StreamChunk{type: :meta, metadata: metadata},
-                {full_text, buf, ttft_logged?, last_flush_at, stream_updates, sources} ->
-                  sources = GroundedSources.merge_metadata(sources, metadata)
+                {full_text, buf, ttft_logged?, last_flush_at, stream_updates, grounding_metadata} ->
+                  grounding_metadata = Grounding.merge(grounding_metadata, metadata)
 
-                  {full_text, buf, ttft_logged?, last_flush_at, stream_updates, sources}
+                  {full_text, buf, ttft_logged?, last_flush_at, stream_updates,
+                   grounding_metadata}
 
                 _chunk, state ->
                   state
@@ -305,15 +310,17 @@ defmodule Dialectic.Workers.LLMWorker do
 
           {final_full_text, stream_updates} =
             if grounding? do
-              reconciled_text =
-                GroundedSources.reconcile_markdown(final_full_text, grounded_sources)
+              cleaned_text = Grounding.strip_sources(final_full_text)
 
-              if reconciled_text != final_full_text do
-                Utils.set_node_content(graph, to_node, reconciled_text, live_view_topic)
-                {reconciled_text, stream_updates + 1}
-              else
-                {final_full_text, stream_updates}
-              end
+              Utils.set_node_response(
+                graph,
+                to_node,
+                cleaned_text,
+                grounding_metadata,
+                live_view_topic
+              )
+
+              {cleaned_text, stream_updates + 1}
             else
               {final_full_text, stream_updates}
             end

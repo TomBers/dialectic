@@ -641,6 +641,31 @@ defmodule DialecticWeb.GraphLiveTest do
       assert state_after.assigns.node.content == "new content"
     end
 
+    test "stream_chunk info renders grounding metadata when content is unchanged", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+      state = :sys.get_state(view.pid).socket
+      current_node = state.assigns.node
+
+      grounding_metadata = %{
+        "google" => %{
+          "groundingChunks" => [
+            %{"web" => %{"title" => "Research", "uri" => "https://example.com/research"}}
+          ],
+          "groundingSupports" => []
+        }
+      }
+
+      updated_vertex = Map.put(current_node, :grounding_metadata, grounding_metadata)
+
+      send(view.pid, {:stream_chunk, updated_vertex, :node_id, current_node.id})
+
+      assert render(view)
+      assert has_element?(view, "#markdown-body-#{current_node.id}[data-grounding]")
+
+      state_after = :sys.get_state(view.pid).socket
+      assert state_after.assigns.node.grounding_metadata == grounding_metadata
+    end
+
     test "stream_chunk info does not update the node if node_id does not match", %{conn: conn} do
       {:ok, view, _html} = setup_live(conn)
       state = :sys.get_state(view.pid).socket

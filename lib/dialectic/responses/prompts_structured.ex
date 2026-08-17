@@ -76,7 +76,7 @@ defmodule Dialectic.Responses.PromptsStructured do
     - Aim for a normal response body of roughly #{profile.min_words}-#{profile.max_words} words.
     - Treat this as an editorial target, not a quota: do not pad a complete answer or cut an explanation before it becomes clear.
     - A task-specific target, including the opening-answer target, takes priority.
-    - The title, `## Sources`, and required follow-up questions sit outside the body target.
+    - The title and required follow-up questions sit outside the body target.
 
     #{readability_contract(mode)}
     #{evidence_contract(mode)}
@@ -85,8 +85,8 @@ defmodule Dialectic.Responses.PromptsStructured do
     - Clearly distinguish documented fact, interpretation, inference, and speculation. Label hypothetical examples as hypothetical.
     - Never invent or guess quotations, study details, publication details, locators, or URLs.
     - Use a direct quote only when search grounding verified the exact wording and the grounded source provides a page, chapter, section, passage, or stable locator.
-    - Every item in `## Sources` must come from the current request's search-grounding results. Identify it accurately by title, author, publisher, or organization, but do not write or reconstruct its URL; the application attaches the exact link from provider metadata after generation.
-    - If a grounded source is unavailable, omit it entirely. Never provide a memory-only bibliography entry or invent sources to meet a target count.
+    - Do not add a sources or references section. The application renders citations directly from provider grounding metadata.
+    - If grounded evidence is unavailable, do not invent or imply a source.
 
     Markdown output
     - Return only valid GitHub Flavored Markdown.
@@ -171,7 +171,7 @@ defmodule Dialectic.Responses.PromptsStructured do
   defp evidence_contract(:high_school) do
     """
     Evidence and quotations
-    - Do not perform source research or add a `## Sources` section unless the user explicitly asks.
+    - Do not perform source research unless the user explicitly asks.
     - Do not supply direct quotations unless the user provided the exact text or explicitly requested source research.
     - Answer from established knowledge, qualify uncertainty plainly, and avoid unsupported specificity.
     """
@@ -180,24 +180,24 @@ defmodule Dialectic.Responses.PromptsStructured do
   defp evidence_contract(:university) do
     """
     Evidence and quotations
-    - Add `## Sources` only when grounded sources materially improve the answer. Use a small, carefully selected set and never add sources merely to fill space.
-    - Prefer relevant primary sources, research or data, official records, and reliable scholarly summaries. Briefly explain important attribution in the prose.
-    - Every source bullet must accurately identify a grounded source by author, title, publisher, or organization. Do not add a Markdown link or reconstruct a URL; the application inserts the exact provider-supplied link.
+    - Ground material claims in relevant primary sources, peer-reviewed research, official records, university-press works, or established academic reference works. Briefly explain important attribution in the prose.
+    - Begin research with searches targeting the relevant academic author, work, journal, publisher, DOI, repository, or institution; use academic site restrictions such as `site:.edu` or `site:.ac.uk` when helpful.
+    - Give primary and scholarly sources the greatest evidential weight. Social media, forums or Q&A sites, video platforms, document-sharing mirrors, generic blogs, and summary sites may provide supplementary context, but should not displace stronger sources or carry a material claim on their own.
     - When analyzing an identifiable primary text, use a brief verified excerpt only when its exact wording materially improves understanding. Quote enough to preserve the meaning, but no more than the analysis needs.
-    - Render the quote as a Markdown blockquote and follow it immediately with attribution plus a page, chapter, section, passage, or stable locator. Include the quote's grounded source in `## Sources`.
-    - For an initial answer, place `## Sources` immediately before `## Follow-up questions`; otherwise make it the final section.
+    - Render the quote as a Markdown blockquote and follow it immediately with attribution plus a page, chapter, section, passage, or stable locator.
+    - Do not add a sources or references section; the application renders one from grounding metadata.
     """
   end
 
   defp evidence_contract(:expert) do
     """
     Evidence and quotations
-    - Add `## Sources` only when grounded sources materially improve the answer. Use a small set of the strongest sources and never add sources merely to fill space.
-    - Prioritize primary texts, original research or data, official records, and authoritative scholarly syntheses. Attribute competing positions to specific authors or schools.
-    - Every source bullet must accurately identify a grounded source by author, title, publisher, or organization. Do not add a Markdown link or reconstruct a URL; the application inserts the exact provider-supplied link.
+    - Ground material claims in primary texts, peer-reviewed research, original data, official records, university-press works, or authoritative scholarly syntheses. Attribute competing positions to specific authors or schools.
+    - Begin research with searches targeting the relevant academic author, work, journal, publisher, DOI, repository, or institution; use academic site restrictions such as `site:.edu` or `site:.ac.uk` when helpful.
+    - Give primary and scholarly sources the greatest evidential weight. Social media, forums or Q&A sites, video platforms, document-sharing mirrors, generic blogs, and summary sites may provide supplementary context, but should not displace stronger sources or carry a material claim on their own.
     - When analyzing an identifiable primary text, use brief verified excerpts only when their exact wording materially improves the analysis. Quote enough to preserve meaning and voice, but no more than the analysis needs.
-    - Render each quote as a Markdown blockquote and follow it immediately with attribution plus a page, chapter, section, passage, or stable locator. Include each quote's grounded source in `## Sources`.
-    - For an initial answer, place `## Sources` immediately before `## Follow-up questions`; otherwise make it the final section.
+    - Render each quote as a Markdown blockquote and follow it immediately with attribution plus a page, chapter, section, passage, or stable locator.
+    - Do not add a sources or references section; the application renders one from grounding metadata.
     """
   end
 

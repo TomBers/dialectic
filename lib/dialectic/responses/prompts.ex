@@ -196,8 +196,6 @@ defmodule Dialectic.Responses.Prompts do
 
       Aim for an opening answer of roughly #{opening_word_range}. Treat this as an editorial target: prioritize a compelling and complete foundation over hitting an exact count. Always leave room for the final `## Follow-up questions` section.
 
-      If a `## Sources` section adds value under the selected source policy, place it immediately before `## Follow-up questions` so the follow-up section remains last.
-
       In the `## Follow-up questions` section:
       - Include exactly 3 numbered questions
       - Make each item a single, self-contained question ending with a question mark

@@ -247,6 +247,7 @@ defmodule DialecticWeb.NodeComp do
                         class="cursor-text selection:bg-amber-200/80 selection:text-slate-900"
                         id={"markdown-body-#{@node.id}"}
                         data-md={@node.content || ""}
+                        data-grounding={DialecticWeb.MarkdownGrounding.encode(@node)}
                         data-body-only="true"
                         data-existing-follow-up-questions={existing_follow_up_questions_json(@node)}
                       >

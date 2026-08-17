@@ -27,14 +27,16 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
       assert prompt =~ "enough descriptive `##` sections"
       assert prompt =~ "Keep each paragraph focused on one idea"
       assert prompt =~ "compact list, a verified blockquote, or a comparison table"
-      assert prompt =~ "Add `## Sources` only when grounded sources materially improve the answer"
-      assert prompt =~ "Use a small, carefully selected set"
+      assert prompt =~ "renders citations directly from provider grounding metadata"
+      assert prompt =~ "peer-reviewed research"
+      assert prompt =~ "Begin research with searches targeting the relevant academic"
+      assert prompt =~ "may provide supplementary context"
+      assert prompt =~ "site:.edu"
 
       assert prompt =~
                "use a brief verified excerpt only when its exact wording materially improves"
 
-      assert prompt =~ "Do not add a Markdown link or reconstruct a URL"
-      assert prompt =~ "the application inserts the exact provider-supplied link"
+      assert prompt =~ "Do not add a sources or references section"
     end
 
     test "defines the university-level Expert contract" do
@@ -46,14 +48,16 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
       assert prompt =~ "Aim for a normal response body of roughly 450-750 words"
       assert prompt =~ "several descriptive `##` sections"
       assert prompt =~ "Keep each paragraph focused on one analytical move"
-      assert prompt =~ "Add `## Sources` only when grounded sources materially improve the answer"
-      assert prompt =~ "Use a small set of the strongest sources"
+      assert prompt =~ "renders citations directly from provider grounding metadata"
+      assert prompt =~ "university-press works"
+      assert prompt =~ "Give primary and scholarly sources the greatest evidential weight"
+      assert prompt =~ "should not displace stronger sources"
+      assert prompt =~ "carry a material claim on their own"
 
       assert prompt =~
                "use brief verified excerpts only when their exact wording materially improves"
 
-      assert prompt =~ "Do not add a Markdown link or reconstruct a URL"
-      assert prompt =~ "the application inserts the exact provider-supplied link"
+      assert prompt =~ "Do not add a sources or references section"
     end
 
     test "keeps common integrity, Markdown, and graph-continuity rules" do
@@ -61,8 +65,8 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
         prompt = PromptsStructured.system_preamble(mode)
 
         assert prompt =~ "Never invent or guess quotations"
-        assert prompt =~ "do not write or reconstruct its URL"
-        assert prompt =~ "Never provide a memory-only bibliography entry"
+        assert prompt =~ "Do not add a sources or references section"
+        assert prompt =~ "If grounded evidence is unavailable, do not invent"
         assert prompt =~ "Return only valid GitHub Flavored Markdown"
         assert prompt =~ "Start with one concise `#` title"
         assert prompt =~ "Use descriptive `##` headings"
