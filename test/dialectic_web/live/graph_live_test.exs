@@ -654,6 +654,46 @@ defmodule DialecticWeb.GraphLiveTest do
       assert has_element?(view, "#background-generations", "Answering")
     end
 
+    test "viewing an answer clears completed notifications and preserves loading ones", %{
+      conn: conn
+    } do
+      {:ok, view, _html} = setup_live_with_data(conn, source_text_graph_data())
+
+      for question <- [
+            "First background question?",
+            "Second background question?",
+            "Still loading?"
+          ] do
+        render_click(view, "reply-and-answer", %{
+          "vertex" => %{"content" => question}
+        })
+      end
+
+      generations =
+        view.pid
+        |> :sys.get_state()
+        |> then(& &1.socket.assigns.background_generations)
+        |> Enum.sort_by(fn {_generation_id, generation} -> generation.sequence end)
+
+      [{first_id, first}, {second_id, second}, {loading_id, _loading}] = generations
+
+      send(view.pid, {:llm_request_complete, hd(first.node_ids)})
+      send(view.pid, {:llm_request_complete, hd(second.node_ids)})
+      :sys.get_state(view.pid)
+
+      view
+      |> element("#open-background-answer-#{first_id}")
+      |> render_click()
+
+      remaining_generations =
+        :sys.get_state(view.pid).socket.assigns.background_generations
+
+      assert Map.keys(remaining_generations) == [loading_id]
+      assert remaining_generations[loading_id].status == :generating
+      refute Map.has_key?(remaining_generations, first_id)
+      refute Map.has_key?(remaining_generations, second_id)
+    end
+
     test "action bar questions move directly to the new answer", %{conn: conn} do
       {:ok, view, _html} = setup_live_with_data(conn, source_text_graph_data())
       initial_assigns = :sys.get_state(view.pid).socket.assigns

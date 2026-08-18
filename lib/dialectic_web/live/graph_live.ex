@@ -787,12 +787,7 @@ defmodule DialecticWeb.GraphLive do
     node = GraphActions.find_node(socket.assigns.graph_id, node_id)
 
     if node do
-      socket =
-        assign(
-          socket,
-          :background_generations,
-          Map.delete(socket.assigns.background_generations, generation_id)
-        )
+      socket = clear_completed_background_generations(socket)
 
       {:noreply, updated_socket} = update_graph(socket, {nil, node}, "node_clicked")
 
@@ -2287,6 +2282,16 @@ defmodule DialecticWeb.GraphLive do
       socket,
       :background_generations,
       Map.delete(socket.assigns.background_generations, generation_id)
+    )
+  end
+
+  defp clear_completed_background_generations(socket) do
+    assign(
+      socket,
+      :background_generations,
+      Map.reject(socket.assigns.background_generations, fn {_id, generation} ->
+        generation.status in [:ready, :failed]
+      end)
     )
   end
 

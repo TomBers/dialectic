@@ -379,7 +379,7 @@
                   <% bookmarked? = MapSet.member?(@bookmarked_node_ids, reading_node.id) %>
                   <div class="mt-3 flex items-start gap-3">
                     <h2 class={[
-                      "min-w-0 flex-1 text-balance font-serif font-semibold leading-[1.15] tracking-tight text-slate-950",
+                      "reader-heading min-w-0 flex-1 text-balance font-semibold leading-[1.15] tracking-tight text-slate-950",
                       if(index == 0,
                         do: "text-[1.65rem] sm:text-[1.95rem]",
                         else: "text-[1.28rem] sm:text-[1.6rem]"
@@ -428,7 +428,7 @@
                       data-mudg-id={@graph_id}
                       data-highlights-only="false"
                     >
-                      <article class="reader-prose prose prose-slate max-w-none prose-headings:font-serif prose-headings:tracking-tight prose-a:break-words">
+                      <article class="reader-prose prose prose-slate max-w-none prose-headings:tracking-tight prose-a:break-words">
                         <div
                           phx-hook="Markdown"
                           id={"outline-markdown-body-#{reading_node.id}"}

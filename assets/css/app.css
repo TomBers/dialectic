@@ -1398,6 +1398,7 @@ button[type="submit"]:active {
 #graph-layout[data-reading-font="serif"],
 #outline-layout[data-reading-font="serif"] {
     --rg-read-font-family: var(--rg-read-font-family-serif);
+    --rg-read-heading-font-family: var(--rg-read-font-family-serif);
     --rg-read-letter-spacing: -0.001em;
     --rg-read-word-spacing: 0.01em;
 }
@@ -1463,6 +1464,10 @@ button[type="submit"]:active {
 }
 
 /* Shared editorial reading measure and hierarchy for reader and graph views. */
+.reader-heading {
+    font-family: var(--rg-read-heading-font-family);
+}
+
 .reader-prose {
     width: min(100%, var(--rg-read-max-width, 62ch));
     max-width: var(--rg-read-max-width, 62ch);
@@ -1500,7 +1505,7 @@ button[type="submit"]:active {
     margin-top: 1.9em;
     margin-bottom: 0.65em;
     color: #0f172a;
-    font-family: var(--rg-read-font-family-serif);
+    font-family: var(--rg-read-heading-font-family);
     font-size: 1.35em;
     font-weight: 650;
     line-height: 1.25;
@@ -1514,7 +1519,7 @@ button[type="submit"]:active {
     margin-top: 1.65em;
     margin-bottom: 0.55em;
     color: #0f172a;
-    font-family: var(--rg-read-font-family-serif);
+    font-family: var(--rg-read-heading-font-family);
     font-size: 1.15em;
     font-weight: 650;
     line-height: 1.3;
