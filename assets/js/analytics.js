@@ -21,25 +21,32 @@ export const loadGoogleAnalytics = () => {
 export const initDelayedAnalytics = () => {
   let fallbackTimer;
 
-  const load = () => {
+  const cleanup = () => {
     window.clearTimeout(fallbackTimer);
+    window.removeEventListener("load", scheduleFallback);
     INTERACTION_EVENTS.forEach((eventName) =>
       window.removeEventListener(eventName, load),
     );
+  };
+
+  const load = () => {
+    cleanup();
     loadGoogleAnalytics();
   };
+
+  function scheduleFallback() {
+    fallbackTimer = window.setTimeout(load, 5000);
+  }
 
   INTERACTION_EVENTS.forEach((eventName) =>
     window.addEventListener(eventName, load, { once: true, passive: true }),
   );
-
-  const scheduleFallback = () => {
-    fallbackTimer = window.setTimeout(load, 5000);
-  };
 
   if (document.readyState === "complete") {
     scheduleFallback();
   } else {
     window.addEventListener("load", scheduleFallback, { once: true });
   }
+
+  return cleanup;
 };
