@@ -346,14 +346,91 @@ defmodule DialecticWeb.GraphLiveTest do
     end
   end
 
-  describe "guided next actions" do
+  describe "guided learning plan" do
     test "is available as an unchecked opt-in on the ask form", %{conn: conn} do
       {:ok, view, _html} = setup_live_for_graph(conn, "Guided Exploration Toggle")
 
       assert has_element?(
                view,
-               "#global-chat-form-guided-exploration[name='guided_exploration']:not(:checked)"
+               "#global-chat-form-guided-learning[name='guided_learning']:not(:checked)"
              )
+
+      refute has_element?(view, "#global-chat-form-guidance-mode")
+    end
+
+    test "creates selected paths as parallel question and answer branches", %{conn: conn} do
+      {:ok, view, _html} = setup_live_for_graph(conn, "Guided Multiple Paths")
+      graph_id = :sys.get_state(view.pid).socket.assigns.graph_id
+
+      render_click(view, "reply-and-answer", %{
+        "vertex" => %{"content" => "Explain Rome’s Second Triumvirate"},
+        "guided_learning" => "true",
+        "query_origin" => "node_action_bar"
+      })
+
+      plan_node = :sys.get_state(view.pid).socket.assigns.node
+      assert plan_node.prompt_kind == "guided_learning_plan"
+
+      GraphManager.set_node_content(
+        graph_id,
+        plan_node.id,
+        """
+        ## Learning plan: Rome’s Second Triumvirate
+        ### Best next actions
+        - **Clarify terms** — Define the political powers involved before comparing the triumvirs.
+        - **Test with a counterexample** — Examine where the alliance failed to control events.
+        - **Find related ideas** — Connect the alliance to the wider collapse of the Republic.
+        ### Paths to explore
+        - **Division of power** — How did the triumvirs divide political and territorial control? — Establishes how the alliance functioned.
+        - **Collapse of the alliance** — Why did cooperation between Octavian and Antony become civil war? — Reveals the mechanisms behind its collapse.
+        - **Cleopatra’s role** — How did Cleopatra influence Antony’s strategy and Roman perceptions? — Separates her political role from propaganda.
+        """
+      )
+
+      render_click(view, "review_guided_learning_plan", %{"id" => plan_node.id})
+
+      assert has_element?(view, "#guided-learning-plan-modal")
+      assert has_element?(view, "#guided-plan-action-0", "Clarify terms")
+      assert has_element?(view, "#guided-plan-path-0", "Division of power")
+      assert has_element?(view, "#guided-plan-path-1", "Collapse of the alliance")
+      assert has_element?(view, "#guided-plan-path-2", "Cleopatra’s role")
+
+      vertex_count_before = length(GraphManager.vertices(graph_id))
+
+      view
+      |> element("#guided-plan-path-form")
+      |> render_submit(%{
+        "paths" => %{
+          "0" => ["false", "true"],
+          "1" => ["false"],
+          "2" => ["false", "true"]
+        }
+      })
+
+      assert length(GraphManager.vertices(graph_id)) == vertex_count_before + 4
+      refute has_element?(view, "#guided-learning-plan-modal")
+
+      refreshed_plan = GraphManager.find_node_by_id(graph_id, plan_node.id)
+      question_children = Enum.filter(refreshed_plan.children, &(&1.class == "question"))
+      assert length(question_children) == 2
+
+      assert Enum.any?(
+               question_children,
+               &(&1.content ==
+                   "How did the triumvirs divide political and territorial control?")
+             )
+
+      assert Enum.all?(question_children, fn question ->
+               question = GraphManager.find_node_by_id(graph_id, question.id)
+               Enum.any?(question.children, &(&1.class == "answer"))
+             end)
+
+      render_click(view, "review_guided_learning_plan", %{"id" => plan_node.id})
+
+      assert has_element?(view, "#guided-plan-path-0", "Already explored")
+      assert has_element?(view, "#guided-plan-path-checkbox-0[disabled]")
+      refute has_element?(view, "#guided-plan-path-checkbox-1[disabled]")
+      assert has_element?(view, "#guided-plan-path-checkbox-2[disabled]")
     end
 
     test "ranks supported actions and applies the learner's selection", %{conn: conn} do
@@ -362,45 +439,46 @@ defmodule DialecticWeb.GraphLiveTest do
 
       render_click(view, "reply-and-answer", %{
         "vertex" => %{"content" => "How should cities adapt to extreme heat?"},
-        "guided_exploration" => "true",
+        "guided_learning" => "true",
         "query_origin" => "node_action_bar"
       })
 
       plan_node = :sys.get_state(view.pid).socket.assigns.node
-      assert plan_node.prompt_kind == "guided_exploration"
+      assert plan_node.prompt_kind == "guided_learning_plan"
 
       GraphManager.set_node_content(
         graph_id,
         plan_node.id,
         """
-        ## Next learning moves: How should cities adapt to extreme heat
+        ## Learning plan: How should cities adapt to extreme heat
+        ### Best next actions
         - **Clarify terms** — Define what successful heat adaptation means before comparing policies.
         - **Test with a counterexample** — Examine a city where common heat interventions failed.
         - **Find related ideas** — Connect heat adaptation to housing, transport, and public health.
         """
       )
 
-      render_click(view, "review_guided_exploration", %{"id" => plan_node.id})
+      render_click(view, "review_guided_learning_plan", %{"id" => plan_node.id})
 
-      assert has_element?(view, "#guided-action-modal")
-      assert has_element?(view, "#guided-action-option-0", "Clarify terms")
-      assert has_element?(view, "#guided-action-option-0", "Recommended")
-      assert has_element?(view, "#guided-action-option-1", "Test with a counterexample")
-      assert has_element?(view, "#guided-action-option-2", "Find related ideas")
+      assert has_element?(view, "#guided-learning-plan-modal")
+      assert has_element?(view, "#guided-plan-action-0", "Clarify terms")
+      assert has_element?(view, "#guided-plan-action-0", "Recommended")
+      assert has_element?(view, "#guided-plan-action-1", "Test with a counterexample")
+      assert has_element?(view, "#guided-plan-action-2", "Find related ideas")
 
       view
-      |> element("#guided-action-option-0")
+      |> element("#guided-plan-action-0")
       |> render_click()
 
-      refute has_element?(view, "#guided-action-modal")
+      refute has_element?(view, "#guided-learning-plan-modal")
       result_node = :sys.get_state(view.pid).socket.assigns.node
       assert result_node.class == "clarify"
       assert Enum.any?(result_node.parents, &(&1.id == plan_node.id))
 
-      render_click(view, "review_guided_exploration", %{"id" => plan_node.id})
+      render_click(view, "review_guided_learning_plan", %{"id" => plan_node.id})
 
-      assert has_element?(view, "#guided-action-option-0[disabled]", "Already asked")
-      assert has_element?(view, "#guided-action-option-1", "Recommended")
+      assert has_element?(view, "#guided-plan-action-0[disabled]", "Already asked")
+      assert has_element?(view, "#guided-plan-action-1", "Recommended")
 
       vertex_count_before_duplicate = length(GraphManager.vertices(graph_id))
 

@@ -259,27 +259,27 @@ defmodule DialecticWeb.NodeComp do
                   <div
                     :if={
                       @can_edit && !@streaming &&
-                        Map.get(@node, :prompt_kind) == "guided_exploration"
+                        Map.get(@node, :prompt_kind) == "guided_learning_plan"
                     }
-                    id={"guided-exploration-actions-#{@node.id}"}
+                    id={"guided-learning-actions-#{@node.id}"}
                     class="mx-auto mt-4 flex w-full max-w-3xl items-center justify-between gap-3 rounded-2xl border border-indigo-200 bg-indigo-50/80 p-3.5 shadow-sm"
                   >
                     <div class="min-w-0">
                       <p class="text-sm font-semibold text-indigo-950">
-                        Choose your next learning move
+                        Choose actions and paths
                       </p>
                       <p class="mt-0.5 text-xs leading-5 text-indigo-800">
-                        Review the ranked recommendations before applying one.
+                        Review ranked actions and expand up to three paths in parallel.
                       </p>
                     </div>
                     <button
-                      id={"review-guided-exploration-#{@node.id}"}
+                      id={"review-guided-learning-#{@node.id}"}
                       type="button"
-                      phx-click="review_guided_exploration"
+                      phx-click="review_guided_learning_plan"
                       phx-value-id={@node.id}
                       class="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-indigo-700 px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
                     >
-                      <span>Review actions</span>
+                      <span>Review plan</span>
                       <.icon name="hero-arrow-right" class="h-3.5 w-3.5" />
                     </button>
                   </div>

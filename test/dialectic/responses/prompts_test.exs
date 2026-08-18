@@ -6,34 +6,21 @@ defmodule Dialectic.Responses.PromptsTest do
   # Note: frame_minimal_context/1 is a private function, so we test it indirectly
   # through the public selection/2 function which uses it internally
 
-  describe "guided_exploration/2" do
-    test "requires a topic-specific heading and allowlisted next actions" do
+  describe "guided_learning_plan/2" do
+    test "combines ranked actions and multiple paths in one response" do
       prompt =
-        Prompts.guided_exploration(
-          "Cities are already experiencing hotter summers.",
-          "How should cities adapt to extreme heat?"
-        )
-
-      assert prompt =~
-               "Start with the exact heading `## Next learning moves: How should cities adapt to extreme heat`"
-
-      assert prompt =~ "Choose only from these exact action labels"
-      assert prompt =~ "Clarify terms"
-      assert prompt =~ "Test with a counterexample"
-      assert prompt =~ "Put the best recommendation first"
-    end
-
-    test "removes common request language from the recommendation title" do
-      prompt =
-        Prompts.guided_exploration(
+        Prompts.guided_learning_plan(
           "The discussion concerns the late Roman Republic.",
           "Explain Rome’s Second Triumvirate"
         )
 
       assert prompt =~
-               "Start with the exact heading `## Next learning moves: Rome’s Second Triumvirate`"
+               "Start with the exact heading `## Learning plan: Rome’s Second Triumvirate`"
 
-      refute prompt =~ "## Next learning moves: Explain Rome’s Second Triumvirate"
+      assert prompt =~ "exact heading `### Best next actions`"
+      assert prompt =~ "exact heading `### Paths to explore`"
+      assert prompt =~ "exactly three top-level bullets"
+      assert prompt =~ "exactly five top-level bullets"
     end
   end
 

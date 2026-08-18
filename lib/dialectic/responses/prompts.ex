@@ -188,18 +188,18 @@ defmodule Dialectic.Responses.Prompts do
   end
 
   @doc """
-  Recommend the most useful next inquiry actions for a learner.
+  Recommend next actions and propose multiple exploration paths in one plan.
   """
-  @spec guided_exploration(String.t(), String.t()) :: String.t()
-  def guided_exploration(context, topic) do
+  @spec guided_learning_plan(String.t(), String.t()) :: String.t()
+  def guided_learning_plan(context, topic) do
     join_blocks([
       frame_context(context),
       """
-      The learner wants guidance on the best next step for **#{sanitize_title(topic)}** before receiving more generated content.
+      The learner wants guidance for **#{sanitize_title(topic)}** before receiving more generated content.
 
-      **Your task:** Rank exactly three inquiry actions that would most improve the learner's understanding at this point. Base the ranking on the specific question and Foundation, not on a generic learning sequence.
+      **Your task:** Create one learning plan containing both ranked inquiry actions and several distinct paths through the topic.
 
-      Choose only from these exact action labels:
+      For the action section, choose only from these exact labels:
       - Clarify terms
       - Surface assumptions
       - Test with a counterexample
@@ -213,12 +213,16 @@ defmodule Dialectic.Responses.Prompts do
       - Find related ideas
 
       Output requirements:
-      - Start with the exact heading `## Next learning moves: #{guided_topic_title(topic)}` so the recommendation node is specific without duplicating the learner's question node.
-      - Then output exactly three top-level Markdown bullet points and no nested lists.
-      - Write each bullet as `**Exact action label** — One specific sentence explaining why this action is useful now.`
-      - Put the best recommendation first.
-      - Use each action at most once and keep each complete bullet under 240 characters.
-      - Do not perform the actions, answer the learner's question, or add text after the list.
+      - Start with the exact heading `## Learning plan: #{guided_topic_title(topic)}`.
+      - Add the exact heading `### Best next actions`, followed by exactly three top-level bullets.
+      - Write each action as `**Exact action label** — One specific sentence explaining why this action is useful now.`
+      - Put the best action first and use each action at most once.
+      - Add the exact heading `### Paths to explore`, followed by exactly five top-level bullets.
+      - Write each path as `**Short path title** — A focused standalone question? — One specific sentence explaining why this path matters.`
+      - Keep each path title under 40 characters and each complete bullet under 280 characters.
+      - Ensure every path question ends with a question mark.
+      - Do not perform any action, answer any path question, or add text after the final path.
+      - Do not use an em dash inside labels, questions, or rationales except as the required separators.
       """
     ])
   end

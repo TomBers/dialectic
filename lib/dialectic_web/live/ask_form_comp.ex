@@ -208,10 +208,10 @@ defmodule DialecticWeb.AskFormComp do
         <div :if={@embedded && !@disabled} class="mt-2 px-1">
           <.input
             type="checkbox"
-            id={"#{@id}-guided-exploration"}
-            name="guided_exploration"
+            id={"#{@id}-guided-learning"}
+            name="guided_learning"
             value="false"
-            label="Guide my next step — recommend the best learning action"
+            label="Guide my learning with next actions and exploration paths"
           />
         </div>
       </.form>

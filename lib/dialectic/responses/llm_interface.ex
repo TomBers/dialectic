@@ -134,11 +134,11 @@ defmodule Dialectic.Responses.LlmInterface do
   end
 
   @doc false
-  @spec gen_guided_exploration(map(), map(), String.t(), String.t()) :: request_result()
-  def gen_guided_exploration(node, child, graph_id, live_view_topic) do
+  @spec gen_guided_learning_plan(map(), map(), String.t(), String.t()) :: request_result()
+  def gen_guided_learning_plan(node, child, graph_id, live_view_topic) do
     context = GraphManager.build_context(graph_id, node)
-    instruction = Prompts.guided_exploration(context, node.content || "")
-    queue_response("guided_exploration", instruction, child, graph_id, live_view_topic)
+    instruction = Prompts.guided_learning_plan(context, node.content || "")
+    queue_response("guided_learning_plan", instruction, child, graph_id, live_view_topic)
   end
 
   @doc """

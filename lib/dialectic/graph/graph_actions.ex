@@ -405,14 +405,19 @@ defmodule Dialectic.Graph.GraphActions do
   """
   def ask_and_answer({graph_id, node, user, live_view_topic}, question_text, opts \\ []) do
     minimal_context = Keyword.get(opts, :minimal_context, false)
-    guided_exploration = Keyword.get(opts, :guided_exploration, false)
+    guided_learning = Keyword.get(opts, :guided_learning, false)
     source_text = opts |> Keyword.get(:source_text) |> normalize_source_text()
 
     {question_prompt_kind, answer_prompt_kind} =
       cond do
-        guided_exploration -> {"guided_exploration_question", "guided_exploration"}
-        minimal_context -> {"selection_explain_question", "selection_explain"}
-        true -> {"question", "answer"}
+        guided_learning ->
+          {"guided_learning_plan_question", "guided_learning_plan"}
+
+        minimal_context ->
+          {"selection_explain_question", "selection_explain"}
+
+        true ->
+          {"question", "answer"}
       end
 
     question_opts = source_text_opts(source_text, question_prompt_kind)
@@ -435,8 +440,8 @@ defmodule Dialectic.Graph.GraphActions do
         [question_node],
         fn n ->
           cond do
-            guided_exploration ->
-              LlmInterface.gen_guided_exploration(question_node, n, graph_id, live_view_topic)
+            guided_learning ->
+              LlmInterface.gen_guided_learning_plan(question_node, n, graph_id, live_view_topic)
 
             minimal_context ->
               LlmInterface.gen_response_minimal_context(
@@ -697,12 +702,12 @@ defmodule Dialectic.Graph.GraphActions do
         cond do
           source_text_opts
           |> Keyword.get(:fields, %{})
-          |> Map.get(:prompt_kind) == "guided_exploration" ->
+          |> Map.get(:prompt_kind) == "guided_learning_plan" ->
             GraphManager.add_child(
               graph_id,
               [parent],
               fn n ->
-                LlmInterface.gen_guided_exploration(parent, n, graph_id, live_view_topic)
+                LlmInterface.gen_guided_learning_plan(parent, n, graph_id, live_view_topic)
               end,
               "answer",
               user,
