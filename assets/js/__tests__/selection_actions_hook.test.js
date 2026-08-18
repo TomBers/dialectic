@@ -1,5 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("../toast.js", () => ({
+  copyToClipboard: vi.fn(() => Promise.resolve()),
+  showToast: vi.fn(),
+}));
+
 import SelectionActionsHook from "../selection_actions_hook.js";
+import { copyToClipboard, showToast } from "../toast.js";
 
 let hook;
 
@@ -10,6 +17,11 @@ function mountHook() {
         <div id="selection-actions-modal-selection-actions" class="hidden" aria-hidden="true">
           <div data-selection-dialog class="max-w-[620px]"></div>
           <div data-selection-text></div>
+          <button type="button" data-selection-copy>
+            <span data-selection-copy-icon>Copy icon</span>
+            <span data-selection-copy-check class="hidden">Check icon</span>
+            <span data-selection-copy-label>Copy text</span>
+          </button>
           <button
             type="button"
             data-selection-action="highlight_only"
@@ -64,6 +76,7 @@ afterEach(() => {
   hook?.destroyed();
   hook = null;
   window.__highlightsCache = [];
+  vi.clearAllMocks();
   document.body.replaceChildren();
 });
 
@@ -101,6 +114,24 @@ describe("SelectionActionsHook", () => {
       },
     );
     expect(instance.modalEl.classList.contains("hidden")).toBe(true);
+  });
+
+  it("copies the raw selected text and confirms the action", async () => {
+    const instance = mountHook();
+    showSelection();
+
+    instance.modalEl.querySelector("[data-selection-copy]").click();
+    await Promise.resolve();
+
+    expect(copyToClipboard).toHaveBeenCalledWith("working memory");
+    expect(showToast).toHaveBeenCalledWith("Selected text copied.", {
+      id: "selection-copy-toast",
+    });
+    expect(
+      instance.modalEl.querySelector("[data-selection-copy-label]").textContent,
+    ).toBe("Copied");
+    expect(instance.modalEl.classList.contains("hidden")).toBe(false);
+    expect(instance.pushEventTo).not.toHaveBeenCalled();
   });
 
   it("refreshes editability from the patched component root on every open", () => {

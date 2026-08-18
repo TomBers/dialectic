@@ -1,3 +1,5 @@
+import { copyToClipboard, showToast } from "./toast.js";
+
 const ASK_MODE = "ask_question";
 
 const SelectionActionsHook = {
@@ -17,6 +19,7 @@ const SelectionActionsHook = {
   },
 
   destroyed() {
+    window.clearTimeout(this.copyFeedbackTimer);
     window.removeEventListener("selection:show", this.handleSelectionShow);
     window.removeEventListener("keydown", this.handleKeydown);
     this.el.removeEventListener("click", this.handleClick);
@@ -140,6 +143,20 @@ const SelectionActionsHook = {
       "rotate-180",
     );
     if (input) input.value = "";
+    this.resetCopyFeedback();
+  },
+
+  resetCopyFeedback() {
+    window.clearTimeout(this.copyFeedbackTimer);
+    this.copyFeedbackTimer = null;
+
+    const label = this.modalEl?.querySelector("[data-selection-copy-label]");
+    const icon = this.modalEl?.querySelector("[data-selection-copy-icon]");
+    const check = this.modalEl?.querySelector("[data-selection-copy-check]");
+
+    if (label) label.textContent = "Copy text";
+    icon?.classList.remove("hidden");
+    check?.classList.add("hidden");
   },
 
   showModal() {
@@ -164,6 +181,13 @@ const SelectionActionsHook = {
   },
 
   handleClick(event) {
+    const copyEl = event.target.closest("[data-selection-copy]");
+    if (copyEl && this.el.contains(copyEl)) {
+      event.preventDefault();
+      this.copySelectedText(copyEl);
+      return;
+    }
+
     const closeEl = event.target.closest("[data-selection-close]");
     if (closeEl && this.el.contains(closeEl)) {
       this.closeModal();
@@ -189,6 +213,27 @@ const SelectionActionsHook = {
     }
 
     this.submitAction(actionEl.dataset.selectionAction);
+  },
+
+  copySelectedText(copyEl) {
+    if (!this.selectionData?.selectedText) return;
+
+    copyToClipboard(this.selectionData.selectedText).then(() => {
+      const label = copyEl.querySelector("[data-selection-copy-label]");
+      const icon = copyEl.querySelector("[data-selection-copy-icon]");
+      const check = copyEl.querySelector("[data-selection-copy-check]");
+
+      if (label) label.textContent = "Copied";
+      icon?.classList.add("hidden");
+      check?.classList.remove("hidden");
+      showToast("Selected text copied.", { id: "selection-copy-toast" });
+
+      window.clearTimeout(this.copyFeedbackTimer);
+      this.copyFeedbackTimer = window.setTimeout(
+        () => this.resetCopyFeedback(),
+        2000,
+      );
+    });
   },
 
   toggleAdvancedTools(toggle) {
