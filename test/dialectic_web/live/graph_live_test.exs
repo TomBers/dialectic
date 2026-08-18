@@ -227,6 +227,12 @@ defmodule DialecticWeb.GraphLiveTest do
                view,
                "#selection-inquiry-actions-selection-actions-content #selection-action-explain-selection-actions"
              )
+
+      assert has_element?(
+               view,
+               "#selection-actions-copy-selection-actions[data-selection-copy]",
+               "Copy text"
+             )
     end
 
     test "surfaces the explanation level and opens its settings", %{conn: conn} do

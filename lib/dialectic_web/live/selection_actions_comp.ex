@@ -107,12 +107,28 @@ defmodule DialecticWeb.SelectionActionsComp do
         >
           <div class="relative overflow-y-auto px-4 pb-5 pt-4 sm:px-5 sm:pb-5 sm:pt-5">
             <div class="flex items-start gap-3">
-              <blockquote
-                id={"selection-actions-passage-#{@id}"}
-                data-selection-text
-                class="min-w-0 flex-1 font-serif text-xl font-medium leading-7 tracking-tight text-slate-950 sm:text-[1.35rem] sm:leading-8"
-              >
-              </blockquote>
+              <div class="min-w-0 flex-1">
+                <blockquote
+                  id={"selection-actions-passage-#{@id}"}
+                  data-selection-text
+                  class="font-serif text-xl font-medium leading-7 tracking-tight text-slate-950 sm:text-[1.35rem] sm:leading-8"
+                >
+                </blockquote>
+                <button
+                  id={"selection-actions-copy-#{@id}"}
+                  type="button"
+                  data-selection-copy
+                  class="mt-3 inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+                >
+                  <span data-selection-copy-icon>
+                    <.icon name="hero-clipboard-document" class="h-3.5 w-3.5" />
+                  </span>
+                  <span data-selection-copy-check class="hidden text-emerald-600">
+                    <.icon name="hero-check" class="h-3.5 w-3.5" />
+                  </span>
+                  <span data-selection-copy-label aria-live="polite">Copy text</span>
+                </button>
+              </div>
               <button
                 id={"selection-actions-close-#{@id}"}
                 type="button"

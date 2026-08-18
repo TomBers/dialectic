@@ -814,6 +814,12 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
              "#selection-actions button[data-selection-action='highlight_only']"
            )
 
+    assert has_element?(
+             view,
+             "#selection-actions-copy-selection-actions[data-selection-copy]",
+             "Copy text"
+           )
+
     refute has_element?(view, "#selection-actions button[data-selection-action='explain']")
 
     assert_push_event(view, "highlights_loaded", %{
