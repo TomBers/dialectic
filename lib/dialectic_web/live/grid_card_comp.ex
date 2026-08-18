@@ -297,7 +297,7 @@ defmodule DialecticWeb.GridCardComp do
               <.link
                 navigate={graph_path(@graph)}
                 class="inline-flex items-center gap-1.5 text-xs font-semibold text-teal-800 transition hover:text-teal-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-300"
-                aria-label={"Read " <> @title}
+                aria-label={"Read grid: " <> @title}
               >
                 Read grid
                 <.icon

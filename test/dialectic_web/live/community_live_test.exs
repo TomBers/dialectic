@@ -239,6 +239,7 @@ defmodule DialecticWeb.CommunityLiveTest do
       assert has_element?(view, selector <> ~s([data-role="community-grid-row"]))
       assert has_element?(view, selector <> " [data-role=community-grid-meta]", "1 idea")
       assert has_element?(view, selector <> " a", "Read grid")
+      assert has_element?(view, selector <> ~s( a[aria-label="Read grid: #{title}"]))
       refute has_element?(view, selector <> ~s( [aria-label^="Result "]))
 
       render_patch(view, ~p"/community?search=Freud")
