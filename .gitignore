@@ -48,6 +48,7 @@ dialectic-*.tar
 !/priv/static/images/fractal-branching-tree-1280.webp
 !/priv/static/images/fractal-branching-tree-1536.webp
 !/priv/static/images/rationalgrid-video-preview.webp
+!/priv/static/images/rationalgrid-video-preview-768.webp
 /priv/static/images/*-*.mp4
 
 # In case you use Node.js/npm, you want to ignore these.

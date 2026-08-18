@@ -26,7 +26,7 @@ defmodule DialecticWeb.Endpoint do
   plug Plug.Static,
     at: "/",
     from: :dialectic,
-    gzip: Mix.env() == :prod,
+    gzip: Mix.env() in [:prod, :perf],
     only: DialecticWeb.static_paths()
 
   if Code.ensure_loaded?(Tidewave) do

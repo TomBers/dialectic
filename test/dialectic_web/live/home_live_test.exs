@@ -200,7 +200,7 @@ defmodule DialecticWeb.HomeLiveTest do
 
     assert has_element?(
              view,
-             ~s(#home-example-video img[src*="rationalgrid-video-preview"])
+             ~s(#home-example-video img[src*="rationalgrid-video-preview-768"][srcset][sizes])
            )
 
     refute has_element?(view, "#home-example-video iframe")

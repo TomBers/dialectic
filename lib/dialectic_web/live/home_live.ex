@@ -475,10 +475,14 @@ defmodule DialecticWeb.HomeLive do
               data-video-title="RationalGrid product video"
             >
               <img
-                src={~p"/images/rationalgrid-video-preview.webp"}
+                src={~p"/images/rationalgrid-video-preview-768.webp"}
+                srcset={
+                  "#{~p"/images/rationalgrid-video-preview-768.webp"} 768w, #{~p"/images/rationalgrid-video-preview.webp"} 1280w"
+                }
+                sizes="(min-width: 1280px) 716px, (min-width: 1024px) 55vw, 100vw"
                 alt="RationalGrid product video preview"
-                width="1280"
-                height="720"
+                width="768"
+                height="432"
                 class="h-full w-full object-cover"
                 loading="lazy"
                 decoding="async"
