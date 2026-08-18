@@ -260,20 +260,21 @@ defmodule DialecticWeb.HomeLive do
         id="home-video-hero"
         class="relative isolate min-h-[72svh] overflow-hidden border-b border-slate-700 bg-slate-950 text-white sm:min-h-[78svh]"
       >
-        <video
-          id="home-video-hero-player"
-          phx-hook="VideoPlayback"
-          phx-update="ignore"
-          data-playback-rate="4.5"
+        <img
+          id="home-hero-background"
+          src={~p"/images/fractal-branching-tree-1280.webp"}
+          srcset={
+            "#{~p"/images/fractal-branching-tree-768.webp"} 768w, #{~p"/images/fractal-branching-tree-1280.webp"} 1280w, #{~p"/images/fractal-branching-tree-1536.webp"} 1536w"
+          }
+          sizes="100vw"
+          alt=""
+          width="1536"
+          height="850"
+          fetchpriority="high"
+          decoding="async"
           class="absolute inset-0 -z-20 h-full w-full object-cover opacity-55 saturate-[1.15]"
-          autoplay={true}
-          muted={true}
-          playsinline={true}
-          preload="metadata"
           aria-hidden="true"
-        >
-          <source src={~p"/images/FractalBranchingTree.mp4"} type="video/mp4" />
-        </video>
+        />
         <div class="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(2,6,23,0.94)_0%,rgba(2,6,23,0.72)_48%,rgba(2,6,23,0.54)_100%)]">
         </div>
         <div
@@ -465,18 +466,34 @@ defmodule DialecticWeb.HomeLive do
           </div>
 
           <div class="border border-slate-700 bg-black p-2 shadow-2xl sm:p-3">
-            <iframe
+            <div
               id="home-example-video"
-              class="aspect-video w-full"
-              src="https://www.youtube.com/embed/nZOqbspGPfY?si=iOZEER4hWd31G157"
-              title="RationalGrid product video"
-              loading="lazy"
-              frameborder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              referrerpolicy="strict-origin-when-cross-origin"
-              allowfullscreen
+              class="relative aspect-video w-full overflow-hidden bg-slate-900"
+              phx-hook="YouTubeFacade"
+              phx-update="ignore"
+              data-video-id="nZOqbspGPfY"
+              data-video-title="RationalGrid product video"
             >
-            </iframe>
+              <img
+                src={~p"/images/rationalgrid-video-preview.webp"}
+                alt="RationalGrid product video preview"
+                width="1280"
+                height="720"
+                class="h-full w-full object-cover"
+                loading="lazy"
+                decoding="async"
+              />
+              <button
+                id="home-example-video-play"
+                type="button"
+                class="absolute inset-0 flex items-center justify-center bg-slate-950/30 text-white transition hover:bg-slate-950/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-teal-300"
+                aria-label="Play RationalGrid product video"
+              >
+                <span class="flex h-16 w-16 items-center justify-center rounded-full bg-teal-300 text-slate-950 shadow-xl transition hover:scale-105">
+                  <.icon name="hero-play-solid" class="ml-1 h-8 w-8" />
+                </span>
+              </button>
+            </div>
           </div>
         </div>
       </section>
@@ -527,10 +544,16 @@ defmodule DialecticWeb.HomeLive do
       <footer class="bg-slate-950 text-slate-300">
         <div class="mx-auto flex w-full max-w-7xl flex-col gap-5 px-5 py-8 sm:flex-row sm:items-center sm:justify-between sm:px-8 lg:px-10">
           <div class="flex items-center gap-3">
-            <img src={~p"/images/favicon.webp"} alt="RationalGrid" class="h-7 w-7" />
+            <img
+              src={~p"/images/favicon-56.webp"}
+              alt="RationalGrid"
+              width="56"
+              height="56"
+              class="h-7 w-7"
+            />
             <div>
               <p class="font-semibold text-white">RationalGrid</p>
-              <p class="text-xs text-slate-500">Questions, evidence, and reasoning—connected.</p>
+              <p class="text-xs text-slate-400">Questions, evidence, and reasoning—connected.</p>
             </div>
           </div>
           <nav aria-label="Homepage footer" class="flex flex-wrap gap-x-5 gap-y-2 text-sm">

@@ -7,6 +7,13 @@ defmodule DialecticWeb.HomeLiveTest do
   import Dialectic.AccountsFixtures
   import Phoenix.LiveViewTest
 
+  test "does not load Google Analytics in the initial document", %{conn: conn} do
+    {:ok, _view, html} = live(conn, ~p"/")
+
+    refute html =~ "googletagmanager.com/gtag"
+    assert html =~ "/assets/app.js"
+  end
+
   test "ignores graph search and filter parameters", %{conn: conn} do
     unique = System.unique_integer([:positive])
 
@@ -151,6 +158,12 @@ defmodule DialecticWeb.HomeLiveTest do
     assert has_element?(view, "#home-video-hero", "Explore with AI to discover new information")
     assert has_element?(view, "#home-video-hero", "keep, find, and share what matters")
     assert has_element?(view, "#home-video-hero", "Explore a question")
+    refute has_element?(view, "#home-video-hero video")
+
+    assert has_element?(
+             view,
+             ~s(#home-hero-background[src*="fractal-branching-tree"][srcset][sizes="100vw"])
+           )
 
     assert has_element?(view, ~s(#home-about-link[href="/about"]), "Why RationalGrid?")
 
@@ -182,7 +195,22 @@ defmodule DialecticWeb.HomeLiveTest do
              "Read the guide"
            )
 
+    assert has_element?(view, "#home-example-video[phx-hook='YouTubeFacade']")
+    assert has_element?(view, "#home-example-video-play")
+
+    assert has_element?(
+             view,
+             ~s(#home-example-video img[src*="rationalgrid-video-preview"])
+           )
+
+    refute has_element?(view, "#home-example-video iframe")
     assert has_element?(view, "#popular-grids", "See what other people explored.")
+
+    assert has_element?(
+             view,
+             "footer p.text-slate-400",
+             "Questions, evidence, and reasoning—connected."
+           )
   end
 
   test "explains each answer depth in the start form", %{conn: conn} do

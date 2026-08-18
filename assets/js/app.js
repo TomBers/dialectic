@@ -40,10 +40,13 @@ import ShareHook from "./share_hook.js";
 import GridChatFormHook from "./grid_chat_form_hook.js";
 import AvatarCropper from "./avatar_cropper_hook.js";
 import BannerCropper from "./banner_cropper_hook.js";
-import VideoPlaybackHook from "./video_playback_hook.js";
+import YouTubeFacadeHook from "./youtube_facade_hook.js";
 import DismissibleHintHook from "./dismissible_hint_hook.js";
 import GenerationStatusHook from "./generation_status_hook.js";
 import { syncGraphAppearanceStorage } from "./appearance_preferences.js";
+import { initDelayedAnalytics } from "./analytics.js";
+
+initDelayedAnalytics();
 
 let hooks = {};
 
@@ -68,7 +71,7 @@ hooks.Share = ShareHook;
 hooks.GridChatForm = GridChatFormHook;
 hooks.AvatarCropper = AvatarCropper;
 hooks.BannerCropper = BannerCropper;
-hooks.VideoPlayback = VideoPlaybackHook;
+hooks.YouTubeFacade = YouTubeFacadeHook;
 hooks.DismissibleHint = DismissibleHintHook;
 hooks.GenerationStatus = GenerationStatusHook;
 hooks.GlobalModalLayer = {
