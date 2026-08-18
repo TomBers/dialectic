@@ -134,6 +134,41 @@ describe("SelectionActionsHook", () => {
     expect(instance.pushEventTo).not.toHaveBeenCalled();
   });
 
+  it("does not apply stale copy feedback to a newly selected passage", async () => {
+    let finishCopy;
+    copyToClipboard.mockReturnValueOnce(
+      new Promise((resolve) => {
+        finishCopy = resolve;
+      }),
+    );
+
+    const instance = mountHook();
+    showSelection();
+    instance.modalEl.querySelector("[data-selection-copy]").click();
+
+    instance.closeModal();
+    showSelection({
+      selectedText: "a different passage",
+      offsets: { start: 30, end: 49 },
+    });
+
+    finishCopy();
+    await Promise.resolve();
+
+    expect(copyToClipboard).toHaveBeenCalledWith("working memory");
+    expect(showToast).toHaveBeenCalledWith("Selected text copied.", {
+      id: "selection-copy-toast",
+    });
+    expect(
+      instance.modalEl.querySelector("[data-selection-copy-label]").textContent,
+    ).toBe("Copy text");
+    expect(
+      instance.modalEl
+        .querySelector("[data-selection-copy-check]")
+        .classList.contains("hidden"),
+    ).toBe(true);
+  });
+
   it("refreshes editability from the patched component root on every open", () => {
     const instance = mountHook();
     const action = instance.modalEl.querySelector("[data-selection-action]");

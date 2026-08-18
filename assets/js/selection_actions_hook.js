@@ -216,9 +216,14 @@ const SelectionActionsHook = {
   },
 
   copySelectedText(copyEl) {
-    if (!this.selectionData?.selectedText) return;
+    const copiedSelection = this.selectionData;
+    if (!copiedSelection?.selectedText) return;
 
-    copyToClipboard(this.selectionData.selectedText).then(() => {
+    copyToClipboard(copiedSelection.selectedText).then(() => {
+      showToast("Selected text copied.", { id: "selection-copy-toast" });
+
+      if (this.selectionData !== copiedSelection) return;
+
       const label = copyEl.querySelector("[data-selection-copy-label]");
       const icon = copyEl.querySelector("[data-selection-copy-icon]");
       const check = copyEl.querySelector("[data-selection-copy-check]");
@@ -226,7 +231,6 @@ const SelectionActionsHook = {
       if (label) label.textContent = "Copied";
       icon?.classList.add("hidden");
       check?.classList.remove("hidden");
-      showToast("Selected text copied.", { id: "selection-copy-toast" });
 
       window.clearTimeout(this.copyFeedbackTimer);
       this.copyFeedbackTimer = window.setTimeout(
