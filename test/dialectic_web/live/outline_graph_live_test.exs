@@ -451,13 +451,13 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert has_element?(
              view,
              "#outline-response-level-3[data-response-level='expert']",
-             "Scholarly"
+             "In-depth"
            )
 
     assert has_element?(
              view,
              "#outline-mobile-response-level-3[data-response-level='expert']",
-             "Scholarly"
+             "In-depth"
            )
 
     assert has_element?(view, "#reading-node-3")
@@ -465,7 +465,7 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert has_element?(
              view,
              "#reader-response-level-3[data-response-level='expert']",
-             "Scholarly level"
+             "In-depth level"
            )
 
     assert has_element?(view, "#outline-end-state")

@@ -194,10 +194,10 @@ defmodule DialecticWeb.HomeLiveTest do
 
     refute has_element?(view, "#new-idea-mode-simple")
     assert has_element?(view, "#new-idea-mode-high_school", "Plain language")
-    assert has_element?(view, "#new-idea-mode-high_school", "Essential")
+    assert has_element?(view, "#new-idea-mode-high_school", "Simple")
     assert has_element?(view, "#new-idea-mode-university", "wider context")
-    assert has_element?(view, "#new-idea-mode-university", "In-depth")
-    assert has_element?(view, "#new-idea-mode-expert", "Scholarly")
+    assert has_element?(view, "#new-idea-mode-university", "Expanded")
+    assert has_element?(view, "#new-idea-mode-expert", "In-depth")
     assert has_element?(view, "#new-idea-mode-expert", "Rigorous analysis")
     assert has_element?(view, "#new-idea-mode-university[data-requires-login='true']")
     assert has_element?(view, "#new-idea-mode-expert[data-requires-login='true']")
