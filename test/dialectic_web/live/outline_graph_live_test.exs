@@ -425,6 +425,7 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert has_element?(view, "#reader-workspace-bar-graph[data-view-transition='mode-switch']")
     assert has_element?(view, "#reading-node-1")
     assert has_element?(view, "#reading-node-2")
+    assert has_element?(view, "#reading-node-1 h2.reader-heading")
     assert has_element?(view, "#reading-node-1 span.bg-gray-900.text-gray-100", "Origin")
     assert has_element?(view, "#reading-node-2 span.bg-sky-50.text-sky-700", "Question")
     assert has_element?(view, "#outline-next-choices")
