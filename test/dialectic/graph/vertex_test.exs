@@ -13,19 +13,29 @@ defmodule Dialectic.Graph.VertexTest do
         id: "1",
         class: "answer",
         prompt_kind: "initial_explainer",
-        response_level: "expert"
+        response_level: "expert",
+        grounding_metadata: %{
+          "google" => %{"webSearchQueries" => ["grounded query"]}
+        }
       }
 
-      assert %Vertex{prompt_kind: "initial_explainer", response_level: "expert"} =
+      assert %Vertex{
+               prompt_kind: "initial_explainer",
+               response_level: "expert",
+               grounding_metadata: %{
+                 "google" => %{"webSearchQueries" => ["grounded query"]}
+               }
+             } =
                vertex |> Vertex.serialize() |> stringify_keys() |> Vertex.deserialize()
 
       legacy_data =
         vertex
         |> Vertex.serialize()
-        |> Map.drop([:prompt_kind, :response_level])
+        |> Map.drop([:prompt_kind, :response_level, :grounding_metadata])
         |> stringify_keys()
 
-      assert %Vertex{prompt_kind: nil, response_level: nil} = Vertex.deserialize(legacy_data)
+      assert %Vertex{prompt_kind: nil, response_level: nil, grounding_metadata: nil} =
+               Vertex.deserialize(legacy_data)
 
       in_memory_legacy_vertex = Map.delete(vertex, :response_level)
       assert Vertex.serialize(in_memory_legacy_vertex).response_level == nil

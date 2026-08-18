@@ -28,7 +28,7 @@ defmodule Dialectic.Responses.RequestQueueWorkerTest do
   end
 
   describe "supported answer levels" do
-    test "exposes three levels and maps legacy Plain values to Standard" do
+    test "exposes three levels and maps legacy Plain values to Essential" do
       graph = "LegacyModeGraph-#{System.unique_integer([:positive])}"
       on_exit(fn -> ModeServer.delete_mode(graph) end)
 
@@ -103,7 +103,7 @@ defmodule Dialectic.Responses.RequestQueueWorkerTest do
                )
 
       persisted_job = Repo.get!(Oban.Job, job.id)
-      assert persisted_job.args["system_prompt"] =~ "Complexity level: Expert"
+      assert persisted_job.args["system_prompt"] =~ "Complexity level: Scholarly"
       assert persisted_job.args["response_level"] == "expert"
       assert persisted_job.args["max_tokens"] == PromptsStructured.max_output_tokens(:expert)
     end

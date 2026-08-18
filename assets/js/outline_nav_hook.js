@@ -18,11 +18,14 @@ const OutlineNavHook = {
     this.lastSelectedId = selectedId;
 
     const scrollToSelection = () => {
-      selected.scrollIntoView({
-        behavior: "auto",
-        block: "center",
-        inline: "nearest",
-      });
+      const containerRect = this.el.getBoundingClientRect();
+      const selectedRect = selected.getBoundingClientRect();
+      const centeredOffset = (this.el.clientHeight - selectedRect.height) / 2;
+
+      this.el.scrollTop = Math.max(
+        0,
+        this.el.scrollTop + selectedRect.top - containerRect.top - centeredOffset,
+      );
     };
 
     requestAnimationFrame(() => {

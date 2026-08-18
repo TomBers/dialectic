@@ -11,7 +11,8 @@ defmodule Dialectic.Graph.Vertex do
              :deleted,
              :source_text,
              :prompt_kind,
-             :response_level
+             :response_level,
+             :grounding_metadata
            ]}
   @valid_classes [
     "thesis",
@@ -52,7 +53,8 @@ defmodule Dialectic.Graph.Vertex do
             compound: false,
             source_text: nil,
             prompt_kind: nil,
-            response_level: nil
+            response_level: nil,
+            grounding_metadata: nil
 
   # Add a function to validate the class
   def validate_class(class) when class in @valid_classes, do: {:ok, class}
@@ -74,7 +76,8 @@ defmodule Dialectic.Graph.Vertex do
       compound: vertex.compound,
       source_text: source_text_value,
       prompt_kind: vertex.prompt_kind,
-      response_level: Map.get(vertex, :response_level)
+      response_level: Map.get(vertex, :response_level),
+      grounding_metadata: Map.get(vertex, :grounding_metadata)
     }
   end
 
@@ -95,7 +98,8 @@ defmodule Dialectic.Graph.Vertex do
       compound: data["compound"],
       source_text: source_text_value,
       prompt_kind: data["prompt_kind"],
-      response_level: data["response_level"]
+      response_level: data["response_level"],
+      grounding_metadata: data["grounding_metadata"]
     }
   end
 

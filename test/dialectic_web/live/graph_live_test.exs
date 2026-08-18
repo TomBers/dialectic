@@ -190,10 +190,49 @@ defmodule DialecticWeb.GraphLiveTest do
              )
     end
 
+    test "keeps whole-node and selected-passage inquiries in the shared action surface", %{
+      conn: conn
+    } do
+      {:ok, view, _html} = setup_live_with_data(conn, source_text_graph_data())
+
+      render_click(view, "node_clicked", %{"id" => "2"})
+
+      assert has_element?(view, "#node-content-2 article.reader-prose")
+      refute has_element?(view, "#node-content-2 .selection-content")
+      assert has_element?(view, "#node-inquiry-actions-2-content #global-chat-form")
+
+      assert has_element?(
+               view,
+               "#global-chat-form-query-origin[name='query_origin'][value='node_action_bar']"
+             )
+
+      refute has_element?(view, "#bottom-menu")
+
+      assert has_element?(view, "#node-suggestions-2 [id^='node-tool-pros-cons-']")
+      assert has_element?(view, "[id^='delete-node-'][phx-value-node='2']", "Delete node")
+
+      view
+      |> element("#global-chat-form [id^='node-tools-more-']")
+      |> render_click()
+
+      assert has_element?(view, "#node-tools-popover-2")
+
+      view
+      |> element("#global-chat-form [id^='node-tools-more-']")
+      |> render_click()
+
+      refute has_element?(view, "#node-tools-popover-2")
+
+      assert has_element?(
+               view,
+               "#selection-inquiry-actions-selection-actions-content #selection-action-explain-selection-actions"
+             )
+    end
+
     test "surfaces the explanation level and opens its settings", %{conn: conn} do
       {:ok, view, _html} = setup_live(conn)
 
-      assert has_element?(view, "#graph-workspace-bar-level", "Detailed")
+      assert has_element?(view, "#graph-workspace-bar-level", "Expanded")
 
       view
       |> element("#graph-workspace-bar-level")
@@ -210,7 +249,7 @@ defmodule DialecticWeb.GraphLiveTest do
 
       render_click(view, "set_prompt_mode", %{"prompt_mode" => "high_school"})
 
-      assert has_element?(view, "#graph-workspace-bar-level", "Standard")
+      assert has_element?(view, "#graph-workspace-bar-level", "Simple")
       assert has_element?(view, "#answer-level-high_school[aria-pressed='true']")
       assert has_element?(view, "#answer-level-high_school[phx-click*='toggle-panel']")
       refute has_element?(view, "#answer-level-simple")
@@ -438,6 +477,7 @@ defmodule DialecticWeb.GraphLiveTest do
       {:ok, view, _html} = setup_live_with_data(conn, source_text_graph_data())
       assigns = :sys.get_state(view.pid).socket.assigns
       graph_id = assigns.graph_id
+      initial_f_graph = assigns.f_graph
 
       assert assigns.node.id == "1"
 
@@ -452,7 +492,7 @@ defmodule DialecticWeb.GraphLiveTest do
         }
       })
 
-      :sys.get_state(view.pid)
+      state = :sys.get_state(view.pid)
 
       event_node = GraphManager.find_node_by_id(graph_id, "2")
       stale_node = GraphManager.find_node_by_id(graph_id, "1")
@@ -465,9 +505,51 @@ defmodule DialecticWeb.GraphLiveTest do
       assert question_node
       assert question_node.source_text == "synaptic tagging"
 
+      answer_node =
+        graph_id
+        |> GraphManager.vertices()
+        |> Enum.map(&GraphManager.vertex_label(graph_id, &1))
+        |> Enum.find(fn
+          %{class: "answer", source_text: "synaptic tagging"} -> true
+          _other -> false
+        end)
+
+      assert answer_node
+
+      assert state.socket.assigns.node.id == "1"
+      assert state.socket.assigns.f_graph == initial_f_graph
+      assert state.socket.assigns.background_generations[answer_node.id].status == :generating
+
+      assert has_element?(
+               view,
+               "#background-generation-#{answer_node.id}",
+               "Working in the background"
+             )
+
       refute Enum.any?(stale_node.children, fn child ->
                child.content == "Please explain: synaptic tagging"
              end)
+
+      send(view.pid, {:llm_request_complete, answer_node.id})
+      :sys.get_state(view.pid)
+
+      assert has_element?(
+               view,
+               "#open-background-answer-#{answer_node.id}",
+               "View"
+             )
+
+      answer_node_id = answer_node.id
+
+      view
+      |> element("#open-background-answer-#{answer_node_id}")
+      |> render_click()
+
+      assert_push_event(view, "reflow_layout", %{id: ^answer_node_id})
+
+      viewed_state = :sys.get_state(view.pid)
+      assert viewed_state.socket.assigns.node.id == answer_node.id
+      refute Map.has_key?(viewed_state.socket.assigns.background_generations, answer_node.id)
     end
 
     test "custom question uses the selection event node when the current node is stale", %{
@@ -542,6 +624,107 @@ defmodule DialecticWeb.GraphLiveTest do
       assert Process.alive?(view.pid)
       assert length(GraphManager.vertices(graph_id)) == vertex_count
       assert has_element?(view, "#flash-error", "Node not found")
+    end
+  end
+
+  describe "background generation" do
+    test "questions outside the action bar preserve the current reader and graph", %{conn: conn} do
+      {:ok, view, _html} = setup_live_with_data(conn, source_text_graph_data())
+      initial_assigns = :sys.get_state(view.pid).socket.assigns
+
+      render_click(view, "reply-and-answer", %{
+        "vertex" => %{"content" => "How does this change the argument?"}
+      })
+
+      assigns = :sys.get_state(view.pid).socket.assigns
+
+      assert assigns.node.id == initial_assigns.node.id
+      assert assigns.f_graph == initial_assigns.f_graph
+      assert map_size(assigns.background_generations) == 1
+
+      {_generation_id, generation} = Enum.at(assigns.background_generations, 0)
+      assert generation.status == :generating
+      assert length(generation.node_ids) == 1
+      assert has_element?(view, "#background-generations", "Answering")
+    end
+
+    test "action bar questions move directly to the new answer", %{conn: conn} do
+      {:ok, view, _html} = setup_live_with_data(conn, source_text_graph_data())
+      initial_assigns = :sys.get_state(view.pid).socket.assigns
+
+      render_click(view, "reply-and-answer", %{
+        "vertex" => %{"content" => "How does this change the argument?"},
+        "query_origin" => "node_action_bar"
+      })
+
+      assigns = :sys.get_state(view.pid).socket.assigns
+
+      refute assigns.node.id == initial_assigns.node.id
+      refute assigns.f_graph == initial_assigns.f_graph
+      assert assigns.node.class == "answer"
+      assert MapSet.member?(assigns.streaming_nodes, assigns.node.id)
+      assert assigns.background_generations == %{}
+
+      answer_node_id = assigns.node.id
+      assert_push_event(view, "center_node", %{id: ^answer_node_id})
+    end
+
+    test "single-result node tools move directly to the new node", %{conn: conn} do
+      {:ok, view, _html} = setup_live_with_data(conn, source_text_graph_data())
+      render_click(view, "node_clicked", %{"id" => "2"})
+      initial_assigns = :sys.get_state(view.pid).socket.assigns
+
+      view
+      |> element("#node-suggestions-2 [id^='node-tool-related-']")
+      |> render_click()
+
+      assigns = :sys.get_state(view.pid).socket.assigns
+      refute assigns.node.id == initial_assigns.node.id
+      refute assigns.f_graph == initial_assigns.f_graph
+      assert assigns.node.class == "ideas"
+      assert MapSet.member?(assigns.streaming_nodes, assigns.node.id)
+      assert assigns.background_generations == %{}
+    end
+
+    test "pro and con branches share one notification that waits for both responses", %{
+      conn: conn
+    } do
+      {:ok, view, _html} = setup_live_with_data(conn, source_text_graph_data())
+      initial_assigns = :sys.get_state(view.pid).socket.assigns
+
+      render_click(view, "node_branch", %{"id" => "2"})
+
+      assigns = :sys.get_state(view.pid).socket.assigns
+      assert assigns.node.id == initial_assigns.node.id
+      assert assigns.f_graph == initial_assigns.f_graph
+      assert map_size(assigns.background_generations) == 1
+
+      {generation_id, generation} = Enum.at(assigns.background_generations, 0)
+      assert generation.status == :generating
+      assert length(generation.node_ids) == 2
+
+      [first_node_id, second_node_id] = generation.node_ids
+      send(view.pid, {:llm_request_complete, first_node_id})
+
+      first_complete =
+        :sys.get_state(view.pid).socket.assigns.background_generations[generation_id]
+
+      assert first_complete.status == :generating
+
+      send(view.pid, {:llm_request_complete, second_node_id})
+      :sys.get_state(view.pid)
+
+      assert has_element?(
+               view,
+               "#background-generation-#{generation_id}",
+               "Responses ready"
+             )
+
+      view
+      |> element("#open-background-answer-#{generation_id}")
+      |> render_click()
+
+      assert_push_event(view, "reflow_layout", %{id: "2"})
     end
   end
 
@@ -639,6 +822,31 @@ defmodule DialecticWeb.GraphLiveTest do
 
       # We expect that the node assign was updated.
       assert state_after.assigns.node.content == "new content"
+    end
+
+    test "stream_chunk info renders grounding metadata when content is unchanged", %{conn: conn} do
+      {:ok, view, _html} = setup_live(conn)
+      state = :sys.get_state(view.pid).socket
+      current_node = state.assigns.node
+
+      grounding_metadata = %{
+        "google" => %{
+          "groundingChunks" => [
+            %{"web" => %{"title" => "Research", "uri" => "https://example.com/research"}}
+          ],
+          "groundingSupports" => []
+        }
+      }
+
+      updated_vertex = Map.put(current_node, :grounding_metadata, grounding_metadata)
+
+      send(view.pid, {:stream_chunk, updated_vertex, :node_id, current_node.id})
+
+      assert render(view)
+      assert has_element?(view, "#markdown-body-#{current_node.id}[data-grounding]")
+
+      state_after = :sys.get_state(view.pid).socket
+      assert state_after.assigns.node.grounding_metadata == grounding_metadata
     end
 
     test "stream_chunk info does not update the node if node_id does not match", %{conn: conn} do

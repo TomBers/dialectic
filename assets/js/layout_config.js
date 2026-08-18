@@ -6,11 +6,11 @@ export const layoutConfig = {
     name: "dagre",
     rankDir: "TB",
     // Spacing adjustments for better proportions
-    nodeSep: 64, // Horizontal spacing between nodes
+    nodeSep: 52, // Keep sibling branches compact across the canvas
     edgeSep: 38, // Spacing between parallel edges
-    rankSep: 88, // Vertical spacing between ranks
+    rankSep: 104, // Give each level more vertical breathing room
     // Visual enhancement settings
-    spacingFactor: 1.08, // Relaxed spacing factor for more readable layout
+    spacingFactor: 1.04, // Slight vertical bias without spreading the whole graph
     padding: 30, // Minimum padding around the graph
     // More natural arrangement for complex graphs
     weaveToward: "leaves",
@@ -31,9 +31,9 @@ export const layoutConfig = {
     name: "dagre",
     rankDir: "TB",
     // Tighter spacing for compact view
-    nodeSep: 42, // Horizontal spacing (increased to prevent child overlaps)
+    nodeSep: 36, // Keep the overview narrow while preserving branch separation
     edgeSep: 20, // Minimal spacing between parallel edges
-    rankSep: 42, // Minimal vertical spacing (increased to prevent overlap)
+    rankSep: 56, // Separate levels so the compact graph reads vertically
     // Visual enhancement settings
     spacingFactor: 0.9, // Tight spacing factor (slightly relaxed)
     padding: 15, // Minimal padding
@@ -59,17 +59,17 @@ export const layoutConfig = {
     animate: true,
     animationDuration: 300,
     // Spacing for expanded compound nodes
-    nodeSep: 42,
+    nodeSep: 36,
     edgeSep: 20,
-    rankSep: 64,
+    rankSep: 76,
     // Better handling of expanded groups
     spacingFactor: 1.0,
     nestingFactor: 0.95,
   },
 
   readabilitySettings: {
-    spacedMinInitialZoom: 0.75,
-    compactMinInitialZoom: 0.78,
+    spacedMinInitialZoom: 0.85,
+    compactMinInitialZoom: 0.82,
   },
 
   // Compound drag and drop options

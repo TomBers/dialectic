@@ -280,7 +280,7 @@ defmodule DialecticWeb.RightPanelComp do
               <div>
                 <div class="text-xs font-semibold text-gray-800">Answer level</div>
                 <p class="text-[10px] text-gray-500 leading-tight">
-                  Standard to Expert
+                  Simple to In-depth
                 </p>
               </div>
             </div>
@@ -297,9 +297,9 @@ defmodule DialecticWeb.RightPanelComp do
             </div>
             <div class="grid grid-cols-3 border border-stone-300 bg-white p-0.5 shadow-inner">
               <%= for {mode, label, description} <- [
-                {"high_school", "Standard", "Simple language and concrete examples."},
-                {"university", "Detailed", "Useful terminology, context, and nuance."},
-                {"expert", "Expert", "Rigorous evidence and competing views."}
+                {"high_school", "Simple", "Plain language, examples, and key ideas."},
+                {"university", "Expanded", "Defined terminology, context, and sourced evidence."},
+                {"expert", "In-depth", "Rigorous analysis, primary sources, and competing interpretations."}
               ] do %>
                 <button
                   type="button"

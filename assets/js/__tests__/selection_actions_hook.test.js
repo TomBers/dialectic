@@ -8,15 +8,32 @@ function mountHook() {
     <div id="selection-actions-hook">
       <div id="selection-actions" data-can-edit="true">
         <div id="selection-actions-modal-selection-actions" class="hidden" aria-hidden="true">
+          <div data-selection-dialog class="max-w-[620px]"></div>
           <div data-selection-text></div>
           <button
             type="button"
             data-selection-action="highlight_only"
             data-disable-if-highlight="true"
           >Highlight</button>
-          <textarea data-selection-input></textarea>
-          <button type="button" data-selection-mode="ask_question">Ask mode</button>
-          <button type="submit" data-selection-input-submit>Ask</button>
+          <form data-selection-input-form>
+            <textarea name="question" data-selection-input></textarea>
+            <button
+              type="button"
+              data-selection-advanced-toggle
+              aria-expanded="false"
+            >Tools</button>
+            <button
+              type="submit"
+              data-selection-input-submit
+              data-selection-submit-action="comment"
+            >Comment</button>
+            <button
+              type="submit"
+              data-selection-input-submit
+              data-selection-submit-action="ask_question"
+            >Ask</button>
+          </form>
+          <div data-selection-advanced-tools class="hidden">Advanced tools</div>
           <button type="button" data-selection-close>Close</button>
         </div>
       </div>
@@ -112,6 +129,46 @@ describe("SelectionActionsHook", () => {
     expect(action.disabled).toBe(false);
     expect(input.disabled).toBe(false);
     expect(submit.disabled).toBe(false);
+  });
+
+  it("submits the selected composer action directly", () => {
+    const instance = mountHook();
+    showSelection();
+
+    instance.modalEl.querySelector('[name="question"]').value = "My interpretation";
+    instance.modalEl
+      .querySelector('[data-selection-submit-action="comment"]')
+      .click();
+
+    expect(instance.pushEventTo).toHaveBeenCalledWith(
+      instance.componentEl,
+      "action",
+      {
+        action: "comment",
+        input: "My interpretation",
+        selectedText: "working memory",
+        nodeId: "2",
+        offsets: { start: 10, end: 24 },
+      },
+    );
+  });
+
+  it("toggles the tools popover from the composer", () => {
+    const instance = mountHook();
+    showSelection();
+    const toggle = instance.modalEl.querySelector("[data-selection-advanced-toggle]");
+    const tools = instance.modalEl.querySelector("[data-selection-advanced-tools]");
+    const dialog = instance.modalEl.querySelector("[data-selection-dialog]");
+
+    toggle.click();
+    expect(tools.classList.contains("hidden")).toBe(false);
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    expect(dialog.classList.contains("max-w-[760px]")).toBe(true);
+
+    toggle.click();
+    expect(tools.classList.contains("hidden")).toBe(true);
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    expect(dialog.classList.contains("max-w-[620px]")).toBe(true);
   });
 
   it("disables highlighting when the exact selection is already cached", () => {

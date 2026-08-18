@@ -111,6 +111,7 @@ defmodule DialecticWeb.Live.ModalComp do
                 phx-hook="Markdown"
                 id={"markdown-body-" <> @id}
                 data-md={Map.get(@node || %{}, :content, "")}
+                data-grounding={DialecticWeb.MarkdownGrounding.encode(@node)}
                 data-body-only="true"
               >
               </div>

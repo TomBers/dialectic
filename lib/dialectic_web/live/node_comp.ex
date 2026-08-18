@@ -30,6 +30,7 @@ defmodule DialecticWeb.NodeComp do
        form: Map.get(assigns, :form, nil),
        cut_off: Map.get(assigns, :cut_off, 500),
        ask_question: Map.get(assigns, :ask_question, true),
+       prompt_mode: Map.get(assigns, :prompt_mode, "university"),
        graph_id: Map.get(assigns, :graph_id, ""),
        graph_struct: Map.get(assigns, :graph_struct, nil),
        graph_owner_id: Map.get(assigns, :graph_owner_id, nil),
@@ -139,7 +140,7 @@ defmodule DialecticWeb.NodeComp do
               <div id={"node-content-#{@node.id}"}>
                 <div id={"node-content-inner-#{@node.id}"}>
                   <article
-                    class="prose prose-stone prose-base sm:prose-lg lg:prose-xl max-w-none w-full prose-headings:mt-0 prose-headings:tracking-tight prose-headings:text-gray-900 prose-p:text-gray-800 prose-li:text-gray-800 prose-p:leading-relaxed prose-li:leading-relaxed"
+                    class="reader-prose prose prose-slate max-w-none w-full prose-headings:font-serif prose-headings:tracking-tight prose-a:break-words"
                     data-role="node-content"
                   >
                     <%!-- Client-side Markdown rendering via Markdown hook --%>
@@ -210,7 +211,7 @@ defmodule DialecticWeb.NodeComp do
                     </div>
 
                     <div
-                      class="selection-content w-full px-1 pb-2 sm:px-2"
+                      class="w-full px-1 pb-2 sm:px-2"
                       data-children={length(@node.children)}
                       id={"list-detector-" <> @node.id}
                     >
@@ -247,6 +248,7 @@ defmodule DialecticWeb.NodeComp do
                         class="cursor-text selection:bg-amber-200/80 selection:text-slate-900"
                         id={"markdown-body-#{@node.id}"}
                         data-md={@node.content || ""}
+                        data-grounding={DialecticWeb.MarkdownGrounding.encode(@node)}
                         data-body-only="true"
                         data-existing-follow-up-questions={existing_follow_up_questions_json(@node)}
                       >
@@ -286,6 +288,9 @@ defmodule DialecticWeb.NodeComp do
                       current_user={@current_user}
                       graph_id={@graph_id}
                       can_edit={@can_edit}
+                      form={@form}
+                      prompt_mode={@prompt_mode}
+                      ask_question={@ask_question}
                     />
                   <% end %>
                 </div>

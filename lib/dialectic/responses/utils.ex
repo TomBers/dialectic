@@ -21,21 +21,29 @@ defmodule Dialectic.Responses.Utils do
       :ok
     else
       updated_vertex = GraphManager.set_node_content(graph, node, text)
-
-      if updated_vertex do
-        # Broadcast :stream_chunk_broadcast directly with nil sender_pid to avoid
-        # amplification. When using :stream_chunk, each subscribed LiveView would
-        # re-broadcast to the same topic, causing N^2 messages with N clients.
-        # Using :stream_chunk_broadcast with nil sender ensures all clients process
-        # the update exactly once without re-broadcasting.
-        Phoenix.PubSub.broadcast(
-          Dialectic.PubSub,
-          live_view_topic,
-          {:stream_chunk_broadcast, updated_vertex, :node_id, node, nil}
-        )
-      end
-
+      broadcast_node(updated_vertex, node, live_view_topic)
       :ok
     end
+  end
+
+  def set_node_response(graph, node, content, grounding_metadata, live_view_topic) do
+    updated_vertex =
+      GraphManager.update_vertex_fields(graph, node, %{
+        content: content,
+        grounding_metadata: grounding_metadata
+      })
+
+    broadcast_node(updated_vertex, node, live_view_topic)
+    :ok
+  end
+
+  defp broadcast_node(nil, _node, _live_view_topic), do: :ok
+
+  defp broadcast_node(updated_vertex, node, live_view_topic) do
+    Phoenix.PubSub.broadcast(
+      Dialectic.PubSub,
+      live_view_topic,
+      {:stream_chunk_broadcast, updated_vertex, :node_id, node, nil}
+    )
   end
 end

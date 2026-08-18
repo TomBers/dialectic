@@ -714,18 +714,10 @@ defmodule DialecticWeb.OutlineGraphLive do
 
     if length(children) > 1 do
       Enum.map(children, fn child ->
-        segment = deepest_branch_segment(graph_id, child)
-        leaf = List.last(segment) || child
-
         %{
           id: child.id,
-          title: display_title(child),
-          class: Map.get(child, :class, "default"),
-          content_preview: preview_node_content(child, 140),
-          leaf_title:
-            if leaf.id != child.id do
-              display_title(leaf)
-            end
+          title: display_title(child, max_length: :infinity),
+          class: Map.get(child, :class, "default")
         }
       end)
     else
@@ -746,12 +738,10 @@ defmodule DialecticWeb.OutlineGraphLive do
             segment = deepest_branch_segment(graph_id, child)
             enriched_segment = Enum.map(segment, &enrich_node/1)
             lead = List.first(enriched_segment)
-            leaf = List.last(enriched_segment)
 
             %{
               id: child.id,
               lead: lead,
-              leaf: leaf,
               active?: branch_active?(selected_node, branch_root, enriched_segment)
             }
           end)
@@ -859,42 +849,6 @@ defmodule DialecticWeb.OutlineGraphLive do
 
   defp fallback_title(node) do
     "Untitled " <> String.downcase(ColUtils.node_type_label(Map.get(node, :class, "default")))
-  end
-
-  defp preview_content(content, limit) do
-    content
-    |> sanitize_preview_text()
-    |> case do
-      "" -> "No content yet."
-      cleaned -> String.slice(cleaned, 0, limit)
-    end
-  end
-
-  defp preview_node_content(node, limit) do
-    cleaned_content = sanitize_preview_text(Map.get(node, :content, ""))
-
-    cleaned_body_content =
-      node
-      |> Map.get(:body_content, node_body_content(node))
-      |> sanitize_preview_text()
-
-    title = node |> display_title(max_length: :infinity) |> sanitize_preview_text()
-
-    cleaned_body_content
-    |> case do
-      "" ->
-        cleaned_content
-        |> String.replace_prefix(title, "")
-        |> String.trim()
-        |> String.trim_leading(":.- ")
-
-      body_content ->
-        body_content
-    end
-    |> case do
-      "" -> preview_content(cleaned_content, limit)
-      deduped -> String.slice(deduped, 0, limit)
-    end
   end
 
   defp node_body_content(node) do
@@ -1048,10 +1002,10 @@ defmodule DialecticWeb.OutlineGraphLive do
     )
   end
 
-  defp response_level_label("simple"), do: "Standard"
-  defp response_level_label("high_school"), do: "Standard"
-  defp response_level_label("university"), do: "Detailed"
-  defp response_level_label("expert"), do: "Expert"
+  defp response_level_label("simple"), do: "Simple"
+  defp response_level_label("high_school"), do: "Simple"
+  defp response_level_label("university"), do: "Expanded"
+  defp response_level_label("expert"), do: "In-depth"
   defp response_level_label(_response_level), do: nil
 
   defp response_level_badge_class("simple"), do: "bg-sky-50 text-sky-700 ring-sky-600/15"

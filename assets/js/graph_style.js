@@ -186,9 +186,14 @@ const cols = {
   default: defaultNodeStyle,
 };
 
-const cutoff = 140;
-const SPACED_NODE_WIDTH = 312;
+const SPACED_NODE_TITLE_CUTOFF = 84;
+const COMPACT_NODE_TITLE_CUTOFF = 56;
+const SPACED_NODE_WIDTH = 288;
 const SPACED_NODE_TEXT_PADDING = 32;
+const SPACED_NODE_FONT_SIZE = 18;
+const SPACED_NODE_LINE_HEIGHT = 1.4;
+const COMPACT_NODE_FONT_SIZE = 11;
+const COMPACT_NODE_LINE_HEIGHT = 1.25;
 const MAIN_GROUP_TITLE_MIN_RENDERED_WIDTH = 280;
 const MAIN_GROUP_TITLE_MAX_RENDERED_WIDTH = 960;
 const MAIN_GROUP_TITLE_RENDERED_MARGIN = 96;
@@ -229,6 +234,7 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "", options = {
           const processedContent = processNodeContent(
             n.data("content") || "",
             false,
+            isCompact ? COMPACT_NODE_TITLE_CUTOFF : SPACED_NODE_TITLE_CUTOFF,
           );
 
           // Normalize content and convert <br> tags to newlines for measurement
@@ -238,7 +244,7 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "", options = {
           const measureText = content.replace(/\u200B/g, "");
 
           if (!isCompact) {
-            const charWidth = 8.6;
+            const charWidth = 9.1;
             const textWidth = SPACED_NODE_WIDTH - SPACED_NODE_TEXT_PADDING;
             const approxCharsPerLine = Math.max(
               16,
@@ -252,10 +258,11 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "", options = {
             }
             const bulletCount = (measureText.match(/•/g) || []).length;
             const bulletExtra = bulletCount * 6;
-            const lineHeight = 23;
-            const basePadding = 28;
-            const computed = basePadding + lines * lineHeight + bulletExtra;
-            return Math.max(44, computed);
+            const lineHeight = Math.ceil(
+              SPACED_NODE_FONT_SIZE * SPACED_NODE_LINE_HEIGHT,
+            );
+            const computed = lines * lineHeight + bulletExtra;
+            return Math.max(lineHeight, computed);
           }
 
           // Compact mode: calculate based on actual dynamic width
@@ -281,15 +288,15 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "", options = {
           const bulletCount = (measureText.match(/•/g) || []).length;
           const bulletExtra = bulletCount * 2;
 
-          // Compute height: 10px font * 1.2 line-height = 12px per line
-          const lineHeight = 12;
-          const basePadding = 8; // 4px top + 4px bottom
-          const computed = basePadding + lines * lineHeight + bulletExtra;
+          const lineHeight = Math.ceil(
+            COMPACT_NODE_FONT_SIZE * COMPACT_NODE_LINE_HEIGHT,
+          );
+          const computed = lines * lineHeight + bulletExtra;
 
-          return Math.max(22, computed);
+          return Math.max(lineHeight, computed);
         },
         "min-width": isCompact ? 50 : 72,
-        "min-height": isCompact ? 22 : 44,
+        "min-height": isCompact ? 14 : 26,
         padding: isCompact ? "4px" : "14px",
         "text-wrap": "wrap",
         "text-max-width": (n) => {
@@ -299,18 +306,24 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "", options = {
 
         /* label ----------------------------------------------------------- */
         label: (ele) => {
-          const text = processNodeContent(ele.data("content") || "");
+          const text = processNodeContent(
+            ele.data("content") || "",
+            true,
+            isCompact ? COMPACT_NODE_TITLE_CUTOFF : SPACED_NODE_TITLE_CUTOFF,
+          );
           return text;
         },
 
         /* font & layout --------------------------------------------------- */
         "font-family": GRAPH_LABEL_FONT_FAMILY,
-        "font-size": isCompact ? 10 : 16,
-        "font-weight": "normal",
+        "font-size": isCompact ? COMPACT_NODE_FONT_SIZE : SPACED_NODE_FONT_SIZE,
+        "font-weight": 500,
         "text-halign": "center",
         "text-valign": "center",
         "text-justification": isCompact ? "center" : "left",
-        "line-height": isCompact ? 1.2 : 1.4,
+        "line-height": isCompact
+          ? COMPACT_NODE_LINE_HEIGHT
+          : SPACED_NODE_LINE_HEIGHT,
 
         /* aesthetics ------------------------------------------------------ */
         shape: "roundrectangle",
@@ -734,7 +747,7 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "", options = {
       "border-color": "#c084fc",
       "border-style": "solid",
       "background-color": "#fffefc",
-      "font-size": isCompact ? 10 : 16,
+      "font-size": isCompact ? COMPACT_NODE_FONT_SIZE : SPACED_NODE_FONT_SIZE,
       "font-weight": isCompact ? "normal" : "bold",
       color: "#1e293b",
       "line-height": isCompact ? 1.2 : 1.3,
@@ -804,7 +817,11 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "", options = {
 }
 
 // Function to process node content for display and size calculation
-function processNodeContent(content, addEllipsis = true) {
+function processNodeContent(
+  content,
+  addEllipsis = true,
+  truncate = SPACED_NODE_TITLE_CUTOFF,
+) {
   let fullContent = content || "";
   fullContent = fullContent.replace(/\*\*/g, ""); // Remove all **
 
@@ -823,8 +840,8 @@ function processNodeContent(content, addEllipsis = true) {
 
   // Slice to cutoff for measurement and display purposes
   const raw = firstLineOnly;
-  const sliced = raw.slice(0, cutoff);
-  const suffix = addEllipsis && raw.length > cutoff ? "…" : "";
+  const sliced = raw.slice(0, truncate);
+  const suffix = addEllipsis && raw.length > truncate ? "…" : "";
 
   // Add break opportunities to help wrapping with long slash/dash sequences
   // - Insert zero-width space after '/', '-', '–', '—'
@@ -836,7 +853,11 @@ function processNodeContent(content, addEllipsis = true) {
 }
 
 function getCompactNodeWidth(n) {
-  const processedContent = processNodeContent(n.data("content") || "", false);
+  const processedContent = processNodeContent(
+    n.data("content") || "",
+    false,
+    COMPACT_NODE_TITLE_CUTOFF,
+  );
   const content = (processedContent || "").replace(/<br\s*\/?>/g, "\n");
   const measureText = content.replace(/\u200B/g, "");
 

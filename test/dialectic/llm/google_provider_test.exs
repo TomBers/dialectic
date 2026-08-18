@@ -3,7 +3,7 @@ defmodule Dialectic.LLM.GoogleProviderTest do
 
   alias Dialectic.LLM.Providers.Google
 
-  test "uses Gemini Flash with the fast Standard profile by default" do
+  test "uses Gemini Flash with the fast Essential profile by default" do
     assert Google.model() == "gemini-3.5-flash-lite"
 
     assert Google.provider_options() == [

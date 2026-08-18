@@ -228,7 +228,7 @@ defmodule DialecticWeb.HomeLive do
         id="answer-level-login-modal"
         show={@show_level_login_modal}
         title="Unlock deeper answer levels"
-        description="Sign in to create grids with Detailed or Expert answers, grounded sources, and deeper analysis."
+        description="Sign in to create grids with Expanded or In-depth answers, grounded sources, and deeper analysis."
       />
 
       <%= if @loading_graph do %>

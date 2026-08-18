@@ -190,13 +190,11 @@ defmodule Dialectic.Responses.Prompts do
       1. A concise opening — lead with a well-supported fact, a counterintuitive insight, or a focused question that reframes the topic.
       2. An orienting foundation that defines the central concepts and explains the main mechanism, argument, or context a reader needs before branching further.
       3. One concrete example or case that makes the topic tangible without mistaking illustration for proof.
-      4. When the topic centers on an identifiable book, speech, law, paper, or other primary text and the selected source policy enables research, a brief verified excerpt when it genuinely preserves the author's voice or sharpens the explanation. Quote enough to preserve its meaning, but no more than the answer needs. Render it as a Markdown blockquote and follow it with specific attribution and a locator.
+      4. When the topic centers on an identifiable book, speech, law, paper, or other primary text and the selected quotation policy permits it, a brief direct excerpt when you can reproduce its exact wording with high confidence and it genuinely preserves the author's voice or sharpens the explanation. Quote enough to preserve its meaning, but no more than the answer needs. Render it as a Markdown blockquote, attribute the author and work, and add a locator only when confidently known.
       5. One meaningful tension, limitation, or competing perspective that prevents the foundation from feeling falsely settled and creates curiosity.
       6. A final section with the exact heading `## Follow-up questions`.
 
       Aim for an opening answer of roughly #{opening_word_range}. Treat this as an editorial target: prioritize a compelling and complete foundation over hitting an exact count. Always leave room for the final `## Follow-up questions` section.
-
-      If a `## Sources` section adds value under the selected source policy, place it immediately before `## Follow-up questions` so the follow-up section remains last.
 
       In the `## Follow-up questions` section:
       - Include exactly 3 numbered questions
@@ -223,9 +221,11 @@ defmodule Dialectic.Responses.Prompts do
 
       Focus on:
       - What the selected concept or claim means and why it matters
-      - Concrete examples or analogies, clearly identified as illustration rather than evidence
-      - The strongest relevant perspectives, including material disagreement where it exists
+      - At least one concrete example or analogy, clearly identified as illustration rather than evidence
+      - The strongest relevant perspectives, giving a serious objection or competing interpretation enough space to be understood rather than appending a token caveat
       - Important questions, scope conditions, or connections that invite further exploration
+
+      When the selection names a thinker or work, distinguish what the primary text claims from later interpretation or explanatory shorthand. Follow the selected complexity level's quotation policy, and explain what each quotation contributes to the analysis. Connect the explanation back to why the selection matters in the Foundation without repeating the Foundation.
 
       Use the Foundation only for context. Focus on depth and breadth regarding the selected text.
       """,

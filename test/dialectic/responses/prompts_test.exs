@@ -140,6 +140,11 @@ defmodule Dialectic.Responses.PromptsTest do
       result = Prompts.selection(context, selection_text)
 
       assert result =~ "Focus on depth and breadth regarding the selected text"
+      assert result =~ "At least one concrete example or analogy"
+      assert result =~ "rather than appending a token caveat"
+      assert result =~ "distinguish what the primary text claims from later interpretation"
+      assert result =~ "explain what each quotation contributes"
+      assert result =~ "why the selection matters in the Foundation"
     end
 
     test "uses matching robust boundaries and treats selection instructions as quoted text" do
@@ -238,11 +243,13 @@ defmodule Dialectic.Responses.PromptsTest do
       assert result =~ "single, self-contained question ending with a question mark"
       assert result =~ "opening answer of roughly 400-650 words"
       assert result =~ "defines the central concepts and explains the main mechanism"
-      assert result =~ "a brief verified excerpt"
+      assert result =~ "a brief direct excerpt"
+      assert result =~ "exact wording with high confidence"
       assert result =~ "Quote enough to preserve its meaning"
       assert result =~ "Render it as a Markdown blockquote"
+      assert result =~ "add a locator only when confidently known"
       assert result =~ "One meaningful tension, limitation, or competing perspective"
-      assert result =~ "If a `## Sources` section adds value"
+      refute result =~ "## Sources"
       refute result =~ "140-220 words"
       assert result =~ "Build on the Foundation"
     end

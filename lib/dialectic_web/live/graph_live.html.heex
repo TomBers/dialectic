@@ -232,6 +232,7 @@
             graph_owner_id={@graph_struct && @graph_struct.user_id}
             current_user={@current_user}
             ask_question={@ask_question}
+            prompt_mode={@prompt_mode}
             can_edit={@can_edit}
             presentation_mode={@presentation_mode}
             token={@token}
@@ -337,6 +338,77 @@
           </div>
         </div>
       <% end %>
+
+      <div
+        :if={map_size(@background_generations) > 0 and @presentation_mode != :presenting}
+        id="background-generations"
+        class="pointer-events-none absolute left-4 top-14 z-30 flex w-[min(22rem,calc(100%-2rem))] flex-col gap-2"
+        aria-live="polite"
+        aria-label="Background answers"
+      >
+        <%= for {generation_id, generation} <- Enum.sort_by(@background_generations, fn {_id, item} -> item.sequence end) do %>
+          <div
+            id={"background-generation-#{generation_id}"}
+            class="pointer-events-auto flex items-start gap-3 rounded-xl border border-slate-200 bg-white/95 p-3 shadow-lg ring-1 ring-white/80 backdrop-blur"
+          >
+            <div class={[
+              "mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full",
+              generation.status == :generating && "bg-indigo-50 text-indigo-600",
+              generation.status == :ready && "bg-emerald-50 text-emerald-600",
+              generation.status == :failed && "bg-rose-50 text-rose-600"
+            ]}>
+              <.icon
+                name={
+                  case generation.status do
+                    :generating -> "hero-arrow-path"
+                    :ready -> "hero-check"
+                    :failed -> "hero-exclamation-triangle"
+                  end
+                }
+                class={
+                  if(generation.status == :generating,
+                    do: "h-4 w-4 animate-spin",
+                    else: "h-4 w-4"
+                  )
+                }
+              />
+            </div>
+            <div class="min-w-0 flex-1">
+              <p class="text-xs font-semibold text-slate-900">
+                <%= case generation.status do %>
+                  <% :generating -> %>
+                    Working in the background
+                  <% :ready -> %>
+                    {if(length(generation.node_ids) == 1,
+                      do: "Answer ready",
+                      else: "Responses ready"
+                    )}
+                  <% :failed -> %>
+                    {if(length(generation.node_ids) == 1,
+                      do: "Answer could not be completed",
+                      else: "Some responses could not be completed"
+                    )}
+                <% end %>
+              </p>
+              <p class="mt-0.5 line-clamp-2 text-xs leading-5 text-slate-600">
+                {if generation.status == :ready and generation.title not in [nil, ""],
+                  do: generation.title,
+                  else: generation.label}
+              </p>
+            </div>
+            <button
+              :if={generation.status in [:ready, :failed]}
+              id={"open-background-answer-#{generation_id}"}
+              type="button"
+              phx-click="open_background_answer"
+              phx-value-id={generation_id}
+              class="shrink-0 rounded-lg bg-slate-900 px-2.5 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-700"
+            >
+              View
+            </button>
+          </div>
+        <% end %>
+      </div>
 
       <div
         id="cy"
@@ -671,40 +743,6 @@
         </div>
       </div>
     <% end %>
-    
-<!-- Chat input bar (hidden during presentation) -->
-    <div
-      :if={@presentation_mode != :presenting}
-      id="bottom-menu"
-      class="fixed bottom-0 z-30 transform origin-bottom scale-100 opacity-100 visible transition-all duration-200 ease-out px-1 pb-3 pointer-events-none shift-with-panel transition-[right] duration-300 ease-in-out left-0 right-0 md:left-[var(--desktop-side-drawer-width)]"
-      style="padding-bottom: calc(env(safe-area-inset-bottom) + 0.75rem);"
-    >
-      <div class="mx-auto w-full max-w-4xl">
-        <div class="relative">
-          <div class="pointer-events-auto transform-gpu rounded-t-[1.75rem] rounded-2xl bg-[linear-gradient(135deg,rgba(45,212,191,0.86),rgba(255,255,255,0.96)_36%,rgba(251,191,36,0.72)_70%,rgba(99,102,241,0.84))] p-[1px] shadow-[0_28px_74px_-48px_rgba(20,184,166,0.85)] transition-all duration-200 ease-out translate-y-0">
-            <div class="relative overflow-hidden rounded-t-[calc(1.75rem-1px)] rounded-[calc(1rem-1px)] bg-white/95 px-1.5 pt-2 pb-2 shadow-xl ring-1 ring-white/80 backdrop-blur">
-              <div
-                class="pointer-events-none absolute inset-x-6 top-0 h-px bg-[linear-gradient(90deg,rgba(45,212,191,0),rgba(45,212,191,0.9),rgba(251,191,36,0.7),rgba(99,102,241,0.85),rgba(56,189,248,0))]"
-                aria-hidden="true"
-              >
-              </div>
-              <div class="px-1.5">
-                <.live_component
-                  module={DialecticWeb.AskFormComp}
-                  id="global-chat-form"
-                  form={@form}
-                  ask_question={@ask_question}
-                  prompt_mode={@prompt_mode}
-                  graph_id={@graph_id}
-                  node={@node}
-                  disabled={GraphHelpers.origin_branching_disabled?(@node)}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
     <!-- Right side: Chat (Drawer) -->
   </div>
 

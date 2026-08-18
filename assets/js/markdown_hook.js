@@ -159,6 +159,431 @@ export function enhanceLinks(root) {
   });
 }
 
+const GROUNDING_REDIRECT_HOSTS = new Set([
+  "vertexaisearch.cloud.google.com",
+]);
+
+function enhanceSourceLink(link) {
+  link.classList.add("markdown-source-link");
+
+  try {
+    const url = new URL(link.getAttribute("href"), window.location.origin);
+    if (GROUNDING_REDIRECT_HOSTS.has(url.hostname)) {
+      link.querySelector(".link-domain")?.remove();
+    }
+  } catch (_error) {
+    // Invalid URLs are already handled by enhanceLinks.
+  }
+}
+
+const TABLE_DELIMITER_ROW =
+  /^\s*\|?\s*:?-{3,}:?\s*(?:\|\s*:?-{3,}:?\s*)+\|?\s*$/;
+
+function normalizeTableFragmentMarkdown(markdown, cellSeparator) {
+  const lines = (markdown || "").split(/\r?\n/);
+  if (lines.some((line) => TABLE_DELIMITER_ROW.test(line))) return markdown;
+
+  let tableFragmentFound = false;
+
+  const normalized = lines.map((line) => {
+    const trimmed = line.trim();
+
+    if (trimmed === "|") {
+      tableFragmentFound = true;
+      return "";
+    }
+
+    if (!trimmed.startsWith("| ")) return line;
+
+    tableFragmentFound = true;
+
+    const cells = trimmed
+      .slice(1)
+      .replace(/\|\s*$/, "")
+      .trim()
+      .split(/\s+\|\s+/)
+      .map((cell) => cell.trim())
+      .filter((cell) => cell !== "");
+
+    if (cells.length <= 1) return cells[0] || "";
+
+    return `${cells[0]}${cellSeparator}${cells.slice(1).join(" — ")}`;
+  });
+
+  if (!tableFragmentFound) return markdown;
+
+  return normalized.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+}
+
+function normalizedSupportReferenceText(markdown) {
+  const container = document.createElement("div");
+  const normalized = normalizeTableFragmentMarkdown(markdown, " ");
+  container.innerHTML = DOMPurify.sanitize(marked.parse(normalized), {
+    USE_PROFILES: { html: true, mathMl: true },
+  });
+
+  return (container.textContent || "").replace(/\s+/g, " ").trim();
+}
+
+function readGroundingMetadata(root) {
+  const raw = root.getAttribute("data-grounding");
+  if (!raw) return null;
+
+  try {
+    const metadata = JSON.parse(raw);
+    return metadata && typeof metadata === "object" ? metadata : null;
+  } catch (_error) {
+    return null;
+  }
+}
+
+const PREFERRED_SOURCE_DOMAINS = [
+  "doi.org",
+  "jstor.org",
+  "muse.jhu.edu",
+  "plato.stanford.edu",
+  "iep.utm.edu",
+  "cambridge.org",
+  "oup.com",
+  "oxfordacademic.com",
+  "springer.com",
+  "wiley.com",
+  "tandfonline.com",
+  "sagepub.com",
+  "sciencedirect.com",
+  "semanticscholar.org",
+  "researchgate.net",
+];
+
+const SUPPLEMENTARY_SOURCE_DOMAINS = [
+  "reddit.com",
+  "quora.com",
+  "youtube.com",
+  "medium.com",
+  "scribd.com",
+  "goodreads.com",
+  "facebook.com",
+  "instagram.com",
+  "tiktok.com",
+  "x.com",
+];
+
+function sourceDomain(title) {
+  return (title || "")
+    .trim()
+    .toLowerCase()
+    .replace(/^www\./, "")
+    .split(/\s+/)[0];
+}
+
+function domainMatches(domain, candidate) {
+  return domain === candidate || domain.endsWith(`.${candidate}`);
+}
+
+function sourcePriority(reference) {
+  const domain = sourceDomain(reference.title);
+
+  if (
+    domain.endsWith(".edu") ||
+    domain.includes(".edu.") ||
+    domain.includes(".ac.") ||
+    PREFERRED_SOURCE_DOMAINS.some((candidate) =>
+      domainMatches(domain, candidate),
+    )
+  ) {
+    return 0;
+  }
+
+  if (
+    SUPPLEMENTARY_SOURCE_DOMAINS.some((candidate) =>
+      domainMatches(domain, candidate),
+    )
+  ) {
+    return 2;
+  }
+
+  return 1;
+}
+
+function groundingView(metadata) {
+  const google = metadata?.google;
+  if (!google || typeof google !== "object") return null;
+
+  const chunks = Array.isArray(google.groundingChunks)
+    ? google.groundingChunks
+    : [];
+  const supports = Array.isArray(google.groundingSupports)
+    ? google.groundingSupports
+    : [];
+  const references = [];
+  const referenceByUrl = new Map();
+  const referenceByChunk = new Map();
+  const referenceNumberByChunk = new Map();
+
+  chunks.forEach((chunk, chunkIndex) => {
+    const web = chunk?.web;
+    if (!web || typeof web.uri !== "string" || web.uri.trim() === "") return;
+
+    let reference = referenceByUrl.get(web.uri);
+    if (!reference) {
+      reference = {
+        title:
+          typeof web.title === "string" && web.title.trim() !== ""
+            ? web.title.trim()
+            : `Source ${references.length + 1}`,
+        url: web.uri,
+        supports: [],
+      };
+      references.push(reference);
+      referenceByUrl.set(web.uri, reference);
+    }
+
+    referenceByChunk.set(chunkIndex, reference);
+  });
+
+  references.sort((left, right) => sourcePriority(left) - sourcePriority(right));
+
+  referenceByChunk.forEach((reference, chunkIndex) => {
+    referenceNumberByChunk.set(chunkIndex, references.indexOf(reference) + 1);
+  });
+
+  const citationGroups = [];
+  supports.forEach((support) => {
+    const text = support?.segment?.text;
+    const chunkIndices = support?.groundingChunkIndices;
+    if (typeof text !== "string" || !Array.isArray(chunkIndices)) return;
+
+    const numbers = Array.from(
+      new Set(
+        chunkIndices
+          .map((index) => referenceNumberByChunk.get(index))
+          .filter((number) => Number.isInteger(number)),
+      ),
+    ).sort((left, right) => left - right);
+
+    if (numbers.length === 0) return;
+    citationGroups.push({ numbers, text });
+
+    numbers.forEach((number) => {
+      const reference = references[number - 1];
+      if (reference && !reference.supports.includes(text)) {
+        reference.supports.push(text);
+      }
+    });
+  });
+
+  return references.length === 0 ? null : { references, citationGroups };
+}
+
+function answerTextIndex(root, sourceHeading) {
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const positions = [];
+  let text = "";
+  let pendingWhitespacePosition = null;
+  let node = walker.nextNode();
+
+  while (node) {
+    if (sourceHeading.contains(node)) break;
+    if (node.parentElement?.closest("[data-source-citation]")) {
+      node = walker.nextNode();
+      continue;
+    }
+
+    for (let offset = 0; offset < node.textContent.length; offset += 1) {
+      const character = node.textContent[offset];
+      const position = { node, offset: offset + 1 };
+
+      if (/\s/.test(character)) {
+        pendingWhitespacePosition = position;
+      } else {
+        if (pendingWhitespacePosition && text !== "" && !text.endsWith(" ")) {
+          text += " ";
+          positions.push(pendingWhitespacePosition);
+        }
+        text += character;
+        positions.push(position);
+        pendingWhitespacePosition = null;
+      }
+    }
+
+    node = walker.nextNode();
+  }
+
+  return { text, positions };
+}
+
+function uniqueSupportMatch(text, supportText) {
+  let candidate = supportText;
+
+  for (let skippedWords = 0; skippedWords <= 12; skippedWords += 1) {
+    const matchStart = text.indexOf(candidate);
+    if (matchStart >= 0 && matchStart === text.lastIndexOf(candidate)) {
+      return { matchStart, length: candidate.length };
+    }
+
+    const nextWord = candidate.indexOf(" ");
+    if (nextWord < 0) break;
+    candidate = candidate.slice(nextWord + 1);
+    if (candidate.length < 64) break;
+  }
+
+  return null;
+}
+
+function citationBlock(node) {
+  return node.parentElement?.closest(
+    "p, li, td, th, h1, h2, h3, h4, h5, h6, blockquote",
+  );
+}
+
+function insertSourceCitation(root, sourceHeading, support, references) {
+  const supportText = normalizedSupportReferenceText(support.text);
+  if (supportText.length < 32) return;
+
+  const index = answerTextIndex(root, sourceHeading);
+  const match = uniqueSupportMatch(index.text, supportText);
+  if (!match) return;
+
+  let matchEnd = match.matchStart + match.length - 1;
+  const block = citationBlock(index.positions[matchEnd]?.node);
+  while (
+    matchEnd + 1 < index.text.length &&
+    block?.contains(index.positions[matchEnd + 1].node) &&
+    /[\p{L}\p{N}]/u.test(index.text[matchEnd + 1])
+  ) {
+    matchEnd += 1;
+  }
+
+  if (!/[.!?]/.test(index.text[matchEnd])) {
+    let blockEnd = matchEnd;
+
+    while (
+      blockEnd + 1 < index.positions.length &&
+      block?.contains(index.positions[blockEnd + 1].node)
+    ) {
+      blockEnd += 1;
+    }
+
+    const sentenceTail = index.text.slice(
+      matchEnd + 1,
+      Math.min(blockEnd + 1, matchEnd + 482),
+    );
+    const sentenceEnd = sentenceTail.search(/[.!?](?=\s|$)/);
+    if (sentenceEnd >= 0) {
+      matchEnd += sentenceEnd + 1;
+    }
+  }
+
+  const endPosition = index.positions[matchEnd];
+  if (!endPosition) return;
+
+  const citation = document.createElement("sup");
+  citation.className = "markdown-inline-citation";
+  citation.dataset.sourceCitation = support.numbers.join(",");
+
+  support.numbers.forEach((number) => {
+    const reference = references[number - 1];
+    if (!reference) return;
+
+    const link = document.createElement("a");
+    link.href = `#${reference.id}`;
+    link.dataset.citationNumber = String(number);
+    link.setAttribute("aria-label", `See source ${number}`);
+    link.title = `See source ${number}`;
+    link.addEventListener("click", () => {
+      if (reference.supportsDetails) reference.supportsDetails.open = true;
+    });
+    citation.appendChild(link);
+  });
+
+  if (citation.children.length === 0) return;
+
+  const range = document.createRange();
+  range.setStart(endPosition.node, endPosition.offset);
+  range.collapse(true);
+  range.insertNode(citation);
+}
+
+function supportElement(markdown) {
+  const support = document.createElement("blockquote");
+  support.className = "markdown-source-support";
+
+  const body = document.createElement("div");
+  body.className = "markdown-source-support-body";
+  const normalized = normalizeTableFragmentMarkdown(markdown, ": ");
+  body.innerHTML = DOMPurify.sanitize(marked.parse(normalized), {
+    USE_PROFILES: { html: true, mathMl: true },
+  });
+
+  support.appendChild(body);
+  return support;
+}
+
+export function renderGroundingReferences(root, metadata) {
+  const view = groundingView(metadata);
+  if (!view) return;
+
+  const heading = document.createElement("h2");
+  heading.className = "markdown-sources-heading";
+  heading.textContent = "Sources";
+
+  const list = document.createElement("ol");
+  list.className = "markdown-source-references";
+
+  view.references.forEach((reference, index) => {
+    const number = index + 1;
+    const item = document.createElement("li");
+    item.id = `${root.id || "markdown"}-source-${number}`;
+    item.className = "markdown-source-reference";
+    reference.id = item.id;
+
+    const link = document.createElement("a");
+    link.className = "markdown-source-link";
+    link.href = reference.url;
+    link.textContent = reference.title;
+    item.appendChild(link);
+
+    if (reference.supports.length > 0) {
+      const details = document.createElement("details");
+      details.className = "markdown-source-details";
+      reference.supportsDetails = details;
+
+      const summary = document.createElement("summary");
+      summary.className = "markdown-source-summary";
+      summary.textContent = `${reference.supports.length} supported ${
+        reference.supports.length === 1 ? "claim" : "claims"
+      }`;
+
+      const supports = document.createElement("div");
+      supports.className = "markdown-source-supports";
+      reference.supports.forEach((support) => {
+        supports.appendChild(supportElement(support));
+      });
+      details.append(summary, supports);
+      item.appendChild(details);
+    }
+
+    list.appendChild(item);
+  });
+
+  const followUpHeading = Array.from(root.querySelectorAll("h2, h3")).find(
+    isFollowUpHeading,
+  );
+
+  if (followUpHeading) {
+    followUpHeading.before(heading, list);
+  } else {
+    root.append(heading, list);
+  }
+
+  enhanceLinks(root);
+  list.querySelectorAll(".markdown-source-link").forEach(enhanceSourceLink);
+
+  view.citationGroups.forEach((support) => {
+    insertSourceCitation(root, heading, support, view.references);
+  });
+}
+
 function normalizedHeadingText(text) {
   return (text || "")
     .trim()
@@ -437,12 +862,15 @@ function renderMdInto(el, askQuestion) {
   // Use a per-element cache to avoid unnecessary DOM churn
   const existingFollowUpQuestions =
     el.getAttribute("data-existing-follow-up-questions") || "[]";
+  const groundingSource = el.getAttribute("data-grounding") || "";
   const enhanceFollowUpQuestionsEnabled =
     el.getAttribute("data-enhance-follow-up-questions") !== "false";
   const currentHash = hashString(
     md +
       "|FOLLOW_UPS|" +
       existingFollowUpQuestions +
+      "|GROUNDING|" +
+      groundingSource +
       "|ENHANCE_FOLLOW_UPS|" +
       enhanceFollowUpQuestionsEnabled,
   );
@@ -470,6 +898,7 @@ function renderMdInto(el, askQuestion) {
   // Enhance anchors for safety/UX
   enhanceLinks(el);
   enhanceBlockquoteAttributions(el);
+  renderGroundingReferences(el, readGroundingMetadata(el));
 
   if (enhanceFollowUpQuestionsEnabled) {
     enhanceFollowUpQuestions(el, askQuestion);
