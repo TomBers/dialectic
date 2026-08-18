@@ -405,9 +405,16 @@ defmodule Dialectic.Graph.GraphActions do
   """
   def ask_and_answer({graph_id, node, user, live_view_topic}, question_text, opts \\ []) do
     minimal_context = Keyword.get(opts, :minimal_context, false)
+    guided_exploration = Keyword.get(opts, :guided_exploration, false)
     source_text = opts |> Keyword.get(:source_text) |> normalize_source_text()
-    question_prompt_kind = if minimal_context, do: "selection_explain_question", else: "question"
-    answer_prompt_kind = if minimal_context, do: "selection_explain", else: "answer"
+
+    {question_prompt_kind, answer_prompt_kind} =
+      cond do
+        guided_exploration -> {"guided_exploration_question", "guided_exploration"}
+        minimal_context -> {"selection_explain_question", "selection_explain"}
+        true -> {"question", "answer"}
+      end
+
     question_opts = source_text_opts(source_text, question_prompt_kind)
     answer_opts = source_text_opts(source_text, answer_prompt_kind)
 
@@ -427,10 +434,20 @@ defmodule Dialectic.Graph.GraphActions do
         graph_id,
         [question_node],
         fn n ->
-          if minimal_context do
-            LlmInterface.gen_response_minimal_context(question_node, n, graph_id, live_view_topic)
-          else
-            LlmInterface.gen_response(question_node, n, graph_id, live_view_topic)
+          cond do
+            guided_exploration ->
+              LlmInterface.gen_guided_exploration(question_node, n, graph_id, live_view_topic)
+
+            minimal_context ->
+              LlmInterface.gen_response_minimal_context(
+                question_node,
+                n,
+                graph_id,
+                live_view_topic
+              )
+
+            true ->
+              LlmInterface.gen_response(question_node, n, graph_id, live_view_topic)
           end
         end,
         "answer",
@@ -677,19 +694,35 @@ defmodule Dialectic.Graph.GraphActions do
         related_ideas({graph_id, parent, user, live_view_topic}, content_override: source_text)
 
       "answer" ->
-        if source_text do
-          GraphManager.add_child(
-            graph_id,
-            [parent],
-            fn n ->
-              LlmInterface.gen_response_minimal_context(parent, n, graph_id, live_view_topic)
-            end,
-            "answer",
-            user,
-            source_text_opts
-          )
-        else
-          answer({graph_id, parent, user, live_view_topic})
+        cond do
+          source_text_opts
+          |> Keyword.get(:fields, %{})
+          |> Map.get(:prompt_kind) == "guided_exploration" ->
+            GraphManager.add_child(
+              graph_id,
+              [parent],
+              fn n ->
+                LlmInterface.gen_guided_exploration(parent, n, graph_id, live_view_topic)
+              end,
+              "answer",
+              user,
+              source_text_opts
+            )
+
+          source_text ->
+            GraphManager.add_child(
+              graph_id,
+              [parent],
+              fn n ->
+                LlmInterface.gen_response_minimal_context(parent, n, graph_id, live_view_topic)
+              end,
+              "answer",
+              user,
+              source_text_opts
+            )
+
+          true ->
+            answer({graph_id, parent, user, live_view_topic})
         end
 
       "explain" ->

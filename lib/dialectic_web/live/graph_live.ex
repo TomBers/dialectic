@@ -45,6 +45,30 @@ defmodule DialecticWeb.GraphLive do
                             ] ++ @critical_thinking_operations
   @structural_graph_operations ["delete" | @node_creation_operations]
   @max_explore_items 3
+  @guided_action_labels %{
+    "Clarify terms" => "clarify",
+    "Surface assumptions" => "assumptions",
+    "Test with a counterexample" => "counterexample",
+    "Explore implications" => "implications",
+    "Find blind spots" => "blind_spots",
+    "Check sources" => "says_who",
+    "Consider opposing views" => "who_disagrees",
+    "Steel-man the argument" => "steel_man",
+    "Try a what-if" => "what_if",
+    "Test both sides" => "branch",
+    "Find related ideas" => "related_ideas"
+  }
+  @guided_action_tools %{
+    "clarify" => :clarify,
+    "assumptions" => :assumptions,
+    "counterexample" => :counterexample,
+    "implications" => :implications,
+    "blind_spots" => :blind_spots,
+    "says_who" => :says_who,
+    "who_disagrees" => :who_disagrees,
+    "steel_man" => :steel_man,
+    "what_if" => :what_if
+  }
   use DialecticWeb.GraphStreaming, preload_highlight_links: true
 
   alias Dialectic.Graph.{Vertex, GraphActions, Siblings}
@@ -561,6 +585,70 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
+  def handle_event("review_guided_exploration", %{"id" => node_id}, socket) do
+    cond do
+      !socket.assigns.can_edit ->
+        {:noreply, put_flash(socket, :error, "This graph is locked")}
+
+      node = GraphActions.find_node(socket.assigns.graph_id, node_id) ->
+        with {:ok, target_node} <- guided_action_target(socket.assigns.graph_id, node) do
+          actions =
+            node
+            |> guided_next_actions()
+            |> annotate_guided_actions(node, target_node)
+
+          if actions == [] do
+            {:noreply,
+             put_flash(socket, :error, "No supported next actions were found in this response")}
+          else
+            {:noreply,
+             assign(socket,
+               node: node,
+               show_guided_action_modal: true,
+               guided_actions: actions,
+               guided_action_node_id: node.id
+             )}
+          end
+        else
+          _missing_target ->
+            {:noreply, put_flash(socket, :error, "The recommendation target could not be found")}
+        end
+
+      true ->
+        {:noreply, put_flash(socket, :error, "The recommendation could not be found")}
+    end
+  end
+
+  def handle_event("close_guided_action_modal", _params, socket) do
+    {:noreply, close_guided_action_modal(socket)}
+  end
+
+  def handle_event(
+        "apply_guided_next_action",
+        %{"action" => action, "id" => recommendation_node_id},
+        socket
+      ) do
+    with :ok <- validate_can_edit(socket),
+         {:ok, recommendation_node} <-
+           find_node_safe(socket.assigns.graph_id, recommendation_node_id),
+         true <- Map.get(recommendation_node, :prompt_kind) == "guided_exploration",
+         true <- guided_action_allowed?(action),
+         {:ok, target_node} <- guided_action_target(socket.assigns.graph_id, recommendation_node),
+         false <- guided_action_used?(recommendation_node, target_node, action) do
+      socket = close_guided_action_modal(socket)
+      apply_guided_action(action, recommendation_node, target_node, socket)
+    else
+      {:error, :locked} ->
+        {:noreply, put_flash(socket, :error, "This graph is locked")}
+
+      true ->
+        {:noreply, put_flash(socket, :error, "That action has already been used here")}
+
+      _invalid_recommendation ->
+        {:noreply, put_flash(socket, :error, "That recommended action is no longer available")}
+    end
+  end
+
   def handle_event("open_explore_modal", %{"items" => items}, socket) do
     if !socket.assigns.can_edit do
       {:noreply, socket |> put_flash(:error, "This graph is locked")}
@@ -1017,7 +1105,8 @@ defmodule DialecticWeb.GraphLive do
 
     case GraphHelpers.handle_reply_and_answer(socket, answer,
            minimal_context: minimal_context,
-           highlight_context: highlight_context
+           highlight_context: highlight_context,
+           guided_exploration: guided_exploration_enabled?(params)
          ) do
       {:ok, {_graph, node}, operation} ->
         socket
@@ -1038,7 +1127,8 @@ defmodule DialecticWeb.GraphLive do
     highlight_context = Map.get(params, "highlight_context")
 
     case GraphHelpers.handle_reply_and_answer(socket, answer,
-           highlight_context: highlight_context
+           highlight_context: highlight_context,
+           guided_exploration: guided_exploration_enabled?(params)
          ) do
       {:ok, {_graph, node}, operation} ->
         socket
@@ -1958,6 +2048,148 @@ defmodule DialecticWeb.GraphLive do
 
   defp checked_checkbox_value?(value), do: value in ["on", "true", "1", true, 1]
 
+  defp guided_exploration_enabled?(params) do
+    checked_checkbox_value?(Map.get(params, "guided_exploration"))
+  end
+
+  defp guided_next_actions(%{prompt_kind: "guided_exploration", content: content})
+       when is_binary(content) do
+    content
+    |> String.split(~r/\r\n|\r|\n/)
+    |> Enum.flat_map(fn line ->
+      case Regex.run(
+             ~r/^\s*(?:[-*+]|\d+[.)])\s+\*\*(.+?)\*\*\s*[—–-]\s*(.+?)\s*$/u,
+             line
+           ) do
+        [_, label, reason] ->
+          case Map.fetch(@guided_action_labels, String.trim(label)) do
+            {:ok, action} ->
+              [%{action: action, label: String.trim(label), reason: clean_guided_reason(reason)}]
+
+            :error ->
+              []
+          end
+
+        _no_match ->
+          []
+      end
+    end)
+    |> Enum.uniq_by(& &1.action)
+    |> Enum.take(3)
+    |> Enum.with_index()
+    |> Enum.map(fn {recommendation, index} ->
+      Map.put(recommendation, :recommended, index == 0)
+    end)
+  end
+
+  defp guided_next_actions(_node), do: []
+
+  defp clean_guided_reason(reason) do
+    reason
+    |> String.replace(~r/(\*\*|__|`)/, "")
+    |> String.trim()
+    |> String.slice(0, 500)
+  end
+
+  defp guided_action_allowed?(action) do
+    action in ["branch", "related_ideas"] or Map.has_key?(@guided_action_tools, action)
+  end
+
+  defp guided_action_target(graph_id, recommendation_node) do
+    case List.first(Map.get(recommendation_node, :parents, [])) do
+      %{} = parent -> {:ok, parent}
+      parent_id when is_binary(parent_id) -> find_node_safe(graph_id, parent_id)
+      _missing_parent -> {:error, :node_not_found}
+    end
+  end
+
+  defp annotate_guided_actions(actions, recommendation_node, target_node) do
+    actions
+    |> Enum.map(fn recommendation ->
+      Map.put(
+        recommendation,
+        :disabled,
+        guided_action_used?(recommendation_node, target_node, recommendation.action)
+      )
+    end)
+    |> Enum.map_reduce(false, fn recommendation, recommendation_assigned? ->
+      recommended? = !recommendation.disabled && !recommendation_assigned?
+
+      {Map.put(recommendation, :recommended, recommended?),
+       recommendation_assigned? || recommended?}
+    end)
+    |> elem(0)
+  end
+
+  defp guided_action_used?(recommendation_node, target_node, action) do
+    classes = guided_action_classes(action)
+
+    [
+      recommendation_node,
+      target_node | Enum.filter(Map.get(target_node, :parents, []), &is_map/1)
+    ]
+    |> Enum.flat_map(&Map.get(&1, :children, []))
+    |> Enum.any?(fn child ->
+      !Map.get(child, :deleted, false) && Map.get(child, :class) in classes
+    end)
+  end
+
+  defp guided_action_classes("branch"), do: ["thesis", "antithesis"]
+  defp guided_action_classes("related_ideas"), do: ["ideas"]
+  defp guided_action_classes(action), do: [action]
+
+  defp apply_guided_action("branch", recommendation_node, target_node, socket) do
+    nodes =
+      create_branch_nodes(socket, recommendation_node,
+        content_override: Map.get(target_node, :content, "")
+      )
+
+    begin_background_generations(
+      socket,
+      nodes,
+      "branch",
+      "Building the strongest case for and against this idea",
+      target_node_id: recommendation_node.id
+    )
+  end
+
+  defp apply_guided_action("related_ideas", recommendation_node, target_node, socket) do
+    result_node =
+      GraphActions.related_ideas(graph_action_params(socket, recommendation_node),
+        content_override: Map.get(target_node, :content, "")
+      )
+
+    begin_foreground_generation(socket, result_node, "ideas")
+  end
+
+  defp apply_guided_action(action, recommendation_node, target_node, socket) do
+    case Map.fetch(@guided_action_tools, action) do
+      {:ok, tool} ->
+        result_node =
+          GraphActions.apply_thinking_tool(
+            tool,
+            graph_action_params(socket, recommendation_node),
+            content_override: Map.get(target_node, :content, "")
+          )
+
+        case result_node do
+          nil -> {:noreply, put_flash(socket, :error, "Failed to apply recommended action")}
+          node -> begin_foreground_generation(socket, node, action)
+        end
+
+      :error ->
+        {:noreply, put_flash(socket, :error, "Unknown recommended action")}
+    end
+  end
+
+  defp close_guided_action_modal(socket) do
+    assign(socket,
+      show_guided_action_modal: false,
+      guided_actions: [],
+      guided_action_node_id: nil
+    )
+  end
+
   # =========================================================================
   # Critical Thinking Tools - Helper Functions
   # =========================================================================
@@ -2595,6 +2827,9 @@ defmodule DialecticWeb.GraphLive do
       explore_selected: [],
       explore_form: to_form(%{}, as: :explore),
       max_explore_items: @max_explore_items,
+      show_guided_action_modal: false,
+      guided_actions: [],
+      guided_action_node_id: nil,
       show_start_stream_modal: false,
       show_help_modal: false,
       show_share_modal: false,

@@ -256,6 +256,34 @@ defmodule DialecticWeb.NodeComp do
                     </div>
                   </article>
 
+                  <div
+                    :if={
+                      @can_edit && !@streaming &&
+                        Map.get(@node, :prompt_kind) == "guided_exploration"
+                    }
+                    id={"guided-exploration-actions-#{@node.id}"}
+                    class="mx-auto mt-4 flex w-full max-w-3xl items-center justify-between gap-3 rounded-2xl border border-indigo-200 bg-indigo-50/80 p-3.5 shadow-sm"
+                  >
+                    <div class="min-w-0">
+                      <p class="text-sm font-semibold text-indigo-950">
+                        Choose your next learning move
+                      </p>
+                      <p class="mt-0.5 text-xs leading-5 text-indigo-800">
+                        Review the ranked recommendations before applying one.
+                      </p>
+                    </div>
+                    <button
+                      id={"review-guided-exploration-#{@node.id}"}
+                      type="button"
+                      phx-click="review_guided_exploration"
+                      phx-value-id={@node.id}
+                      class="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-indigo-700 px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                    >
+                      <span>Review actions</span>
+                      <.icon name="hero-arrow-right" class="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+
                   <%= if GraphHelpers.origin_branching_disabled?(@node) do %>
                     <div
                       id={"origin-intro-#{@node.id}"}

@@ -6,6 +6,37 @@ defmodule Dialectic.Responses.PromptsTest do
   # Note: frame_minimal_context/1 is a private function, so we test it indirectly
   # through the public selection/2 function which uses it internally
 
+  describe "guided_exploration/2" do
+    test "requires a topic-specific heading and allowlisted next actions" do
+      prompt =
+        Prompts.guided_exploration(
+          "Cities are already experiencing hotter summers.",
+          "How should cities adapt to extreme heat?"
+        )
+
+      assert prompt =~
+               "Start with the exact heading `## Next learning moves: How should cities adapt to extreme heat`"
+
+      assert prompt =~ "Choose only from these exact action labels"
+      assert prompt =~ "Clarify terms"
+      assert prompt =~ "Test with a counterexample"
+      assert prompt =~ "Put the best recommendation first"
+    end
+
+    test "removes common request language from the recommendation title" do
+      prompt =
+        Prompts.guided_exploration(
+          "The discussion concerns the late Roman Republic.",
+          "Explain Rome’s Second Triumvirate"
+        )
+
+      assert prompt =~
+               "Start with the exact heading `## Next learning moves: Rome’s Second Triumvirate`"
+
+      refute prompt =~ "## Next learning moves: Explain Rome’s Second Triumvirate"
+    end
+  end
+
   describe "selection/2 - minimal context behavior" do
     test "includes context when shorter than max length (1000 characters)" do
       short_context = "This is a short context that is well under the 1000 character limit."

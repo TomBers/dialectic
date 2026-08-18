@@ -133,6 +133,14 @@ defmodule Dialectic.Responses.LlmInterface do
     queue_response("initial_explainer", instruction, child, graph_id, live_view_topic)
   end
 
+  @doc false
+  @spec gen_guided_exploration(map(), map(), String.t(), String.t()) :: request_result()
+  def gen_guided_exploration(node, child, graph_id, live_view_topic) do
+    context = GraphManager.build_context(graph_id, node)
+    instruction = Prompts.guided_exploration(context, node.content || "")
+    queue_response("guided_exploration", instruction, child, graph_id, live_view_topic)
+  end
+
   @doc """
   Generate a response with minimal context for selected text explanations.
 

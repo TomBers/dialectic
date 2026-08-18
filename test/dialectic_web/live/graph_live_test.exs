@@ -346,6 +346,74 @@ defmodule DialecticWeb.GraphLiveTest do
     end
   end
 
+  describe "guided next actions" do
+    test "is available as an unchecked opt-in on the ask form", %{conn: conn} do
+      {:ok, view, _html} = setup_live_for_graph(conn, "Guided Exploration Toggle")
+
+      assert has_element?(
+               view,
+               "#global-chat-form-guided-exploration[name='guided_exploration']:not(:checked)"
+             )
+    end
+
+    test "ranks supported actions and applies the learner's selection", %{conn: conn} do
+      {:ok, view, _html} = setup_live_for_graph(conn, "Guided Exploration Plan")
+      graph_id = :sys.get_state(view.pid).socket.assigns.graph_id
+
+      render_click(view, "reply-and-answer", %{
+        "vertex" => %{"content" => "How should cities adapt to extreme heat?"},
+        "guided_exploration" => "true",
+        "query_origin" => "node_action_bar"
+      })
+
+      plan_node = :sys.get_state(view.pid).socket.assigns.node
+      assert plan_node.prompt_kind == "guided_exploration"
+
+      GraphManager.set_node_content(
+        graph_id,
+        plan_node.id,
+        """
+        ## Next learning moves: How should cities adapt to extreme heat
+        - **Clarify terms** — Define what successful heat adaptation means before comparing policies.
+        - **Test with a counterexample** — Examine a city where common heat interventions failed.
+        - **Find related ideas** — Connect heat adaptation to housing, transport, and public health.
+        """
+      )
+
+      render_click(view, "review_guided_exploration", %{"id" => plan_node.id})
+
+      assert has_element?(view, "#guided-action-modal")
+      assert has_element?(view, "#guided-action-option-0", "Clarify terms")
+      assert has_element?(view, "#guided-action-option-0", "Recommended")
+      assert has_element?(view, "#guided-action-option-1", "Test with a counterexample")
+      assert has_element?(view, "#guided-action-option-2", "Find related ideas")
+
+      view
+      |> element("#guided-action-option-0")
+      |> render_click()
+
+      refute has_element?(view, "#guided-action-modal")
+      result_node = :sys.get_state(view.pid).socket.assigns.node
+      assert result_node.class == "clarify"
+      assert Enum.any?(result_node.parents, &(&1.id == plan_node.id))
+
+      render_click(view, "review_guided_exploration", %{"id" => plan_node.id})
+
+      assert has_element?(view, "#guided-action-option-0[disabled]", "Already asked")
+      assert has_element?(view, "#guided-action-option-1", "Recommended")
+
+      vertex_count_before_duplicate = length(GraphManager.vertices(graph_id))
+
+      render_click(view, "apply_guided_next_action", %{
+        "id" => plan_node.id,
+        "action" => "clarify"
+      })
+
+      assert length(GraphManager.vertices(graph_id)) == vertex_count_before_duplicate
+      assert has_element?(view, "#flash-error", "That action has already been used here")
+    end
+  end
+
   describe "explore admission" do
     test "shows the server-side explore selection limit", %{conn: conn} do
       {:ok, view, _html} = setup_live_for_graph(conn, "Explore Limit UI")

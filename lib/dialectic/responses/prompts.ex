@@ -120,6 +120,21 @@ defmodule Dialectic.Responses.Prompts do
     Regex.replace(~r/^\s*#+\s*/, s, "")
   end
 
+  defp guided_topic_title(topic) do
+    topic
+    |> sanitize_title()
+    |> String.replace(
+      ~r/^(?:(?:please|can you|could you|would you)\s+)?(?:explain|tell me about|describe|explore|help me understand)\s+/iu,
+      ""
+    )
+    |> String.replace(~r/[?.!]+\s*$/u, "")
+    |> String.trim()
+    |> case do
+      "" -> "this topic"
+      title -> title
+    end
+  end
+
   defp anti_repetition_footer do
     """
     **Important:** Do not repeat or merely rephrase what's in the Foundation section. Focus on adding genuinely new information, perspectives, or insights.
@@ -169,6 +184,42 @@ defmodule Dialectic.Responses.Prompts do
       """,
       citation_encouragement(),
       anti_repetition_footer()
+    ])
+  end
+
+  @doc """
+  Recommend the most useful next inquiry actions for a learner.
+  """
+  @spec guided_exploration(String.t(), String.t()) :: String.t()
+  def guided_exploration(context, topic) do
+    join_blocks([
+      frame_context(context),
+      """
+      The learner wants guidance on the best next step for **#{sanitize_title(topic)}** before receiving more generated content.
+
+      **Your task:** Rank exactly three inquiry actions that would most improve the learner's understanding at this point. Base the ranking on the specific question and Foundation, not on a generic learning sequence.
+
+      Choose only from these exact action labels:
+      - Clarify terms
+      - Surface assumptions
+      - Test with a counterexample
+      - Explore implications
+      - Find blind spots
+      - Check sources
+      - Consider opposing views
+      - Steel-man the argument
+      - Try a what-if
+      - Test both sides
+      - Find related ideas
+
+      Output requirements:
+      - Start with the exact heading `## Next learning moves: #{guided_topic_title(topic)}` so the recommendation node is specific without duplicating the learner's question node.
+      - Then output exactly three top-level Markdown bullet points and no nested lists.
+      - Write each bullet as `**Exact action label** — One specific sentence explaining why this action is useful now.`
+      - Put the best recommendation first.
+      - Use each action at most once and keep each complete bullet under 240 characters.
+      - Do not perform the actions, answer the learner's question, or add text after the list.
+      """
     ])
   end
 
