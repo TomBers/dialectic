@@ -570,128 +570,185 @@
         :if={@show_guided_plan_modal}
         id="guided-learning-plan-modal"
         on_cancel={JS.push("close_guided_plan_modal")}
+        class="mx-auto max-w-4xl !rounded-[1.35rem] !border !border-slate-200 !bg-stone-50 !p-0 shadow-[0_28px_72px_rgba(15,23,42,0.2)] ring-1 ring-slate-950/5"
         show
       >
-        <h2 class="text-xl font-semibold text-slate-950">Choose how to continue</h2>
-        <p class="mt-1 text-sm leading-6 text-slate-600">
-          Apply one focused learning action, or select up to {@max_explore_items} paths to explore in parallel.
-        </p>
-
-        <section id="guided-plan-actions" class="mt-5">
-          <h3 class="text-sm font-bold uppercase tracking-wide text-slate-700">
-            Best next actions
-          </h3>
-          <div class="mt-2.5 space-y-2.5">
-            <%= for {recommendation, index} <- Enum.with_index(@guided_actions) do %>
-              <button
-                id={"guided-plan-action-#{index}"}
-                type="button"
-                phx-click="apply_guided_next_action"
-                phx-value-action={recommendation.action}
-                phx-value-id={@guided_plan_node_id}
-                disabled={recommendation.disabled}
-                aria-disabled={to_string(recommendation.disabled)}
-                class={[
-                  "flex w-full items-start gap-3 rounded-2xl border p-4 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2",
-                  recommendation.disabled &&
-                    "cursor-not-allowed border-slate-200 bg-slate-100 opacity-60",
-                  !recommendation.disabled && recommendation.recommended &&
-                    "border-indigo-300 bg-indigo-50 hover:border-indigo-400 hover:bg-indigo-100/70",
-                  !recommendation.disabled && !recommendation.recommended &&
-                    "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
-                ]}
-              >
-                <span class={[
-                  "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold",
-                  if(recommendation.recommended,
-                    do: "bg-indigo-700 text-white",
-                    else: "bg-slate-100 text-slate-600"
-                  )
-                ]}>
-                  {index + 1}
-                </span>
-                <span class="min-w-0 flex-1">
-                  <span class="flex flex-wrap items-center gap-2">
-                    <span class="text-sm font-semibold text-slate-950">
-                      {recommendation.label}
-                    </span>
-                    <span
-                      :if={recommendation.recommended}
-                      class="rounded-full bg-indigo-700 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white"
-                    >
-                      Recommended
-                    </span>
-                    <span
-                      :if={recommendation.disabled}
-                      class="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-600"
-                    >
-                      Already asked
-                    </span>
-                  </span>
-                  <span class="mt-1 block text-sm leading-5 text-slate-600">
-                    {recommendation.reason}
-                  </span>
-                </span>
-                <.icon name="hero-arrow-right" class="mt-1 h-4 w-4 shrink-0 text-slate-400" />
-              </button>
-            <% end %>
-          </div>
-        </section>
-
-        <section id="guided-plan-paths" class="mt-6 border-t border-slate-200 pt-5">
-          <h3 class="text-sm font-bold uppercase tracking-wide text-slate-700">
-            Paths to explore
-          </h3>
-          <p class="mt-1 text-xs leading-5 text-slate-500">
-            Each selected path creates one AI request.
-          </p>
+        <div class="flex max-h-[calc(100svh-2rem)] flex-col overflow-hidden rounded-[inherit] sm:max-h-[calc(100svh-5rem)]">
+          <header class="shrink-0 border-b border-slate-200 bg-white px-5 py-4 pr-14 sm:px-7 sm:py-5 sm:pr-16">
+            <h2
+              id="guided-learning-plan-modal-title"
+              class="font-serif text-2xl font-semibold leading-tight tracking-tight text-slate-950"
+            >
+              Choose how to continue
+            </h2>
+            <p
+              id="guided-learning-plan-modal-description"
+              class="mt-1.5 max-w-2xl text-sm leading-5 text-slate-600"
+            >
+              Take one focused next step, or explore up to {@max_explore_items} paths together.
+            </p>
+          </header>
 
           <.form
             for={@guided_path_form}
             id="guided-plan-path-form"
             phx-submit="submit_guided_paths"
-            class="mt-3"
+            class="flex min-h-0 flex-1 flex-col"
           >
-            <div class="max-h-112 space-y-2.5 overflow-y-auto pr-1">
-              <%= for path <- @guided_paths do %>
-                <div
-                  id={"guided-plan-path-#{path.index}"}
-                  class={[
-                    "rounded-2xl border p-4",
-                    if(path.disabled,
-                      do: "border-slate-200 bg-slate-100 opacity-60",
-                      else: "border-slate-200 bg-white hover:border-indigo-300"
-                    )
-                  ]}
-                >
-                  <div class="flex items-start justify-between gap-3">
-                    <.input
-                      type="checkbox"
-                      id={"guided-plan-path-checkbox-#{path.index}"}
-                      name={"paths[#{path.index}]"}
-                      value="false"
-                      label={path.label}
-                      disabled={path.disabled}
-                    />
-                    <span
-                      :if={path.disabled}
-                      class="shrink-0 rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-600"
-                    >
-                      Already explored
-                    </span>
+            <div class="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-7 sm:py-6">
+              <section id="guided-plan-actions">
+                <div class="flex items-end justify-between gap-4">
+                  <div>
+                    <h3 class="font-serif text-lg font-semibold leading-6 text-slate-950">
+                      Best next actions
+                    </h3>
+                    <p class="mt-0.5 text-xs leading-5 text-slate-500">
+                      Choose one to continue immediately.
+                    </p>
                   </div>
-                  <p class="mt-2 text-sm font-medium leading-5 text-slate-900">{path.question}</p>
-                  <p class="mt-1 text-xs leading-5 text-slate-600">{path.reason}</p>
+                  <span class="hidden text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 sm:block">
+                    One action
+                  </span>
                 </div>
-              <% end %>
+
+                <div class="mt-3 grid gap-3 lg:grid-cols-3">
+                  <%= for {recommendation, index} <- Enum.with_index(@guided_actions) do %>
+                    <button
+                      id={"guided-plan-action-#{index}"}
+                      type="button"
+                      phx-click="apply_guided_next_action"
+                      phx-value-action={recommendation.action}
+                      phx-value-id={@guided_plan_node_id}
+                      disabled={recommendation.disabled}
+                      aria-disabled={to_string(recommendation.disabled)}
+                      class={[
+                        "group flex min-h-[10.5rem] w-full flex-col rounded-2xl border p-4 text-left shadow-sm transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2",
+                        recommendation.disabled &&
+                          "cursor-not-allowed border-slate-200 bg-slate-100/80",
+                        !recommendation.disabled && recommendation.recommended &&
+                          "border-indigo-300 bg-gradient-to-br from-indigo-50 via-white to-white ring-1 ring-indigo-100 hover:-translate-y-0.5 hover:border-indigo-400 hover:shadow-md",
+                        !recommendation.disabled && !recommendation.recommended &&
+                          "border-slate-200 bg-white hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
+                      ]}
+                    >
+                      <span class="flex w-full items-start justify-between gap-2">
+                        <span class={[
+                          "text-sm font-semibold leading-5",
+                          if(recommendation.disabled,
+                            do: "text-slate-500",
+                            else: "text-slate-950"
+                          )
+                        ]}>
+                          {recommendation.label}
+                        </span>
+                        <span
+                          :if={recommendation.recommended}
+                          class="shrink-0 rounded-full bg-indigo-700 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white"
+                        >
+                          Recommended
+                        </span>
+                        <span
+                          :if={recommendation.disabled}
+                          class="shrink-0 rounded-full bg-slate-200 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-slate-500"
+                        >
+                          Already asked
+                        </span>
+                      </span>
+                      <span class={[
+                        "mt-2 block flex-1 text-sm leading-5",
+                        if(recommendation.disabled, do: "text-slate-500", else: "text-slate-600")
+                      ]}>
+                        {recommendation.reason}
+                      </span>
+                      <span
+                        :if={!recommendation.disabled}
+                        class={[
+                          "mt-4 inline-flex items-center gap-1.5 text-xs font-semibold",
+                          if(recommendation.recommended,
+                            do: "text-indigo-700",
+                            else: "text-slate-700"
+                          )
+                        ]}
+                      >
+                        Continue
+                        <.icon
+                          name="hero-arrow-right"
+                          class="h-3.5 w-3.5 transition group-hover:translate-x-0.5"
+                        />
+                      </span>
+                    </button>
+                  <% end %>
+                </div>
+              </section>
+
+              <section id="guided-plan-paths" class="mt-7 border-t border-slate-200 pt-6">
+                <div class="flex items-end justify-between gap-4">
+                  <div>
+                    <h3 class="font-serif text-lg font-semibold leading-6 text-slate-950">
+                      Paths to explore
+                    </h3>
+                    <p class="mt-0.5 text-xs leading-5 text-slate-500">
+                      Select up to {@max_explore_items}. Each path creates one AI request.
+                    </p>
+                  </div>
+                  <span class="hidden text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 sm:block">
+                    Multiple paths
+                  </span>
+                </div>
+
+                <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                  <%= for path <- @guided_paths do %>
+                    <div
+                      id={"guided-plan-path-#{path.index}"}
+                      class={[
+                        "rounded-2xl border p-4 shadow-sm transition",
+                        if(path.disabled,
+                          do: "border-slate-200 bg-slate-100/80",
+                          else:
+                            "border-slate-200 bg-white hover:border-indigo-300 hover:shadow-md has-[:checked]:border-indigo-400 has-[:checked]:bg-indigo-50/70 has-[:checked]:ring-1 has-[:checked]:ring-indigo-200"
+                        )
+                      ]}
+                    >
+                      <div class="flex items-start justify-between gap-3">
+                        <.input
+                          type="checkbox"
+                          id={"guided-plan-path-checkbox-#{path.index}"}
+                          name={"paths[#{path.index}]"}
+                          value="false"
+                          label={path.label}
+                          disabled={path.disabled}
+                        />
+                        <span
+                          :if={path.disabled}
+                          class="shrink-0 rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-600"
+                        >
+                          Already explored
+                        </span>
+                      </div>
+                      <p class={[
+                        "mt-3 font-serif text-base font-semibold leading-5",
+                        if(path.disabled, do: "text-slate-500", else: "text-slate-950")
+                      ]}>
+                        {path.question}
+                      </p>
+                      <p class={[
+                        "mt-1.5 text-xs leading-5",
+                        if(path.disabled, do: "text-slate-500", else: "text-slate-600")
+                      ]}>
+                        {path.reason}
+                      </p>
+                    </div>
+                  <% end %>
+                </div>
+              </section>
             </div>
 
-            <div class="mt-5 flex justify-end gap-2">
+            <div class="flex shrink-0 items-center justify-end gap-2 border-t border-slate-200 bg-white px-5 py-3.5 sm:px-7 sm:py-4">
               <button
                 id="guided-plan-cancel"
                 type="button"
                 phx-click="close_guided_plan_modal"
-                class="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                class="rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
               >
                 Cancel
               </button>
@@ -699,13 +756,13 @@
                 id="guided-plan-path-submit"
                 type="submit"
                 disabled={Enum.all?(@guided_paths, & &1.disabled)}
-                class="rounded-full bg-indigo-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
+                class="inline-flex items-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Explore selected paths
+                Explore selected paths <.icon name="hero-arrow-right" class="h-4 w-4" />
               </button>
             </div>
           </.form>
-        </section>
+        </div>
       </.modal>
 
       <.modal
