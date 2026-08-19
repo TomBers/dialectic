@@ -73,6 +73,7 @@ defmodule DialecticWeb.GraphLive do
 
   alias Dialectic.Graph.{Vertex, GraphActions, Siblings}
   alias Dialectic.Accounts.User
+  alias DialecticWeb.ColUtils
   alias DialecticWeb.GridChat
   alias DialecticWeb.NodeComp
   alias DialecticWeb.GraphHelpers
@@ -2202,7 +2203,17 @@ defmodule DialecticWeb.GraphLive do
         [_, label, reason] ->
           case Map.fetch(@guided_action_labels, String.trim(label)) do
             {:ok, action} ->
-              [%{action: action, label: String.trim(label), reason: clean_guided_reason(reason)}]
+              presentation = guided_action_presentation(action)
+
+              [
+                %{
+                  action: action,
+                  label: String.trim(label),
+                  reason: clean_guided_reason(reason),
+                  icon: presentation.icon,
+                  tool_description: presentation.description
+                }
+              ]
 
             :error ->
               []
@@ -2221,6 +2232,27 @@ defmodule DialecticWeb.GraphLive do
   end
 
   defp guided_next_actions(_node), do: []
+
+  defp guided_action_presentation("branch") do
+    %{
+      icon: "hero-scale",
+      description: "Compare the strongest case for and against this idea."
+    }
+  end
+
+  defp guided_action_presentation("related_ideas") do
+    %{
+      icon: "hero-light-bulb",
+      description: "Find concepts and directions connected to this idea."
+    }
+  end
+
+  defp guided_action_presentation(action) do
+    %{
+      icon: ColUtils.advanced_tool_icon(action),
+      description: ColUtils.advanced_tool_description(action)
+    }
+  end
 
   defp clean_guided_reason(reason) do
     reason

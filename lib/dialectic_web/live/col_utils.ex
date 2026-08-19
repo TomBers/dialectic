@@ -126,6 +126,35 @@ defmodule DialecticWeb.ColUtils do
     do:
       "border-2 border-slate-200/80 bg-gradient-to-br from-white to-slate-50/70 hover:border-slate-300"
 
+  @advanced_tool_metadata %{
+    "clarify" => %{icon: "hero-light-bulb", description: "What do we mean?"},
+    "assumptions" => %{icon: "hero-cube-transparent", description: "What has to be true?"},
+    "counterexample" => %{icon: "hero-x-mark", description: "Is that always true?"},
+    "implications" => %{icon: "hero-arrow-trending-up", description: "If true, then what?"},
+    "blind_spots" => %{icon: "hero-eye-slash", description: "What are we missing?"},
+    "says_who" => %{icon: "hero-user", description: "Says who?"},
+    "who_disagrees" => %{icon: "hero-users", description: "Who disagrees?"},
+    "steel_man" => %{icon: "hero-star", description: "Build the strongest argument."},
+    "what_if" => %{
+      icon: "hero-question-mark-circle",
+      description: "Explore a hypothetical scenario."
+    }
+  }
+
+  @doc "Returns the shared icon for a critical-thinking tool."
+  def advanced_tool_icon(type) do
+    type
+    |> then(&Map.get(@advanced_tool_metadata, &1, %{}))
+    |> Map.get(:icon, "hero-wrench-screwdriver")
+  end
+
+  @doc "Returns the short shared explanation for a critical-thinking tool."
+  def advanced_tool_description(type) do
+    type
+    |> then(&Map.get(@advanced_tool_metadata, &1, %{}))
+    |> Map.get(:description, "Use this tool to take the idea further.")
+  end
+
   @doc """
   Returns the icon chip classes for advanced-tool buttons.
   """

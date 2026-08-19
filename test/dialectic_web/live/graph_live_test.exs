@@ -466,6 +466,22 @@ defmodule DialecticWeb.GraphLiveTest do
       assert has_element?(view, "#guided-plan-action-1", "Test with a counterexample")
       assert has_element?(view, "#guided-plan-action-2", "Find related ideas")
 
+      assert has_element?(
+               view,
+               "#guided-plan-action-0 [data-guided-action-icon='clarify']"
+             )
+
+      assert has_element?(
+               view,
+               "#guided-plan-action-0 [role='tooltip']",
+               "What do we mean?"
+             )
+
+      assert has_element?(
+               view,
+               "#guided-plan-action-2 [data-guided-action-icon='related_ideas']"
+             )
+
       view
       |> element("#guided-plan-action-0")
       |> render_click()

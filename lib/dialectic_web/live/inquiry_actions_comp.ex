@@ -9,18 +9,28 @@ defmodule DialecticWeb.InquiryActionsComp do
       tools: [
         %{
           key: "clarify",
-          icon: "hero-light-bulb",
+          icon: ColUtils.advanced_tool_icon("clarify"),
           label: "Clarify Terms",
-          blurb: "What do we mean?"
+          blurb: ColUtils.advanced_tool_description("clarify")
         },
         %{
           key: "assumptions",
-          icon: "hero-cube-transparent",
+          icon: ColUtils.advanced_tool_icon("assumptions"),
           label: "Assumptions",
-          blurb: "What has to be true?"
+          blurb: ColUtils.advanced_tool_description("assumptions")
         },
-        %{key: "says_who", icon: "hero-user", label: "Source Check", blurb: "Says who?"},
-        %{key: "steel_man", icon: "hero-star", label: "Steel Man", blurb: "Strongest argument"}
+        %{
+          key: "says_who",
+          icon: ColUtils.advanced_tool_icon("says_who"),
+          label: "Source Check",
+          blurb: ColUtils.advanced_tool_description("says_who")
+        },
+        %{
+          key: "steel_man",
+          icon: ColUtils.advanced_tool_icon("steel_man"),
+          label: "Steel Man",
+          blurb: ColUtils.advanced_tool_description("steel_man")
+        }
       ]
     },
     %{
@@ -28,15 +38,15 @@ defmodule DialecticWeb.InquiryActionsComp do
       tools: [
         %{
           key: "counterexample",
-          icon: "hero-x-mark",
+          icon: ColUtils.advanced_tool_icon("counterexample"),
           label: "Test",
-          blurb: "Is that always true?"
+          blurb: ColUtils.advanced_tool_description("counterexample")
         },
         %{
           key: "who_disagrees",
-          icon: "hero-users",
+          icon: ColUtils.advanced_tool_icon("who_disagrees"),
           label: "Other Perspectives",
-          blurb: "Who disagrees?"
+          blurb: ColUtils.advanced_tool_description("who_disagrees")
         }
       ]
     },
@@ -45,21 +55,21 @@ defmodule DialecticWeb.InquiryActionsComp do
       tools: [
         %{
           key: "implications",
-          icon: "hero-arrow-trending-up",
+          icon: ColUtils.advanced_tool_icon("implications"),
           label: "Implications",
-          blurb: "If true, then what?"
+          blurb: ColUtils.advanced_tool_description("implications")
         },
         %{
           key: "blind_spots",
-          icon: "hero-eye-slash",
+          icon: ColUtils.advanced_tool_icon("blind_spots"),
           label: "Blind Spots",
-          blurb: "What are we missing?"
+          blurb: ColUtils.advanced_tool_description("blind_spots")
         },
         %{
           key: "what_if",
-          icon: "hero-question-mark-circle",
+          icon: ColUtils.advanced_tool_icon("what_if"),
           label: "What If",
-          blurb: "Hypothetical scenarios"
+          blurb: ColUtils.advanced_tool_description("what_if")
         }
       ]
     }
