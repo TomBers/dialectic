@@ -490,6 +490,39 @@ defmodule DialecticWeb.GraphLiveTest do
       assert length(GraphManager.vertices(graph_id)) == vertex_count_before_duplicate
       assert has_element?(view, "#flash-error", "That action has already been used here")
     end
+
+    test "rejects a supported action that the plan did not recommend", %{conn: conn} do
+      {:ok, view, _html} = setup_live_for_graph(conn, "Guided Recommendation Validation")
+      graph_id = :sys.get_state(view.pid).socket.assigns.graph_id
+
+      render_click(view, "reply-and-answer", %{
+        "vertex" => %{"content" => "How should cities adapt to extreme heat?"},
+        "guided_learning" => "true",
+        "query_origin" => "node_action_bar"
+      })
+
+      plan_node = :sys.get_state(view.pid).socket.assigns.node
+
+      GraphManager.set_node_content(
+        graph_id,
+        plan_node.id,
+        """
+        ## Learning plan: How should cities adapt to extreme heat
+        ### Best next actions
+        - **Clarify terms** — Define what successful heat adaptation means before comparing policies.
+        """
+      )
+
+      vertex_count_before = length(GraphManager.vertices(graph_id))
+
+      render_click(view, "apply_guided_next_action", %{
+        "id" => plan_node.id,
+        "action" => "assumptions"
+      })
+
+      assert length(GraphManager.vertices(graph_id)) == vertex_count_before
+      assert has_element?(view, "#flash-error", "That recommended action is no longer available")
+    end
   end
 
   describe "explore admission" do

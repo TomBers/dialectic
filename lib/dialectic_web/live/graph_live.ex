@@ -679,7 +679,7 @@ defmodule DialecticWeb.GraphLive do
     with :ok <- validate_can_edit(socket),
          {:ok, plan_node} <- find_node_safe(socket.assigns.graph_id, plan_node_id),
          true <- Map.get(plan_node, :prompt_kind) == "guided_learning_plan",
-         true <- guided_action_allowed?(action),
+         true <- guided_action_recommended?(plan_node, action),
          {:ok, target_node} <- guided_action_target(socket.assigns.graph_id, plan_node),
          false <- guided_action_used?(plan_node, target_node, action) do
       socket = close_guided_plan_modal(socket)
@@ -2229,8 +2229,8 @@ defmodule DialecticWeb.GraphLive do
     |> String.slice(0, 500)
   end
 
-  defp guided_action_allowed?(action) do
-    action in ["branch", "related_ideas"] or Map.has_key?(@guided_action_tools, action)
+  defp guided_action_recommended?(plan_node, action) do
+    Enum.any?(guided_next_actions(plan_node), &(&1.action == action))
   end
 
   defp guided_action_target(graph_id, plan_node) do
