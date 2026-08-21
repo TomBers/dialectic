@@ -471,6 +471,7 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "", options = {
     },
     { selector: ".hidden", style: { display: "none" } },
     { selector: ".depth-hidden", style: { display: "none" } },
+    { selector: ".focus-hidden", style: { display: "none" } },
     { selector: ".presentation-hidden", style: { display: "none" } },
     {
       selector: ".presentation-hidden-parent",

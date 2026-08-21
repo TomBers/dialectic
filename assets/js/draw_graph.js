@@ -10,6 +10,7 @@ cytoscape.use(compoundDragAndDrop);
 const VISIBLE_GRAPH_NODE_FILTER = (n) =>
   !n.hasClass("hidden") &&
   !n.hasClass("depth-hidden") &&
+  !n.hasClass("focus-hidden") &&
   !n.hasClass("presentation-hidden") &&
   !n.hasClass("presentation-hidden-parent");
 
@@ -451,6 +452,7 @@ export function draw_graph(
         return (
           !edge.hasClass("hidden") &&
           !edge.hasClass("depth-hidden") &&
+          !edge.hasClass("focus-hidden") &&
           !edge.hasClass("presentation-hidden")
         );
       });
@@ -465,10 +467,13 @@ export function draw_graph(
             !node.isParent() &&
             !node.hasClass("hidden") &&
             !node.hasClass("depth-hidden") &&
+            !node.hasClass("focus-hidden") &&
             !node.hasClass("presentation-hidden")
           );
         })
         .addClass("selected-neighbor");
+
+      _rebuildFocusControls(cy, container);
     } catch (_e) {}
   };
 
@@ -687,6 +692,7 @@ export function draw_graph(
                 (n) =>
                   !n.isParent() &&
                   !n.hasClass("depth-hidden") &&
+                  !n.hasClass("focus-hidden") &&
                   !n.hasClass("hidden"),
               );
             if (siblings.length > 1) {
@@ -1166,6 +1172,13 @@ export function draw_graph(
   cy.ensureDepthVisible = (id) => ensureDepthVisible(cy, id);
   cy.ensureGroupVisible = (id) => ensureGroupVisible(cy, id);
   cy.ensureNodeVisible = (id) => ensureNodeVisible(cy, id);
+  cy.focusBranch = (nodeOrId) =>
+    focusBranch(
+      cy,
+      typeof nodeOrId === "string" ? cy.getElementById(nodeOrId) : nodeOrId,
+      container,
+    );
+  cy.clearBranchFocus = () => clearBranchFocus(cy, container);
   cy.reflowAfterVisibilityChange = (onDone) =>
     reflowAfterVisibilityChange(cy, onDone);
   cy.expandNodeChildren = (n) =>
@@ -1203,6 +1216,7 @@ export function draw_graph(
   // Rebuild overlay buttons after every layout completes (covers init + expand/collapse relayouts)
   cy.on("layoutstop", () => {
     _rebuildDepthToggleOverlays(cy, container);
+    _rebuildFocusControls(cy, container);
   });
 
   // Keep button positions in sync with pan / zoom / animation (throttled to 1 rAF)
@@ -1222,6 +1236,7 @@ export function draw_graph(
   // above is registered (if dagre finishes synchronously), so schedule a fallback.
   requestAnimationFrame(() => {
     _rebuildDepthToggleOverlays(cy, container);
+    _rebuildFocusControls(cy, container);
   });
 
   // Expose cleanup so graph_hook.js can remove the overlay on destroy
@@ -1232,6 +1247,10 @@ export function draw_graph(
       }
       cy._depthToggleOverlay = null;
       cy._depthToggleButtons = null;
+      if (cy._focusControls && cy._focusControls.parentNode) {
+        cy._focusControls.parentNode.removeChild(cy._focusControls);
+      }
+      cy._focusControls = null;
       _depthToggleRafPending = false;
     } catch (_e) {}
   };
@@ -1609,11 +1628,64 @@ function ensureDepthVisible(cy, nodeId) {
   return changed;
 }
 
+function clearBranchFocusState(cy) {
+  const changed = Boolean(cy._focusedBranchId) || cy.$(".focus-hidden").length > 0;
+  cy.elements().removeClass("focus-hidden");
+  cy._focusedBranchId = null;
+  return changed;
+}
+
+export function focusBranch(cy, node, container = cy.container?.()) {
+  if (!node || node.length === 0 || node.isParent()) return false;
+
+  cy.elements().removeClass("focus-hidden");
+
+  const ancestors = node.predecessors().filter((element) => element.isNode());
+  const descendants = node.successors().filter((element) => element.isNode());
+  let keptNodes = node.union(ancestors).union(descendants);
+  keptNodes = keptNodes.union(keptNodes.ancestors());
+
+  cy.nodes().difference(keptNodes).addClass("focus-hidden");
+  cy.edges().forEach((edge) => {
+    if (
+      edge.source().hasClass("focus-hidden") ||
+      edge.target().hasClass("focus-hidden")
+    ) {
+      edge.addClass("focus-hidden");
+    }
+  });
+
+  cy._focusedBranchId = node.id();
+  _rebuildFocusControls(cy, container);
+  reflowAfterVisibilityChange(cy, () => {
+    _rebuildFocusControls(cy, container);
+    cy.applySelectionContext?.(node);
+  });
+  return true;
+}
+
+export function clearBranchFocus(cy, container = cy.container?.()) {
+  if (!clearBranchFocusState(cy)) return false;
+
+  _rebuildFocusControls(cy, container);
+  reflowAfterVisibilityChange(cy, () => {
+    _rebuildFocusControls(cy, container);
+    const selected = cy.$("node.selected").filter((node) => !node.isParent());
+    if (selected.length > 0) cy.applySelectionContext?.(selected[0]);
+  });
+  return true;
+}
+
 function ensureNodeVisible(cy, nodeId) {
+  const node = cy.getElementById(nodeId);
+  const focusChanged =
+    node && node.length > 0 && node.hasClass("focus-hidden")
+      ? clearBranchFocusState(cy)
+      : false;
   const groupChanged = ensureGroupVisible(cy, nodeId);
   const depthChanged = ensureDepthVisible(cy, nodeId);
 
-  return groupChanged || depthChanged;
+  return focusChanged || groupChanged || depthChanged;
 }
 
 /** Save current depth-collapse flags (node id → true) for persistence across cy.json() reloads */
@@ -1859,21 +1931,21 @@ function _injectDepthToggleStyles() {
 }
 .depth-toggle-btn {
   --depth-toggle-translate-x: -50%;
-  --depth-toggle-translate-y: -100%;
+  --depth-toggle-translate-y: 0;
   --depth-toggle-scale: 1;
   pointer-events: auto;
   position: absolute;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 5px;
+  width: 22px;
+  height: 22px;
+  padding: 0;
   border-radius: 10px;
   background: #ffffff;
   border: 1.5px solid #cbd5e1;
   color: #475569;
-  font-size: 10px;
+  font-size: 16px;
   font-weight: 600;
   font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
   cursor: pointer;
@@ -1917,8 +1989,105 @@ function _injectDepthToggleStyles() {
 .depth-toggle-btn.depth-expanded-btn:hover {
   background: #f9fafb;
   border-color: #9ca3af;
+}
+.graph-focus-controls {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  z-index: 12;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transform: translateX(-50%);
+  pointer-events: auto;
+  border: 1px solid #cbd5e1;
+  border-radius: 9999px;
+  background: rgba(255,255,255,0.96);
+  padding: 5px 8px 5px 10px;
+  color: #475569;
+  box-shadow: 0 2px 8px rgba(15,23,42,0.12);
+  font: 600 11px/1 ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+.graph-focus-controls button {
+  border: 0;
+  border-radius: 9999px;
+  background: #0f766e;
+  padding: 5px 9px;
+  color: #ffffff;
+  cursor: pointer;
+  font: inherit;
+}
+.graph-focus-controls button:hover {
+  background: #115e59;
 }`;
   document.head.appendChild(s);
+}
+
+function _rebuildFocusControls(cy, container) {
+  if (!container) return;
+
+  _injectDepthToggleStyles();
+
+  let controls = container.querySelector(".graph-focus-controls");
+  if (!controls) {
+    controls = document.createElement("div");
+    controls.className = "graph-focus-controls";
+    container.appendChild(controls);
+  }
+
+  cy._focusControls = controls;
+  controls.replaceChildren();
+
+  const presentationMode = cy?._ownerHook?.el?.dataset?.presentationMode || "off";
+  if (presentationMode === "presenting") {
+    controls.style.display = "none";
+    return;
+  }
+
+  const focused = Boolean(cy._focusedBranchId);
+  const selected = cy
+    .$("node.selected")
+    .filter(
+      (node) =>
+        !node.isParent() &&
+        !node.hasClass("hidden") &&
+        !node.hasClass("depth-hidden") &&
+        !node.hasClass("focus-hidden"),
+    );
+
+  if (!focused && selected.length === 0) {
+    controls.style.display = "none";
+    return;
+  }
+
+  controls.style.display = "flex";
+
+  if (focused) {
+    const status = document.createElement("span");
+    status.textContent = "Focused branch";
+    controls.appendChild(status);
+  }
+
+  const button = document.createElement("button");
+  button.type = "button";
+  button.textContent = focused ? "Show all paths" : "Focus branch";
+  button.setAttribute(
+    "aria-label",
+    focused ? "Show all graph paths" : "Focus the selected graph branch",
+  );
+  button.addEventListener("mousedown", (event) => event.stopPropagation());
+  button.addEventListener("pointerdown", (event) => event.stopPropagation());
+  button.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (focused) {
+      clearBranchFocus(cy, container);
+    } else {
+      focusBranch(cy, selected[0], container);
+    }
+  });
+  controls.appendChild(button);
 }
 
 /**
@@ -1963,7 +2132,10 @@ function _rebuildDepthToggleOverlays(cy, container) {
     .nodes()
     .filter(
       (n) =>
-        !n.isParent() && !n.hasClass("depth-hidden") && !n.hasClass("hidden"),
+        !n.isParent() &&
+        !n.hasClass("depth-hidden") &&
+        !n.hasClass("focus-hidden") &&
+        !n.hasClass("hidden"),
     );
 
   visible.forEach((n) => {
@@ -1980,12 +2152,12 @@ function _rebuildDepthToggleOverlays(cy, container) {
     const hiddenCount = n.data("_hiddenChildCount") || children.length;
 
     if (collapsed) {
-      btn.textContent = "Show";
+      btn.textContent = "›";
       btn.classList.add("depth-collapsed-btn");
       btn.title = `Show downstream branch (${hiddenCount} direct child${hiddenCount === 1 ? "" : "ren"}) (E)`;
       btn.setAttribute("aria-label", `Show downstream branch from node ${n.id()}`);
     } else {
-      btn.textContent = "Hide";
+      btn.textContent = "⌄";
       btn.classList.add("depth-expanded-btn");
       btn.title = `Hide downstream branch (${children.length} direct child${children.length === 1 ? "" : "ren"}) (C)`;
       btn.setAttribute("aria-label", `Hide downstream branch from node ${n.id()}`);
@@ -2014,11 +2186,40 @@ function _rebuildDepthToggleOverlays(cy, container) {
 }
 
 /**
- * Reposition every toggle button just above the node whose branch it controls.
+ * Reposition each disclosure control on the node's downstream side.
  * Called on every Cytoscape render frame so buttons track pan/zoom smoothly.
  */
-export function depthTogglePosition(bb) {
-  return { x: (bb.x1 + bb.x2) / 2, y: bb.y1 - 6 };
+export function depthTogglePosition(bb, direction = "TB") {
+  switch (direction) {
+    case "BT":
+      return {
+        x: (bb.x1 + bb.x2) / 2,
+        y: bb.y1 - 6,
+        translateX: "-50%",
+        translateY: "-100%",
+      };
+    case "LR":
+      return {
+        x: bb.x2 + 6,
+        y: (bb.y1 + bb.y2) / 2,
+        translateX: "0",
+        translateY: "-50%",
+      };
+    case "RL":
+      return {
+        x: bb.x1 - 6,
+        y: (bb.y1 + bb.y2) / 2,
+        translateX: "-100%",
+        translateY: "-50%",
+      };
+    default:
+      return {
+        x: (bb.x1 + bb.x2) / 2,
+        y: bb.y2 + 6,
+        translateX: "-50%",
+        translateY: "0",
+      };
+  }
 }
 
 function _updateDepthTogglePositions(cy) {
@@ -2030,6 +2231,7 @@ function _updateDepthTogglePositions(cy) {
     return;
   }
 
+  const direction = localStorage.getItem("graph_direction") || "TB";
   const zoom = typeof cy.zoom === "function" ? cy.zoom() : 1;
   const hideBelowZoom = 0.3;
   const scale = Math.max(0.68, Math.min(1, 0.45 + zoom * 0.55));
@@ -2052,6 +2254,7 @@ function _updateDepthTogglePositions(cy) {
       !node ||
       node.length === 0 ||
       node.hasClass("depth-hidden") ||
+      node.hasClass("focus-hidden") ||
       node.hasClass("hidden")
     ) {
       btn.style.display = "none";
@@ -2071,10 +2274,12 @@ function _updateDepthTogglePositions(cy) {
       return;
     }
 
-    const { x, y } = depthTogglePosition(bb);
+    const { x, y, translateX, translateY } = depthTogglePosition(bb, direction);
 
     btn.style.display = "";
     btn.style.setProperty("--depth-toggle-scale", scale.toFixed(3));
+    btn.style.setProperty("--depth-toggle-translate-x", translateX);
+    btn.style.setProperty("--depth-toggle-translate-y", translateY);
     btn.style.left = `${x}px`;
     btn.style.top = `${y}px`;
   });
