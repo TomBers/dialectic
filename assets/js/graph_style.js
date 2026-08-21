@@ -1,4 +1,5 @@
 import { INDIGO_500 } from "./colors.js";
+import { edgeRelationLabel } from "./graph_relations.js";
 
 const defaultNodeStyle = {
   text: "#1f2937", // gray-800
@@ -196,12 +197,12 @@ const cols = {
   default: defaultNodeStyle,
 };
 
-const SPACED_NODE_TITLE_CUTOFF = 84;
-const COMPACT_NODE_TITLE_CUTOFF = 56;
-const SPACED_NODE_WIDTH = 288;
-const SPACED_NODE_TEXT_PADDING = 32;
-const SPACED_NODE_FONT_SIZE = 18;
-const SPACED_NODE_LINE_HEIGHT = 1.4;
+const SPACED_NODE_TITLE_CUTOFF = 52;
+const COMPACT_NODE_TITLE_CUTOFF = 36;
+const SPACED_NODE_WIDTH = 240;
+const SPACED_NODE_TEXT_PADDING = 28;
+const SPACED_NODE_FONT_SIZE = 16;
+const SPACED_NODE_LINE_HEIGHT = 1.35;
 const COMPACT_NODE_FONT_SIZE = 11;
 const COMPACT_NODE_LINE_HEIGHT = 1.25;
 const MAIN_GROUP_TITLE_MIN_RENDERED_WIDTH = 280;
@@ -210,6 +211,7 @@ const MAIN_GROUP_TITLE_RENDERED_MARGIN = 96;
 const GRAPH_LABEL_FONT_FAMILY =
   'InterVariable, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
 const GRAPH_GROUP_LABEL_FONT_FAMILY = GRAPH_LABEL_FONT_FAMILY;
+
 
 const mixWithWhite = (hexColor, whiteRatio) => {
   const normalized = String(hexColor || "").replace("#", "");
@@ -230,6 +232,22 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "", options = {
   const transitionDuration = (duration) => (reduceMotion ? "0ms" : duration);
   const compoundLabel = (n) =>
     n.id() === "Main" && mainGroupTitle ? mainGroupTitle : n.data("id");
+  const relationshipLabelStyle = {
+    label: edgeRelationLabel,
+    "font-family": GRAPH_LABEL_FONT_FAMILY,
+    "font-size": isCompact ? 9 : 11,
+    "font-weight": 600,
+    color: highContrast ? "#0f172a" : "#334155",
+    "text-rotation": "autorotate",
+    "text-margin-y": isCompact ? -6 : -9,
+    "text-background-color": "#ffffff",
+    "text-background-opacity": highContrast ? 1 : 0.92,
+    "text-background-padding": isCompact ? 2 : 4,
+    "text-background-shape": "roundrectangle",
+    "text-border-color": highContrast ? "#475569" : "#cbd5e1",
+    "text-border-width": highContrast ? 1 : 0.5,
+    "text-border-opacity": highContrast ? 0.9 : 0.7,
+  };
 
   const base_style = [
     {
@@ -254,7 +272,7 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "", options = {
           const measureText = content.replace(/\u200B/g, "");
 
           if (!isCompact) {
-            const charWidth = 9.1;
+            const charWidth = 8.2;
             const textWidth = SPACED_NODE_WIDTH - SPACED_NODE_TEXT_PADDING;
             const approxCharsPerLine = Math.max(
               16,
@@ -306,8 +324,8 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "", options = {
           return Math.max(lineHeight, computed);
         },
         "min-width": isCompact ? 50 : 72,
-        "min-height": isCompact ? 14 : 26,
-        padding: isCompact ? "4px" : "14px",
+        "min-height": isCompact ? 14 : 22,
+        padding: isCompact ? "4px" : "10px",
         "text-wrap": "wrap",
         "text-max-width": (n) => {
           if (!isCompact) return SPACED_NODE_WIDTH - SPACED_NODE_TEXT_PADDING;
@@ -327,6 +345,7 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "", options = {
         /* font & layout --------------------------------------------------- */
         "font-family": GRAPH_LABEL_FONT_FAMILY,
         "font-size": isCompact ? COMPACT_NODE_FONT_SIZE : SPACED_NODE_FONT_SIZE,
+        "text-metrics": "glyph",
         "font-weight": 500,
         "text-halign": "center",
         "text-valign": "center",
@@ -346,26 +365,17 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "", options = {
             ? 1
             : 1.5,
         "border-color": highContrast ? "#64748b" : "#cbd5e1",
-        "background-color": highContrast ? "#ffffff" : "#fffdf8",
+        "background-color": "#ffffff",
         "background-opacity": 0.98,
         color: highContrast ? "#111827" : "#1f2937",
         "text-outline-width": 0,
         "text-outline-opacity": 0,
 
-        /* drop shadow via ghost — gives nodes a floating-card feel */
-        ghost: "yes",
-        "ghost-offset-x": isCompact ? 1 : 1,
-        "ghost-offset-y": isCompact ? 2 : 3,
-        "ghost-opacity": isCompact ? 0.06 : 0.08,
-        "shadow-blur": isCompact ? 8 : 14,
-        "shadow-color": "#0f172a",
-        "shadow-opacity": isCompact ? 0.06 : 0.09,
-        "shadow-offset-x": 0,
-        "shadow-offset-y": isCompact ? 1 : 3,
+        ghost: "no",
 
         /* smooth transitions for hover / select state changes */
         "transition-property":
-          "background-color border-color border-width opacity underlay-opacity underlay-padding shadow-blur shadow-opacity shadow-offset-y",
+          "background-color border-color border-width opacity underlay-opacity underlay-padding",
         "transition-duration": transitionDuration("170ms"),
         "transition-timing-function": "ease-in-out-sine",
       },
@@ -514,15 +524,24 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "", options = {
     {
       selector: "edge",
       style: {
+        label: "",
         width: highContrast ? (isCompact ? 1.3 : 1.8) : isCompact ? 1 : 1.4,
         "line-color": highContrast ? "#334155" : "#64748b",
-        "edge-distances": "node-position",
-        "curve-style": "bezier",
+        "line-fill": "linear-gradient",
+        "line-gradient-stop-colors": highContrast
+          ? "#64748b #0f172a"
+          : "#cbd5e1 #475569",
+        "line-gradient-stop-positions": "0% 100%",
+        "line-cap": "round",
+        "curve-style": "round-taxi",
+        "taxi-direction": "auto",
+        "taxi-turn": "50%",
+        "taxi-turn-min-distance": isCompact ? 12 : 18,
+        "taxi-radius": isCompact ? 8 : 12,
+        "edge-distances": "intersection",
         "target-arrow-shape": "triangle",
         "target-arrow-color": highContrast ? "#334155" : "#64748b",
         "arrow-scale": isCompact ? 0.58 : 0.76,
-        "control-point-step-size": isCompact ? 28 : 46,
-        "control-point-weight": 0.5,
         opacity: highContrast ? 0.76 : 0.5,
         /* smooth transition so hover fade-in feels polished */
         "transition-property": "line-color target-arrow-color width opacity",
@@ -530,10 +549,13 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "", options = {
         "transition-timing-function": "ease-in-out-sine",
       },
     },
+
     {
       selector: ".edge-hover",
       style: {
+        ...relationshipLabelStyle,
         width: isCompact ? 1.8 : 2.6,
+        "line-fill": "solid",
         "line-color": "#0f766e",
         "target-arrow-color": "#0f766e",
         "z-index": 9998,
@@ -553,13 +575,9 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "", options = {
       "border-style": "solid",
       color: defaultNodeStyle.selectedText,
       "underlay-color": defaultNodeStyle.selectedBorder,
-      "underlay-opacity": 0.2,
-      "underlay-padding": isCompact ? 12 : 18,
+      "underlay-opacity": 0.1,
+      "underlay-padding": isCompact ? 8 : 12,
       "underlay-shape": "roundrectangle",
-      "ghost-opacity": 0.28,
-      "shadow-blur": isCompact ? 14 : 26,
-      "shadow-opacity": 0.18,
-      "shadow-offset-y": isCompact ? 2 : 7,
       "z-index": 9997,
     },
   });
@@ -567,25 +585,19 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "", options = {
   base_style.push({
     selector: "node.node-hover",
     style: {
-      "background-color": defaultNodeStyle.hoverBackground,
+      "background-color": "#f8fafc",
       "border-color": defaultNodeStyle.hoverBorder,
-      "border-width": isCompact ? 2.25 : 3,
+      "border-width": isCompact ? 2 : 2.5,
       "border-style": "solid",
-      "underlay-color": defaultNodeStyle.hoverBorder,
-      "underlay-opacity": 0.13,
-      "underlay-padding": isCompact ? 8 : 12,
-      "underlay-shape": "roundrectangle",
-      "ghost-opacity": 0.22,
-      "shadow-blur": isCompact ? 12 : 22,
-      "shadow-opacity": 0.15,
-      "shadow-offset-y": isCompact ? 2 : 6,
     },
   });
 
   base_style.push({
     selector: "edge.selected-edge",
     style: {
+      ...relationshipLabelStyle,
       width: isCompact ? 1.9 : 2.8,
+      "line-fill": "solid",
       "line-color": "#0f766e",
       "target-arrow-color": "#0f766e",
       "arrow-scale": isCompact ? 0.66 : 0.94,
@@ -601,64 +613,52 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "", options = {
         "border-color": highContrast
           ? cols[nodeType].hoverBorder || cols[nodeType].border
           : cols[nodeType].border,
-        "background-color": mixWithWhite(
-          cols[nodeType].background,
-          highContrast ? 0.48 : 0.72,
-        ),
+        "background-color": highContrast
+          ? "#ffffff"
+          : mixWithWhite(cols[nodeType].background, 0.9),
         "border-width": highContrast
           ? isCompact
             ? 2
             : 2.5
           : isCompact
-            ? 1.5
-            : 2,
+            ? 1
+            : 1.5,
         "border-opacity": 1,
         color: highContrast ? cols[nodeType].text : defaultNodeStyle.text,
       },
     });
 
-    /* hover — gentle lift: slightly deeper tint + border boost */
+    /* Hover keeps the idea quiet while making its relationships prominent. */
     base_style.push({
       selector: `node.${nodeType}.node-hover`,
       style: {
         "background-color": mixWithWhite(
           cols[nodeType].hoverBackground || cols[nodeType].background,
-          0.5,
+          0.84,
         ),
         "border-color": cols[nodeType].hoverBorder || cols[nodeType].border,
-        "border-width": isCompact ? 2.25 : 3,
+        "border-width": isCompact ? 2 : 2.5,
         "border-style": "solid",
         color: defaultNodeStyle.text,
-        "underlay-color": cols[nodeType].hoverBorder || cols[nodeType].border,
-        "underlay-opacity": 0.14,
-        "underlay-padding": isCompact ? 8 : 12,
-        "underlay-shape": "roundrectangle",
-        "ghost-opacity": 0.22, // deepen shadow slightly on hover
-        "shadow-opacity": 0.16,
       },
     });
 
-    /* selected — prominent border + wide underlay halo */
+    /* Selection anchors the relationship labels without overwhelming the map. */
     base_style.push({
       selector: `node.${nodeType}.selected`,
       style: {
         "background-color": mixWithWhite(
           cols[nodeType].selectedBackground,
-          0.38,
+          0.78,
         ),
         "border-color": cols[nodeType].selectedBorder,
         "border-width": isCompact ? 3 : 4,
         "border-style": "solid",
         color: defaultNodeStyle.selectedText,
-        /* wide halo well outside the border so it reads as a glow, not a second border */
         "underlay-color": cols[nodeType].selectedBorder,
-        "underlay-opacity": 0.2,
-        "underlay-padding": isCompact ? 12 : 18,
+        "underlay-opacity": 0.1,
+        "underlay-padding": isCompact ? 8 : 12,
         "underlay-shape": "roundrectangle",
-        "ghost-opacity": 0.3,
-        "shadow-blur": isCompact ? 14 : 26,
-        "shadow-opacity": 0.2,
-        "shadow-offset-y": isCompact ? 2 : 7,
         "z-index": 9997,
       },
     });
@@ -677,12 +677,7 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "", options = {
     style: {
       "border-width": isCompact ? 2 : 2.75,
       "border-style": "solid",
-      "underlay-color": "#14b8a6",
-      "underlay-opacity": 0.075,
-      "underlay-padding": isCompact ? 6 : 10,
-      "underlay-shape": "roundrectangle",
-      "ghost-opacity": 0.18,
-      "shadow-opacity": 0.13,
+      "background-color": "#f8fafc",
     },
   });
 
@@ -785,6 +780,7 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "", options = {
     selector: "edge.presentation-edge",
     style: {
       width: isCompact ? 0.9 : 1.15,
+      "line-fill": "solid",
       "line-color": "#94a3b8",
       "target-arrow-color": "#94a3b8",
       "arrow-scale": isCompact ? 0.52 : 0.7,
@@ -798,7 +794,9 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "", options = {
   base_style.push({
     selector: "edge.presentation-edge-active",
     style: {
+      ...relationshipLabelStyle,
       width: isCompact ? 1.4 : 2,
+      "line-fill": "solid",
       "line-color": "#6366f1",
       "target-arrow-color": "#6366f1",
       "arrow-scale": isCompact ? 0.6 : 0.85,

@@ -90,7 +90,8 @@ defmodule Dialectic.Graph.VertexTest do
         id: "child",
         class: "answer",
         content: "Child",
-        parent: parent.id
+        parent: parent.id,
+        prompt_kind: "selection_explain"
       }
 
       deleted = %Vertex{id: "deleted", class: "answer", content: "Deleted", deleted: true}
@@ -114,8 +115,29 @@ defmodule Dialectic.Graph.VertexTest do
              ]
 
       assert edges == [
-               %{data: %{id: "parent_child", source: "parent", target: "child"}}
+               %{
+                 data: %{
+                   id: "parent_child",
+                   relation: "selection_explain",
+                   source: "parent",
+                   target: "child"
+                 }
+               }
              ]
+    end
+
+    test "falls back to the child class for legacy relation data", %{graph: graph} do
+      parent = %Vertex{id: "parent", class: "origin", content: "Parent"}
+      child = %Vertex{id: "child", class: "clarify", content: "Child"}
+
+      :digraph.add_vertex(graph, parent.id, parent)
+      :digraph.add_vertex(graph, child.id, child)
+      :digraph.add_edge(graph, parent.id, child.id)
+
+      assert [%{data: %{relation: "clarify"}}] =
+               graph
+               |> Vertex.to_cytoscape_format()
+               |> Enum.reject(&Map.has_key?(&1, :classes))
     end
   end
 

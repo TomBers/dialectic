@@ -1,5 +1,19 @@
 // Shared layout configuration for consistent graph rendering - enhanced for visual appeal
 
+const stableElementSort = (elementA, elementB) => {
+  const idA = String(elementA.id());
+  const idB = String(elementB.id());
+
+  if (idA < idB) return -1;
+  if (idA > idB) return 1;
+  return 0;
+};
+
+const dagreRenderingOptions = {
+  nodeDimensionsIncludeLabels: true,
+  sort: stableElementSort,
+};
+
 export const layoutConfig = {
   // Base layout options (spaced view - default)
   baseLayout: {
@@ -13,8 +27,7 @@ export const layoutConfig = {
     spacingFactor: 1.04, // Slight vertical bias without spreading the whole graph
     padding: 30, // Minimum padding around the graph
     // More natural arrangement for complex graphs
-    weaveToward: "leaves",
-    nestingFactor: 1.0, // Full size for compound nodes
+    ...dagreRenderingOptions,
     fit: false, // Do not auto-fit to viewport
     // Higher quality layout algorithm
     ranker: "network-simplex", // More compact layout algorithm
@@ -22,8 +35,6 @@ export const layoutConfig = {
     animate: true,
     animationDuration: 250, // Faster animations
     animationEasing: "ease-out-cubic",
-    // Additional compactness settings
-    gravity: 1.2, // Pull nodes toward the center without crowding branches
   },
 
   // Compact layout options
@@ -38,8 +49,7 @@ export const layoutConfig = {
     spacingFactor: 0.9, // Tight spacing factor (slightly relaxed)
     padding: 15, // Minimal padding
     // More natural arrangement for complex graphs
-    weaveToward: "leaves",
-    nestingFactor: 0.9, // Smaller compound nodes
+    ...dagreRenderingOptions,
     fit: false, // Do not auto-fit to viewport
     // Higher quality layout algorithm
     ranker: "network-simplex", // More compact layout algorithm
@@ -47,8 +57,6 @@ export const layoutConfig = {
     animate: true,
     animationDuration: 250, // Faster animations
     animationEasing: "ease-out-cubic",
-    // Additional compactness settings
-    gravity: 2.2, // Pull nodes more toward the center
   },
 
   // Layout options for expanded compound nodes
@@ -64,7 +72,7 @@ export const layoutConfig = {
     rankSep: 76,
     // Better handling of expanded groups
     spacingFactor: 1.0,
-    nestingFactor: 0.95,
+    ...dagreRenderingOptions,
   },
 
   readabilitySettings: {

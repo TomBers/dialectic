@@ -421,7 +421,7 @@ defmodule Dialectic.Graph.Vertex do
       Enum.flat_map(edges, fn edge ->
         with {_, v1, v2, _} <- :digraph.edge(graph, edge),
              {source_id, %{deleted: false}} <- :digraph.vertex(graph, v1),
-             {target_id, %{deleted: false}} <- :digraph.vertex(graph, v2) do
+             {target_id, %{deleted: false} = target_data} <- :digraph.vertex(graph, v2) do
           # Create edge ID from source and target names
           edge_id = source_id <> "_" <> target_id
 
@@ -431,7 +431,9 @@ defmodule Dialectic.Graph.Vertex do
               data: %{
                 id: edge_id,
                 source: source_id,
-                target: target_id
+                target: target_id,
+                relation:
+                  Map.get(target_data, :prompt_kind) || Map.get(target_data, :class, "related")
               }
             }
           ]
