@@ -504,10 +504,91 @@ defmodule DialecticWeb.GraphLiveTest do
       assert has_element?(view, "#guided-learning-login-3", "Create an account")
       refute has_element?(view, "#guided-plan-action-0")
 
+      render_click(view, "node_regenerate", %{"id" => "3"})
+
+      assert has_element?(view, "#login-modal", "Login Required")
+      assert length(GraphManager.vertices(graph.title)) == vertex_count
+      assert GraphManager.find_node_by_id(graph.title, "3").deleted == false
+
       render_click(view, "apply_guided_next_action", %{"id" => "3", "action" => "clarify"})
 
       assert has_element?(view, "#login-modal", "Login Required")
       assert length(GraphManager.vertices(graph.title)) == vertex_count
+    end
+
+    test "renders a valid structured plan when annotated options are temporarily unavailable", %{
+      conn: conn
+    } do
+      conn =
+        log_in_user(
+          conn,
+          user_fixture(%{
+            email: "fallback-plan-#{System.unique_integer([:positive])}@example.com"
+          })
+        )
+
+      {:ok, guided_plan} =
+        GuidedLearningPlan.validate("""
+        ## Learning plan: Fallback rendering
+        #{@guided_test_actions}
+        #{@guided_test_paths}
+        """)
+
+      {:ok, canonical_content} = GuidedLearningPlan.render(guided_plan)
+
+      graph_data =
+        canonical_content
+        |> learning_plan_graph_data(guided_plan)
+        |> update_in(["edges"], fn edges ->
+          Enum.reject(edges, &(&1["data"]["target"] == "3"))
+        end)
+
+      graph =
+        Dialectic.GraphFixtures.insert_graph(%{
+          title: "Fallback Learning Plan #{System.unique_integer([:positive])}",
+          data: graph_data
+        })
+
+      {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}/graph?node=3")
+
+      assert has_element?(view, "#guided-learning-plan-3")
+      assert has_element?(view, "#guided-plan-action-0", "Clarify terms")
+      assert has_element?(view, "#guided-plan-path-path-1", "Cooling homes")
+      refute has_element?(view, "#markdown-body-3")
+    end
+
+    test "supports legacy content-only learning plans", %{conn: conn} do
+      conn =
+        log_in_user(
+          conn,
+          user_fixture(%{email: "legacy-plan-#{System.unique_integer([:positive])}@example.com"})
+        )
+
+      content = """
+      ## Learning plan: Legacy plan
+      #{@guided_test_actions}
+      #{@guided_test_paths}
+      """
+
+      graph =
+        Dialectic.GraphFixtures.insert_graph(%{
+          title: "Legacy Learning Plan #{System.unique_integer([:positive])}",
+          data: learning_plan_graph_data(content, nil)
+        })
+
+      {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}/graph?node=3")
+
+      assert has_element?(view, "#guided-learning-plan-3")
+      assert has_element?(view, "#guided-plan-action-0", "Clarify terms")
+
+      view
+      |> element("#guided-plan-action-0")
+      |> render_click()
+
+      assert :sys.get_state(view.pid).socket.assigns.node.class == "clarify"
+
+      persisted_plan = GraphManager.find_node_by_id(graph.title, "3").guided_plan
+      assert {:ok, _plan} = GuidedLearningPlan.normalize(persisted_plan)
     end
 
     test "renders persisted learning-plan errors instead of interactive controls", %{conn: conn} do
@@ -562,6 +643,130 @@ defmodule DialecticWeb.GraphLiveTest do
       assert has_element?(view, "#guided-plan-action-0", "Clarify terms")
       assert has_element?(view, "#guided-plan-path-path-1", "Cooling homes")
       assert :sys.get_state(view.pid).socket.assigns.node.guided_plan == guided_plan
+    end
+
+    test "regenerates a stalled learning plan for a signed-in user", %{conn: conn} do
+      {:ok, view, _html} = setup_live_for_graph(conn, "Guided Plan Regeneration")
+      graph_id = :sys.get_state(view.pid).socket.assigns.graph_id
+
+      render_click(view, "reply-and-answer", %{
+        "vertex" => %{"content" => "Help me learn graph theory"},
+        "guided_learning" => "true",
+        "query_origin" => "node_action_bar"
+      })
+
+      stalled_plan = :sys.get_state(view.pid).socket.assigns.node
+      assert stalled_plan.class == "learning_plan"
+
+      render_click(view, "node_regenerate", %{"id" => stalled_plan.id})
+
+      replacement =
+        graph_id
+        |> GraphManager.vertices()
+        |> Enum.map(&GraphManager.find_node_by_id(graph_id, &1))
+        |> Enum.find(fn node ->
+          node.class == "learning_plan" && !node.deleted && node.id != stalled_plan.id
+        end)
+
+      assert replacement
+      assert GraphManager.find_node_by_id(graph_id, stalled_plan.id).deleted
+
+      render_click(view, "node_regenerate", %{"id" => stalled_plan.id})
+      assert has_element?(view, "#flash-error", "no longer available")
+
+      active_learning_plans =
+        graph_id
+        |> GraphManager.vertices()
+        |> Enum.map(&GraphManager.find_node_by_id(graph_id, &1))
+        |> Enum.count(&(&1.class == "learning_plan" && !&1.deleted))
+
+      assert active_learning_plans == 1
+    end
+
+    test "disables guided controls while the graph is locked", %{conn: conn} do
+      {:ok, view, _html} = setup_live_for_graph(conn, "Locked Guided Plan")
+      graph_id = :sys.get_state(view.pid).socket.assigns.graph_id
+
+      render_click(view, "reply-and-answer", %{
+        "vertex" => %{"content" => "Help me learn safely"},
+        "guided_learning" => "true",
+        "query_origin" => "node_action_bar"
+      })
+
+      plan_node = :sys.get_state(view.pid).socket.assigns.node
+
+      set_guided_plan(
+        graph_id,
+        plan_node.id,
+        """
+        ## Learning plan: Safe learning
+        #{@guided_test_actions}
+        #{@guided_test_paths}
+        """
+      )
+
+      render_click(view, "node_clicked", %{"id" => plan_node.id})
+      render_click(view, "toggle_lock_graph", %{})
+
+      assert has_element?(view, "#guided-plan-action-0[disabled]")
+      assert has_element?(view, "#guided-plan-path-checkbox-path-1[disabled]")
+      assert has_element?(view, "#guided-plan-path-submit[disabled]")
+
+      vertex_count = length(GraphManager.vertices(graph_id))
+
+      render_click(view, "apply_guided_next_action", %{
+        "id" => plan_node.id,
+        "action" => "clarify"
+      })
+
+      assert has_element?(view, "#flash-error", "This graph is locked")
+      assert length(GraphManager.vertices(graph_id)) == vertex_count
+    end
+
+    test "does not mark unrelated ancestor branches as guided-plan submissions", %{conn: conn} do
+      {:ok, view, _html} = setup_live_for_graph(conn, "Scoped Guided Deduplication")
+      graph_id = :sys.get_state(view.pid).socket.assigns.graph_id
+
+      render_click(view, "reply-and-answer", %{
+        "vertex" => %{"content" => "Help me learn scoped deduplication"},
+        "guided_learning" => "true",
+        "query_origin" => "node_action_bar"
+      })
+
+      plan_node = :sys.get_state(view.pid).socket.assigns.node
+
+      set_guided_plan(
+        graph_id,
+        plan_node.id,
+        """
+        ## Learning plan: Scoped deduplication
+        #{@guided_test_actions}
+        #{@guided_test_paths}
+        """
+      )
+
+      target_node = GraphManager.find_node_by_id(graph_id, List.first(plan_node.parents).id)
+      ancestor_node = List.first(target_node.parents)
+
+      unrelated_action =
+        GraphManager.add_node(graph_id, %Dialectic.Graph.Vertex{
+          content: "An unrelated clarification",
+          class: "clarify"
+        })
+
+      unrelated_path =
+        GraphManager.add_node(graph_id, %Dialectic.Graph.Vertex{
+          content: "How can homes stay safe during heat waves?",
+          class: "question"
+        })
+
+      GraphManager.add_edges(graph_id, unrelated_action, [ancestor_node])
+      GraphManager.add_edges(graph_id, unrelated_path, [ancestor_node])
+
+      render_click(view, "node_clicked", %{"id" => plan_node.id})
+
+      refute has_element?(view, "#guided-plan-action-0[disabled]")
+      refute has_element?(view, "#guided-plan-path-checkbox-path-1[disabled]")
     end
 
     test "creates selected paths as parallel question and answer branches", %{conn: conn} do

@@ -334,6 +334,80 @@ defmodule GraphManager do
     end
   end
 
+  def handle_call(
+        {:reserve_guided_submission, {node_id, submission_key}},
+        _from,
+        {graph_struct, graph}
+      ) do
+    case :digraph.vertex(graph, node_id) do
+      {_id, %{class: "learning_plan", deleted: false, guided_plan: nil} = vertex}
+      when submission_key == "regeneration" ->
+        updated_vertex = Map.put(vertex, :guided_plan, %{reservations: [submission_key]})
+        :digraph.add_vertex(graph, node_id, updated_vertex)
+        {:reply, :ok, {graph_struct, graph}}
+
+      {_id, %{class: "learning_plan", deleted: false, guided_plan: guided_plan} = vertex}
+      when is_map(guided_plan) and is_binary(submission_key) ->
+        reservations =
+          guided_plan
+          |> Map.get(:reservations, Map.get(guided_plan, "reservations", []))
+          |> List.wrap()
+
+        reservation_conflict? =
+          submission_key in reservations ||
+            (submission_key == "regeneration" && reservations != []) ||
+            (submission_key != "regeneration" && "regeneration" in reservations)
+
+        if reservation_conflict? do
+          {:reply, {:error, :already_reserved}, {graph_struct, graph}}
+        else
+          reservation_key =
+            if Map.has_key?(guided_plan, "reservations"), do: "reservations", else: :reservations
+
+          updated_plan = Map.put(guided_plan, reservation_key, [submission_key | reservations])
+          updated_vertex = Map.put(vertex, :guided_plan, updated_plan)
+          :digraph.add_vertex(graph, node_id, updated_vertex)
+          {:reply, :ok, {graph_struct, graph}}
+        end
+
+      {_id, _vertex} ->
+        {:reply, {:error, :invalid_guided_plan}, {graph_struct, graph}}
+
+      false ->
+        {:reply, {:error, :node_not_found}, {graph_struct, graph}}
+    end
+  end
+
+  def handle_call(
+        {:release_guided_submission, {node_id, submission_key}},
+        _from,
+        {graph_struct, graph}
+      ) do
+    case :digraph.vertex(graph, node_id) do
+      {_id, %{class: "learning_plan", guided_plan: guided_plan} = vertex}
+      when is_map(guided_plan) and is_binary(submission_key) ->
+        reservation_key =
+          if Map.has_key?(guided_plan, "reservations"), do: "reservations", else: :reservations
+
+        reservations =
+          guided_plan
+          |> Map.get(:reservations, Map.get(guided_plan, "reservations", []))
+          |> List.wrap()
+          |> List.delete(submission_key)
+
+        updated_plan = Map.put(guided_plan, reservation_key, reservations)
+        updated_vertex = Map.put(vertex, :guided_plan, updated_plan)
+        :digraph.add_vertex(graph, node_id, updated_vertex)
+        {:reply, :ok, {graph_struct, graph}}
+
+      {_id, _vertex} ->
+        {:reply, {:error, :invalid_guided_plan}, {graph_struct, graph}}
+
+      false ->
+        {:reply, {:error, :node_not_found}, {graph_struct, graph}}
+    end
+  end
+
   def handle_call({:toggle_graph_locked}, _from, {graph_struct, graph}) do
     updated_graph_struct = Dialectic.DbActions.Graphs.toggle_graph_locked(graph_struct)
     {:reply, updated_graph_struct, {updated_graph_struct, graph}}
@@ -616,6 +690,20 @@ defmodule GraphManager do
 
   def update_vertex_fields(path, node_id, fields) do
     GenServer.call(via_tuple(path), {:update_vertex_fields, {node_id, fields}})
+  end
+
+  def reserve_guided_submission(path, node_id, submission_key) do
+    GenServer.call(
+      via_tuple(path),
+      {:reserve_guided_submission, {node_id, submission_key}}
+    )
+  end
+
+  def release_guided_submission(path, node_id, submission_key) do
+    GenServer.call(
+      via_tuple(path),
+      {:release_guided_submission, {node_id, submission_key}}
+    )
   end
 
   def set_node_content(path, node_id, content) do

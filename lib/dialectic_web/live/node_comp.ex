@@ -1,6 +1,7 @@
 defmodule DialecticWeb.NodeComp do
   use DialecticWeb, :live_component
 
+  alias Dialectic.Responses.GuidedLearningPlan
   alias DialecticWeb.GraphHelpers
   alias DialecticWeb.GridCardComp
 
@@ -22,6 +23,8 @@ defmodule DialecticWeb.NodeComp do
       |> Map.put_new(:parents, [])
 
     node_id = Map.get(node, :id, "")
+    guided_actions = guided_options(assigns, :guided_actions, node, &GuidedLearningPlan.actions/1)
+    guided_paths = guided_options(assigns, :guided_paths, node, &GuidedLearningPlan.paths/1)
 
     {:ok,
      assign(socket,
@@ -39,8 +42,8 @@ defmodule DialecticWeb.NodeComp do
        can_edit: Map.get(assigns, :can_edit, true),
        menu_visible: Map.get(assigns, :menu_visible, true),
        streaming: Map.get(assigns, :streaming, false),
-       guided_actions: Map.get(assigns, :guided_actions, []),
-       guided_paths: Map.get(assigns, :guided_paths, []),
+       guided_actions: guided_actions,
+       guided_paths: guided_paths,
        guided_path_form: Map.get(assigns, :guided_path_form, to_form(%{}, as: :guided_paths)),
        max_explore_items: Map.get(assigns, :max_explore_items, 3),
        presentation_mode: Map.get(assigns, :presentation_mode, :off),
@@ -114,9 +117,29 @@ defmodule DialecticWeb.NodeComp do
 
   defp existing_follow_up_questions_json(_node), do: "[]"
 
-  defp interactive_learning_plan?(guided_actions, guided_paths) do
-    length(guided_actions) == 3 and length(guided_paths) == 5
+  defp guided_options(assigns, key, node, fallback) do
+    case Map.get(assigns, key, []) do
+      [] ->
+        case GuidedLearningPlan.resolve(node) do
+          {:ok, plan} ->
+            plan
+            |> fallback.()
+            |> Enum.map(&Map.put_new(&1, :disabled, false))
+
+          {:error, _errors} ->
+            []
+        end
+
+      options ->
+        options
+    end
   end
+
+  defp interactive_learning_plan?(%{class: "learning_plan"} = node) do
+    match?({:ok, _plan}, GuidedLearningPlan.resolve(node))
+  end
+
+  defp interactive_learning_plan?(_node), do: false
 
   defp learning_plan(assigns) do
     ~H"""
@@ -138,21 +161,22 @@ defmodule DialecticWeb.NodeComp do
 
         <div class="mt-3 grid gap-3">
           <%= for {recommendation, index} <- Enum.with_index(@guided_actions) do %>
+            <% action_disabled = recommendation.disabled || !@can_edit %>
             <button
               id={"guided-plan-action-#{index}"}
               type="button"
               phx-click="apply_guided_next_action"
               phx-value-action={recommendation.action}
               phx-value-id={@node.id}
-              disabled={recommendation.disabled}
-              aria-disabled={to_string(recommendation.disabled)}
+              disabled={action_disabled}
+              aria-disabled={to_string(action_disabled)}
               aria-describedby={"guided-plan-action-tooltip-#{index}"}
               class={[
                 "group flex w-full flex-col rounded-2xl border p-4 text-left shadow-sm transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2",
-                recommendation.disabled && "cursor-not-allowed border-slate-200 bg-slate-100/80",
-                !recommendation.disabled && recommendation.recommended &&
+                action_disabled && "cursor-not-allowed border-slate-200 bg-slate-100/80",
+                !action_disabled && recommendation.recommended &&
                   "border-indigo-300 bg-gradient-to-br from-indigo-50 via-white to-white ring-1 ring-indigo-100 hover:border-indigo-400 hover:shadow-md",
-                !recommendation.disabled && !recommendation.recommended &&
+                !action_disabled && !recommendation.recommended &&
                   "border-slate-200 bg-white hover:border-slate-300 hover:shadow-md"
               ]}
             >
@@ -168,9 +192,11 @@ defmodule DialecticWeb.NodeComp do
                     >
                       <.icon name={recommendation.icon} class="h-4 w-4" />
                     </span>
+                    <span id={"guided-plan-action-tooltip-#{index}"} role="tooltip" class="sr-only">
+                      {recommendation.tool_description}
+                    </span>
                     <span
-                      id={"guided-plan-action-tooltip-#{index}"}
-                      role="tooltip"
+                      aria-hidden="true"
                       class="pointer-events-none invisible absolute bottom-full left-0 z-30 mb-2 w-52 rounded-lg bg-slate-950 px-3 py-2 text-xs font-medium leading-4 text-white opacity-0 shadow-xl transition-opacity group-hover/tool:visible group-hover/tool:opacity-100"
                     >
                       {recommendation.tool_description}
@@ -178,7 +204,7 @@ defmodule DialecticWeb.NodeComp do
                   </span>
                   <span class={[
                     "min-w-0 pt-1 text-sm font-semibold leading-5",
-                    if(recommendation.disabled, do: "text-slate-500", else: "text-slate-950")
+                    if(action_disabled, do: "text-slate-500", else: "text-slate-950")
                   ]}>
                     {recommendation.label}
                   </span>
@@ -198,12 +224,12 @@ defmodule DialecticWeb.NodeComp do
               </span>
               <span class={[
                 "mt-2 block text-sm leading-5",
-                if(recommendation.disabled, do: "text-slate-500", else: "text-slate-600")
+                if(action_disabled, do: "text-slate-500", else: "text-slate-600")
               ]}>
                 {recommendation.reason}
               </span>
               <span
-                :if={!recommendation.disabled}
+                :if={!action_disabled}
                 class="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-700"
               >
                 Continue <.icon name="hero-arrow-right" class="h-3.5 w-3.5" />
@@ -228,11 +254,12 @@ defmodule DialecticWeb.NodeComp do
           class="mt-3 space-y-3"
         >
           <%= for path <- @guided_paths do %>
+            <% path_disabled = path.disabled || !@can_edit %>
             <div
               id={"guided-plan-path-#{path.id}"}
               class={[
                 "rounded-2xl border p-4 shadow-sm transition",
-                if(path.disabled,
+                if(path_disabled,
                   do: "border-slate-200 bg-slate-100/80",
                   else:
                     "border-slate-200 bg-white hover:border-indigo-300 has-[:checked]:border-indigo-400 has-[:checked]:bg-indigo-50/70 has-[:checked]:ring-1 has-[:checked]:ring-indigo-200"
@@ -246,7 +273,7 @@ defmodule DialecticWeb.NodeComp do
                   name={"paths[#{path.id}]"}
                   value="false"
                   label={path.label}
-                  disabled={path.disabled}
+                  disabled={path_disabled}
                 />
                 <span
                   :if={path.disabled}
@@ -257,13 +284,13 @@ defmodule DialecticWeb.NodeComp do
               </div>
               <p class={[
                 "mt-3 font-serif text-base font-semibold leading-5",
-                if(path.disabled, do: "text-slate-500", else: "text-slate-950")
+                if(path_disabled, do: "text-slate-500", else: "text-slate-950")
               ]}>
                 {path.question}
               </p>
               <p class={[
                 "mt-1.5 text-xs leading-5",
-                if(path.disabled, do: "text-slate-500", else: "text-slate-600")
+                if(path_disabled, do: "text-slate-500", else: "text-slate-600")
               ]}>
                 {path.reason}
               </p>
@@ -273,7 +300,7 @@ defmodule DialecticWeb.NodeComp do
           <button
             id="guided-plan-path-submit"
             type="submit"
-            disabled={Enum.all?(@guided_paths, & &1.disabled)}
+            disabled={!@can_edit || Enum.all?(@guided_paths, & &1.disabled)}
             class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Explore selected paths <.icon name="hero-arrow-right" class="h-4 w-4" />
@@ -419,8 +446,7 @@ defmodule DialecticWeb.NodeComp do
                         </button>
                       </div>
 
-                      <%= if @node.class == "learning_plan" and
-                            interactive_learning_plan?(@guided_actions, @guided_paths) do %>
+                      <%= if interactive_learning_plan?(@node) do %>
                         <%= if @current_user do %>
                           <.learning_plan
                             node={@node}
@@ -428,6 +454,7 @@ defmodule DialecticWeb.NodeComp do
                             guided_paths={@guided_paths}
                             guided_path_form={@guided_path_form}
                             max_explore_items={@max_explore_items}
+                            can_edit={@can_edit}
                           />
                         <% else %>
                           <div

@@ -557,7 +557,7 @@ defmodule Dialectic.Graph.GraphActions do
           do: {true, nil},
           else: {false, "Need at least 2 parent nodes for synthesis"}
 
-      class in ["thesis", "antithesis", "ideas", "answer", "explain"] or
+      class in ["thesis", "antithesis", "ideas", "answer", "learning_plan", "explain"] or
           class in thinking_tool_classes ->
         if List.first(parents) != nil,
           do: {true, nil},
@@ -587,6 +587,9 @@ defmodule Dialectic.Graph.GraphActions do
     case GraphManager.find_node_by_id(graph_id, stuck_node_id) do
       nil ->
         {:error, "Node not found"}
+
+      %{deleted: true} ->
+        {:error, "Node is no longer available"}
 
       stuck_node ->
         parents = stuck_node.parents

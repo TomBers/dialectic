@@ -65,6 +65,28 @@ defmodule Dialectic.Responses.GuidedLearningPlanTest do
     end
   end
 
+  test "resolves legacy content-only learning plans" do
+    assert {:ok, %{title: "Urban heat"}} =
+             GuidedLearningPlan.resolve(%{guided_plan: nil, content: @valid_plan})
+
+    assert {:error, _errors} =
+             GuidedLearningPlan.resolve(%{guided_plan: nil, content: "generation failed"})
+  end
+
+  test "recognizes atom- and string-keyed submission reservations" do
+    assert GuidedLearningPlan.submission_reserved?(
+             %{reservations: ["action:clarify"]},
+             "action:clarify"
+           )
+
+    assert GuidedLearningPlan.submission_reserved?(
+             %{"reservations" => ["path:path-1"]},
+             "path:path-1"
+           )
+
+    refute GuidedLearningPlan.submission_reserved?(%{}, "action:clarify")
+  end
+
   test "normalizes serialized plans and renders canonical markdown" do
     {:ok, plan} = GuidedLearningPlan.validate(@valid_plan)
     serialized_plan = plan |> Jason.encode!() |> Jason.decode!()

@@ -204,6 +204,76 @@ defmodule GraphManagerTest do
       assert result == nil
     end
 
+    test "atomically reserves a guided submission once", %{graph: _} do
+      plan =
+        GraphManager.add_node(@graph_id, %Vertex{
+          content: "Learning plan",
+          class: "learning_plan",
+          guided_plan: %{version: 1, reservations: []}
+        })
+
+      results =
+        1..20
+        |> Task.async_stream(
+          fn _index ->
+            GraphManager.reserve_guided_submission(@graph_id, plan.id, "action:clarify")
+          end,
+          timeout: :infinity
+        )
+        |> Enum.map(fn {:ok, result} -> result end)
+
+      assert Enum.count(results, &(&1 == :ok)) == 1
+      assert Enum.count(results, &(&1 == {:error, :already_reserved})) == 19
+
+      refreshed_plan = GraphManager.find_node_by_id(@graph_id, plan.id)
+      assert refreshed_plan.guided_plan.reservations == ["action:clarify"]
+
+      assert :ok =
+               GraphManager.release_guided_submission(
+                 @graph_id,
+                 plan.id,
+                 "action:clarify"
+               )
+
+      assert :ok =
+               GraphManager.reserve_guided_submission(
+                 @graph_id,
+                 plan.id,
+                 "action:clarify"
+               )
+    end
+
+    test "makes regeneration exclusive and rejects deleted learning plans", %{graph: _} do
+      plan =
+        GraphManager.add_node(@graph_id, %Vertex{
+          content: "Learning plan",
+          class: "learning_plan",
+          guided_plan: %{version: 1}
+        })
+
+      assert :ok =
+               GraphManager.reserve_guided_submission(@graph_id, plan.id, "regeneration")
+
+      assert {:error, :already_reserved} =
+               GraphManager.reserve_guided_submission(
+                 @graph_id,
+                 plan.id,
+                 "path:path-1"
+               )
+
+      assert :ok =
+               GraphManager.release_guided_submission(@graph_id, plan.id, "regeneration")
+
+      GraphManager.delete_node(@graph_id, plan.id)
+
+      assert {:error, :invalid_guided_plan} =
+               GraphManager.reserve_guided_submission(
+                 @graph_id,
+                 plan.id,
+                 "action:clarify"
+               )
+    end
+
     test "path_to_node terminates when graph contains a cycle", %{graph: _} do
       first =
         GraphManager.add_node(@graph_id, %Vertex{
