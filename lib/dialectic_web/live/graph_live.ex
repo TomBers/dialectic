@@ -45,35 +45,11 @@ defmodule DialecticWeb.GraphLive do
                             ] ++ @critical_thinking_operations
   @structural_graph_operations ["delete" | @node_creation_operations]
   @max_explore_items 3
-  @guided_action_labels %{
-    "Clarify terms" => "clarify",
-    "Surface assumptions" => "assumptions",
-    "Test with a counterexample" => "counterexample",
-    "Explore implications" => "implications",
-    "Find blind spots" => "blind_spots",
-    "Check sources" => "says_who",
-    "Consider opposing views" => "who_disagrees",
-    "Steel-man the argument" => "steel_man",
-    "Try a what-if" => "what_if",
-    "Test both sides" => "branch",
-    "Find related ideas" => "related_ideas"
-  }
-  @guided_action_tools %{
-    "clarify" => :clarify,
-    "assumptions" => :assumptions,
-    "counterexample" => :counterexample,
-    "implications" => :implications,
-    "blind_spots" => :blind_spots,
-    "says_who" => :says_who,
-    "who_disagrees" => :who_disagrees,
-    "steel_man" => :steel_man,
-    "what_if" => :what_if
-  }
   use DialecticWeb.GraphStreaming, preload_highlight_links: true
 
   alias Dialectic.Graph.{Vertex, GraphActions, Siblings}
+  alias Dialectic.Responses.GuidedLearningPlan
   alias Dialectic.Accounts.User
-  alias DialecticWeb.ColUtils
   alias DialecticWeb.GridChat
   alias DialecticWeb.NodeComp
   alias DialecticWeb.GraphHelpers
@@ -591,6 +567,7 @@ defmodule DialecticWeb.GraphLive do
          :ok <- validate_can_edit(socket),
          {:ok, %{class: "learning_plan"} = plan_node} <-
            find_node_safe(socket.assigns.graph_id, socket.assigns.node.id),
+         {:ok, _guided_plan} <- GuidedLearningPlan.normalize(plan_node.guided_plan),
          {:ok, target_node} <- guided_action_target(socket.assigns.graph_id, plan_node) do
       paths =
         plan_node
@@ -646,6 +623,7 @@ defmodule DialecticWeb.GraphLive do
          :ok <- validate_can_edit(socket),
          {:ok, plan_node} <- find_node_safe(socket.assigns.graph_id, plan_node_id),
          true <- Map.get(plan_node, :class) == "learning_plan",
+         {:ok, _guided_plan} <- GuidedLearningPlan.normalize(plan_node.guided_plan),
          true <- guided_action_recommended?(plan_node, action),
          {:ok, target_node} <- guided_action_target(socket.assigns.graph_id, plan_node),
          false <- guided_action_used?(plan_node, target_node, action) do
@@ -2080,7 +2058,8 @@ defmodule DialecticWeb.GraphLive do
     is_nil(socket.assigns.current_user) && guided_learning_enabled?(params)
   end
 
-  defp guided_plan_options(%{class: "learning_plan"} = plan_node) do
+  defp guided_plan_options(%{class: "learning_plan", guided_plan: guided_plan} = plan_node)
+       when is_map(guided_plan) do
     case List.first(Map.get(plan_node, :parents, [])) do
       %{} = target_node ->
         actions =
@@ -2102,32 +2081,9 @@ defmodule DialecticWeb.GraphLive do
 
   defp guided_plan_options(_node), do: {[], []}
 
-  defp guided_paths(%{class: "learning_plan", content: content})
-       when is_binary(content) do
-    content
-    |> String.split(~r/\r\n|\r|\n/)
-    |> Enum.flat_map(fn line ->
-      case Regex.run(
-             ~r/^\s*(?:[-*+]|\d+[.)])\s+\*\*(.+?)\*\*\s+—\s+(.+?\?)\s+—\s+(.+?)\s*$/u,
-             line
-           ) do
-        [_, label, question, reason] ->
-          [
-            %{
-              label: clean_guided_reason(label),
-              question: clean_guided_reason(question),
-              reason: clean_guided_reason(reason)
-            }
-          ]
-
-        _no_match ->
-          []
-      end
-    end)
-    |> Enum.uniq_by(&normalize_guided_question(&1.question))
-    |> Enum.take(5)
-    |> Enum.with_index()
-    |> Enum.map(fn {path, index} -> Map.merge(path, %{index: index, disabled: false}) end)
+  defp guided_paths(%{class: "learning_plan", guided_plan: guided_plan})
+       when is_map(guided_plan) do
+    GuidedLearningPlan.paths(guided_plan)
   end
 
   defp guided_paths(_node), do: []
@@ -2160,18 +2116,15 @@ defmodule DialecticWeb.GraphLive do
   end
 
   defp selected_guided_paths(params, paths) do
-    selected_indexes =
+    selected_ids =
       case Map.get(params, "paths") do
         selected when is_map(selected) ->
           selected
-          |> Enum.flat_map(fn {index, value} ->
+          |> Enum.flat_map(fn {path_id, value} ->
             values = if is_list(value), do: value, else: [value]
 
             if Enum.any?(values, &checked_checkbox_value?/1) do
-              case Integer.parse(index) do
-                {parsed, ""} -> [parsed]
-                _invalid_index -> []
-              end
+              [path_id]
             else
               []
             end
@@ -2183,7 +2136,7 @@ defmodule DialecticWeb.GraphLive do
       end
 
     Enum.filter(paths, fn path ->
-      !path.disabled && MapSet.member?(selected_indexes, path.index)
+      !path.disabled && MapSet.member?(selected_ids, path.id)
     end)
   end
 
@@ -2193,75 +2146,12 @@ defmodule DialecticWeb.GraphLive do
     "Exploring #{length(paths)} selected paths"
   end
 
-  defp guided_next_actions(%{class: "learning_plan", content: content})
-       when is_binary(content) do
-    content
-    |> String.split(~r/\r\n|\r|\n/)
-    |> Enum.flat_map(fn line ->
-      case Regex.run(
-             ~r/^\s*(?:[-*+]|\d+[.)])\s+\*\*(.+?)\*\*\s*[—–-]\s*(.+?)\s*$/u,
-             line
-           ) do
-        [_, label, reason] ->
-          case Map.fetch(@guided_action_labels, String.trim(label)) do
-            {:ok, action} ->
-              presentation = guided_action_presentation(action)
-
-              [
-                %{
-                  action: action,
-                  label: String.trim(label),
-                  reason: clean_guided_reason(reason),
-                  icon: presentation.icon,
-                  tool_description: presentation.description
-                }
-              ]
-
-            :error ->
-              []
-          end
-
-        _no_match ->
-          []
-      end
-    end)
-    |> Enum.uniq_by(& &1.action)
-    |> Enum.take(3)
-    |> Enum.with_index()
-    |> Enum.map(fn {recommendation, index} ->
-      Map.put(recommendation, :recommended, index == 0)
-    end)
+  defp guided_next_actions(%{class: "learning_plan", guided_plan: guided_plan})
+       when is_map(guided_plan) do
+    GuidedLearningPlan.actions(guided_plan)
   end
 
   defp guided_next_actions(_node), do: []
-
-  defp guided_action_presentation("branch") do
-    %{
-      icon: "hero-scale",
-      description: "Compare the strongest case for and against this idea."
-    }
-  end
-
-  defp guided_action_presentation("related_ideas") do
-    %{
-      icon: "hero-light-bulb",
-      description: "Find concepts and directions connected to this idea."
-    }
-  end
-
-  defp guided_action_presentation(action) do
-    %{
-      icon: ColUtils.advanced_tool_icon(action),
-      description: ColUtils.advanced_tool_description(action)
-    }
-  end
-
-  defp clean_guided_reason(reason) do
-    reason
-    |> String.replace(~r/(\*\*|__|`)/, "")
-    |> String.trim()
-    |> String.slice(0, 500)
-  end
 
   defp guided_action_recommended?(plan_node, action) do
     Enum.any?(guided_next_actions(plan_node), &(&1.action == action))
@@ -2294,7 +2184,7 @@ defmodule DialecticWeb.GraphLive do
   end
 
   defp guided_action_used?(plan_node, target_node, action) do
-    classes = guided_action_classes(action)
+    classes = GuidedLearningPlan.result_classes(action)
 
     [
       plan_node,
@@ -2306,35 +2196,31 @@ defmodule DialecticWeb.GraphLive do
     end)
   end
 
-  defp guided_action_classes("branch"), do: ["thesis", "antithesis"]
-  defp guided_action_classes("related_ideas"), do: ["ideas"]
-  defp guided_action_classes(action), do: [action]
-
-  defp apply_guided_action("branch", plan_node, target_node, socket) do
-    nodes =
-      create_branch_nodes(socket, plan_node, content_override: Map.get(target_node, :content, ""))
-
-    begin_background_generations(
-      socket,
-      nodes,
-      "branch",
-      "Building the strongest case for and against this idea",
-      target_node_id: plan_node.id
-    )
-  end
-
-  defp apply_guided_action("related_ideas", plan_node, target_node, socket) do
-    result_node =
-      GraphActions.related_ideas(graph_action_params(socket, plan_node),
-        content_override: Map.get(target_node, :content, "")
-      )
-
-    begin_foreground_generation(socket, result_node, "ideas")
-  end
-
   defp apply_guided_action(action, plan_node, target_node, socket) do
-    case Map.fetch(@guided_action_tools, action) do
-      {:ok, tool} ->
+    case GuidedLearningPlan.executor(action) do
+      {:ok, :branch} ->
+        nodes =
+          create_branch_nodes(socket, plan_node,
+            content_override: Map.get(target_node, :content, "")
+          )
+
+        begin_background_generations(
+          socket,
+          nodes,
+          "branch",
+          "Building the strongest case for and against this idea",
+          target_node_id: plan_node.id
+        )
+
+      {:ok, :related_ideas} ->
+        result_node =
+          GraphActions.related_ideas(graph_action_params(socket, plan_node),
+            content_override: Map.get(target_node, :content, "")
+          )
+
+        begin_foreground_generation(socket, result_node, "ideas")
+
+      {:ok, {:thinking_tool, tool}} ->
         result_node =
           GraphActions.apply_thinking_tool(
             tool,

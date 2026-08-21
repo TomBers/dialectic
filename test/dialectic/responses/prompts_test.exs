@@ -1,7 +1,7 @@
 defmodule Dialectic.Responses.PromptsTest do
   use ExUnit.Case, async: true
 
-  alias Dialectic.Responses.Prompts
+  alias Dialectic.Responses.{GuidedLearningPlan, Prompts}
 
   # Note: frame_minimal_context/1 is a private function, so we test it indirectly
   # through the public selection/2 function which uses it internally
@@ -21,6 +21,8 @@ defmodule Dialectic.Responses.PromptsTest do
       assert prompt =~ "exact heading `### Paths to explore`"
       assert prompt =~ "exactly three top-level bullets"
       assert prompt =~ "exactly five top-level bullets"
+
+      assert Enum.all?(GuidedLearningPlan.labels(), &String.contains?(prompt, "- #{&1}"))
     end
   end
 

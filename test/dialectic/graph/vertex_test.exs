@@ -42,6 +42,31 @@ defmodule Dialectic.Graph.VertexTest do
     end
   end
 
+  test "round-trips structured learning-plan data" do
+    guided_plan = %{
+      version: 1,
+      title: "Test topic",
+      actions: [%{key: "clarify", reason: "Define the topic."}],
+      paths: [
+        %{
+          id: "path-1",
+          label: "Foundation",
+          question: "What comes first?",
+          reason: "It establishes context."
+        }
+      ]
+    }
+
+    vertex = %Vertex{id: "plan-1", class: "learning_plan", guided_plan: guided_plan}
+    serialized = Vertex.serialize(vertex)
+
+    assert serialized.guided_plan == guided_plan
+
+    deserialized = serialized |> Jason.encode!() |> Jason.decode!() |> Vertex.deserialize()
+    assert deserialized.guided_plan["version"] == 1
+    assert hd(deserialized.guided_plan["actions"])["key"] == "clarify"
+  end
+
   describe "build_context/3 question traversal" do
     test "keeps origin history through an omitted question", %{graph: graph} do
       origin = add_vertex(graph, "origin", "Initial framing", "origin")

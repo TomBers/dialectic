@@ -145,12 +145,13 @@ defmodule Dialectic.Responses.RequestQueue do
     end
   end
 
-  defp build_params(instruction, system_prompt, to_node, graph, request_context, opts) do
+  @doc false
+  def build_params(instruction, system_prompt, to_node, graph, request_context, opts) do
     node_id = if is_map(to_node), do: to_node.id, else: to_node
     {live_view_topic, anonymous_actor_id} = split_request_context(request_context)
     mode = request_mode(opts, system_prompt, graph)
 
-    %{
+    params = %{
       instruction: instruction,
       system_prompt: system_prompt,
       question: instruction,
@@ -162,6 +163,14 @@ defmodule Dialectic.Responses.RequestQueue do
       response_level: mode |> PromptsStructured.response_profile() |> Map.fetch!(:key),
       max_tokens: PromptsStructured.max_output_tokens(mode)
     }
+
+    case Keyword.get(opts, :response_contract) do
+      contract when is_binary(contract) and contract != "" ->
+        Map.put(params, :response_contract, contract)
+
+      _no_contract ->
+        params
+    end
   end
 
   defp request_mode(opts, system_prompt, graph) do

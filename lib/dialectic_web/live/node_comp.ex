@@ -225,7 +225,7 @@ defmodule DialecticWeb.NodeComp do
         >
           <%= for path <- @guided_paths do %>
             <div
-              id={"guided-plan-path-#{path.index}"}
+              id={"guided-plan-path-#{path.id}"}
               class={[
                 "rounded-2xl border p-4 shadow-sm transition",
                 if(path.disabled,
@@ -238,8 +238,8 @@ defmodule DialecticWeb.NodeComp do
               <div class="flex items-start justify-between gap-3">
                 <.input
                   type="checkbox"
-                  id={"guided-plan-path-checkbox-#{path.index}"}
-                  name={"paths[#{path.index}]"}
+                  id={"guided-plan-path-checkbox-#{path.id}"}
+                  name={"paths[#{path.id}]"}
                   value="false"
                   label={path.label}
                   disabled={path.disabled}

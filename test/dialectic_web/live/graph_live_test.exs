@@ -3,11 +3,20 @@ defmodule DialecticWeb.GraphLiveTest do
   alias Dialectic.Accounts
   alias Dialectic.Follows
   alias Dialectic.GridActivity
+  alias Dialectic.Responses.GuidedLearningPlan
 
   import Phoenix.LiveViewTest
   import Dialectic.AccountsFixtures
 
   @graph_id "Satre"
+  @guided_test_paths """
+  ### Paths to explore
+  - **Cooling homes** — How can homes stay safe during heat waves? — Compares practical building interventions.
+  - **Public space** — Which street designs reduce dangerous heat? — Connects planning choices to exposure.
+  - **Health systems** — How should clinics prepare for extreme heat? — Tests readiness for vulnerable residents.
+  - **Energy demand** — Can cooling expand without overloading the grid? — Links adaptation to infrastructure.
+  - **Unequal exposure** — Who faces the greatest heat risk and why? — Surfaces distributional consequences.
+  """
 
   defp setup_live(conn) do
     conn =
@@ -121,6 +130,16 @@ defmodule DialecticWeb.GraphLiveTest do
         %{"data" => %{"id" => "2_3", "source" => "2", "target" => "3"}}
       ]
     }
+  end
+
+  defp set_guided_plan(graph_id, node_id, content) do
+    {:ok, guided_plan} = GuidedLearningPlan.validate(content)
+    {:ok, canonical_content} = GuidedLearningPlan.render(guided_plan)
+
+    GraphManager.update_vertex_fields(graph_id, node_id, %{
+      content: canonical_content,
+      guided_plan: guided_plan
+    })
   end
 
   describe "mount/3" do
@@ -478,7 +497,7 @@ defmodule DialecticWeb.GraphLiveTest do
       assert plan_node.class == "learning_plan"
       assert plan_node.prompt_kind == "guided_learning_plan"
 
-      GraphManager.set_node_content(
+      set_guided_plan(
         graph_id,
         plan_node.id,
         """
@@ -491,6 +510,8 @@ defmodule DialecticWeb.GraphLiveTest do
         - **Division of power** — How did the triumvirs divide political and territorial control? — Establishes how the alliance functioned.
         - **Collapse of the alliance** — Why did cooperation between Octavian and Antony become civil war? — Reveals the mechanisms behind its collapse.
         - **Cleopatra’s role** — How did Cleopatra influence Antony’s strategy and Roman perceptions? — Separates her political role from propaganda.
+        - **Republican institutions** — Which institutions failed to constrain the triumvirs? — Connects personal rivalry to systemic weakness.
+        - **Military loyalty** — Why did Roman armies follow individual commanders? — Explains the power base behind political conflict.
         """
       )
 
@@ -499,9 +520,9 @@ defmodule DialecticWeb.GraphLiveTest do
       assert has_element?(view, "#guided-learning-plan-#{plan_node.id}")
       refute has_element?(view, "#guided-learning-plan-modal")
       assert has_element?(view, "#guided-plan-action-0", "Clarify terms")
-      assert has_element?(view, "#guided-plan-path-0", "Division of power")
-      assert has_element?(view, "#guided-plan-path-1", "Collapse of the alliance")
-      assert has_element?(view, "#guided-plan-path-2", "Cleopatra’s role")
+      assert has_element?(view, "#guided-plan-path-path-1", "Division of power")
+      assert has_element?(view, "#guided-plan-path-path-2", "Collapse of the alliance")
+      assert has_element?(view, "#guided-plan-path-path-3", "Cleopatra’s role")
 
       vertex_count_before = length(GraphManager.vertices(graph_id))
 
@@ -509,9 +530,9 @@ defmodule DialecticWeb.GraphLiveTest do
       |> element("#guided-plan-path-form")
       |> render_submit(%{
         "paths" => %{
-          "0" => ["false", "true"],
-          "1" => ["false"],
-          "2" => ["false", "true"]
+          "path-1" => ["false", "true"],
+          "path-2" => ["false"],
+          "path-3" => ["false", "true"]
         }
       })
 
@@ -553,10 +574,10 @@ defmodule DialecticWeb.GraphLiveTest do
 
       render_click(view, "node_clicked", %{"id" => plan_node.id})
 
-      assert has_element?(view, "#guided-plan-path-0", "Already explored")
-      assert has_element?(view, "#guided-plan-path-checkbox-0[disabled]")
-      refute has_element?(view, "#guided-plan-path-checkbox-1[disabled]")
-      assert has_element?(view, "#guided-plan-path-checkbox-2[disabled]")
+      assert has_element?(view, "#guided-plan-path-path-1", "Already explored")
+      assert has_element?(view, "#guided-plan-path-checkbox-path-1[disabled]")
+      refute has_element?(view, "#guided-plan-path-checkbox-path-2[disabled]")
+      assert has_element?(view, "#guided-plan-path-checkbox-path-3[disabled]")
     end
 
     test "ranks supported actions and applies the learner's selection", %{conn: conn} do
@@ -573,7 +594,7 @@ defmodule DialecticWeb.GraphLiveTest do
       assert plan_node.class == "learning_plan"
       assert plan_node.prompt_kind == "guided_learning_plan"
 
-      GraphManager.set_node_content(
+      set_guided_plan(
         graph_id,
         plan_node.id,
         """
@@ -582,6 +603,7 @@ defmodule DialecticWeb.GraphLiveTest do
         - **Clarify terms** — Define what successful heat adaptation means before comparing policies.
         - **Test with a counterexample** — Examine a city where common heat interventions failed.
         - **Find related ideas** — Connect heat adaptation to housing, transport, and public health.
+        #{@guided_test_paths}
         """
       )
 
@@ -646,14 +668,23 @@ defmodule DialecticWeb.GraphLiveTest do
 
       plan_node = :sys.get_state(view.pid).socket.assigns.node
 
-      GraphManager.set_node_content(
+      set_guided_plan(
         graph_id,
         plan_node.id,
         """
         ## Learning plan: How should cities adapt to extreme heat
         ### Best next actions
         - **Clarify terms** — Define what successful heat adaptation means before comparing policies.
+        - **Test with a counterexample** — Examine a city where common heat interventions failed.
+        - **Find related ideas** — Connect heat adaptation to housing, transport, and public health.
+        #{@guided_test_paths}
         """
+      )
+
+      GraphManager.set_node_content(
+        graph_id,
+        plan_node.id,
+        "## Learning plan: Tampered text\n### Best next actions\n- **Surface assumptions** — This text is not canonical."
       )
 
       vertex_count_before = length(GraphManager.vertices(graph_id))

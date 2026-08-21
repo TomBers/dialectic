@@ -19,7 +19,7 @@ defmodule Dialectic.Responses.Prompts do
   3. Tasks are framed as continuations, not standalone answers
   """
 
-  alias Dialectic.Responses.PromptsStructured
+  alias Dialectic.Responses.{GuidedLearningPlan, PromptsStructured}
 
   # Maximum character length for context in minimal context prompts.
   # Longer contexts are truncated to this length to keep prompts focused
@@ -192,6 +192,8 @@ defmodule Dialectic.Responses.Prompts do
   """
   @spec guided_learning_plan(String.t(), String.t()) :: String.t()
   def guided_learning_plan(context, topic) do
+    action_labels = Enum.map_join(GuidedLearningPlan.labels(), "\n", &"- #{&1}")
+
     join_blocks([
       frame_context(context),
       """
@@ -200,17 +202,7 @@ defmodule Dialectic.Responses.Prompts do
       **Your task:** Create one learning plan containing both ranked inquiry actions and several distinct paths through the topic.
 
       For the action section, choose only from these exact labels:
-      - Clarify terms
-      - Surface assumptions
-      - Test with a counterexample
-      - Explore implications
-      - Find blind spots
-      - Check sources
-      - Consider opposing views
-      - Steel-man the argument
-      - Try a what-if
-      - Test both sides
-      - Find related ideas
+      #{action_labels}
 
       Output requirements:
       - Start with the exact heading `## Learning plan: #{guided_topic_title(topic)}`.
