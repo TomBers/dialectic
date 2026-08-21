@@ -114,6 +114,10 @@ defmodule DialecticWeb.NodeComp do
 
   defp existing_follow_up_questions_json(_node), do: "[]"
 
+  defp interactive_learning_plan?(guided_actions, guided_paths) do
+    length(guided_actions) == 3 and length(guided_paths) == 5
+  end
+
   defp learning_plan(assigns) do
     ~H"""
     <div id={"guided-learning-plan-#{@node.id}"} class="not-prose space-y-7 pb-3 pt-1">
@@ -415,7 +419,8 @@ defmodule DialecticWeb.NodeComp do
                         </button>
                       </div>
 
-                      <%= if @node.class == "learning_plan" do %>
+                      <%= if @node.class == "learning_plan" and
+                            interactive_learning_plan?(@guided_actions, @guided_paths) do %>
                         <%= if @current_user do %>
                           <.learning_plan
                             node={@node}

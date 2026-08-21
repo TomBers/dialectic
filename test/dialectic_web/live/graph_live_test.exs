@@ -9,6 +9,12 @@ defmodule DialecticWeb.GraphLiveTest do
   import Dialectic.AccountsFixtures
 
   @graph_id "Satre"
+  @guided_test_actions """
+  ### Best next actions
+  - **Clarify terms** — Define the central idea before comparing approaches.
+  - **Test with a counterexample** — Examine where the usual explanation fails.
+  - **Find related ideas** — Connect the topic to adjacent concepts.
+  """
   @guided_test_paths """
   ### Paths to explore
   - **Cooling homes** — How can homes stay safe during heat waves? — Compares practical building interventions.
@@ -130,6 +136,18 @@ defmodule DialecticWeb.GraphLiveTest do
         %{"data" => %{"id" => "2_3", "source" => "2", "target" => "3"}}
       ]
     }
+  end
+
+  defp learning_plan_graph_data(content, guided_plan) do
+    update_in(learning_plan_graph_data(), ["nodes"], fn nodes ->
+      Enum.map(nodes, fn
+        %{"id" => "3"} = node ->
+          Map.merge(node, %{"content" => content, "guided_plan" => guided_plan})
+
+        node ->
+          node
+      end)
+    end)
   end
 
   defp set_guided_plan(graph_id, node_id, content) do
@@ -464,11 +482,20 @@ defmodule DialecticWeb.GraphLiveTest do
       assert length(GraphManager.vertices(graph.title)) == vertex_count
     end
 
-    test "signed-out viewers cannot use actions on an existing learning plan", %{conn: conn} do
+    test "signed-out viewers cannot use actions on a valid learning plan", %{conn: conn} do
+      {:ok, guided_plan} =
+        GuidedLearningPlan.validate("""
+        ## Learning plan: Test topic
+        #{@guided_test_actions}
+        #{@guided_test_paths}
+        """)
+
+      {:ok, canonical_content} = GuidedLearningPlan.render(guided_plan)
+
       graph =
         Dialectic.GraphFixtures.insert_graph(%{
           title: "Anonymous Existing Learning Plan #{System.unique_integer([:positive])}",
-          data: learning_plan_graph_data()
+          data: learning_plan_graph_data(canonical_content, guided_plan)
         })
 
       {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}/graph?node=3")
@@ -481,6 +508,60 @@ defmodule DialecticWeb.GraphLiveTest do
 
       assert has_element?(view, "#login-modal", "Login Required")
       assert length(GraphManager.vertices(graph.title)) == vertex_count
+    end
+
+    test "renders persisted learning-plan errors instead of interactive controls", %{conn: conn} do
+      error = "We couldn't create a valid learning plan. Please try again."
+
+      graph =
+        Dialectic.GraphFixtures.insert_graph(%{
+          title: "Invalid Learning Plan #{System.unique_integer([:positive])}",
+          data: learning_plan_graph_data(error, nil)
+        })
+
+      {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}/graph?node=3")
+
+      assert has_element?(view, "#markdown-body-3[data-md*='valid learning plan']")
+      refute has_element?(view, "#guided-learning-login-3")
+      refute has_element?(view, "#guided-learning-plan-3")
+    end
+
+    test "activates a completed guided plan from its final streaming update", %{conn: conn} do
+      {:ok, view, _html} = setup_live_for_graph(conn, "Guided Streaming Completion")
+      graph_id = :sys.get_state(view.pid).socket.assigns.graph_id
+
+      render_click(view, "reply-and-answer", %{
+        "vertex" => %{"content" => "Help me learn R"},
+        "guided_learning" => "true",
+        "query_origin" => "node_action_bar"
+      })
+
+      plan_node = :sys.get_state(view.pid).socket.assigns.node
+
+      {:ok, guided_plan} =
+        GuidedLearningPlan.validate("""
+        ## Learning plan: R
+        #{@guided_test_actions}
+        #{@guided_test_paths}
+        """)
+
+      {:ok, canonical_content} = GuidedLearningPlan.render(guided_plan)
+
+      updated_vertex =
+        GraphManager.update_vertex_fields(graph_id, plan_node.id, %{
+          content: canonical_content,
+          guided_plan: guided_plan
+        })
+
+      send(
+        view.pid,
+        {:stream_chunk_broadcast, updated_vertex, :node_id, plan_node.id, nil}
+      )
+
+      assert has_element?(view, "#guided-learning-plan-#{plan_node.id}")
+      assert has_element?(view, "#guided-plan-action-0", "Clarify terms")
+      assert has_element?(view, "#guided-plan-path-path-1", "Cooling homes")
+      assert :sys.get_state(view.pid).socket.assigns.node.guided_plan == guided_plan
     end
 
     test "creates selected paths as parallel question and answer branches", %{conn: conn} do

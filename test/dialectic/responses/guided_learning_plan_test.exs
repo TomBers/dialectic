@@ -40,6 +40,31 @@ defmodule Dialectic.Responses.GuidedLearningPlanTest do
     assert Enum.at(paths, 0).question == "How can homes stay safe during heat waves?"
   end
 
+  test "accepts one-character learning-plan titles" do
+    content = String.replace(@valid_plan, "Urban heat", "R")
+
+    assert {:ok, %{title: "R"} = plan} = GuidedLearningPlan.validate(content)
+    assert {:ok, markdown} = GuidedLearningPlan.render(plan)
+    assert markdown =~ "## Learning plan: R"
+  end
+
+  test "rejects values that become empty during normalization" do
+    invalid_plans = [
+      String.replace(@valid_plan, "Urban heat", "__"),
+      String.replace(
+        @valid_plan,
+        "Define successful adaptation before comparing policies.",
+        "`"
+      ),
+      String.replace(@valid_plan, "Cooling homes", "__")
+    ]
+
+    for invalid_plan <- invalid_plans do
+      assert {:error, ["invalid structured learning plan"]} =
+               GuidedLearningPlan.validate(invalid_plan)
+    end
+  end
+
   test "normalizes serialized plans and renders canonical markdown" do
     {:ok, plan} = GuidedLearningPlan.validate(@valid_plan)
     serialized_plan = plan |> Jason.encode!() |> Jason.decode!()

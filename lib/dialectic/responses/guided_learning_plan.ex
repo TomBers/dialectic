@@ -179,7 +179,7 @@ defmodule Dialectic.Responses.GuidedLearningPlan do
     errors =
       []
       |> require_match(
-        Regex.match?(~r/^## Learning plan: \S.+$/m, content),
+        Regex.match?(~r/^## Learning plan: \S.*$/m, content),
         "missing or invalid learning-plan heading"
       )
       |> require_match(
@@ -204,8 +204,13 @@ defmodule Dialectic.Responses.GuidedLearningPlan do
       )
 
     case Enum.reverse(errors) do
-      [] -> {:ok, build_plan(content, parsed_actions, parsed_paths)}
-      validation_errors -> {:error, validation_errors}
+      [] ->
+        content
+        |> build_plan(parsed_actions, parsed_paths)
+        |> normalize()
+
+      validation_errors ->
+        {:error, validation_errors}
     end
   end
 
@@ -216,9 +221,10 @@ defmodule Dialectic.Responses.GuidedLearningPlan do
     title = value(plan, :title)
     actions = value(plan, :actions)
     paths = value(plan, :paths)
+    normalized_title = if is_binary(title), do: clean(title)
 
     with 1 <- version,
-         true <- is_binary(title) and String.trim(title) != "",
+         true <- is_binary(normalized_title) and normalized_title != "",
          true <- is_list(actions) and length(actions) == 3,
          true <- is_list(paths) and length(paths) == 5,
          {:ok, normalized_actions} <- normalize_actions(actions),
@@ -226,7 +232,7 @@ defmodule Dialectic.Responses.GuidedLearningPlan do
       {:ok,
        %{
          version: 1,
-         title: String.trim(title),
+         title: normalized_title,
          actions: normalized_actions,
          paths: normalized_paths
        }}
@@ -355,9 +361,11 @@ defmodule Dialectic.Responses.GuidedLearningPlan do
       Enum.flat_map(actions, fn action ->
         key = value(action, :key)
         reason = value(action, :reason)
+        normalized_reason = if is_binary(reason), do: clean(reason)
 
-        if is_binary(key) and is_binary(reason) and reason != "" and match?({:ok, _}, fetch(key)) do
-          [%{key: key, reason: clean(reason)}]
+        if is_binary(key) and is_binary(normalized_reason) and normalized_reason != "" and
+             match?({:ok, _}, fetch(key)) do
+          [%{key: key, reason: normalized_reason}]
         else
           []
         end
@@ -377,11 +385,22 @@ defmodule Dialectic.Responses.GuidedLearningPlan do
         label = value(path, :label)
         question = value(path, :question)
         reason = value(path, :reason)
+        normalized_label = if is_binary(label), do: clean(label)
+        normalized_question = if is_binary(question), do: clean(question)
+        normalized_reason = if is_binary(reason), do: clean(reason)
 
-        if Enum.all?([id, label, question, reason], &is_binary/1) and id == "path-#{index}" and
-             label != "" and String.length(label) < 40 and String.ends_with?(question, "?") and
-             reason != "" do
-          [%{id: id, label: clean(label), question: clean(question), reason: clean(reason)}]
+        if is_binary(id) and id == "path-#{index}" and is_binary(normalized_label) and
+             normalized_label != "" and String.length(normalized_label) < 40 and
+             is_binary(normalized_question) and String.ends_with?(normalized_question, "?") and
+             is_binary(normalized_reason) and normalized_reason != "" do
+          [
+            %{
+              id: id,
+              label: normalized_label,
+              question: normalized_question,
+              reason: normalized_reason
+            }
+          ]
         else
           []
         end

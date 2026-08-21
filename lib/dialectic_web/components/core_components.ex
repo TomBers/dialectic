@@ -343,7 +343,7 @@ defmodule DialecticWeb.CoreComponents do
                 class="peer sr-only"
                 {@rest}
               />
-              <div class="h-6 w-11 rounded-full bg-gray-300 transition peer-checked:bg-indigo-500">
+              <div class="h-6 w-11 rounded-full bg-gray-300 transition peer-checked:bg-indigo-500 peer-focus-visible:ring-2 peer-focus-visible:ring-indigo-500 peer-focus-visible:ring-offset-2">
               </div>
               <div class="pointer-events-none absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-transform peer-checked:translate-x-5">
               </div>
