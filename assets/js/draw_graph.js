@@ -710,53 +710,23 @@ export function draw_graph(
         if (target) {
           context.pushEvent("node_clicked", { id: target.id() });
 
-          // Update selection visuals immediately for responsiveness
           cy.elements().removeClass("selected");
           target.addClass("selected");
-          applySelectionContext(target);
 
-          // Ensure the target is visible (expand depth/group if needed)
-          if (
-            target.hasClass("depth-hidden") &&
-            typeof cy.ensureDepthVisible === "function"
-          ) {
-            cy.ensureDepthVisible(target.id());
+          const finishNavigation = () => {
+            applySelectionContext(target);
+            requestAnimationFrame(() => ensureVisible(cy, container, target.id()));
+          };
+          const needsReflow =
+            typeof cy.ensureNodeVisible === "function"
+              ? cy.ensureNodeVisible(target.id())
+              : false;
+
+          if (needsReflow) {
+            cy.reflowAfterVisibilityChange(finishNavigation);
+          } else {
+            finishNavigation();
           }
-
-          // Minimal pan to keep target in view
-          requestAnimationFrame(() => {
-            const zoom = cy.zoom();
-            const pan = cy.pan();
-            const bb = target.boundingBox();
-            const pad = 12;
-            const rect = container.getBoundingClientRect();
-
-            const rbbLeft = bb.x1 * zoom + pan.x - pad;
-            const rbbRight = bb.x2 * zoom + pan.x + pad;
-            const rbbTop = bb.y1 * zoom + pan.y - pad;
-            const rbbBottom = bb.y2 * zoom + pan.y + pad;
-
-            const margin = 16;
-            let dx = 0;
-            let dy = 0;
-
-            if (rbbLeft < margin) dx = margin - rbbLeft;
-            else if (rbbRight > rect.width - margin)
-              dx = rect.width - margin - rbbRight;
-            if (rbbTop < margin) dy = margin - rbbTop;
-            else if (rbbBottom > rect.height - margin)
-              dy = rect.height - margin - rbbBottom;
-
-            if (dx !== 0 || dy !== 0) {
-              cy.animate({
-                pan: { x: pan.x + dx, y: pan.y + dy },
-                duration: cy._reduceMotion ? 0 : 150,
-                easing: "ease-in-out-quad",
-              });
-            }
-          });
-
-          enforceCollapsedState(cy);
         }
         e.preventDefault();
       }
@@ -1112,9 +1082,14 @@ export function draw_graph(
     try {
       const group = cy.getElementById(id);
       if (group && group.isParent()) {
+        const revealing = isCollapsed(group);
         toggle(group);
-        // Relayout after toggle to prevent overlapping nodes
-        _relayoutAfterDepthChange(cy);
+
+        if (revealing) {
+          reflowAfterVisibilityChange(cy);
+        } else {
+          _relayoutAfterDepthChange(cy);
+        }
       }
     } catch (_e) {}
   });
@@ -1190,6 +1165,9 @@ export function draw_graph(
   cy.recomputeDepthVisibility = () => recomputeDepthVisibility(cy);
   cy.ensureDepthVisible = (id) => ensureDepthVisible(cy, id);
   cy.ensureGroupVisible = (id) => ensureGroupVisible(cy, id);
+  cy.ensureNodeVisible = (id) => ensureNodeVisible(cy, id);
+  cy.reflowAfterVisibilityChange = (onDone) =>
+    reflowAfterVisibilityChange(cy, onDone);
   cy.expandNodeChildren = (n) =>
     expandNodeChildren(cy, typeof n === "string" ? cy.getElementById(n) : n);
   cy.collapseNodeChildren = (n) =>
@@ -1529,7 +1507,7 @@ function expandNodeChildren(cy, node) {
   node.removeClass("node-collapsed");
   recomputeDepthVisibility(cy);
   _persistDepthState(cy);
-  _relayoutAfterDepthChange(cy);
+  reflowAfterVisibilityChange(cy);
 }
 
 /** Expand every depth-collapsed node in the graph */
@@ -1542,7 +1520,7 @@ function expandAllDepth(cy) {
     });
   recomputeDepthVisibility(cy);
   _persistDepthState(cy);
-  _relayoutAfterDepthChange(cy);
+  reflowAfterVisibilityChange(cy);
 }
 
 /** Collapse all nodes at or beyond `maxDepth` that have children */
@@ -1595,7 +1573,7 @@ function ensureGroupVisible(cy, nodeId) {
 
 function ensureDepthVisible(cy, nodeId) {
   const node = cy.getElementById(nodeId);
-  if (!node || node.length === 0 || !node.hasClass("depth-hidden")) return;
+  if (!node || node.length === 0 || !node.hasClass("depth-hidden")) return false;
 
   // Collect all ancestors via upward BFS
   const ancestors = new Set();
@@ -1627,6 +1605,15 @@ function ensureDepthVisible(cy, nodeId) {
     recomputeDepthVisibility(cy);
     _persistDepthState(cy);
   }
+
+  return changed;
+}
+
+function ensureNodeVisible(cy, nodeId) {
+  const groupChanged = ensureGroupVisible(cy, nodeId);
+  const depthChanged = ensureDepthVisible(cy, nodeId);
+
+  return groupChanged || depthChanged;
 }
 
 /** Save current depth-collapse flags (node id → true) for persistence across cy.json() reloads */
@@ -1801,6 +1788,39 @@ function _spreadOverlappingCompoundNodes(cy) {
  * Internal helper: re-run the dagre layout after a depth visibility change
  * so that visible nodes reposition into a clean arrangement.
  */
+export function reflowAfterVisibilityChange(cy, onDone) {
+  if (typeof onDone === "function") {
+    cy._visibilityReflowCallbacks ||= [];
+    cy._visibilityReflowCallbacks.push(onDone);
+  }
+
+  if (cy._visibilityReflowPending) return;
+  cy._visibilityReflowPending = true;
+
+  requestAnimationFrame(() => {
+    if (!cy || (typeof cy.destroyed === "function" && cy.destroyed())) return;
+
+    try {
+      cy.style().update();
+      cy.resize();
+    } catch (_e) {}
+
+    requestAnimationFrame(() => {
+      if (!cy || (typeof cy.destroyed === "function" && cy.destroyed())) return;
+
+      cy._visibilityReflowPending = false;
+      const callbacks = cy._visibilityReflowCallbacks || [];
+      cy._visibilityReflowCallbacks = [];
+
+      if (callbacks.length > 0) {
+        cy.one("layoutstop", () => callbacks.forEach((callback) => callback()));
+      }
+
+      _relayoutAfterDepthChange(cy);
+    });
+  });
+}
+
 function _relayoutAfterDepthChange(cy) {
   try {
     const viewMode = localStorage.getItem("graph_view_mode") || "spaced";
@@ -1839,7 +1859,7 @@ function _injectDepthToggleStyles() {
 }
 .depth-toggle-btn {
   --depth-toggle-translate-x: -50%;
-  --depth-toggle-translate-y: 0;
+  --depth-toggle-translate-y: -100%;
   --depth-toggle-scale: 1;
   pointer-events: auto;
   position: absolute;
@@ -1866,33 +1886,17 @@ function _injectDepthToggleStyles() {
   transform: translate(var(--depth-toggle-translate-x), var(--depth-toggle-translate-y)) scale(var(--depth-toggle-scale));
   transform-origin: center center;
 }
-/* direction-aware centering */
-.depth-toggle-btn.depth-dir-tb { --depth-toggle-translate-x: -50%; --depth-toggle-translate-y: 0; }
-.depth-toggle-btn.depth-dir-bt { --depth-toggle-translate-x: -50%; --depth-toggle-translate-y: -100%; }
-.depth-toggle-btn.depth-dir-lr { --depth-toggle-translate-x: 0; --depth-toggle-translate-y: -50%; }
-.depth-toggle-btn.depth-dir-rl { --depth-toggle-translate-x: -100%; --depth-toggle-translate-y: -50%; }
+
 .depth-toggle-btn:hover {
   background: #f1f5f9;
   border-color: #94a3b8;
   box-shadow: 0 2px 4px rgba(0,0,0,0.12);
 }
-.depth-toggle-btn.depth-dir-tb:active {
+.depth-toggle-btn:active {
   background: #e2e8f0;
   transform: translate(var(--depth-toggle-translate-x), var(--depth-toggle-translate-y)) scale(calc(var(--depth-toggle-scale) * 0.95));
 }
-.depth-toggle-btn.depth-dir-bt:active {
-  background: #e2e8f0;
-  transform: translate(var(--depth-toggle-translate-x), var(--depth-toggle-translate-y)) scale(calc(var(--depth-toggle-scale) * 0.95));
-}
-.depth-toggle-btn.depth-dir-lr:active {
-  background: #e2e8f0;
-  transform: translate(var(--depth-toggle-translate-x), var(--depth-toggle-translate-y)) scale(calc(var(--depth-toggle-scale) * 0.95));
-}
-.depth-toggle-btn.depth-dir-rl:active {
-  background: #e2e8f0;
-  transform: translate(var(--depth-toggle-translate-x), var(--depth-toggle-translate-y)) scale(calc(var(--depth-toggle-scale) * 0.95));
-}
-/* collapsed → warm amber "+N" pill — stands out from all node types */
+/* Hidden branch → explicit amber Show action. */
 .depth-toggle-btn.depth-collapsed-btn {
   background: #fef3c7;
   border-color: #f59e0b;
@@ -1904,7 +1908,7 @@ function _injectDepthToggleStyles() {
   border-color: #d97706;
   box-shadow: 0 0 10px rgba(245, 158, 11, 0.6), 0 2px 4px rgba(0,0,0,0.12);
 }
-/* expanded → subtle grey "−" circle */
+/* Visible branch → subtle grey Hide action. */
 .depth-toggle-btn.depth-expanded-btn {
   background: #ffffff;
   border-color: #d1d5db;
@@ -1976,21 +1980,15 @@ function _rebuildDepthToggleOverlays(cy, container) {
     const hiddenCount = n.data("_hiddenChildCount") || children.length;
 
     if (collapsed) {
-      btn.textContent = `+${hiddenCount}`;
+      btn.textContent = "Show";
       btn.classList.add("depth-collapsed-btn");
-      btn.title = `Expand ${hiddenCount} hidden child${hiddenCount === 1 ? "" : "ren"} (E)`;
-      btn.setAttribute(
-        "aria-label",
-        `Expand ${hiddenCount} hidden child${hiddenCount === 1 ? "" : "ren"} of node ${n.id()}`,
-      );
+      btn.title = `Show downstream branch (${hiddenCount} direct child${hiddenCount === 1 ? "" : "ren"}) (E)`;
+      btn.setAttribute("aria-label", `Show downstream branch from node ${n.id()}`);
     } else {
-      btn.textContent = "\u2212"; // minus sign
+      btn.textContent = "Hide";
       btn.classList.add("depth-expanded-btn");
-      btn.title = `Collapse ${children.length} child${children.length === 1 ? "" : "ren"} (C)`;
-      btn.setAttribute(
-        "aria-label",
-        `Collapse ${children.length} child${children.length === 1 ? "" : "ren"} of node ${n.id()}`,
-      );
+      btn.title = `Hide downstream branch (${children.length} direct child${children.length === 1 ? "" : "ren"}) (C)`;
+      btn.setAttribute("aria-label", `Hide downstream branch from node ${n.id()}`);
     }
 
     // Stop events from reaching the Cytoscape canvas beneath
@@ -2016,9 +2014,13 @@ function _rebuildDepthToggleOverlays(cy, container) {
 }
 
 /**
- * Reposition every toggle button to sit at the bottom-centre of its node.
+ * Reposition every toggle button just above the node whose branch it controls.
  * Called on every Cytoscape render frame so buttons track pan/zoom smoothly.
  */
+export function depthTogglePosition(bb) {
+  return { x: (bb.x1 + bb.x2) / 2, y: bb.y1 - 6 };
+}
+
 function _updateDepthTogglePositions(cy) {
   if (
     !cy ||
@@ -2028,7 +2030,6 @@ function _updateDepthTogglePositions(cy) {
     return;
   }
 
-  const dir = localStorage.getItem("graph_direction") || "TB";
   const zoom = typeof cy.zoom === "function" ? cy.zoom() : 1;
   const hideBelowZoom = 0.3;
   const scale = Math.max(0.68, Math.min(1, 0.45 + zoom * 0.55));
@@ -2070,34 +2071,7 @@ function _updateDepthTogglePositions(cy) {
       return;
     }
 
-    let x, y;
-    switch (dir) {
-      case "BT": // children above → button above the node
-        x = (bb.x1 + bb.x2) / 2;
-        y = bb.y1 - 2;
-        break;
-      case "LR": // children to the right → button to the right
-        x = bb.x2 + 2;
-        y = (bb.y1 + bb.y2) / 2;
-        break;
-      case "RL": // children to the left → button to the left
-        x = bb.x1 - 2;
-        y = (bb.y1 + bb.y2) / 2;
-        break;
-      default: // TB — children below → button below (original behaviour)
-        x = (bb.x1 + bb.x2) / 2;
-        y = bb.y2 + 2;
-        break;
-    }
-
-    // Swap direction class so the CSS transform centres correctly
-    btn.classList.remove(
-      "depth-dir-tb",
-      "depth-dir-bt",
-      "depth-dir-lr",
-      "depth-dir-rl",
-    );
-    btn.classList.add(`depth-dir-${dir.toLowerCase()}`);
+    const { x, y } = depthTogglePosition(bb);
 
     btn.style.display = "";
     btn.style.setProperty("--depth-toggle-scale", scale.toFixed(3));

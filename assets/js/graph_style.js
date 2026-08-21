@@ -213,6 +213,24 @@ const GRAPH_LABEL_FONT_FAMILY =
 const GRAPH_GROUP_LABEL_FONT_FAMILY = GRAPH_LABEL_FONT_FAMILY;
 
 
+const graphTaxiDirection = () => {
+  const graphDirection = localStorage.getItem("graph_direction") || "TB";
+  return graphDirection === "LR" || graphDirection === "RL"
+    ? "horizontal"
+    : "vertical";
+};
+
+const stableTaxiTurn = (edge) => {
+  const edgeId = String(typeof edge.id === "function" ? edge.id() : "");
+  let hash = 0;
+
+  for (const character of edgeId) {
+    hash = (hash * 31 + character.charCodeAt(0)) >>> 0;
+  }
+
+  return `${38 + (hash % 7) * 4}%`;
+};
+
 const mixWithWhite = (hexColor, whiteRatio) => {
   const normalized = String(hexColor || "").replace("#", "");
   if (!/^[0-9a-f]{6}$/i.test(normalized)) return hexColor;
@@ -238,7 +256,7 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "", options = {
     "font-size": isCompact ? 9 : 11,
     "font-weight": 600,
     color: highContrast ? "#0f172a" : "#334155",
-    "text-rotation": "autorotate",
+    "text-rotation": "none",
     "text-margin-y": isCompact ? -6 : -9,
     "text-background-color": "#ffffff",
     "text-background-opacity": highContrast ? 1 : 0.92,
@@ -534,8 +552,8 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "", options = {
         "line-gradient-stop-positions": "0% 100%",
         "line-cap": "round",
         "curve-style": "round-taxi",
-        "taxi-direction": "auto",
-        "taxi-turn": "50%",
+        "taxi-direction": graphTaxiDirection,
+        "taxi-turn": stableTaxiTurn,
         "taxi-turn-min-distance": isCompact ? 12 : 18,
         "taxi-radius": isCompact ? 8 : 12,
         "edge-distances": "intersection",

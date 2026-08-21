@@ -869,24 +869,10 @@ const graphHook = {
         this.cy.elements().removeClass("selected");
         const nodeToCenter = this.cy.getElementById(id);
         if (nodeToCenter.length > 0) {
-          // Track whether we need a full reflow
-          let needsReflow = false;
-
-          // If the node is inside a collapsed compound group, expand it
-          if (
-            nodeToCenter.hasClass("hidden") &&
-            typeof this.cy.ensureGroupVisible === "function"
-          ) {
-            needsReflow = this.cy.ensureGroupVisible(id) || needsReflow;
-          }
-          // If the node is depth-hidden, expand its ancestors to make it visible
-          if (
-            nodeToCenter.hasClass("depth-hidden") &&
-            typeof this.cy.ensureDepthVisible === "function"
-          ) {
-            this.cy.ensureDepthVisible(id);
-            needsReflow = true;
-          }
+          const needsReflow =
+            typeof this.cy.ensureNodeVisible === "function"
+              ? this.cy.ensureNodeVisible(id)
+              : false;
           nodeToCenter.addClass("selected");
           if (typeof this.cy.applySelectionContext === "function") {
             this.cy.applySelectionContext(nodeToCenter);
@@ -902,18 +888,22 @@ const graphHook = {
           if (needsReflow) {
             this._pendingCenterId = id;
             this._layoutRunning = true;
-            layoutGraph(this.cy, {}, () => {
+            const onReflowDone = () => {
+              this._layoutRunning = false;
               this._pendingCenterId = null;
-              // Force Cytoscape to recalculate all styles and re-render
-              // node textures so that text on newly-expanded parents
-              // isn't blurry from stale cached label bitmaps.
               try {
                 this.cy.style().update();
               } catch (_e) {}
               requestAnimationFrame(() =>
                 ensureVisible(this.cy, container, id),
               );
-            });
+            };
+
+            if (typeof this.cy.reflowAfterVisibilityChange === "function") {
+              this.cy.reflowAfterVisibilityChange(onReflowDone);
+            } else {
+              layoutGraph(this.cy, {}, onReflowDone);
+            }
             return;
           }
 
@@ -983,21 +973,12 @@ const graphHook = {
         allNodes.forEach((n) => {
           if (idSet.has(n.id())) {
             n.addClass("search-match");
-            // If the node is depth-hidden or group-hidden, reveal it
+            // Reveal matched nodes and reflow once after all visibility changes.
             if (
-              n.hasClass("depth-hidden") &&
-              typeof this.cy.ensureDepthVisible === "function"
+              typeof this.cy.ensureNodeVisible === "function" &&
+              this.cy.ensureNodeVisible(n.id())
             ) {
-              this.cy.ensureDepthVisible(n.id());
               needsReflow = true;
-            }
-            if (
-              n.hasClass("hidden") &&
-              typeof this.cy.ensureGroupVisible === "function"
-            ) {
-              if (this.cy.ensureGroupVisible(n.id())) {
-                needsReflow = true;
-              }
             }
           } else {
             n.addClass("search-dimmed");
@@ -1019,12 +1000,18 @@ const graphHook = {
         // reflow so they don't overlap, then refresh styles.
         if (needsReflow) {
           this._layoutRunning = true;
-          layoutGraph(this.cy, {}, () => {
+          const onReflowDone = () => {
             this._layoutRunning = false;
             try {
               this.cy.style().update();
             } catch (_e) {}
-          });
+          };
+
+          if (typeof this.cy.reflowAfterVisibilityChange === "function") {
+            this.cy.reflowAfterVisibilityChange(onReflowDone);
+          } else {
+            layoutGraph(this.cy, {}, onReflowDone);
+          }
         }
       } catch (_e) {}
     });
@@ -1189,19 +1176,10 @@ const graphHook = {
       if (!n || n.length === 0) return;
 
       if (
-        n.hasClass("depth-hidden") &&
-        typeof this.cy.ensureDepthVisible === "function"
+        typeof this.cy.ensureNodeVisible === "function" &&
+        this.cy.ensureNodeVisible(id)
       ) {
-        this.cy.ensureDepthVisible(id);
         needsReflow = true;
-      }
-      if (
-        n.hasClass("hidden") &&
-        typeof this.cy.ensureGroupVisible === "function"
-      ) {
-        if (this.cy.ensureGroupVisible(id)) {
-          needsReflow = true;
-        }
       }
     });
 
@@ -1270,11 +1248,17 @@ const graphHook = {
     // If we expanded any collapsed/depth-hidden nodes, run a reflow
     // so the revealed nodes get proper positions.
     if (needsReflow) {
-      layoutGraph(this.cy, {}, () => {
+      const onReflowDone = () => {
         try {
           this.cy.style().update();
         } catch (_e) {}
-      });
+      };
+
+      if (typeof this.cy.reflowAfterVisibilityChange === "function") {
+        this.cy.reflowAfterVisibilityChange(onReflowDone);
+      } else {
+        layoutGraph(this.cy, {}, onReflowDone);
+      }
     }
   },
 

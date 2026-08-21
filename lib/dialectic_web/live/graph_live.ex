@@ -901,11 +901,8 @@ defmodule DialecticWeb.GraphLive do
           "node_clicked"
         )
 
-      # Center and expand the node
-      updated_socket =
-        updated_socket
-        |> push_event("center_node", %{id: node_id})
-        |> push_event("expand_node", %{id: node_id})
+      # Reveal only the ancestors needed to make the target visible.
+      updated_socket = push_event(updated_socket, "center_node", %{id: node_id})
 
       {:noreply, updated_socket}
     else
@@ -926,7 +923,6 @@ defmodule DialecticWeb.GraphLive do
       {:noreply,
        updated_socket
        |> push_event("center_node", %{id: node_id})
-       |> push_event("expand_node", %{id: node_id})
        |> push_event("reflow_layout", %{id: node_id})}
     else
       {:noreply, put_flash(socket, :error, "Answer not found")}
@@ -1079,9 +1075,7 @@ defmodule DialecticWeb.GraphLive do
           node ->
             {_, socket} = update_graph(socket, {nil, node}, "node_clicked")
 
-            socket
-            |> push_event("center_node", %{id: node.id})
-            |> push_event("expand_node", %{id: node.id})
+            push_event(socket, "center_node", %{id: node.id})
         end
       end
 

@@ -16,9 +16,10 @@ describe("graph layout proportions", () => {
     layoutConfig.expandLayout,
   ];
 
-  it("keeps graph levels more separated than sibling branches", () => {
+  it("keeps graph levels separated and leaves room between sibling branches", () => {
     for (const layout of dagreLayouts) {
       expect(layout.rankSep).toBeGreaterThan(layout.nodeSep);
+      expect(layout.nodeSep).toBeGreaterThan(layout.edgeSep);
     }
   });
 
@@ -73,7 +74,7 @@ describe("graph layout proportions", () => {
       "round-taxi",
     );
     expect(cy.getElementById("b-c").pstyle("taxi-direction").value).toBe(
-      "auto",
+      "vertical",
     );
 
     cy.destroy();
@@ -99,19 +100,27 @@ describe("graph layout proportions", () => {
     expect(nodeStyle.ghost).toBe("no");
   });
 
-  it("uses orthogonal edges for both Dagre and preset layouts", () => {
+  it("keeps taxi routing aligned with the graph direction", () => {
     const styles = graphStyle("spaced", "Example");
     const edgeStyle = styleFor(styles, "edge");
 
+    const edgeA = { id: () => "edge-a" };
+    const edgeB = { id: () => "edge-b" };
+
     expect(edgeStyle["curve-style"]).toBe("round-taxi");
-    expect(edgeStyle["taxi-direction"]).toBe("auto");
-    expect(edgeStyle["taxi-turn"]).toBe("50%");
+
+    localStorage.setItem("graph_direction", "TB");
+    expect(edgeStyle["taxi-direction"]()).toBe("vertical");
+    localStorage.setItem("graph_direction", "LR");
+    expect(edgeStyle["taxi-direction"]()).toBe("horizontal");
+    localStorage.removeItem("graph_direction");
+    expect(edgeStyle["taxi-turn"](edgeA)).toMatch(/^(38|42|46|50|54|58|62)%$/);
+    expect(edgeStyle["taxi-turn"](edgeA)).not.toBe(edgeStyle["taxi-turn"](edgeB));
     expect(edgeStyle["taxi-turn-min-distance"]).toBe(18);
     expect(edgeStyle["taxi-radius"]).toBe(12);
     expect(edgeStyle["edge-distances"]).toBe("intersection");
     expect(edgeStyle["line-fill"]).toBe("linear-gradient");
     expect(edgeStyle["line-gradient-stop-positions"]).toBe("0% 100%");
-    expect(styleFor(styles, "edge.useDagreEdgeControlPoints")).toBeUndefined();
   });
 
   it("reveals generation relationships only for contextual edges", () => {
@@ -137,6 +146,8 @@ describe("graph layout proportions", () => {
     expect(selectedStyle.label(relationEdge)).toBe("tests with a counterexample");
     expect(hoverStyle.label(legacyEdge)).toBe("clarifies");
     expect(hoverStyle.label(unknownEdge)).toBe("leads to");
+    expect(hoverStyle["text-rotation"]).toBe("none");
+    expect(selectedStyle["text-rotation"]).toBe("none");
   });
 
   it("keeps graph labels concise in reading and overview modes", () => {

@@ -20,8 +20,8 @@ export const layoutConfig = {
     name: "dagre",
     rankDir: "TB",
     // Spacing adjustments for better proportions
-    nodeSep: 52, // Keep sibling branches compact across the canvas
-    edgeSep: 38, // Spacing between parallel edges
+    nodeSep: 64, // Keep sibling branches distinct across the canvas
+    edgeSep: 46, // Leave room to distinguish parallel relationship tracks
     rankSep: 104, // Give each level more vertical breathing room
     // Visual enhancement settings
     spacingFactor: 1.04, // Slight vertical bias without spreading the whole graph
@@ -42,8 +42,8 @@ export const layoutConfig = {
     name: "dagre",
     rankDir: "TB",
     // Tighter spacing for compact view
-    nodeSep: 36, // Keep the overview narrow while preserving branch separation
-    edgeSep: 20, // Minimal spacing between parallel edges
+    nodeSep: 44, // Keep the overview compact without merging sibling branches
+    edgeSep: 28, // Preserve visible separation between relationship tracks
     rankSep: 56, // Separate levels so the compact graph reads vertically
     // Visual enhancement settings
     spacingFactor: 0.9, // Tight spacing factor (slightly relaxed)
@@ -67,8 +67,8 @@ export const layoutConfig = {
     animate: true,
     animationDuration: 300,
     // Spacing for expanded compound nodes
-    nodeSep: 36,
-    edgeSep: 20,
+    nodeSep: 44,
+    edgeSep: 28,
     rankSep: 76,
     // Better handling of expanded groups
     spacingFactor: 1.0,
