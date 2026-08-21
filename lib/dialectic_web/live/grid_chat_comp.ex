@@ -158,8 +158,7 @@ defmodule DialecticWeb.GridChatComp do
                   title={presence_title(presence)}
                 >
                   <span class="relative inline-flex h-5 w-5 shrink-0 items-center justify-center overflow-visible rounded-full bg-gradient-to-br from-indigo-100 via-white to-violet-100 text-[8px] font-bold uppercase text-indigo-700 ring-1 ring-indigo-200/90">
-                    <span class="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-white">
-                    </span>
+                    <span class="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-white"></span>
                     <img
                       :if={avatar_url?(presence_avatar_url(presence))}
                       src={presence_avatar_url(presence)}

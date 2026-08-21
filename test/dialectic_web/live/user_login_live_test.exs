@@ -64,7 +64,7 @@ defmodule DialecticWeb.UserLoginLiveTest do
 
       {:ok, _login_live, login_html} =
         lv
-        |> element(~s|main a:fl-contains("Sign up")|)
+        |> element("#login-sign-up-link")
         |> render_click()
         |> follow_redirect(conn, ~p"/users/register")
 
@@ -78,7 +78,7 @@ defmodule DialecticWeb.UserLoginLiveTest do
 
       {:ok, conn} =
         lv
-        |> element(~s|main a:fl-contains("Forgot password?")|)
+        |> element("#login-forgot-password-link")
         |> render_click()
         |> follow_redirect(conn, ~p"/users/reset_password")
 

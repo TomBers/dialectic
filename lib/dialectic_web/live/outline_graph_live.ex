@@ -1046,7 +1046,7 @@ defmodule DialecticWeb.OutlineGraphLive do
     label =
       class
       |> ColUtils.node_type_label()
-      |> String.split("/")
+      |> String.split("/", parts: 2)
       |> List.first()
       |> String.trim()
       |> String.downcase()

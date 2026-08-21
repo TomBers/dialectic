@@ -110,8 +110,7 @@
         phx-click="close_help_modal"
         class="absolute inset-0 bg-gray-900/55 backdrop-blur-[1px]"
         aria-label="Close how-to guide"
-      >
-      </button>
+      ></button>
 
       <div class="relative z-10 flex max-h-[calc(100dvh-1.5rem)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-gray-200 sm:max-h-[calc(100dvh-2.5rem)]">
         <div class="flex items-center justify-between border-b border-gray-200 px-4 py-3">
@@ -195,8 +194,8 @@
       </div>
     </div>
   </div>
-  
-<!-- Main content with drawer menu -->
+
+  <!-- Main content with drawer menu -->
   <div class={[
     "relative z-0 hidden min-h-0 flex-1 md:flex",
     if(@presentation_mode == :presenting,
@@ -513,11 +512,10 @@
       </div>
 
       <%= if @graph_id do %>
-        <span phx-window-keydown={show_modal("modal-graph-live-modal-comp")} phx-key="Enter">
-        </span>
+        <span phx-window-keydown={show_modal("modal-graph-live-modal-comp")} phx-key="Enter"></span>
       <% end %>
-      
-<!-- Streams panel -->
+
+      <!-- Streams panel -->
 
       <%!-- removed deprecated combine modal; now uses combine-drawer panel --%>
       <%!-- removed deprecated grouping modal; grouping now only via streams --%>
@@ -761,8 +759,7 @@
           class="fixed inset-0 z-[9990] border-0 bg-black/20 p-0"
           phx-click="close_search_overlay"
           aria-label="Close search overlay"
-        >
-        </button>
+        ></button>
         <div
           id="quick-search-panel"
           class="fixed top-24 left-1/2 -translate-x-1/2 w-full max-w-md px-4 z-[9991]"

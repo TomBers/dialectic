@@ -55,6 +55,7 @@ defmodule DialecticWeb.UserResetPasswordLive do
 
           <div class="mt-6 flex items-center justify-between">
             <.link
+              id="reset-password-login-link"
               href={~p"/users/log_in"}
               class="text-sm font-semibold text-indigo-600 hover:text-indigo-500"
             >
@@ -62,6 +63,7 @@ defmodule DialecticWeb.UserResetPasswordLive do
             </.link>
 
             <.link
+              id="reset-password-registration-link"
               href={~p"/users/register"}
               class="text-sm font-semibold text-zinc-700 hover:text-zinc-900"
             >

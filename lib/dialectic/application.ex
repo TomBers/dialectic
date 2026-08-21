@@ -20,6 +20,7 @@ defmodule Dialectic.Application do
     children = [
       DialecticWeb.Telemetry,
       Dialectic.Repo,
+      Dialectic.RateLimit,
       {DNSCluster, query: Application.get_env(:dialectic, :dns_cluster_query) || :ignore},
       {Oban, Application.fetch_env!(:dialectic, Oban)},
       {Phoenix.PubSub, name: Dialectic.PubSub},

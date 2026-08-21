@@ -252,13 +252,15 @@ defmodule Dialectic.Workers.LLMWorker do
           # lost partial updates or GraphManager restarts).
           flush_started_at = System.monotonic_time(:millisecond)
 
-          {final_full_text, final_buf, _, _last_flush_at, stream_updates, grounding_metadata} =
+          {final_chunks, _final_size, final_buffer_size, _, _last_flush_at, stream_updates,
+           grounding_metadata} =
             Enum.reduce(
               stream_resp.stream,
-              {"", "", false, flush_started_at, 0, nil},
+              {[], 0, 0, false, flush_started_at, 0, nil},
               fn
                 %ReqLLM.StreamChunk{type: :content, text: token},
-                {full_text, buf, ttft_logged?, last_flush_at, stream_updates, grounding_metadata} ->
+                {chunks, full_size, buffer_size, ttft_logged?, last_flush_at, stream_updates,
+                 grounding_metadata} ->
                   chunk =
                     case token do
                       t when is_binary(t) -> t
@@ -277,30 +279,35 @@ defmodule Dialectic.Workers.LLMWorker do
                       ttft_logged?
                     end
 
-                  new_full_text = full_text <> chunk
-                  new_buf = buf <> chunk
+                  chunk_size = byte_size(chunk)
+                  new_chunks = [chunk | chunks]
+                  new_full_size = full_size + chunk_size
+                  new_buffer_size = buffer_size + chunk_size
                   now = System.monotonic_time(:millisecond)
                   elapsed_ms = now - last_flush_at
 
-                  if should_flush_stream?(full_text == "", byte_size(new_buf), elapsed_ms) do
+                  if should_flush_stream?(full_size == 0, new_buffer_size, elapsed_ms) do
                     if buffer_response? do
-                      {new_full_text, "", ttft_logged?, now, stream_updates, grounding_metadata}
+                      {new_chunks, new_full_size, 0, ttft_logged?, now, stream_updates,
+                       grounding_metadata}
                     else
-                      Utils.set_node_content(graph, to_node, new_full_text, live_view_topic)
+                      full_text = new_chunks |> Enum.reverse() |> IO.iodata_to_binary()
+                      Utils.set_node_content(graph, to_node, full_text, live_view_topic)
 
-                      {new_full_text, "", ttft_logged?, now, stream_updates + 1,
+                      {new_chunks, new_full_size, 0, ttft_logged?, now, stream_updates + 1,
                        grounding_metadata}
                     end
                   else
-                    {new_full_text, new_buf, ttft_logged?, last_flush_at, stream_updates,
-                     grounding_metadata}
+                    {new_chunks, new_full_size, new_buffer_size, ttft_logged?, last_flush_at,
+                     stream_updates, grounding_metadata}
                   end
 
                 %ReqLLM.StreamChunk{type: :meta, metadata: metadata},
-                {full_text, buf, ttft_logged?, last_flush_at, stream_updates, grounding_metadata} ->
+                {chunks, full_size, buffer_size, ttft_logged?, last_flush_at, stream_updates,
+                 grounding_metadata} ->
                   grounding_metadata = Grounding.merge(grounding_metadata, metadata)
 
-                  {full_text, buf, ttft_logged?, last_flush_at, stream_updates,
+                  {chunks, full_size, buffer_size, ttft_logged?, last_flush_at, stream_updates,
                    grounding_metadata}
 
                 _chunk, state ->
@@ -308,8 +315,10 @@ defmodule Dialectic.Workers.LLMWorker do
               end
             )
 
+          final_full_text = final_chunks |> Enum.reverse() |> IO.iodata_to_binary()
+
           stream_updates =
-            if final_buf != "" do
+            if final_buffer_size > 0 do
               if buffer_response? do
                 stream_updates
               else
@@ -667,7 +676,7 @@ defmodule Dialectic.Workers.LLMWorker do
     topic = extract_initial_topic(instruction)
     text = strip_follow_up_section(text)
 
-    questions = [
+    [first_question, second_question, third_question] = [
       "What historical context most changes how we should understand #{topic}?",
       "Which interpretation of #{topic} is most contested, and why?",
       "What detail about #{topic} would be most rewarding to explore next?"
@@ -676,9 +685,9 @@ defmodule Dialectic.Workers.LLMWorker do
     [
       String.trim_trailing(text),
       "## Follow-up questions",
-      "1. #{Enum.at(questions, 0)}",
-      "2. #{Enum.at(questions, 1)}",
-      "3. #{Enum.at(questions, 2)}"
+      "1. #{first_question}",
+      "2. #{second_question}",
+      "3. #{third_question}"
     ]
     |> Enum.join("\n\n")
   end

@@ -75,6 +75,50 @@ defmodule Dialectic.Graph.VertexTest do
     assert deserialized.guided_submissions == ["action:clarify"]
   end
 
+  describe "to_cytoscape_format/1" do
+    test "serializes active vertices and edges while excluding deleted graph elements", %{
+      graph: graph
+    } do
+      parent = %Vertex{
+        id: "parent",
+        class: "origin",
+        content: "Parent",
+        compound: true
+      }
+
+      child = %Vertex{
+        id: "child",
+        class: "answer",
+        content: "Child",
+        parent: parent.id
+      }
+
+      deleted = %Vertex{id: "deleted", class: "answer", content: "Deleted", deleted: true}
+
+      :digraph.add_vertex(graph, parent.id, parent)
+      :digraph.add_vertex(graph, child.id, child)
+      :digraph.add_vertex(graph, deleted.id, deleted)
+      :digraph.add_edge(graph, parent.id, child.id)
+      :digraph.add_edge(graph, parent.id, deleted.id)
+
+      elements = Vertex.to_cytoscape_format(graph)
+      nodes = Enum.filter(elements, &Map.has_key?(&1, :classes))
+      edges = Enum.reject(elements, &Map.has_key?(&1, :classes))
+
+      assert Enum.sort_by(nodes, & &1.data.id) == [
+               %{classes: "answer", data: %{content: "Child", id: "child", parent: "parent"}},
+               %{
+                 classes: "origin",
+                 data: %{compound: true, content: "Parent", id: "parent", parent: nil}
+               }
+             ]
+
+      assert edges == [
+               %{data: %{id: "parent_child", source: "parent", target: "child"}}
+             ]
+    end
+  end
+
   describe "build_context/3 question traversal" do
     test "keeps origin history through an omitted question", %{graph: graph} do
       origin = add_vertex(graph, "origin", "Initial framing", "origin")

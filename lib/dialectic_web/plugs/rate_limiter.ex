@@ -38,11 +38,11 @@ defmodule DialecticWeb.Plugs.RateLimiter do
       identifier = get_identifier(conn, type)
       bucket_key = "rate_limit:#{type}:#{identifier}"
 
-      case Hammer.check_rate(bucket_key, scale_ms, limit) do
+      case Dialectic.RateLimit.hit(bucket_key, scale_ms, limit) do
         {:allow, _count} ->
           conn
 
-        {:deny, _limit} ->
+        {:deny, _retry_after} ->
           conn
           |> put_status(:too_many_requests)
           |> put_resp_header("retry-after", "#{div(scale_ms, 1000)}")
@@ -96,7 +96,7 @@ defmodule DialecticWeb.Plugs.RateLimiter do
     case get_req_header(conn, "x-forwarded-for") do
       [ip | _] ->
         ip
-        |> String.split(",")
+        |> String.split(",", parts: 2)
         |> List.first()
         |> String.trim()
 

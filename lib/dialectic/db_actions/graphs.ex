@@ -390,12 +390,9 @@ defmodule Dialectic.DbActions.Graphs do
   def toggle_graph_public(graph) do
     {:ok, graph} = Dialectic.DbActions.Sharing.ensure_share_token(graph)
 
-    updated_graph =
-      graph
-      |> Graph.changeset(%{is_public: !graph.is_public})
-      |> Repo.update!()
-
-    updated_graph
+    graph
+    |> Graph.changeset(%{is_public: !graph.is_public})
+    |> Repo.update!()
   end
 
   @doc """

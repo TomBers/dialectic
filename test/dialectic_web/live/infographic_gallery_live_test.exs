@@ -92,7 +92,7 @@ defmodule DialecticWeb.InfographicGalleryLiveTest do
 
       # Click backdrop to close
       view
-      |> element("div[aria-hidden='true']")
+      |> element("#infographic-modal-backdrop")
       |> render_click()
 
       refute has_element?(view, "#infographic-modal")

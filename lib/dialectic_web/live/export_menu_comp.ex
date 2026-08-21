@@ -121,8 +121,8 @@ defmodule DialecticWeb.ExportMenuComp do
             </svg>
             <span>Markdown</span>
           </.link>
-          
-    <!-- JSON Extract -->
+
+          <!-- JSON Extract -->
           <.link
             href={
               path =

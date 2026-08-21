@@ -16,6 +16,7 @@ defmodule DialecticWeb.UserRegistrationLive do
           <p class="mt-1 text-sm text-zinc-600">
             Already registered?
             <.link
+              id="registration-login-link"
               navigate={~p"/users/log_in"}
               class="font-semibold text-indigo-600 hover:text-indigo-500"
             >

@@ -166,7 +166,13 @@ defmodule DialecticWeb.InfographicGalleryLive do
         phx-window-keydown="close_modal"
         phx-key="escape"
       >
-        <div class="fixed inset-0 bg-slate-950/90" phx-click="close_modal" aria-hidden="true"></div>
+        <div
+          id="infographic-modal-backdrop"
+          class="fixed inset-0 bg-slate-950/90"
+          phx-click="close_modal"
+          aria-hidden="true"
+        >
+        </div>
 
         <div class="relative flex min-h-screen items-start justify-center p-4 pt-12 sm:pt-16">
           <.focus_wrap id="infographic-modal-focus-wrap" class="w-full max-w-7xl">

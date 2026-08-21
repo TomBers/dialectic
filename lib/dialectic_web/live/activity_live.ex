@@ -970,8 +970,7 @@ defmodule DialecticWeb.ActivityLive do
                       <span class={[
                         "mt-1.5 h-3 w-3 rounded-full border-2 border-white ring-1",
                         item_dot_class(item)
-                      ]}>
-                      </span>
+                      ]}></span>
 
                       <div class="min-w-0">
                         <div class="flex flex-wrap items-start justify-between gap-2">
@@ -1117,8 +1116,7 @@ defmodule DialecticWeb.ActivityLive do
                             id={"activity-log-#{log.id}"}
                             class="grid grid-cols-[0.75rem_minmax(0,1fr)] gap-2.5 py-3"
                           >
-                            <span class="mt-1.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-amber-500 ring-1 ring-amber-200">
-                            </span>
+                            <span class="mt-1.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-amber-500 ring-1 ring-amber-200"></span>
                             <div class="min-w-0">
                               <p class="text-xs leading-5 text-slate-700">
                                 <span

@@ -13,6 +13,7 @@ defmodule DialecticWeb.UserLoginLive do
           <p class="mt-1 text-sm text-zinc-600">
             Don’t have an account?
             <.link
+              id="login-sign-up-link"
               navigate={~p"/users/register"}
               class="font-semibold text-indigo-600 hover:text-indigo-500"
             >
@@ -72,6 +73,7 @@ defmodule DialecticWeb.UserLoginLive do
                 </label>
 
                 <.link
+                  id="login-forgot-password-link"
                   href={~p"/users/reset_password"}
                   class="text-sm font-semibold text-indigo-600 hover:text-indigo-500"
                 >

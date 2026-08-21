@@ -59,8 +59,8 @@ defmodule DialecticWeb.LockComp do
           </div>
         </label>
       </div>
-      
-    <!-- Privacy Toggle -->
+
+      <!-- Privacy Toggle -->
       <div class="rounded-xl border border-gray-200 bg-white px-3 py-2.5 shadow-sm">
         <label
           for="toggle_public_graph"

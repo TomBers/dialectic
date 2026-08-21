@@ -218,13 +218,11 @@ defmodule DialecticWeb.InquiryActionsComp do
                   <span
                     data-selection-question-count
                     class="hidden rounded-full bg-indigo-50 px-2 py-1 text-[10px] font-medium text-indigo-700 ring-1 ring-indigo-200"
-                  >
-                  </span>
+                  ></span>
                   <span
                     data-selection-comment-count
                     class="hidden rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-medium text-emerald-700 ring-1 ring-emerald-200"
-                  >
-                  </span>
+                  ></span>
                 </div>
 
                 <div class="ml-auto flex items-center gap-1">

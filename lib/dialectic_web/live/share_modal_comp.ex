@@ -264,8 +264,7 @@ defmodule DialecticWeb.ShareModalComp do
                             <span class={[
                               "pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
                               if(@share_node, do: "translate-x-4", else: "translate-x-0")
-                            ]}>
-                            </span>
+                            ]}></span>
                           </button>
                           <span>
                             Link to current node

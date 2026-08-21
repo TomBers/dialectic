@@ -30,15 +30,15 @@ defmodule DialecticWeb.NodeComp do
      assign(socket,
        node_id: node_id,
        node: node,
-       user: Map.get(assigns, :user, nil),
-       form: Map.get(assigns, :form, nil),
+       user: Map.get(assigns, :user),
+       form: Map.get(assigns, :form),
        cut_off: Map.get(assigns, :cut_off, 500),
        ask_question: Map.get(assigns, :ask_question, true),
        prompt_mode: Map.get(assigns, :prompt_mode, "university"),
        graph_id: Map.get(assigns, :graph_id, ""),
-       graph_struct: Map.get(assigns, :graph_struct, nil),
-       graph_owner_id: Map.get(assigns, :graph_owner_id, nil),
-       current_user: Map.get(assigns, :current_user, nil),
+       graph_struct: Map.get(assigns, :graph_struct),
+       graph_owner_id: Map.get(assigns, :graph_owner_id),
+       current_user: Map.get(assigns, :current_user),
        can_edit: Map.get(assigns, :can_edit, true),
        menu_visible: Map.get(assigns, :menu_visible, true),
        streaming: Map.get(assigns, :streaming, false),
@@ -47,7 +47,7 @@ defmodule DialecticWeb.NodeComp do
        guided_path_form: Map.get(assigns, :guided_path_form, to_form(%{}, as: :guided_paths)),
        max_explore_items: Map.get(assigns, :max_explore_items, 3),
        presentation_mode: Map.get(assigns, :presentation_mode, :off),
-       token: Map.get(assigns, :token, nil)
+       token: Map.get(assigns, :token)
      )}
   end
 
@@ -363,8 +363,7 @@ defmodule DialecticWeb.NodeComp do
                         id={"markdown-title-#{@node.id}"}
                         data-md={@node.content || ""}
                         data-title-only="true"
-                      >
-                      </span>
+                      ></span>
                       <span class="flex items-center gap-2">
                         <% noted? =
                           Enum.any?(Map.get(@node || %{}, :noted_by, []), fn u -> u == @user end) %>
@@ -567,12 +566,9 @@ defmodule DialecticWeb.NodeComp do
                   <div class="flex items-center gap-1.5 rounded-full border border-indigo-100 bg-white/80 px-3 py-1.5 shadow-sm backdrop-blur">
                     <span class="text-xs font-medium text-indigo-700">Thinking</span>
                     <span class="flex gap-0.5">
-                      <span class="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-[typing_1.4s_ease-in-out_infinite]">
-                      </span>
-                      <span class="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-[typing_1.4s_ease-in-out_-0.16s_infinite]">
-                      </span>
-                      <span class="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-[typing_1.4s_ease-in-out_-0.32s_infinite]">
-                      </span>
+                      <span class="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-[typing_1.4s_ease-in-out_infinite]"></span>
+                      <span class="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-[typing_1.4s_ease-in-out_-0.16s_infinite]"></span>
+                      <span class="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-[typing_1.4s_ease-in-out_-0.32s_infinite]"></span>
                     </span>
                   </div>
                 </div>

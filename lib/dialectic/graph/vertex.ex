@@ -148,13 +148,10 @@ defmodule Dialectic.Graph.Vertex do
   def build_context(node, graph, limit) do
     allowed_parent = Map.get(node, :parent)
 
-    context =
-      collect_parents(graph, node.id, allowed_parent)
-      |> Enum.map(&add_node_context(&1, graph))
-      |> enforce_limit(limit)
-      |> Enum.join("\n\n")
-
-    context
+    collect_parents(graph, node.id, allowed_parent)
+    |> Enum.map(&add_node_context(&1, graph))
+    |> enforce_limit(limit)
+    |> Enum.join("\n\n")
   end
 
   defp enforce_limit([], _limit), do: []
@@ -392,68 +389,54 @@ defmodule Dialectic.Graph.Vertex do
 
     # Convert vertices to cytoscape nodes format
     nodes =
-      Enum.reduce(vertices, [], fn vertex, acc ->
+      Enum.flat_map(vertices, fn vertex ->
         # Get the vertex label/data from the digraph
         case :digraph.vertex(graph, vertex) do
-          {vid, dat} ->
+          {vid, %{deleted: false} = dat} ->
             # Create cytoscape node format
-            case dat.deleted do
-              true ->
-                acc
-
-              false ->
-                acc ++
-                  [
-                    %{
-                      classes: dat.class,
-                      data:
-                        %{
-                          id: vid,
-                          parent: Map.get(dat, :parent, ""),
-                          content: dat.content
-                        }
-                        |> then(fn m ->
-                          if Map.get(dat, :compound, false),
-                            do: Map.put(m, :compound, true),
-                            else: m
-                        end)
-                    }
-                  ]
-            end
+            [
+              %{
+                classes: dat.class,
+                data:
+                  %{
+                    id: vid,
+                    parent: Map.get(dat, :parent, ""),
+                    content: dat.content
+                  }
+                  |> then(fn m ->
+                    if Map.get(dat, :compound, false),
+                      do: Map.put(m, :compound, true),
+                      else: m
+                  end)
+              }
+            ]
 
           _ ->
-            acc
+            []
         end
       end)
 
     # Convert edges to cytoscape edges format
     edges =
-      Enum.reduce(edges, [], fn edge, acc ->
+      Enum.flat_map(edges, fn edge ->
         with {_, v1, v2, _} <- :digraph.edge(graph, edge),
-             {source_id, s_dat} <- :digraph.vertex(graph, v1),
-             {target_id, t_dat} <- :digraph.vertex(graph, v2) do
+             {source_id, %{deleted: false}} <- :digraph.vertex(graph, v1),
+             {target_id, %{deleted: false}} <- :digraph.vertex(graph, v2) do
           # Create edge ID from source and target names
           edge_id = source_id <> "_" <> target_id
 
           # Create cytoscape edge format
-          case !(s_dat.deleted or t_dat.deleted) do
-            true ->
-              acc ++
-                [
-                  %{
-                    data: %{
-                      id: edge_id,
-                      source: source_id,
-                      target: target_id
-                    }
-                  }
-                ]
-
-            false ->
-              acc
-          end
+          [
+            %{
+              data: %{
+                id: edge_id,
+                source: source_id,
+                target: target_id
+              }
+            }
+          ]
         else
-          _ -> acc
+          _ -> []
         end
       end)
 

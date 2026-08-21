@@ -134,7 +134,7 @@ defmodule DialecticWeb.HighlightShare do
     title_markup =
       title_layout.lines
       |> Enum.with_index()
-      |> Enum.map_join("", fn {line, index} ->
+      |> Enum.map_join(fn {line, index} ->
         y = title_layout.start_y + index * title_layout.line_gap
         ~s(<tspan x="#{@quote_area_left}" y="#{y}">#{escape_xml(line)}</tspan>)
       end)
@@ -201,7 +201,7 @@ defmodule DialecticWeb.HighlightShare do
     quote_markup =
       quote_layout.lines
       |> Enum.with_index()
-      |> Enum.map_join("", fn {line, index} ->
+      |> Enum.map_join(fn {line, index} ->
         y = quote_layout.start_y + index * quote_layout.line_gap
         ~s(<tspan x="#{@quote_area_left}" y="#{y}">#{escape_xml(line)}</tspan>)
       end)
@@ -317,11 +317,16 @@ defmodule DialecticWeb.HighlightShare do
 
   defp quote_layout_score(%{font_size: font_size, lines: lines}) do
     max_units = max_line_units(font_size)
-    line_units = Enum.map(lines, &text_units/1)
-    longest_line = Enum.max(line_units, fn -> 1 end)
-    shortest_line = Enum.min(line_units, fn -> 1 end)
-    average_line = Enum.sum(line_units) / max(length(line_units), 1)
-    line_count_penalty = max(length(lines) - 3, 0) * 0.18
+
+    {longest_line, shortest_line, total_units, line_count} =
+      Enum.reduce(lines, {1, nil, 0, 0}, fn line, {longest, shortest, total, count} ->
+        units = text_units(line)
+        {max(longest, units), min(shortest || units, units), total + units, count + 1}
+      end)
+
+    shortest_line = shortest_line || 1
+    average_line = total_units / max(line_count, 1)
+    line_count_penalty = max(line_count - 3, 0) * 0.18
 
     fill_score = average_line / max_units
     balance_score = shortest_line / max(longest_line, 1)
@@ -473,18 +478,22 @@ defmodule DialecticWeb.HighlightShare do
     if text_units(trimmed) <= max_units do
       trimmed
     else
-      trimmed
-      |> String.graphemes()
-      |> Enum.reduce_while({"", 0.0}, fn grapheme, {acc, units} ->
-        next_units = units + char_units(grapheme)
+      {graphemes, _units, truncated?} =
+        trimmed
+        |> String.graphemes()
+        |> Enum.reduce_while({[], 0.0, false}, fn grapheme, {acc, units, false} ->
+          next_units = units + char_units(grapheme)
 
-        if next_units + char_units("…") <= max_units do
-          {:cont, {acc <> grapheme, next_units}}
-        else
-          {:halt, {String.trim_trailing(acc) <> "…", next_units}}
-        end
-      end)
-      |> elem(0)
+          if next_units + char_units("…") <= max_units do
+            {:cont, {[grapheme | acc], next_units, false}}
+          else
+            {:halt, {acc, units, true}}
+          end
+        end)
+
+      truncated_text = graphemes |> Enum.reverse() |> IO.iodata_to_binary()
+
+      if truncated?, do: String.trim_trailing(truncated_text) <> "…", else: truncated_text
     end
   end
 

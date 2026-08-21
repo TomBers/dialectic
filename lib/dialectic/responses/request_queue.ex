@@ -276,7 +276,7 @@ defmodule Dialectic.Responses.RequestQueue do
   end
 
   defp rate_limited?(actor_key) do
-    case Hammer.check_rate(
+    case Dialectic.RateLimit.hit(
            "llm_admission:#{actor_key}",
            @rate_window_ms,
            max_requests_per_minute()
@@ -284,12 +284,8 @@ defmodule Dialectic.Responses.RequestQueue do
       {:allow, _count} ->
         false
 
-      {:deny, _limit} ->
+      {:deny, _retry_after} ->
         true
-
-      {:error, reason} ->
-        Logger.error("[RequestQueue] Rate limiter unavailable: #{inspect(reason)}")
-        false
     end
   end
 

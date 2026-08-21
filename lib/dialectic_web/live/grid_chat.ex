@@ -5,8 +5,6 @@ defmodule DialecticWeb.GridChat do
   alias DialecticWeb.Presence
   alias Phoenix.PubSub
 
-  require Phoenix.LiveView
-
   @max_message_length 500
   @message_stream_limit -100
   @message_count_limit abs(@message_stream_limit)

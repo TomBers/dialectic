@@ -68,8 +68,7 @@ defmodule DialecticWeb.Live.ModalComp do
           phx-hook="TextSelectionHook"
           data-node-id={Map.get(@node || %{}, :id, "")}
         >
-          
-    <!-- Directional navigation buttons -->
+          <!-- Directional navigation buttons -->
           <!-- Top sticky bar (Parent) -->
           <div class="sticky top-0 z-10 flex justify-center bg-white/90 backdrop-blur px-2 py-1 md:py-2 border-b border-gray-100">
             <button
@@ -85,15 +84,14 @@ defmodule DialecticWeb.Live.ModalComp do
                   id={"markdown-parent-title-" <> @id}
                   data-md={@nav_parent_title}
                   data-title-only="true"
-                >
-                </span>
+                ></span>
               <% else %>
                 ↑ Parent
               <% end %>
             </button>
           </div>
-          
-    <!-- Side arrows (hidden on small screens) -->
+
+          <!-- Side arrows (hidden on small screens) -->
 
           <article class="prose prose-stone prose-lg md:prose-xl lg:prose-2xl max-w-none selection-content space-y-4 min-h-[50vh]">
             <h2 class="text-xl sm:text-2xl md:text-3xl">
@@ -102,8 +100,7 @@ defmodule DialecticWeb.Live.ModalComp do
                 id={"markdown-title-" <> @id}
                 data-md={Map.get(@node || %{}, :content, "")}
                 data-title-only="true"
-              >
-              </span>
+              ></span>
             </h2>
 
             <div class="text-base sm:text-lg">
@@ -117,8 +114,8 @@ defmodule DialecticWeb.Live.ModalComp do
               </div>
             </div>
           </article>
-          
-    <!-- Bottom sticky bar (Child) -->
+
+          <!-- Bottom sticky bar (Child) -->
           <div class="sticky bottom-0 z-10 flex justify-center bg-white/90 backdrop-blur px-2 py-1 md:py-2 border-t border-gray-100">
             <button
               phx-click={JS.push("node_move", value: %{direction: "down"})}
@@ -132,8 +129,7 @@ defmodule DialecticWeb.Live.ModalComp do
                   id={"markdown-child-title-" <> @id}
                   data-md={@nav_child_title}
                   data-title-only="true"
-                >
-                </span>
+                ></span>
                 ↓
               <% else %>
                 Child ↓

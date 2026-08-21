@@ -56,8 +56,7 @@ defmodule DialecticWeb.UserSettingsLive do
               width="640"
               height="168"
               class="h-auto w-full cursor-move rounded-lg border border-zinc-200 bg-white shadow-sm"
-            >
-            </canvas>
+            ></canvas>
 
             <div class="mt-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
               <div>
@@ -265,8 +264,7 @@ defmodule DialecticWeb.UserSettingsLive do
                         class="h-full w-full object-cover"
                       />
                     <% true -> %>
-                      <span class="block h-full w-full bg-gradient-to-r from-indigo-500 to-blue-400">
-                      </span>
+                      <span class="block h-full w-full bg-gradient-to-r from-indigo-500 to-blue-400"></span>
                   <% end %>
 
                   <span class="absolute bottom-2 right-2 rounded-full bg-black/45 px-3 py-1 text-xs font-semibold text-white opacity-0 shadow-sm transition group-hover:opacity-100 group-focus-visible:opacity-100">
@@ -355,8 +353,7 @@ defmodule DialecticWeb.UserSettingsLive do
                               width="320"
                               height="320"
                               class="h-80 w-80 max-w-full cursor-move rounded-full border border-zinc-200 bg-white shadow-sm"
-                            >
-                            </canvas>
+                            ></canvas>
                           </div>
 
                           <div class="flex-1 space-y-4">

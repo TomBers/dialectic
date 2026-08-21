@@ -275,8 +275,7 @@ defmodule DialecticWeb.HighlightsPanelComp do
                         class="mt-1 inline-flex h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-500 ring-2 ring-emerald-100"
                         title="Visible in the current view"
                         aria-label="In view"
-                      >
-                      </span>
+                      ></span>
                     <% end %>
                   </div>
                 </button>
