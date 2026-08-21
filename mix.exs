@@ -10,7 +10,8 @@ defmodule Dialectic.MixProject do
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
       deps: deps(),
-      test_coverage: [summary: [threshold: 80], output: "cover"]
+      test_coverage: [summary: [threshold: 80], output: "cover"],
+      listeners: [Phoenix.CodeReloader]
     ]
   end
 

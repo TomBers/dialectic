@@ -1660,6 +1660,9 @@ export function focusBranch(cy, node, container = cy.container?.()) {
   reflowAfterVisibilityChange(cy, () => {
     _rebuildFocusControls(cy, container);
     cy.applySelectionContext?.(node);
+    if (container) {
+      fitVisibleGraph(cy, container, 84, { focusNodeId: node.id() });
+    }
   });
   return true;
 }
@@ -1672,6 +1675,11 @@ export function clearBranchFocus(cy, container = cy.container?.()) {
     _rebuildFocusControls(cy, container);
     const selected = cy.$("node.selected").filter((node) => !node.isParent());
     if (selected.length > 0) cy.applySelectionContext?.(selected[0]);
+    if (container) {
+      fitVisibleGraph(cy, container, 84, {
+        focusNodeId: selected.length > 0 ? selected[0].id() : null,
+      });
+    }
   });
   return true;
 }
@@ -1893,6 +1901,17 @@ export function reflowAfterVisibilityChange(cy, onDone) {
   });
 }
 
+export function visibleLayoutElements(cy) {
+  return cy.elements().filter((element) => {
+    return (
+      !element.hasClass("hidden") &&
+      !element.hasClass("depth-hidden") &&
+      !element.hasClass("focus-hidden") &&
+      !element.hasClass("presentation-hidden")
+    );
+  });
+}
+
 function _relayoutAfterDepthChange(cy) {
   try {
     const viewMode = localStorage.getItem("graph_view_mode") || "spaced";
@@ -1902,12 +1921,18 @@ function _relayoutAfterDepthChange(cy) {
         ? layoutConfig.compactLayout
         : layoutConfig.baseLayout;
 
-    cy.layout({
+    const layoutOptions = {
       ...baseLayout,
       rankDir: graphDirection,
       animate: cy._reduceMotion ? false : true,
       animationDuration: cy._reduceMotion ? 0 : 250,
-    }).run();
+    };
+
+    if (typeof cy.elements === "function") {
+      layoutOptions.eles = visibleLayoutElements(cy);
+    }
+
+    cy.layout(layoutOptions).run();
   } catch (_e) {}
 }
 
@@ -1959,6 +1984,19 @@ function _injectDepthToggleStyles() {
   transform-origin: center center;
 }
 
+.depth-chevron {
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transition: transform 0.15s ease;
+}
+.depth-expanded-btn .depth-chevron {
+  transform: translateY(-1px) rotate(45deg);
+}
+.depth-collapsed-btn .depth-chevron {
+  transform: translateX(-1px) rotate(-45deg);
+}
 .depth-toggle-btn:hover {
   background: #f1f5f9;
   border-color: #94a3b8;
@@ -2152,16 +2190,19 @@ function _rebuildDepthToggleOverlays(cy, container) {
     const hiddenCount = n.data("_hiddenChildCount") || children.length;
 
     if (collapsed) {
-      btn.textContent = "›";
       btn.classList.add("depth-collapsed-btn");
       btn.title = `Show downstream branch (${hiddenCount} direct child${hiddenCount === 1 ? "" : "ren"}) (E)`;
       btn.setAttribute("aria-label", `Show downstream branch from node ${n.id()}`);
     } else {
-      btn.textContent = "⌄";
       btn.classList.add("depth-expanded-btn");
       btn.title = `Hide downstream branch (${children.length} direct child${children.length === 1 ? "" : "ren"}) (C)`;
       btn.setAttribute("aria-label", `Hide downstream branch from node ${n.id()}`);
     }
+
+    const icon = document.createElement("span");
+    icon.className = "depth-chevron";
+    icon.setAttribute("aria-hidden", "true");
+    btn.appendChild(icon);
 
     // Stop events from reaching the Cytoscape canvas beneath
     btn.addEventListener("mousedown", (e) => e.stopPropagation());
