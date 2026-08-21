@@ -213,7 +213,10 @@ defmodule DialecticWeb.AskFormComp do
               id={"#{@id}-guided-learning"}
               name="guided_learning"
               value="false"
-              label="Guide my learning with next actions and exploration paths"
+              variant="learning_plan"
+              label="Guide my learning"
+              description="On adds ranked next actions and tailored exploration paths."
+              badge="Learning plan"
             />
           <% else %>
             <button
