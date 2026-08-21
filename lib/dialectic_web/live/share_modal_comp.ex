@@ -11,6 +11,7 @@ defmodule DialecticWeb.ShareModalComp do
       socket
       |> assign(assigns)
       |> assign_new(:share_target, fn -> :editor end)
+      |> assign_new(:reader_path_endpoint, fn -> nil end)
       |> assign_new(:presentation_mode, fn -> nil end)
       |> assign_new(:show_preview, fn -> true end)
       |> assign_new(:selected_highlight, fn -> nil end)
@@ -580,6 +581,15 @@ defmodule DialecticWeb.ShareModalComp do
               end
             else
               p
+            end
+          end)
+          |> then(fn params ->
+            if assigns[:share_target] == :reader &&
+                 is_binary(assigns[:reader_path_endpoint]) &&
+                 assigns[:reader_path_endpoint] != "" do
+              Keyword.put(params, :path, assigns.reader_path_endpoint)
+            else
+              params
             end
           end)
 

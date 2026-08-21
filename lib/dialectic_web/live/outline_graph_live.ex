@@ -71,7 +71,15 @@ defmodule DialecticWeb.OutlineGraphLive do
 
   @impl true
   def handle_params(params, _uri, socket) do
-    selected_node = resolve_target_node(socket.assigns.graph_id, params)
+    path_endpoint = current_selected_node(socket.assigns.graph_id, params["path"])
+
+    selected_node =
+      if params["node"] do
+        resolve_target_node(socket.assigns.graph_id, params)
+      else
+        path_endpoint || resolve_target_node(socket.assigns.graph_id, params)
+      end
+
     previous_node_id = socket.assigns.selected_node_id
 
     highlight_id = Map.get(params, "highlight")
@@ -79,13 +87,19 @@ defmodule DialecticWeb.OutlineGraphLive do
     share_highlight =
       HighlightShare.highlight_for_graph(socket.assigns.graph_struct, highlight_id)
 
-    path_focus_ids =
-      if socket.assigns.path_focus_ids != [] && selected_node &&
-           selected_node.id in socket.assigns.path_focus_ids do
-        socket.assigns.path_focus_ids
+    requested_path_ids =
+      if path_endpoint do
+        socket.assigns.graph_id
+        |> build_selected_path(path_endpoint)
+        |> Enum.map(& &1.id)
       else
         []
       end
+
+    path_focus_ids =
+      if selected_node && selected_node.id in requested_path_ids,
+        do: requested_path_ids,
+        else: []
 
     socket =
       socket
@@ -208,6 +222,7 @@ defmodule DialecticWeb.OutlineGraphLive do
       {:noreply,
        assign(socket,
          selected_node_id: node_id,
+         share_node: reading_node,
          selected_path: selected_path,
          selected_path_ids: selected_path_ids,
          selected_focus_outline_nodes: focused_outline_nodes,
@@ -221,12 +236,11 @@ defmodule DialecticWeb.OutlineGraphLive do
   @impl true
   def handle_event("choose_path", _params, socket) do
     if socket.assigns.can_choose_path? do
+      params = Keyword.put(socket.assigns.nav_params, :path, socket.assigns.selected_node_id)
+
       {:noreply,
-       assign(socket,
-         path_focus_ids: Enum.map(socket.assigns.selected_focus_outline_nodes, & &1.id),
-         visible_outline_nodes: socket.assigns.selected_focus_outline_nodes,
-         visible_reading_chain: socket.assigns.selected_path,
-         paths_filtered?: true
+       push_patch(socket,
+         to: graph_path(socket.assigns.graph_struct, socket.assigns.selected_node_id, params)
        )}
     else
       {:noreply, socket}
@@ -236,11 +250,13 @@ defmodule DialecticWeb.OutlineGraphLive do
   @impl true
   def handle_event("show_all_paths", _params, socket) do
     {:noreply,
-     assign(socket,
-       path_focus_ids: [],
-       visible_outline_nodes: socket.assigns.outline_nodes,
-       visible_reading_chain: socket.assigns.reading_chain,
-       paths_filtered?: false
+     push_patch(socket,
+       to:
+         graph_path(
+           socket.assigns.graph_struct,
+           socket.assigns.selected_node_id,
+           socket.assigns.nav_params
+         )
      )}
   end
 
@@ -441,6 +457,7 @@ defmodule DialecticWeb.OutlineGraphLive do
       can_choose_path?: false,
       selected_node_id: nil,
       node: nil,
+      share_node: nil,
       selected_path: [],
       displayed_node_ids: MapSet.new(),
       highlight_node_ids: MapSet.new(),
@@ -568,6 +585,7 @@ defmodule DialecticWeb.OutlineGraphLive do
     assign(socket,
       selected_node_id: nil,
       node: nil,
+      share_node: nil,
       selected_path: [],
       selected_path_ids: MapSet.new(),
       displayed_node_ids: MapSet.new(),
@@ -643,6 +661,7 @@ defmodule DialecticWeb.OutlineGraphLive do
     assign(socket,
       selected_node_id: selected_node.id,
       node: selected_node,
+      share_node: selected_node,
       selected_path: selected_path,
       selected_path_ids: selected_path_ids,
       displayed_node_ids: displayed_node_ids,
@@ -1131,7 +1150,12 @@ defmodule DialecticWeb.OutlineGraphLive do
       node ->
         push_patch(
           socket,
-          to: graph_path(socket.assigns.graph_struct, node.id, socket.assigns.nav_params)
+          to:
+            graph_path(
+              socket.assigns.graph_struct,
+              node.id,
+              reader_nav_params(socket.assigns.nav_params, socket.assigns.path_focus_ids)
+            )
         )
     end
   end
@@ -1140,7 +1164,9 @@ defmodule DialecticWeb.OutlineGraphLive do
     graph_path(
       socket.assigns.graph_struct,
       node_id,
-      Keyword.put(socket.assigns.nav_params, :highlight, highlight_id)
+      socket.assigns.nav_params
+      |> reader_nav_params(socket.assigns.path_focus_ids)
+      |> Keyword.put(:highlight, highlight_id)
     )
   end
 
@@ -1197,6 +1223,12 @@ defmodule DialecticWeb.OutlineGraphLive do
   end
 
   defp challenge_action_label(_node), do: "Challenge node"
+
+  defp reader_nav_params(nav_params, []), do: nav_params
+
+  defp reader_nav_params(nav_params, path_focus_ids) do
+    Keyword.put(nav_params, :path, List.last(path_focus_ids))
+  end
 
   defp token_params(token) when is_binary(token) and token != "", do: [token: token]
   defp token_params(_token), do: []

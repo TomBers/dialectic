@@ -591,6 +591,7 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
 
     view |> element("#outline-choose-path") |> render_click()
 
+    assert_patch(view, ~p"/g/#{graph.slug}?node=3&path=3")
     assert has_element?(view, "#outline-node-1")
     assert has_element?(view, "#outline-node-2")
     assert has_element?(view, "#outline-node-3[data-outline-selected='true']")
@@ -607,7 +608,7 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
 
     view |> element("#outline-node-2") |> render_click()
 
-    assert_patch(view, ~p"/g/#{graph.slug}?node=2")
+    assert_patch(view, ~p"/g/#{graph.slug}?node=2&path=3")
     assert has_element?(view, "#outline-node-2[data-outline-selected='true']")
     assert has_element?(view, "#outline-node-3")
     refute has_element?(view, "#outline-node-4")
@@ -616,10 +617,27 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
 
     view |> element("#outline-show-all-paths") |> render_click()
 
+    assert_patch(view, ~p"/g/#{graph.slug}?node=2")
     assert has_element?(view, "#outline-node-4")
     assert has_element?(view, "#outline-node-5")
     assert has_element?(view, "#outline-node-2[data-outline-selected='true']")
     refute has_element?(view, "#outline-show-all-paths")
+  end
+
+  test "restores a shared reader path from the URL", %{conn: conn} do
+    graph = create_graph()
+
+    {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=2&path=4")
+    assigns = :sys.get_state(view.pid).socket.assigns
+
+    assert assigns.paths_filtered?
+    assert assigns.path_focus_ids == ["1", "2", "4"]
+    assert Enum.map(assigns.visible_outline_nodes, & &1.id) == ["1", "2", "4"]
+    assert Enum.map(assigns.visible_reading_chain, & &1.id) == ["1", "2", "4"]
+    assert assigns.selected_node_id == "2"
+    assert has_element?(view, "#outline-node-2[data-outline-selected='true']")
+    assert has_element?(view, ~s(#outline-node-4[href="/g/#{graph.slug}?node=4&path=4"]))
+    assert has_element?(view, "#outline-show-all-paths")
   end
 
   test "compare branches keep their own lead nodes when branches reconverge", %{conn: conn} do
@@ -699,6 +717,21 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert has_element?(view, "#share-modal-hook")
     assert has_element?(view, ~s(#share-url-input[value="#{share_url}"]))
     refute render(view) =~ "Generating preview..."
+  end
+
+  test "share button includes the chosen path and viewed chapter", %{conn: conn} do
+    graph = create_graph()
+
+    {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=3&path=3")
+    render_hook(view, "reader_node_viewed", %{"id" => "2"})
+
+    view
+    |> element("#reader-workspace-bar-share")
+    |> render_click()
+
+    share_url = "#{DialecticWeb.Endpoint.url()}/g/#{graph.slug}?node=2&path=3"
+
+    assert has_element?(view, ~s(#share-url-input[value="#{share_url}"]))
   end
 
   test "highlight share button opens the share modal for the selected quote", %{conn: conn} do

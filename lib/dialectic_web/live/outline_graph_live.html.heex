@@ -40,7 +40,7 @@
               mode={:reader}
               graph_struct={@graph_struct}
               node_id={@selected_node_id}
-              nav_params={@nav_params}
+              nav_params={reader_nav_params(@nav_params, @path_focus_ids)}
               mobile_aux_id="reader-workspace-bar-outline"
               mobile_aux_click={JS.dispatch("toggle-mobile-outline", to: "#outline-layout")}
               mobile_aux_label="Conversation outline"
@@ -155,7 +155,13 @@
             <% row_response_level = Map.get(row, :response_level) %>
             <.link
               id={"outline-node-#{row.id}"}
-              patch={graph_path(@graph_struct, row.id, @nav_params)}
+              patch={
+                graph_path(
+                  @graph_struct,
+                  row.id,
+                  reader_nav_params(@nav_params, @path_focus_ids)
+                )
+              }
               data-outline-selected={to_string(selected?)}
               style={outline_indent_style(row.indent)}
               class={[
@@ -283,7 +289,13 @@
                       <% row_response_level = Map.get(row, :response_level) %>
                       <.link
                         id={"outline-mobile-node-#{row.id}"}
-                        patch={graph_path(@graph_struct, row.id, @nav_params)}
+                        patch={
+                          graph_path(
+                            @graph_struct,
+                            row.id,
+                            reader_nav_params(@nav_params, @path_focus_ids)
+                          )
+                        }
                         phx-click={JS.dispatch("close-mobile-outline", to: "#outline-layout")}
                         data-outline-selected={to_string(selected?)}
                         style={outline_indent_style(row.indent, 0.35)}
@@ -522,7 +534,13 @@
                   <%= for choice <- @next_choices do %>
                     <DialecticWeb.PathActionCardComp.path_action_card
                       id={"next-choice-#{choice.id}"}
-                      patch={graph_path(@graph_struct, choice.id, @nav_params)}
+                      patch={
+                        graph_path(
+                          @graph_struct,
+                          choice.id,
+                          reader_nav_params(@nav_params, @path_focus_ids)
+                        )
+                      }
                       title={choice.title}
                       node_class={choice.class}
                     />
@@ -604,7 +622,13 @@
                 <%= for branch <- inactive_branches do %>
                   <DialecticWeb.PathActionCardComp.path_action_card
                     id={"branch-compare-card-#{branch.id}"}
-                    patch={graph_path(@graph_struct, branch.id, @nav_params)}
+                    patch={
+                      graph_path(
+                        @graph_struct,
+                        branch.id,
+                        reader_nav_params(@nav_params, @path_focus_ids)
+                      )
+                    }
                     title={branch.lead.full_title}
                     node_class={branch.lead.class}
                   />
@@ -805,9 +829,10 @@
   show={@show_share_modal}
   graph_struct={@graph_struct}
   current_user={@current_user}
-  selected_node={@node}
+  selected_node={@share_node}
   selected_highlight={@selected_share_highlight}
   share_node={true}
   share_target={:reader}
+  reader_path_endpoint={List.last(@path_focus_ids)}
   show_preview={false}
 />
