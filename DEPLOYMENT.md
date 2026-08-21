@@ -498,36 +498,99 @@ fly machine start --all
 
 ## Backup and Recovery
 
-### Database Backups
+### Database Restore Runbook
 
-#### Automated Backups (Fly.io Postgres)
+Production uses the unmanaged Fly Postgres app `mudg-db`. It has continuous WAL backups for point-in-time recovery and daily Fly volume snapshots. Prefer a WAL restore; use a volume snapshot only if WAL restore is unavailable.
 
-```bash
-# Backups are automatic with Fly Postgres
-# List available backups
-fly postgres backups list
+Never restore over `mudg-db`. Restore into a new Postgres app, validate it, and only then point `mudg` at it. Keep the original database until the restored service has been stable long enough to provide a rollback path.
 
-# Restore from backup
-fly postgres backups restore <backup-id>
-```
-
-#### Manual Backup
+#### 1. Identify the recovery point
 
 ```bash
-# Create manual backup
-fly ssh console --app dialectic-db
-pg_dump $DATABASE_URL > backup_$(date +%Y%m%d).sql
-
-# Download backup
-fly ssh sftp get /backup_20240106.sql
+fly pg backup config show --app mudg-db
+fly pg backup list --app mudg-db
 ```
+
+For accidental deletion or a bad migration, choose a UTC timestamp immediately before the incident in RFC3339 format, such as `2026-08-21T10:30:00Z`. If no timestamp is supplied, Fly restores to the latest available point.
+
+#### 2. Restore into a new cluster
+
+Use a unique destination app name:
+
+```bash
+fly pg backup restore mudg-db-restore-YYYYMMDD \
+  --app mudg-db \
+  --restore-target-time 2026-08-21T10:30:00Z
+```
+
+To restore a named full backup instead of a timestamp, use `--restore-target-name <backup-id>`. Do not pass both target options.
+
+Wait for the restored cluster to become healthy:
+
+```bash
+fly status --app mudg-db-restore-YYYYMMDD
+fly checks list --app mudg-db-restore-YYYYMMDD
+fly pg db list --app mudg-db-restore-YYYYMMDD
+```
+
+#### 3. Validate before cutover
+
+Connect to the restored cluster and inspect the `mudg` database:
+
+```bash
+fly pg connect --app mudg-db-restore-YYYYMMDD --database mudg
+```
+
+At minimum, check representative users, graphs, notes, highlights, and the latest timestamps. Check `schema_migrations` against the application release you intend to run. Also inspect `oban_jobs`: restoring starts with the historical job table, so jobs that were pending at the recovery point may execute when the application reconnects.
+
+For a high-impact incident, connect a temporary staging application to the restored cluster and perform login and graph-loading smoke tests before production cutover.
+
+#### 4. Cut over production
+
+Announce a write freeze or maintenance window first. Writes accepted by the old database after the selected recovery point will not exist in the restored database.
+
+Stop or otherwise block writes from `mudg`, then attach the restored cluster. Use the existing database name and a new attachment user to avoid colliding with the restored `mudg` role. Fly creates this user with its default attachment privileges, which are currently required to access and migrate the restored schema:
+
+```bash
+fly pg attach mudg-db-restore-YYYYMMDD \
+  --app mudg \
+  --database-name mudg \
+  --database-user mudg_restore
+```
+
+Confirm any prompt to replace `DATABASE_URL`. Rotate or reduce the attachment user's privileges after the incident if the application no longer requires them. If Fly refuses because `mudg-db` is still registered as attached, detach it while the application is stopped, then repeat the attach command:
+
+```bash
+fly pg detach mudg-db --app mudg
+```
+
+Verify production immediately:
+
+```bash
+fly checks list --app mudg
+fly logs --app mudg
+```
+
+Test login, graph loading, writes, and background jobs. Do not destroy `mudg-db` during the incident. Record the recovery timestamp and new database app name.
+
+#### Volume snapshot fallback
+
+If WAL backup restore is unavailable, list the database volume and snapshots, then restore using the same Postgres image version:
+
+```bash
+fly volumes list --app mudg-db
+fly volumes snapshots list <volume-id> --app mudg-db
+fly image show --app mudg-db
+fly pg create \
+  --snapshot-id <snapshot-id> \
+  --image-ref flyio/postgres-flex:<matching-version>
+```
+
+Validate and cut over using the same procedure above. Volume snapshots currently have a shorter and less precise recovery window than WAL backups.
 
 ### Application State
 
-Graph data is stored in the database, but you may want to:
-1. Regularly backup the database
-2. Export critical graphs as JSON
-3. Store backups offsite (S3, etc.)
+Graph and account data is stored in Postgres. Uploaded avatars and banners are stored separately in Tigris and are not recovered by a database restore.
 
 ## Production Maintenance
 
