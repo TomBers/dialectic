@@ -567,7 +567,7 @@ defmodule DialecticWeb.GraphLive do
          :ok <- validate_can_edit(socket),
          {:ok, %{class: "learning_plan"} = plan_node} <-
            find_node_safe(socket.assigns.graph_id, socket.assigns.node.id),
-         {:ok, plan_node} <- ensure_guided_plan(socket.assigns.graph_id, plan_node),
+         {:ok, _guided_plan} <- GuidedLearningPlan.normalize(plan_node.guided_plan),
          {:ok, target_node} <- guided_action_target(socket.assigns.graph_id, plan_node) do
       paths =
         plan_node
@@ -647,7 +647,7 @@ defmodule DialecticWeb.GraphLive do
          :ok <- validate_can_edit(socket),
          {:ok, plan_node} <- find_node_safe(socket.assigns.graph_id, plan_node_id),
          true <- Map.get(plan_node, :class) == "learning_plan",
-         {:ok, plan_node} <- ensure_guided_plan(socket.assigns.graph_id, plan_node),
+         {:ok, _guided_plan} <- GuidedLearningPlan.normalize(plan_node.guided_plan),
          true <- guided_action_recommended?(plan_node, action),
          {:ok, target_node} <- guided_action_target(socket.assigns.graph_id, plan_node),
          false <- guided_action_used?(plan_node, target_node, action),
@@ -2109,7 +2109,7 @@ defmodule DialecticWeb.GraphLive do
   end
 
   defp guided_plan_options(%{class: "learning_plan"} = plan_node) do
-    with {:ok, _guided_plan} <- GuidedLearningPlan.resolve(plan_node),
+    with {:ok, _guided_plan} <- GuidedLearningPlan.normalize(Map.get(plan_node, :guided_plan)),
          %{} = target_node <- List.first(Map.get(plan_node, :parents, [])) do
       actions =
         plan_node
@@ -2129,11 +2129,9 @@ defmodule DialecticWeb.GraphLive do
 
   defp guided_plan_options(_node), do: {[], []}
 
-  defp guided_paths(%{class: "learning_plan"} = plan_node) do
-    case GuidedLearningPlan.resolve(plan_node) do
-      {:ok, plan} -> GuidedLearningPlan.paths(plan)
-      {:error, _errors} -> []
-    end
+  defp guided_paths(%{class: "learning_plan", guided_plan: guided_plan})
+       when is_map(guided_plan) do
+    GuidedLearningPlan.paths(guided_plan)
   end
 
   defp guided_paths(_node), do: []
@@ -2150,10 +2148,7 @@ defmodule DialecticWeb.GraphLive do
 
     Enum.map(paths, fn path ->
       reserved? =
-        GuidedLearningPlan.submission_reserved?(
-          plan_node.guided_plan,
-          guided_path_submission_key(path.id)
-        )
+        guided_submission_reserved?(plan_node, guided_path_submission_key(path.id))
 
       Map.put(
         path,
@@ -2202,11 +2197,9 @@ defmodule DialecticWeb.GraphLive do
     "Exploring #{length(paths)} selected paths"
   end
 
-  defp guided_next_actions(%{class: "learning_plan"} = plan_node) do
-    case GuidedLearningPlan.resolve(plan_node) do
-      {:ok, plan} -> GuidedLearningPlan.actions(plan)
-      {:error, _errors} -> []
-    end
+  defp guided_next_actions(%{class: "learning_plan", guided_plan: guided_plan})
+       when is_map(guided_plan) do
+    GuidedLearningPlan.actions(guided_plan)
   end
 
   defp guided_next_actions(_node), do: []
@@ -2243,10 +2236,7 @@ defmodule DialecticWeb.GraphLive do
 
   defp guided_action_used?(plan_node, _target_node, action) do
     reserved? =
-      GuidedLearningPlan.submission_reserved?(
-        plan_node.guided_plan,
-        guided_action_submission_key(action)
-      )
+      guided_submission_reserved?(plan_node, guided_action_submission_key(action))
 
     classes = GuidedLearningPlan.result_classes(action)
 
@@ -2254,6 +2244,10 @@ defmodule DialecticWeb.GraphLive do
       Enum.any?(Map.get(plan_node, :children, []), fn child ->
         !Map.get(child, :deleted, false) && Map.get(child, :class) in classes
       end)
+  end
+
+  defp guided_submission_reserved?(plan_node, submission_key) do
+    submission_key in Map.get(plan_node, :guided_submissions, [])
   end
 
   defp guided_path_submission_key(path_id), do: "path:#{path_id}"
@@ -2430,19 +2424,6 @@ defmodule DialecticWeb.GraphLive do
 
   defp validate_logged_in(%{assigns: %{current_user: %User{}}}), do: :ok
   defp validate_logged_in(_socket), do: {:error, :login_required}
-
-  defp ensure_guided_plan(graph_id, plan_node) do
-    case GuidedLearningPlan.normalize(Map.get(plan_node, :guided_plan)) do
-      {:ok, _plan} ->
-        {:ok, plan_node}
-
-      {:error, _errors} ->
-        with {:ok, plan} <- GuidedLearningPlan.validate(Map.get(plan_node, :content)) do
-          GraphManager.update_vertex_fields(graph_id, plan_node.id, %{guided_plan: plan})
-          {:ok, Map.put(plan_node, :guided_plan, plan)}
-        end
-    end
-  end
 
   defp validate_regeneration_access(%{class: "learning_plan"}, socket),
     do: validate_logged_in(socket)

@@ -12,6 +12,7 @@ defmodule Dialectic.Graph.Vertex do
              :source_text,
              :prompt_kind,
              :guided_plan,
+             :guided_submissions,
              :response_level,
              :grounding_metadata
            ]}
@@ -56,6 +57,7 @@ defmodule Dialectic.Graph.Vertex do
             source_text: nil,
             prompt_kind: nil,
             guided_plan: nil,
+            guided_submissions: [],
             response_level: nil,
             grounding_metadata: nil
 
@@ -80,6 +82,7 @@ defmodule Dialectic.Graph.Vertex do
       source_text: source_text_value,
       prompt_kind: vertex.prompt_kind,
       guided_plan: Map.get(vertex, :guided_plan),
+      guided_submissions: Map.get(vertex, :guided_submissions, []),
       response_level: Map.get(vertex, :response_level),
       grounding_metadata: Map.get(vertex, :grounding_metadata)
     }
@@ -103,6 +106,7 @@ defmodule Dialectic.Graph.Vertex do
       source_text: source_text_value,
       prompt_kind: data["prompt_kind"],
       guided_plan: data["guided_plan"],
+      guided_submissions: data["guided_submissions"] || [],
       response_level: data["response_level"],
       grounding_metadata: data["grounding_metadata"]
     }

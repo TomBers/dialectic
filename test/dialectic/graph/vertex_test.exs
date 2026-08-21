@@ -57,14 +57,22 @@ defmodule Dialectic.Graph.VertexTest do
       ]
     }
 
-    vertex = %Vertex{id: "plan-1", class: "learning_plan", guided_plan: guided_plan}
+    vertex = %Vertex{
+      id: "plan-1",
+      class: "learning_plan",
+      guided_plan: guided_plan,
+      guided_submissions: ["action:clarify"]
+    }
+
     serialized = Vertex.serialize(vertex)
 
     assert serialized.guided_plan == guided_plan
+    assert serialized.guided_submissions == ["action:clarify"]
 
     deserialized = serialized |> Jason.encode!() |> Jason.decode!() |> Vertex.deserialize()
     assert deserialized.guided_plan["version"] == 1
     assert hd(deserialized.guided_plan["actions"])["key"] == "clarify"
+    assert deserialized.guided_submissions == ["action:clarify"]
   end
 
   describe "build_context/3 question traversal" do

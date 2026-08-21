@@ -340,34 +340,31 @@ defmodule GraphManager do
         {graph_struct, graph}
       ) do
     case :digraph.vertex(graph, node_id) do
-      {_id, %{class: "learning_plan", deleted: false, guided_plan: nil} = vertex}
-      when submission_key == "regeneration" ->
-        updated_vertex = Map.put(vertex, :guided_plan, %{reservations: [submission_key]})
-        :digraph.add_vertex(graph, node_id, updated_vertex)
-        {:reply, :ok, {graph_struct, graph}}
+      {_id, %{class: "learning_plan", deleted: false} = vertex}
+      when is_binary(submission_key) ->
+        valid_submission? =
+          submission_key == "regeneration" || is_map(Map.get(vertex, :guided_plan))
 
-      {_id, %{class: "learning_plan", deleted: false, guided_plan: guided_plan} = vertex}
-      when is_map(guided_plan) and is_binary(submission_key) ->
-        reservations =
-          guided_plan
-          |> Map.get(:reservations, Map.get(guided_plan, "reservations", []))
-          |> List.wrap()
+        submissions = Map.get(vertex, :guided_submissions, []) |> List.wrap()
 
-        reservation_conflict? =
-          submission_key in reservations ||
-            (submission_key == "regeneration" && reservations != []) ||
-            (submission_key != "regeneration" && "regeneration" in reservations)
+        submission_conflict? =
+          submission_key in submissions ||
+            (submission_key == "regeneration" && submissions != []) ||
+            (submission_key != "regeneration" && "regeneration" in submissions)
 
-        if reservation_conflict? do
-          {:reply, {:error, :already_reserved}, {graph_struct, graph}}
-        else
-          reservation_key =
-            if Map.has_key?(guided_plan, "reservations"), do: "reservations", else: :reservations
+        cond do
+          !valid_submission? ->
+            {:reply, {:error, :invalid_guided_plan}, {graph_struct, graph}}
 
-          updated_plan = Map.put(guided_plan, reservation_key, [submission_key | reservations])
-          updated_vertex = Map.put(vertex, :guided_plan, updated_plan)
-          :digraph.add_vertex(graph, node_id, updated_vertex)
-          {:reply, :ok, {graph_struct, graph}}
+          submission_conflict? ->
+            {:reply, {:error, :already_reserved}, {graph_struct, graph}}
+
+          true ->
+            updated_vertex =
+              Map.put(vertex, :guided_submissions, [submission_key | submissions])
+
+            :digraph.add_vertex(graph, node_id, updated_vertex)
+            {:reply, :ok, {graph_struct, graph}}
         end
 
       {_id, _vertex} ->
@@ -384,19 +381,14 @@ defmodule GraphManager do
         {graph_struct, graph}
       ) do
     case :digraph.vertex(graph, node_id) do
-      {_id, %{class: "learning_plan", guided_plan: guided_plan} = vertex}
-      when is_map(guided_plan) and is_binary(submission_key) ->
-        reservation_key =
-          if Map.has_key?(guided_plan, "reservations"), do: "reservations", else: :reservations
-
-        reservations =
-          guided_plan
-          |> Map.get(:reservations, Map.get(guided_plan, "reservations", []))
+      {_id, %{class: "learning_plan"} = vertex} when is_binary(submission_key) ->
+        submissions =
+          vertex
+          |> Map.get(:guided_submissions, [])
           |> List.wrap()
           |> List.delete(submission_key)
 
-        updated_plan = Map.put(guided_plan, reservation_key, reservations)
-        updated_vertex = Map.put(vertex, :guided_plan, updated_plan)
+        updated_vertex = Map.put(vertex, :guided_submissions, submissions)
         :digraph.add_vertex(graph, node_id, updated_vertex)
         {:reply, :ok, {graph_struct, graph}}
 

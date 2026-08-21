@@ -170,29 +170,6 @@ defmodule Dialectic.Responses.GuidedLearningPlan do
 
   def paths(_content), do: []
 
-  def submission_reserved?(plan, submission_key)
-      when is_map(plan) and is_binary(submission_key) do
-    plan
-    |> value(:reservations)
-    |> List.wrap()
-    |> Enum.member?(submission_key)
-  end
-
-  def submission_reserved?(_plan, _submission_key), do: false
-
-  def resolve(%{guided_plan: guided_plan, content: content}) do
-    case normalize(guided_plan) do
-      {:ok, plan} -> {:ok, plan}
-      {:error, _errors} -> validate(content)
-    end
-  end
-
-  def resolve(%{"guided_plan" => guided_plan, "content" => content}) do
-    resolve(%{guided_plan: guided_plan, content: content})
-  end
-
-  def resolve(_node), do: {:error, ["invalid structured learning plan"]}
-
   def validate(content) when is_binary(content) do
     parsed_actions = parsed_actions(content)
     parsed_paths = parsed_paths(content)

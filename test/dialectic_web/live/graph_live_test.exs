@@ -557,40 +557,6 @@ defmodule DialecticWeb.GraphLiveTest do
       refute has_element?(view, "#markdown-body-3")
     end
 
-    test "supports legacy content-only learning plans", %{conn: conn} do
-      conn =
-        log_in_user(
-          conn,
-          user_fixture(%{email: "legacy-plan-#{System.unique_integer([:positive])}@example.com"})
-        )
-
-      content = """
-      ## Learning plan: Legacy plan
-      #{@guided_test_actions}
-      #{@guided_test_paths}
-      """
-
-      graph =
-        Dialectic.GraphFixtures.insert_graph(%{
-          title: "Legacy Learning Plan #{System.unique_integer([:positive])}",
-          data: learning_plan_graph_data(content, nil)
-        })
-
-      {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}/graph?node=3")
-
-      assert has_element?(view, "#guided-learning-plan-3")
-      assert has_element?(view, "#guided-plan-action-0", "Clarify terms")
-
-      view
-      |> element("#guided-plan-action-0")
-      |> render_click()
-
-      assert :sys.get_state(view.pid).socket.assigns.node.class == "clarify"
-
-      persisted_plan = GraphManager.find_node_by_id(graph.title, "3").guided_plan
-      assert {:ok, _plan} = GuidedLearningPlan.normalize(persisted_plan)
-    end
-
     test "renders persisted learning-plan errors instead of interactive controls", %{conn: conn} do
       error = "We couldn't create a valid learning plan. Please try again."
 

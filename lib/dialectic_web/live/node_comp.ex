@@ -120,7 +120,7 @@ defmodule DialecticWeb.NodeComp do
   defp guided_options(assigns, key, node, fallback) do
     case Map.get(assigns, key, []) do
       [] ->
-        case GuidedLearningPlan.resolve(node) do
+        case GuidedLearningPlan.normalize(Map.get(node, :guided_plan)) do
           {:ok, plan} ->
             plan
             |> fallback.()
@@ -136,7 +136,7 @@ defmodule DialecticWeb.NodeComp do
   end
 
   defp interactive_learning_plan?(%{class: "learning_plan"} = node) do
-    match?({:ok, _plan}, GuidedLearningPlan.resolve(node))
+    match?({:ok, _plan}, GuidedLearningPlan.normalize(Map.get(node, :guided_plan)))
   end
 
   defp interactive_learning_plan?(_node), do: false

@@ -209,7 +209,7 @@ defmodule GraphManagerTest do
         GraphManager.add_node(@graph_id, %Vertex{
           content: "Learning plan",
           class: "learning_plan",
-          guided_plan: %{version: 1, reservations: []}
+          guided_plan: %{version: 1}
         })
 
       results =
@@ -226,7 +226,7 @@ defmodule GraphManagerTest do
       assert Enum.count(results, &(&1 == {:error, :already_reserved})) == 19
 
       refreshed_plan = GraphManager.find_node_by_id(@graph_id, plan.id)
-      assert refreshed_plan.guided_plan.reservations == ["action:clarify"]
+      assert refreshed_plan.guided_submissions == ["action:clarify"]
 
       assert :ok =
                GraphManager.release_guided_submission(
