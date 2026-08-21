@@ -574,8 +574,18 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
 
     {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=3")
 
-    assert has_element?(view, "#outline-choose-path")
-    assert has_element?(view, "#outline-mobile-choose-path")
+    assert has_element?(
+             view,
+             "#outline-node-3 + #outline-choose-path",
+             "Choose this path"
+           )
+
+    assert has_element?(
+             view,
+             "#outline-mobile-node-3 + #outline-mobile-choose-path",
+             "Choose this path"
+           )
+
     assert has_element?(view, "#outline-node-4")
     assert has_element?(view, "#outline-node-5")
 

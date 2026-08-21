@@ -131,27 +131,15 @@
             <h2 class="text-sm font-semibold text-slate-900">Conversation Outline</h2>
             <p class="mt-1 text-xs text-slate-500">Choose a point in the conversation.</p>
           </div>
-          <%= cond do %>
-            <% @paths_filtered? -> %>
-              <button
-                id="outline-show-all-paths"
-                type="button"
-                phx-click="show_all_paths"
-                class="inline-flex shrink-0 items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-50"
-              >
-                <.icon name="hero-squares-2x2" class="h-3.5 w-3.5" /> Show all paths
-              </button>
-            <% @can_choose_path? -> %>
-              <button
-                id="outline-choose-path"
-                type="button"
-                phx-click="choose_path"
-                class="inline-flex shrink-0 items-center gap-1 rounded-full bg-teal-700 px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-teal-800"
-              >
-                <.icon name="hero-map" class="h-3.5 w-3.5" /> Choose path
-              </button>
-            <% true -> %>
-          <% end %>
+          <button
+            :if={@paths_filtered?}
+            id="outline-show-all-paths"
+            type="button"
+            phx-click="show_all_paths"
+            class="inline-flex shrink-0 items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-50"
+          >
+            <.icon name="hero-squares-2x2" class="h-3.5 w-3.5" /> Show all paths
+          </button>
         </div>
       </div>
 
@@ -231,6 +219,15 @@
                 </div>
               </div>
             </.link>
+            <button
+              :if={selected? && @can_choose_path? && !@paths_filtered?}
+              id="outline-choose-path"
+              type="button"
+              phx-click="choose_path"
+              class="mt-1 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-teal-200 bg-teal-50 px-3 py-1.5 text-xs font-semibold text-teal-800 transition hover:border-teal-300 hover:bg-teal-100"
+            >
+              <.icon name="hero-map" class="h-3.5 w-3.5" /> Choose this path
+            </button>
           <% end %>
         </nav>
       <% end %>
@@ -261,27 +258,15 @@
                       Jump to another point in the conversation.
                     </p>
                   </div>
-                  <%= cond do %>
-                    <% @paths_filtered? -> %>
-                      <button
-                        id="outline-mobile-show-all-paths"
-                        type="button"
-                        phx-click="show_all_paths"
-                        class="inline-flex shrink-0 items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700"
-                      >
-                        <.icon name="hero-squares-2x2" class="h-3.5 w-3.5" /> Show all
-                      </button>
-                    <% @can_choose_path? -> %>
-                      <button
-                        id="outline-mobile-choose-path"
-                        type="button"
-                        phx-click="choose_path"
-                        class="inline-flex shrink-0 items-center gap-1 rounded-full bg-teal-700 px-2.5 py-1 text-[11px] font-semibold text-white"
-                      >
-                        <.icon name="hero-map" class="h-3.5 w-3.5" /> Choose path
-                      </button>
-                    <% true -> %>
-                  <% end %>
+                  <button
+                    :if={@paths_filtered?}
+                    id="outline-mobile-show-all-paths"
+                    type="button"
+                    phx-click="show_all_paths"
+                    class="inline-flex shrink-0 items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700"
+                  >
+                    <.icon name="hero-squares-2x2" class="h-3.5 w-3.5" /> Show all
+                  </button>
                 </div>
               </div>
 
@@ -363,6 +348,15 @@
                           </div>
                         </div>
                       </.link>
+                      <button
+                        :if={selected? && @can_choose_path? && !@paths_filtered?}
+                        id="outline-mobile-choose-path"
+                        type="button"
+                        phx-click="choose_path"
+                        class="mt-1 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-teal-200 bg-white px-3 py-2 text-xs font-semibold text-teal-800"
+                      >
+                        <.icon name="hero-map" class="h-3.5 w-3.5" /> Choose this path
+                      </button>
                     <% end %>
                   </nav>
                 <% end %>
