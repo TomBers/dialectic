@@ -88,6 +88,16 @@ const cols = {
   },
   answer: defaultNodeStyle,
   explain: defaultNodeStyle,
+  learning_plan: {
+    text: "#312e81",
+    background: "#e0e7ff",
+    border: "#6366f1",
+    hoverBackground: "#c7d2fe",
+    hoverBorder: "#4f46e5",
+    selectedText: "#312e81",
+    selectedBackground: "#c7d2fe",
+    selectedBorder: "#4338ca",
+  },
 
   // ── Cluster 1 — Core Inquiry Moves ──────────────────────────────────
   clarify: {

@@ -17,6 +17,7 @@ defmodule DialecticWeb.NodeComp do
       base_node
       |> Map.put_new(:id, "")
       |> Map.put_new(:content, "")
+      |> Map.put_new(:class, "")
       |> Map.put_new(:children, [])
       |> Map.put_new(:parents, [])
 
@@ -38,6 +39,10 @@ defmodule DialecticWeb.NodeComp do
        can_edit: Map.get(assigns, :can_edit, true),
        menu_visible: Map.get(assigns, :menu_visible, true),
        streaming: Map.get(assigns, :streaming, false),
+       guided_actions: Map.get(assigns, :guided_actions, []),
+       guided_paths: Map.get(assigns, :guided_paths, []),
+       guided_path_form: Map.get(assigns, :guided_path_form, to_form(%{}, as: :guided_paths)),
+       max_explore_items: Map.get(assigns, :max_explore_items, 3),
        presentation_mode: Map.get(assigns, :presentation_mode, :off),
        token: Map.get(assigns, :token, nil)
      )}
@@ -48,6 +53,7 @@ defmodule DialecticWeb.NodeComp do
     "antithesis",
     "ideas",
     "answer",
+    "learning_plan",
     "explain",
     "synthesis",
     "clarify",
@@ -107,6 +113,172 @@ defmodule DialecticWeb.NodeComp do
   end
 
   defp existing_follow_up_questions_json(_node), do: "[]"
+
+  defp learning_plan(assigns) do
+    ~H"""
+    <div id={"guided-learning-plan-#{@node.id}"} class="not-prose space-y-7 pb-3 pt-1">
+      <section id="guided-plan-actions">
+        <div class="flex items-end justify-between gap-4">
+          <div>
+            <h3 class="font-serif text-lg font-semibold leading-6 text-slate-950">
+              Best next actions
+            </h3>
+            <p class="mt-0.5 text-xs leading-5 text-slate-500">
+              Choose one to continue immediately.
+            </p>
+          </div>
+          <span class="hidden text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 sm:block">
+            One action
+          </span>
+        </div>
+
+        <div class="mt-3 grid gap-3">
+          <%= for {recommendation, index} <- Enum.with_index(@guided_actions) do %>
+            <button
+              id={"guided-plan-action-#{index}"}
+              type="button"
+              phx-click="apply_guided_next_action"
+              phx-value-action={recommendation.action}
+              phx-value-id={@node.id}
+              disabled={recommendation.disabled}
+              aria-disabled={to_string(recommendation.disabled)}
+              aria-describedby={"guided-plan-action-tooltip-#{index}"}
+              class={[
+                "group flex w-full flex-col rounded-2xl border p-4 text-left shadow-sm transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2",
+                recommendation.disabled && "cursor-not-allowed border-slate-200 bg-slate-100/80",
+                !recommendation.disabled && recommendation.recommended &&
+                  "border-indigo-300 bg-gradient-to-br from-indigo-50 via-white to-white ring-1 ring-indigo-100 hover:border-indigo-400 hover:shadow-md",
+                !recommendation.disabled && !recommendation.recommended &&
+                  "border-slate-200 bg-white hover:border-slate-300 hover:shadow-md"
+              ]}
+            >
+              <span class="flex w-full items-start justify-between gap-2">
+                <span class="flex min-w-0 items-start gap-2.5">
+                  <span class="group/tool relative shrink-0">
+                    <span
+                      data-guided-action-icon={recommendation.action}
+                      class={[
+                        "inline-flex h-8 w-8 items-center justify-center rounded-lg shadow-sm ring-1 ring-inset ring-black/5",
+                        DialecticWeb.ColUtils.advanced_tool_icon_class(recommendation.action)
+                      ]}
+                    >
+                      <.icon name={recommendation.icon} class="h-4 w-4" />
+                    </span>
+                    <span
+                      id={"guided-plan-action-tooltip-#{index}"}
+                      role="tooltip"
+                      class="pointer-events-none invisible absolute bottom-full left-0 z-30 mb-2 w-52 rounded-lg bg-slate-950 px-3 py-2 text-xs font-medium leading-4 text-white opacity-0 shadow-xl transition-opacity group-hover/tool:visible group-hover/tool:opacity-100"
+                    >
+                      {recommendation.tool_description}
+                    </span>
+                  </span>
+                  <span class={[
+                    "min-w-0 pt-1 text-sm font-semibold leading-5",
+                    if(recommendation.disabled, do: "text-slate-500", else: "text-slate-950")
+                  ]}>
+                    {recommendation.label}
+                  </span>
+                </span>
+                <span
+                  :if={recommendation.recommended}
+                  class="shrink-0 rounded-full bg-indigo-700 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white"
+                >
+                  Recommended
+                </span>
+                <span
+                  :if={recommendation.disabled}
+                  class="shrink-0 rounded-full bg-slate-200 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-slate-500"
+                >
+                  Already asked
+                </span>
+              </span>
+              <span class={[
+                "mt-2 block text-sm leading-5",
+                if(recommendation.disabled, do: "text-slate-500", else: "text-slate-600")
+              ]}>
+                {recommendation.reason}
+              </span>
+              <span
+                :if={!recommendation.disabled}
+                class="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-700"
+              >
+                Continue <.icon name="hero-arrow-right" class="h-3.5 w-3.5" />
+              </span>
+            </button>
+          <% end %>
+        </div>
+      </section>
+
+      <section :if={@guided_paths != []} id="guided-plan-paths" class="border-t border-slate-200 pt-6">
+        <div>
+          <h3 class="font-serif text-lg font-semibold leading-6 text-slate-950">Paths to explore</h3>
+          <p class="mt-0.5 text-xs leading-5 text-slate-500">
+            Select up to {@max_explore_items}. Each path creates one AI request.
+          </p>
+        </div>
+
+        <.form
+          for={@guided_path_form}
+          id="guided-plan-path-form"
+          phx-submit="submit_guided_paths"
+          class="mt-3 space-y-3"
+        >
+          <%= for path <- @guided_paths do %>
+            <div
+              id={"guided-plan-path-#{path.index}"}
+              class={[
+                "rounded-2xl border p-4 shadow-sm transition",
+                if(path.disabled,
+                  do: "border-slate-200 bg-slate-100/80",
+                  else:
+                    "border-slate-200 bg-white hover:border-indigo-300 has-[:checked]:border-indigo-400 has-[:checked]:bg-indigo-50/70 has-[:checked]:ring-1 has-[:checked]:ring-indigo-200"
+                )
+              ]}
+            >
+              <div class="flex items-start justify-between gap-3">
+                <.input
+                  type="checkbox"
+                  id={"guided-plan-path-checkbox-#{path.index}"}
+                  name={"paths[#{path.index}]"}
+                  value="false"
+                  label={path.label}
+                  disabled={path.disabled}
+                />
+                <span
+                  :if={path.disabled}
+                  class="shrink-0 rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-600"
+                >
+                  Already explored
+                </span>
+              </div>
+              <p class={[
+                "mt-3 font-serif text-base font-semibold leading-5",
+                if(path.disabled, do: "text-slate-500", else: "text-slate-950")
+              ]}>
+                {path.question}
+              </p>
+              <p class={[
+                "mt-1.5 text-xs leading-5",
+                if(path.disabled, do: "text-slate-500", else: "text-slate-600")
+              ]}>
+                {path.reason}
+              </p>
+            </div>
+          <% end %>
+
+          <button
+            id="guided-plan-path-submit"
+            type="submit"
+            disabled={Enum.all?(@guided_paths, & &1.disabled)}
+            class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Explore selected paths <.icon name="hero-arrow-right" class="h-4 w-4" />
+          </button>
+        </.form>
+      </section>
+    </div>
+    """
+  end
 
   @impl true
   def render(assigns) do
@@ -243,46 +415,51 @@ defmodule DialecticWeb.NodeComp do
                         </button>
                       </div>
 
-                      <div
-                        phx-hook="Markdown"
-                        class="cursor-text selection:bg-amber-200/80 selection:text-slate-900"
-                        id={"markdown-body-#{@node.id}"}
-                        data-md={@node.content || ""}
-                        data-grounding={DialecticWeb.MarkdownGrounding.encode(@node)}
-                        data-body-only="true"
-                        data-existing-follow-up-questions={existing_follow_up_questions_json(@node)}
-                      >
-                      </div>
+                      <%= if @node.class == "learning_plan" do %>
+                        <%= if @current_user do %>
+                          <.learning_plan
+                            node={@node}
+                            guided_actions={@guided_actions}
+                            guided_paths={@guided_paths}
+                            guided_path_form={@guided_path_form}
+                            max_explore_items={@max_explore_items}
+                          />
+                        <% else %>
+                          <div
+                            id={"guided-learning-login-#{@node.id}"}
+                            class="not-prose rounded-2xl border border-indigo-200 bg-indigo-50/70 p-4"
+                          >
+                            <p class="text-sm font-semibold text-indigo-950">
+                              Create an account to use this learning plan
+                            </p>
+                            <p class="mt-1 text-xs leading-5 text-indigo-800">
+                              Registration is free and unlocks recommended branches and parallel exploration paths.
+                            </p>
+                            <button
+                              id={"guided-learning-login-button-#{@node.id}"}
+                              type="button"
+                              phx-click="show_login_required"
+                              class="mt-3 inline-flex items-center gap-1.5 rounded-full bg-indigo-700 px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                            >
+                              Create account or sign in
+                              <.icon name="hero-arrow-right" class="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        <% end %>
+                      <% else %>
+                        <div
+                          phx-hook="Markdown"
+                          class="cursor-text selection:bg-amber-200/80 selection:text-slate-900"
+                          id={"markdown-body-#{@node.id}"}
+                          data-md={@node.content || ""}
+                          data-grounding={DialecticWeb.MarkdownGrounding.encode(@node)}
+                          data-body-only="true"
+                          data-existing-follow-up-questions={existing_follow_up_questions_json(@node)}
+                        >
+                        </div>
+                      <% end %>
                     </div>
                   </article>
-
-                  <div
-                    :if={
-                      @can_edit && !@streaming &&
-                        Map.get(@node, :prompt_kind) == "guided_learning_plan"
-                    }
-                    id={"guided-learning-actions-#{@node.id}"}
-                    class="mx-auto mt-4 flex w-full max-w-3xl items-center justify-between gap-3 rounded-2xl border border-indigo-200 bg-indigo-50/80 p-3.5 shadow-sm"
-                  >
-                    <div class="min-w-0">
-                      <p class="text-sm font-semibold text-indigo-950">
-                        Choose actions and paths
-                      </p>
-                      <p class="mt-0.5 text-xs leading-5 text-indigo-800">
-                        Review ranked actions and expand up to three paths in parallel.
-                      </p>
-                    </div>
-                    <button
-                      id={"review-guided-learning-#{@node.id}"}
-                      type="button"
-                      phx-click="review_guided_learning_plan"
-                      phx-value-id={@node.id}
-                      class="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-indigo-700 px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
-                    >
-                      <span>Review plan</span>
-                      <.icon name="hero-arrow-right" class="h-3.5 w-3.5" />
-                    </button>
-                  </div>
 
                   <%= if GraphHelpers.origin_branching_disabled?(@node) do %>
                     <div

@@ -19,6 +19,7 @@ defmodule Dialectic.Graph.Vertex do
     "antithesis",
     "synthesis",
     "answer",
+    "learning_plan",
     "assumption",
     "premise",
     "conclusion",

@@ -118,6 +118,7 @@ defmodule DialecticWeb.InquiryActionsComp do
               ask_question={@ask_question}
               prompt_mode={@prompt_mode}
               graph_id={@graph_id}
+              current_user={@current_user}
               node={@node}
               show_context={false}
               embedded

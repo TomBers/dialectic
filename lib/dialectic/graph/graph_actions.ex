@@ -455,7 +455,7 @@ defmodule Dialectic.Graph.GraphActions do
               LlmInterface.gen_response(question_node, n, graph_id, live_view_topic)
           end
         end,
-        "answer",
+        if(guided_learning, do: "learning_plan", else: "answer"),
         user,
         answer_opts
       )
@@ -698,22 +698,18 @@ defmodule Dialectic.Graph.GraphActions do
       "ideas" ->
         related_ideas({graph_id, parent, user, live_view_topic}, content_override: source_text)
 
+      "learning_plan" ->
+        GraphManager.add_child(
+          graph_id,
+          [parent],
+          fn n -> LlmInterface.gen_guided_learning_plan(parent, n, graph_id, live_view_topic) end,
+          "learning_plan",
+          user,
+          source_text_opts
+        )
+
       "answer" ->
         cond do
-          source_text_opts
-          |> Keyword.get(:fields, %{})
-          |> Map.get(:prompt_kind) == "guided_learning_plan" ->
-            GraphManager.add_child(
-              graph_id,
-              [parent],
-              fn n ->
-                LlmInterface.gen_guided_learning_plan(parent, n, graph_id, live_view_topic)
-              end,
-              "answer",
-              user,
-              source_text_opts
-            )
-
           source_text ->
             GraphManager.add_child(
               graph_id,

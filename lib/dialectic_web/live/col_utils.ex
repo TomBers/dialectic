@@ -14,6 +14,7 @@ defmodule DialecticWeb.ColUtils do
   def border_class("question"), do: "border-sky-500"
   def border_class("user"), do: "border-green-600"
   def border_class("answer"), do: "border-gray-400"
+  def border_class("learning_plan"), do: "border-indigo-500"
   def border_class("thesis"), do: "border-emerald-500"
   def border_class("antithesis"), do: "border-red-500"
   def border_class("synthesis"), do: "border-violet-500"
@@ -40,6 +41,10 @@ defmodule DialecticWeb.ColUtils do
   def badge_class("question"), do: "bg-sky-50 text-sky-700 ring-1 ring-sky-600/10"
   def badge_class("user"), do: "bg-green-100 text-green-800 ring-1 ring-green-700/10"
   def badge_class("answer"), do: "bg-gray-100 text-gray-700 ring-1 ring-gray-600/10"
+
+  def badge_class("learning_plan"),
+    do: "bg-indigo-50 text-indigo-700 ring-1 ring-indigo-600/10"
+
   def badge_class("thesis"), do: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/10"
   def badge_class("antithesis"), do: "bg-red-50 text-red-700 ring-1 ring-red-600/10"
   def badge_class("synthesis"), do: "bg-violet-50 text-violet-700 ring-1 ring-violet-600/10"
@@ -65,6 +70,7 @@ defmodule DialecticWeb.ColUtils do
   def dot_class("question"), do: "bg-sky-500"
   def dot_class("user"), do: "bg-green-600"
   def dot_class("answer"), do: "bg-gray-400"
+  def dot_class("learning_plan"), do: "bg-indigo-500"
   def dot_class("thesis"), do: "bg-emerald-500"
   def dot_class("antithesis"), do: "bg-red-500"
   def dot_class("synthesis"), do: "bg-violet-500"
@@ -195,6 +201,7 @@ defmodule DialecticWeb.ColUtils do
   def node_type_label("question"), do: "Question"
   def node_type_label("user"), do: "User Comment"
   def node_type_label("answer"), do: "Answer"
+  def node_type_label("learning_plan"), do: "Learning Plan"
   def node_type_label("thesis"), do: "Pro / Supporting Point"
   def node_type_label("antithesis"), do: "Con / Counterpoint"
   def node_type_label("synthesis"), do: "Synthesis / Balanced View"
@@ -220,6 +227,10 @@ defmodule DialecticWeb.ColUtils do
   def node_type_description("question"), do: "A question posed to the AI (Blue)"
   def node_type_description("user"), do: "A comment or thought from a user (Dark Green)"
   def node_type_description("answer"), do: "An AI-generated response (Gray)"
+
+  def node_type_description("learning_plan"),
+    do: "An interactive plan of recommended actions and paths (Indigo)"
+
   def node_type_description("thesis"), do: "A supporting argument or pro point (Green)"
   def node_type_description("antithesis"), do: "A counterargument or con point (Red)"
 

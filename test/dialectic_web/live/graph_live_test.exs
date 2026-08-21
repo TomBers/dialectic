@@ -80,6 +80,49 @@ defmodule DialecticWeb.GraphLiveTest do
     }
   end
 
+  defp learning_plan_graph_data do
+    %{
+      "nodes" => [
+        %{
+          "id" => "1",
+          "content" => "## Test topic",
+          "class" => "origin",
+          "user" => nil,
+          "parent" => nil,
+          "noted_by" => [],
+          "deleted" => false,
+          "compound" => false
+        },
+        %{
+          "id" => "2",
+          "content" => "How should I learn this?",
+          "class" => "question",
+          "user" => nil,
+          "parent" => nil,
+          "noted_by" => [],
+          "deleted" => false,
+          "compound" => false
+        },
+        %{
+          "id" => "3",
+          "content" =>
+            "## Learning plan: Test topic\n### Best next actions\n- **Clarify terms** — Define the central idea.",
+          "class" => "learning_plan",
+          "prompt_kind" => "guided_learning_plan",
+          "user" => nil,
+          "parent" => nil,
+          "noted_by" => [],
+          "deleted" => false,
+          "compound" => false
+        }
+      ],
+      "edges" => [
+        %{"data" => %{"id" => "1_2", "source" => "1", "target" => "2"}},
+        %{"data" => %{"id" => "2_3", "source" => "2", "target" => "3"}}
+      ]
+    }
+  end
+
   describe "mount/3" do
     test "keeps a stable anonymous LLM actor in the signed browser session", %{conn: conn} do
       first_conn = get(conn, ~p"/")
@@ -358,6 +401,69 @@ defmodule DialecticWeb.GraphLiveTest do
       refute has_element?(view, "#global-chat-form-guidance-mode")
     end
 
+    test "encourages signed-out users to create an account", %{conn: conn} do
+      graph =
+        Dialectic.GraphFixtures.insert_graph(%{
+          title: "Anonymous Guided Learning #{System.unique_integer([:positive])}"
+        })
+
+      {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}/graph?node=1")
+
+      refute has_element?(view, "#global-chat-form-guided-learning")
+
+      assert has_element?(
+               view,
+               "#global-chat-form-guided-learning-signup",
+               "Create a free account"
+             )
+
+      view
+      |> element("#global-chat-form-guided-learning-signup")
+      |> render_click()
+
+      assert has_element?(view, "#login-modal", "Create account")
+    end
+
+    test "crafted signed-out submissions open the login modal without creating nodes", %{
+      conn: conn
+    } do
+      graph =
+        Dialectic.GraphFixtures.insert_graph(%{
+          title: "Crafted Anonymous Guided Learning #{System.unique_integer([:positive])}"
+        })
+
+      {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}/graph?node=1")
+      vertex_count = length(GraphManager.vertices(graph.title))
+
+      render_click(view, "reply-and-answer", %{
+        "vertex" => %{"content" => "Build me a learning plan"},
+        "guided_learning" => "true",
+        "query_origin" => "node_action_bar"
+      })
+
+      assert has_element?(view, "#login-modal", "Login Required")
+      assert length(GraphManager.vertices(graph.title)) == vertex_count
+    end
+
+    test "signed-out viewers cannot use actions on an existing learning plan", %{conn: conn} do
+      graph =
+        Dialectic.GraphFixtures.insert_graph(%{
+          title: "Anonymous Existing Learning Plan #{System.unique_integer([:positive])}",
+          data: learning_plan_graph_data()
+        })
+
+      {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}/graph?node=3")
+      vertex_count = length(GraphManager.vertices(graph.title))
+
+      assert has_element?(view, "#guided-learning-login-3", "Create an account")
+      refute has_element?(view, "#guided-plan-action-0")
+
+      render_click(view, "apply_guided_next_action", %{"id" => "3", "action" => "clarify"})
+
+      assert has_element?(view, "#login-modal", "Login Required")
+      assert length(GraphManager.vertices(graph.title)) == vertex_count
+    end
+
     test "creates selected paths as parallel question and answer branches", %{conn: conn} do
       {:ok, view, _html} = setup_live_for_graph(conn, "Guided Multiple Paths")
       graph_id = :sys.get_state(view.pid).socket.assigns.graph_id
@@ -369,6 +475,7 @@ defmodule DialecticWeb.GraphLiveTest do
       })
 
       plan_node = :sys.get_state(view.pid).socket.assigns.node
+      assert plan_node.class == "learning_plan"
       assert plan_node.prompt_kind == "guided_learning_plan"
 
       GraphManager.set_node_content(
@@ -387,9 +494,10 @@ defmodule DialecticWeb.GraphLiveTest do
         """
       )
 
-      render_click(view, "review_guided_learning_plan", %{"id" => plan_node.id})
+      render_click(view, "node_clicked", %{"id" => plan_node.id})
 
-      assert has_element?(view, "#guided-learning-plan-modal")
+      assert has_element?(view, "#guided-learning-plan-#{plan_node.id}")
+      refute has_element?(view, "#guided-learning-plan-modal")
       assert has_element?(view, "#guided-plan-action-0", "Clarify terms")
       assert has_element?(view, "#guided-plan-path-0", "Division of power")
       assert has_element?(view, "#guided-plan-path-1", "Collapse of the alliance")
@@ -408,7 +516,25 @@ defmodule DialecticWeb.GraphLiveTest do
       })
 
       assert length(GraphManager.vertices(graph_id)) == vertex_count_before + 4
-      refute has_element?(view, "#guided-learning-plan-modal")
+
+      [{generation_id, generation}] =
+        :sys.get_state(view.pid).socket.assigns.background_generations |> Enum.to_list()
+
+      most_recent_result_id = List.last(generation.node_ids)
+      assert generation.target_node_id == most_recent_result_id
+
+      Enum.each(generation.node_ids, fn node_id ->
+        send(view.pid, {:llm_request_complete, node_id})
+      end)
+
+      :sys.get_state(view.pid)
+
+      view
+      |> element("#open-background-answer-#{generation_id}")
+      |> render_click()
+
+      assert :sys.get_state(view.pid).socket.assigns.node.id == most_recent_result_id
+      assert_push_event(view, "center_node", %{id: ^most_recent_result_id})
 
       refreshed_plan = GraphManager.find_node_by_id(graph_id, plan_node.id)
       question_children = Enum.filter(refreshed_plan.children, &(&1.class == "question"))
@@ -425,7 +551,7 @@ defmodule DialecticWeb.GraphLiveTest do
                Enum.any?(question.children, &(&1.class == "answer"))
              end)
 
-      render_click(view, "review_guided_learning_plan", %{"id" => plan_node.id})
+      render_click(view, "node_clicked", %{"id" => plan_node.id})
 
       assert has_element?(view, "#guided-plan-path-0", "Already explored")
       assert has_element?(view, "#guided-plan-path-checkbox-0[disabled]")
@@ -444,6 +570,7 @@ defmodule DialecticWeb.GraphLiveTest do
       })
 
       plan_node = :sys.get_state(view.pid).socket.assigns.node
+      assert plan_node.class == "learning_plan"
       assert plan_node.prompt_kind == "guided_learning_plan"
 
       GraphManager.set_node_content(
@@ -458,9 +585,10 @@ defmodule DialecticWeb.GraphLiveTest do
         """
       )
 
-      render_click(view, "review_guided_learning_plan", %{"id" => plan_node.id})
+      render_click(view, "node_clicked", %{"id" => plan_node.id})
 
-      assert has_element?(view, "#guided-learning-plan-modal")
+      assert has_element?(view, "#guided-learning-plan-#{plan_node.id}")
+      refute has_element?(view, "#guided-learning-plan-modal")
       assert has_element?(view, "#guided-plan-action-0", "Clarify terms")
       assert has_element?(view, "#guided-plan-action-0", "Recommended")
       assert has_element?(view, "#guided-plan-action-1", "Test with a counterexample")
@@ -486,12 +614,11 @@ defmodule DialecticWeb.GraphLiveTest do
       |> element("#guided-plan-action-0")
       |> render_click()
 
-      refute has_element?(view, "#guided-learning-plan-modal")
       result_node = :sys.get_state(view.pid).socket.assigns.node
       assert result_node.class == "clarify"
       assert Enum.any?(result_node.parents, &(&1.id == plan_node.id))
 
-      render_click(view, "review_guided_learning_plan", %{"id" => plan_node.id})
+      render_click(view, "node_clicked", %{"id" => plan_node.id})
 
       assert has_element?(view, "#guided-plan-action-0[disabled]", "Already asked")
       assert has_element?(view, "#guided-plan-action-1", "Recommended")

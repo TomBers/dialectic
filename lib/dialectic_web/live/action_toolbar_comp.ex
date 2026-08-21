@@ -53,6 +53,7 @@ defmodule DialecticWeb.ActionToolbarComp do
         node={@node}
         graph_id={@graph_id}
         can_edit={@can_edit}
+        current_user={@current_user}
         form={@form}
         prompt_mode={@prompt_mode}
         ask_question={@ask_question}

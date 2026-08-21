@@ -725,8 +725,9 @@
                             node.class == "antithesis" && "bg-rose-400",
                             node.class == "synthesis" && "bg-purple-400",
                             node.class == "ideas" && "bg-orange-400",
+                            node.class == "learning_plan" && "bg-indigo-500",
                             node.class == "origin" && "bg-slate-400",
-                            node.class not in ~w(question user thesis antithesis synthesis ideas origin) &&
+                            node.class not in ~w(question user thesis antithesis synthesis ideas learning_plan origin) &&
                               "bg-gray-400"
                           ]} />
                           <span class="shrink-0 text-xs text-gray-400">
