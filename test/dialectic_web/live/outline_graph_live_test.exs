@@ -637,6 +637,12 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert assigns.selected_node_id == "2"
     assert has_element?(view, "#outline-node-2[data-outline-selected='true']")
     assert has_element?(view, ~s(#outline-node-4[href="/g/#{graph.slug}?node=4&path=4"]))
+
+    assert has_element?(
+             view,
+             ~s(#reader-workspace-bar-graph[href="/g/#{graph.slug}/graph?node=2&path=4"])
+           )
+
     assert has_element?(view, "#outline-show-all-paths")
   end
 

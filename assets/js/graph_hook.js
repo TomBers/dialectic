@@ -296,6 +296,7 @@ const graphHook = {
 
     const container =
       this.el.querySelector(`#${div}`) || document.getElementById(div);
+    this._container = container;
 
     container.dataset.graphReady = "false";
     container.setAttribute("aria-busy", "true");
@@ -318,6 +319,9 @@ const graphHook = {
       initialPresentationMode === "presenting" && initialPresentationIds.length > 0
         ? this._buildPresentationElements(initialPresentationIds, graph)
         : this._parseGraphElements(graph);
+    const initialFocusPathIds =
+      initialPresentationMode === "presenting" ? [] : this._readReaderPathIds();
+    this._setReaderPathTransitionPending(initialFocusPathIds.length > 0);
     const initialDrawOptions =
       initialPresentationMode === "presenting" && initialPresentationIds.length > 0
         ? {
@@ -347,9 +351,6 @@ const graphHook = {
     // Track view mode and direction for detecting changes
     this._lastViewMode = viewMode;
     this._lastGraphDirection = graphDirection;
-
-    // Store container reference for reinitializing
-    this._container = container;
 
     // Link back so layoutGraph can update running state
     try {
@@ -439,6 +440,7 @@ const graphHook = {
       });
     }
     this._pendingCenterId = null;
+    this._syncReaderPathFocus({ force: true });
     this._centerOnNodeVisible = (id) => {
       try {
         const n = this.cy.getElementById(id);
@@ -1359,6 +1361,79 @@ const graphHook = {
     });
   },
 
+  _setReaderPathTransitionPending(pending) {
+    if (!this._container) return;
+
+    if (pending) {
+      this._container.style.transition = "none";
+      this._container.style.opacity = "0";
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      if (!this._container) return;
+      this._container.style.transition = this._reduceMotion
+        ? "none"
+        : "opacity 120ms ease-out";
+      this._container.style.opacity = "1";
+    });
+  },
+
+  _readReaderPathIds() {
+    try {
+      const parsed = JSON.parse(this.el.dataset.readerPathIds || "[]");
+      return Array.isArray(parsed) ? parsed.map((id) => String(id)) : [];
+    } catch (_e) {
+      return [];
+    }
+  },
+
+  _syncReaderPathFocus({ force = false } = {}) {
+    if (!this.cy) return;
+
+    const ids = this._readReaderPathIds();
+    const idsKey = ids.join(",");
+    if (!force && idsKey === this._lastReaderPathIdsKey) return;
+    this._lastReaderPathIdsKey = idsKey;
+
+    if (this._readerPathFocusTimer) {
+      clearTimeout(this._readerPathFocusTimer);
+      this._readerPathFocusTimer = null;
+    }
+
+    if (ids.length === 0) {
+      this._setReaderPathTransitionPending(false);
+      if (this.cy._readerPathFocus) {
+        this.cy._readerPathFocus = false;
+        this.cy.clearBranchFocus?.();
+      }
+      return;
+    }
+
+    this._setReaderPathTransitionPending(true);
+    const cy = this.cy;
+    let applied = false;
+    const applyFocus = () => {
+      if (applied || this.cy !== cy || cy.destroyed?.()) return;
+      applied = true;
+      if (this._readerPathFocusTimer) {
+        clearTimeout(this._readerPathFocusTimer);
+        this._readerPathFocusTimer = null;
+      }
+      const focused = cy.focusPath?.(ids, () => {
+        this._setReaderPathTransitionPending(false);
+      });
+      if (focused === false) this._setReaderPathTransitionPending(false);
+    };
+
+    if (this._layoutRunning) {
+      cy.one("layoutstop", () => requestAnimationFrame(applyFocus));
+      this._readerPathFocusTimer = setTimeout(applyFocus, 400);
+    } else {
+      requestAnimationFrame(applyFocus);
+    }
+  },
+
   _readPresentationState() {
     const mode = this.el.dataset.presentationMode || "off";
     let ids = [];
@@ -1998,6 +2073,9 @@ const graphHook = {
   },
 
   _handleViewModeChange(currentViewMode, graphStr, currentNode) {
+    const readerPathIds = this._readReaderPathIds();
+    this._setReaderPathTransitionPending(readerPathIds.length > 0);
+
     // Store the current zoom and pan
     const zoom = this.cy ? this.cy.zoom() : 1;
     const pan = this.cy ? this.cy.pan() : { x: 0, y: 0 };
@@ -2064,6 +2142,8 @@ const graphHook = {
         this.cy.applySelectionContext(currentNode);
       }
     }
+
+    this._syncReaderPathFocus({ force: true });
   },
 
   _handleGraphDirectionChange(newDirection) {
@@ -2307,10 +2387,16 @@ const graphHook = {
       this._bindPngButtons();
     }
 
+    this._syncReaderPathFocus();
+
     // Debug redraw of bounds on update (no pan to avoid jitter)
     if (this._debugRedraw) this._debugRedraw();
   },
   destroyed() {
+    if (this._readerPathFocusTimer) {
+      clearTimeout(this._readerPathFocusTimer);
+      this._readerPathFocusTimer = null;
+    }
     if (this._onViewModeChange) {
       this.el.removeEventListener("viewModeChanged", this._onViewModeChange);
     }

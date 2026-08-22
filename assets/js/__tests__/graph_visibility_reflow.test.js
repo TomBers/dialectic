@@ -4,12 +4,14 @@ import {
   clearBranchFocus,
   depthTogglePosition,
   focusBranch,
+  focusPath,
   reflowAfterVisibilityChange,
   visibleLayoutElements,
 } from "../draw_graph.js";
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  window.history.replaceState({}, "", "/");
 });
 
 describe("graph visibility reflow", () => {
@@ -30,8 +32,41 @@ describe("graph visibility reflow", () => {
     });
   });
 
+  it("applies and clears an exact reader path", () => {
+    vi.stubGlobal("requestAnimationFrame", vi.fn());
+    window.history.replaceState({}, "", "/g/example/graph?node=2&path=2");
+    const pushEvent = vi.fn();
+    const cy = cytoscape({
+      headless: true,
+      elements: [
+        { data: { id: "root" } },
+        { data: { id: "path-node" } },
+        { data: { id: "sibling" } },
+        { data: { id: "root-path", source: "root", target: "path-node" } },
+        { data: { id: "root-sibling", source: "root", target: "sibling" } },
+      ],
+    });
+    cy._ownerHook = { pushEvent };
+
+    expect(focusPath(cy, ["root", "path-node"], null)).toBe(true);
+    expect(cy._readerPathFocus).toBe(true);
+    expect(cy._focusedBranchId).toBe("path-node");
+    expect(cy.getElementById("root").hasClass("focus-hidden")).toBe(false);
+    expect(cy.getElementById("path-node").hasClass("focus-hidden")).toBe(false);
+    expect(cy.getElementById("sibling").hasClass("focus-hidden")).toBe(true);
+
+    expect(clearBranchFocus(cy, null)).toBe(true);
+    expect(pushEvent).toHaveBeenCalledWith("clear_reader_path", {});
+    expect(new URL(window.location.href).searchParams.has("path")).toBe(false);
+    expect(cy.$(".focus-hidden")).toHaveLength(0);
+
+    cy.destroy();
+  });
+
   it("focuses one branch and restores sibling paths", () => {
     vi.stubGlobal("requestAnimationFrame", vi.fn());
+    window.history.replaceState({}, "", "/g/example/graph?node=branch-a");
+    const pushEvent = vi.fn();
     const cy = cytoscape({
       headless: true,
       elements: [
@@ -46,8 +81,11 @@ describe("graph visibility reflow", () => {
         { data: { id: "b-leaf", source: "branch-b", target: "leaf-b" } },
       ],
     });
+    cy._ownerHook = { pushEvent };
 
     expect(focusBranch(cy, cy.getElementById("branch-a"), null)).toBe(true);
+    expect(pushEvent).toHaveBeenCalledWith("set_reader_path", { id: "branch-a" });
+    expect(new URL(window.location.href).searchParams.get("path")).toBe("branch-a");
     expect(cy.getElementById("root").hasClass("focus-hidden")).toBe(false);
     expect(cy.getElementById("branch-a").hasClass("focus-hidden")).toBe(false);
     expect(cy.getElementById("leaf-a").hasClass("focus-hidden")).toBe(false);

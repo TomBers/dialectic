@@ -1178,6 +1178,7 @@ export function draw_graph(
       typeof nodeOrId === "string" ? cy.getElementById(nodeOrId) : nodeOrId,
       container,
     );
+  cy.focusPath = (ids, onDone) => focusPath(cy, ids, container, onDone);
   cy.clearBranchFocus = () => clearBranchFocus(cy, container);
   cy.reflowAfterVisibilityChange = (onDone) =>
     reflowAfterVisibilityChange(cy, onDone);
@@ -1635,6 +1636,51 @@ function clearBranchFocusState(cy) {
   return changed;
 }
 
+function applyPathFocusState(cy, ids) {
+  const requestedIds = [...new Set((ids || []).map((id) => String(id)))];
+  const pathNodes = cy.collection(
+    requestedIds.map((id) => cy.getElementById(id)).filter((node) => node.length > 0),
+  );
+  const pathIds = pathNodes.map((node) => node.id());
+  if (pathIds.length === 0) return [];
+
+  cy.elements().removeClass("focus-hidden");
+  const keptNodes = pathNodes.union(pathNodes.ancestors());
+  cy.nodes().difference(keptNodes).addClass("focus-hidden");
+  cy.edges().forEach((edge) => {
+    if (
+      edge.source().hasClass("focus-hidden") ||
+      edge.target().hasClass("focus-hidden")
+    ) {
+      edge.addClass("focus-hidden");
+    }
+  });
+
+  cy._focusedBranchId = pathIds[pathIds.length - 1];
+  return pathIds;
+}
+
+export function focusPath(cy, ids, container = cy.container?.(), onDone) {
+  const pathIds = applyPathFocusState(cy, ids);
+  if (pathIds.length === 0) return false;
+
+  cy._readerPathFocus = true;
+  _rebuildFocusControls(cy, container);
+  reflowAfterVisibilityChange(cy, () => {
+    _rebuildFocusControls(cy, container);
+    const selected = cy.$("node.selected").filter((node) => !node.isParent());
+    if (selected.length > 0) cy.applySelectionContext?.(selected[0]);
+    if (container) {
+      fitVisibleGraph(cy, container, 84, {
+        focusNodeId:
+          selected.length > 0 ? selected[0].id() : pathIds[pathIds.length - 1],
+      });
+    }
+    onDone?.();
+  });
+  return true;
+}
+
 export function focusBranch(cy, node, container = cy.container?.()) {
   if (!node || node.length === 0 || node.isParent()) return false;
 
@@ -1656,6 +1702,18 @@ export function focusBranch(cy, node, container = cy.container?.()) {
   });
 
   cy._focusedBranchId = node.id();
+
+  if (cy._ownerHook?.pushEvent) {
+    cy._readerPathFocus = true;
+    cy._ownerHook.pushEvent("set_reader_path", { id: node.id() });
+
+    const url = new URL(window.location.href);
+    url.searchParams.set("path", node.id());
+    window.history.replaceState(window.history.state, "", url);
+  } else {
+    cy._readerPathFocus = false;
+  }
+
   _rebuildFocusControls(cy, container);
   reflowAfterVisibilityChange(cy, () => {
     _rebuildFocusControls(cy, container);
@@ -1667,9 +1725,22 @@ export function focusBranch(cy, node, container = cy.container?.()) {
   return true;
 }
 
+function clearReaderPathState(cy) {
+  if (!cy._readerPathFocus) return false;
+
+  cy._readerPathFocus = false;
+  cy._ownerHook?.pushEvent?.("clear_reader_path", {});
+
+  const url = new URL(window.location.href);
+  url.searchParams.delete("path");
+  window.history.replaceState(window.history.state, "", url);
+  return true;
+}
+
 export function clearBranchFocus(cy, container = cy.container?.()) {
   if (!clearBranchFocusState(cy)) return false;
 
+  clearReaderPathState(cy);
   _rebuildFocusControls(cy, container);
   reflowAfterVisibilityChange(cy, () => {
     _rebuildFocusControls(cy, container);
@@ -1690,6 +1761,8 @@ function ensureNodeVisible(cy, nodeId) {
     node && node.length > 0 && node.hasClass("focus-hidden")
       ? clearBranchFocusState(cy)
       : false;
+  if (focusChanged) clearReaderPathState(cy);
+
   const groupChanged = ensureGroupVisible(cy, nodeId);
   const depthChanged = ensureDepthVisible(cy, nodeId);
 

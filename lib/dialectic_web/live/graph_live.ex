@@ -93,6 +93,7 @@ defmodule DialecticWeb.GraphLive do
     # stale shared links degrade gracefully (correct slide count, no gaps
     # in badge numbering, and an empty-slides fallback when all are gone).
     graph_id = socket.assigns.graph_id
+    socket = assign_reader_path(socket, params["path"])
 
     valid_slide_ids =
       Enum.filter(slide_ids, fn id ->
@@ -130,8 +131,8 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  def handle_params(_params, _uri, socket) do
-    {:noreply, socket}
+  def handle_params(params, _uri, socket) do
+    {:noreply, assign_reader_path(socket, params["path"])}
   end
 
   @impl true
@@ -243,6 +244,14 @@ defmodule DialecticWeb.GraphLive do
 
       {:noreply, assign(socket, prompt_mode: mode_str)}
     end
+  end
+
+  def handle_event("set_reader_path", %{"id" => path_endpoint}, socket) do
+    {:noreply, assign_reader_path(socket, path_endpoint)}
+  end
+
+  def handle_event("clear_reader_path", _params, socket) do
+    {:noreply, assign(socket, reader_path_endpoint: nil, reader_path_ids: [])}
   end
 
   def handle_event("node:join_group", %{"node" => nid, "parent" => gid}, socket) do
@@ -2948,6 +2957,53 @@ defmodule DialecticWeb.GraphLive do
     else
       {Map.get(params, "node", "1"), nil}
     end
+  end
+
+  defp assign_reader_path(socket, path_endpoint) do
+    path_endpoint = normalize_reader_path(path_endpoint)
+    path_ids = reader_path_ids(socket.assigns.graph_id, path_endpoint)
+
+    assign(socket,
+      reader_path_endpoint: if(path_ids == [], do: nil, else: path_endpoint),
+      reader_path_ids: path_ids
+    )
+  end
+
+  defp normalize_reader_path(path_endpoint) when is_binary(path_endpoint) do
+    case String.trim(path_endpoint) do
+      "" -> nil
+      endpoint -> endpoint
+    end
+  end
+
+  defp normalize_reader_path(_path_endpoint), do: nil
+
+  defp reader_path_ids(_graph_id, nil), do: []
+
+  defp reader_path_ids(graph_id, path_endpoint) do
+    case GraphManager.find_node_by_id(graph_id, path_endpoint) do
+      nil ->
+        []
+
+      node ->
+        graph_id
+        |> GraphManager.path_to_node(node)
+        |> Enum.reverse()
+        |> Enum.reject(fn path_node ->
+          Map.get(path_node, :deleted, false) || Map.get(path_node, :compound, false)
+        end)
+        |> Enum.map(& &1.id)
+    end
+  end
+
+  defp graph_nav_params(token, path_endpoint) do
+    []
+    |> then(fn params -> if token, do: Keyword.put(params, :token, token), else: params end)
+    |> then(fn params ->
+      if path_endpoint,
+        do: Keyword.put(params, :path, path_endpoint),
+        else: params
+    end)
   end
 
   defp assign_defaults(socket) do

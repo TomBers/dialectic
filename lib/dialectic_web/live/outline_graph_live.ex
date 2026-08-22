@@ -459,7 +459,6 @@ defmodule DialecticWeb.OutlineGraphLive do
       node: nil,
       share_node: nil,
       selected_path: [],
-      displayed_node_ids: MapSet.new(),
       highlight_node_ids: MapSet.new(),
       reading_chain: [],
       visible_reading_chain: [],
@@ -588,7 +587,6 @@ defmodule DialecticWeb.OutlineGraphLive do
       share_node: nil,
       selected_path: [],
       selected_path_ids: MapSet.new(),
-      displayed_node_ids: MapSet.new(),
       highlight_node_ids: MapSet.new(),
       reading_chain: [],
       visible_reading_chain: [],
@@ -650,8 +648,6 @@ defmodule DialecticWeb.OutlineGraphLive do
         reading_chain
       end
 
-    displayed_node_ids = MapSet.new(Enum.map(visible_reading_chain, & &1.id))
-
     highlight_node_ids =
       visible_reading_chain
       |> Enum.filter(&highlight_container_mounted?/1)
@@ -664,7 +660,6 @@ defmodule DialecticWeb.OutlineGraphLive do
       share_node: selected_node,
       selected_path: selected_path,
       selected_path_ids: selected_path_ids,
-      displayed_node_ids: displayed_node_ids,
       highlight_node_ids: highlight_node_ids,
       reading_chain: reading_chain,
       visible_reading_chain: visible_reading_chain,
@@ -837,8 +832,6 @@ defmodule DialecticWeb.OutlineGraphLive do
     end)
     |> elem(0)
   end
-
-  defp build_reading_chain(_graph_id, nil), do: []
 
   defp build_reading_chain(graph_id, selected_node) do
     graph_id

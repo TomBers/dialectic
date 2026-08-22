@@ -267,7 +267,7 @@
                 mode={:graph}
                 graph_struct={@graph_struct}
                 node_id={Map.get(@node || %{}, :id)}
-                nav_params={if(@token, do: [token: @token], else: [])}
+                nav_params={graph_nav_params(@token, @reader_path_endpoint)}
                 prompt_mode={@prompt_mode}
                 prompt_mode_click={
                   JS.dispatch("toggle-panel",
@@ -427,6 +427,7 @@
         data-high-contrast={if(@appearance_preferences.high_contrast, do: "true", else: "false")}
         data-graph={@f_graph}
         data-node={if @node, do: @node.id, else: nil}
+        data-reader-path-ids={Jason.encode!(@reader_path_ids)}
         data-operation={@graph_operation}
         data-presentation-mode={@presentation_mode}
         data-presentation-slide-ids={Jason.encode!(@presentation_slide_ids)}

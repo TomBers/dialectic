@@ -47,7 +47,7 @@ defmodule DialecticWeb.GraphLiveTest do
     live(conn, ~p"/g/#{graph.slug}/graph?node=1")
   end
 
-  defp setup_live_with_data(conn, data) do
+  defp setup_live_with_data(conn, data, path_endpoint \\ nil) do
     conn =
       conn
       |> log_in_user(
@@ -60,7 +60,11 @@ defmodule DialecticWeb.GraphLiveTest do
         data: data
       })
 
-    live(conn, ~p"/g/#{graph.slug}/graph?node=1")
+    if path_endpoint do
+      live(conn, ~p"/g/#{graph.slug}/graph?node=#{path_endpoint}&path=#{path_endpoint}")
+    else
+      live(conn, ~p"/g/#{graph.slug}/graph?node=1")
+    end
   end
 
   defp source_text_graph_data do
@@ -267,6 +271,41 @@ defmodule DialecticWeb.GraphLiveTest do
       assert has_element?(
                view,
                ~s(#graph-workspace-bar-reader[href="/g/#{graph.slug}?node=#{node_id}"])
+             )
+    end
+
+    test "preserves the reader path when switching back from graph view", %{conn: conn} do
+      {:ok, view, _html} = setup_live_with_data(conn, source_text_graph_data(), "2")
+      state = :sys.get_state(view.pid).socket
+      graph = state.assigns.graph_struct
+
+      assert state.assigns.reader_path_endpoint == "2"
+      assert List.last(state.assigns.reader_path_ids) == "2"
+
+      assert has_element?(
+               view,
+               "#cy[data-reader-path-ids='#{Jason.encode!(state.assigns.reader_path_ids)}']"
+             )
+
+      assert has_element?(
+               view,
+               ~s(#graph-workspace-bar-reader[href="/g/#{graph.slug}?node=2&path=2"])
+             )
+    end
+
+    test "manual branch focus updates the reader path link", %{conn: conn} do
+      {:ok, view, _html} = setup_live_with_data(conn, source_text_graph_data())
+      graph = :sys.get_state(view.pid).socket.assigns.graph_struct
+
+      render_hook(view, "set_reader_path", %{"id" => "2"})
+
+      state = :sys.get_state(view.pid).socket
+      assert state.assigns.reader_path_endpoint == "2"
+      assert List.last(state.assigns.reader_path_ids) == "2"
+
+      assert has_element?(
+               view,
+               ~s(#graph-workspace-bar-reader[href="/g/#{graph.slug}?node=1&path=2"])
              )
     end
 
