@@ -15,17 +15,11 @@ afterEach(() => {
 });
 
 describe("graph visibility reflow", () => {
-  it("positions disclosure controls on the downstream side", () => {
+  it("positions disclosure controls to the right of the node", () => {
     const bounds = { x1: 100, x2: 220, y1: 80, y2: 140 };
 
-    expect(depthTogglePosition(bounds, "TB")).toEqual({
-      x: 160,
-      y: 146,
-      translateX: "-50%",
-      translateY: "0",
-    });
-    expect(depthTogglePosition(bounds, "LR")).toEqual({
-      x: 226,
+    expect(depthTogglePosition(bounds)).toEqual({
+      x: 228,
       y: 110,
       translateX: "0",
       translateY: "-50%",
@@ -196,6 +190,31 @@ describe("graph visibility reflow", () => {
 
     cy.destroy();
     container.remove();
+  });
+
+  it("can disable focus animation for reader-path transitions", () => {
+    const frames = [];
+    vi.stubGlobal("requestAnimationFrame", (callback) => {
+      frames.push(callback);
+      return frames.length;
+    });
+
+    const cy = {
+      _reduceMotion: false,
+      destroyed: () => false,
+      style: () => ({ update: vi.fn() }),
+      resize: vi.fn(),
+      one: vi.fn(),
+      layout: vi.fn(() => ({ run: vi.fn() })),
+    };
+
+    reflowAfterVisibilityChange(cy, null, { animate: false });
+    frames.shift()();
+    frames.shift()();
+
+    expect(cy.layout).toHaveBeenCalledWith(
+      expect.objectContaining({ animate: false, animationDuration: 0 }),
+    );
   });
 
   it("coalesces multiple reveals into one layout", () => {

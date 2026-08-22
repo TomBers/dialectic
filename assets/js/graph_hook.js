@@ -334,6 +334,7 @@ const graphHook = {
             onInitialLayoutReady: markInitialGraphReady,
             reduceMotion: this._reduceMotion,
             highContrast: this._highContrast,
+            animateInitialLayout: initialFocusPathIds.length === 0,
           };
 
     this.cy = draw_graph(
@@ -1370,13 +1371,8 @@ const graphHook = {
       return;
     }
 
-    requestAnimationFrame(() => {
-      if (!this._container) return;
-      this._container.style.transition = this._reduceMotion
-        ? "none"
-        : "opacity 120ms ease-out";
-      this._container.style.opacity = "1";
-    });
+    this._container.style.transition = "none";
+    this._container.style.opacity = "1";
   },
 
   _readReaderPathIds() {
@@ -1420,9 +1416,13 @@ const graphHook = {
         clearTimeout(this._readerPathFocusTimer);
         this._readerPathFocusTimer = null;
       }
-      const focused = cy.focusPath?.(ids, () => {
-        this._setReaderPathTransitionPending(false);
-      });
+      const focused = cy.focusPath?.(
+        ids,
+        () => {
+          this._setReaderPathTransitionPending(false);
+        },
+        { animate: false },
+      );
       if (focused === false) this._setReaderPathTransitionPending(false);
     };
 
@@ -2099,6 +2099,7 @@ const graphHook = {
       {
         reduceMotion: this._reduceMotion,
         highContrast: this._highContrast,
+        animateInitialLayout: readerPathIds.length === 0,
       },
     );
 

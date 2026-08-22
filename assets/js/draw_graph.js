@@ -226,7 +226,9 @@ export function draw_graph(
           rankDir: graphDirection,
           fit: false,
           padding: initialFitPadding,
-          ...(reduceMotion ? { animate: false, animationDuration: 0 } : {}),
+          ...(reduceMotion || options.animateInitialLayout === false
+            ? { animate: false, animationDuration: 0 }
+            : {}),
         };
 
   const cy = cytoscape({
@@ -1178,10 +1180,11 @@ export function draw_graph(
       typeof nodeOrId === "string" ? cy.getElementById(nodeOrId) : nodeOrId,
       container,
     );
-  cy.focusPath = (ids, onDone) => focusPath(cy, ids, container, onDone);
+  cy.focusPath = (ids, onDone, focusOptions) =>
+    focusPath(cy, ids, container, onDone, focusOptions);
   cy.clearBranchFocus = () => clearBranchFocus(cy, container);
-  cy.reflowAfterVisibilityChange = (onDone) =>
-    reflowAfterVisibilityChange(cy, onDone);
+  cy.reflowAfterVisibilityChange = (onDone, reflowOptions) =>
+    reflowAfterVisibilityChange(cy, onDone, reflowOptions);
   cy.expandNodeChildren = (n) =>
     expandNodeChildren(cy, typeof n === "string" ? cy.getElementById(n) : n);
   cy.collapseNodeChildren = (n) =>
@@ -1660,7 +1663,13 @@ function applyPathFocusState(cy, ids) {
   return pathIds;
 }
 
-export function focusPath(cy, ids, container = cy.container?.(), onDone) {
+export function focusPath(
+  cy,
+  ids,
+  container = cy.container?.(),
+  onDone,
+  { animate = true } = {},
+) {
   const pathIds = applyPathFocusState(cy, ids);
   if (pathIds.length === 0) return false;
 
@@ -1677,7 +1686,7 @@ export function focusPath(cy, ids, container = cy.container?.(), onDone) {
       });
     }
     onDone?.();
-  });
+  }, { animate });
   return true;
 }
 
@@ -1941,10 +1950,16 @@ function _spreadOverlappingCompoundNodes(cy) {
  * Internal helper: re-run the dagre layout after a depth visibility change
  * so that visible nodes reposition into a clean arrangement.
  */
-export function reflowAfterVisibilityChange(cy, onDone) {
+export function reflowAfterVisibilityChange(cy, onDone, { animate } = {}) {
   if (typeof onDone === "function") {
     cy._visibilityReflowCallbacks ||= [];
     cy._visibilityReflowCallbacks.push(onDone);
+  }
+
+  if (animate === false) {
+    cy._visibilityReflowAnimate = false;
+  } else if (cy._visibilityReflowAnimate === undefined && animate === true) {
+    cy._visibilityReflowAnimate = true;
   }
 
   if (cy._visibilityReflowPending) return;
@@ -1962,6 +1977,8 @@ export function reflowAfterVisibilityChange(cy, onDone) {
       if (!cy || (typeof cy.destroyed === "function" && cy.destroyed())) return;
 
       cy._visibilityReflowPending = false;
+      const reflowAnimate = cy._visibilityReflowAnimate;
+      cy._visibilityReflowAnimate = undefined;
       const callbacks = cy._visibilityReflowCallbacks || [];
       cy._visibilityReflowCallbacks = [];
 
@@ -1969,7 +1986,7 @@ export function reflowAfterVisibilityChange(cy, onDone) {
         cy.one("layoutstop", () => callbacks.forEach((callback) => callback()));
       }
 
-      _relayoutAfterDepthChange(cy);
+      _relayoutAfterDepthChange(cy, { animate: reflowAnimate });
     });
   });
 }
@@ -1985,7 +2002,7 @@ export function visibleLayoutElements(cy) {
   });
 }
 
-function _relayoutAfterDepthChange(cy) {
+function _relayoutAfterDepthChange(cy, { animate } = {}) {
   try {
     const viewMode = localStorage.getItem("graph_view_mode") || "spaced";
     const graphDirection = localStorage.getItem("graph_direction") || "TB";
@@ -1994,11 +2011,14 @@ function _relayoutAfterDepthChange(cy) {
         ? layoutConfig.compactLayout
         : layoutConfig.baseLayout;
 
+    const shouldAnimate =
+      typeof animate === "boolean" ? animate && !cy._reduceMotion : !cy._reduceMotion;
+
     const layoutOptions = {
       ...baseLayout,
       rankDir: graphDirection,
-      animate: cy._reduceMotion ? false : true,
-      animationDuration: cy._reduceMotion ? 0 : 250,
+      animate: shouldAnimate,
+      animationDuration: shouldAnimate ? 250 : 0,
     };
 
     if (typeof cy.elements === "function") {
@@ -2300,40 +2320,16 @@ function _rebuildDepthToggleOverlays(cy, container) {
 }
 
 /**
- * Reposition each disclosure control on the node's downstream side.
+ * Reposition each disclosure control at the node's right-center edge.
  * Called on every Cytoscape render frame so buttons track pan/zoom smoothly.
  */
-export function depthTogglePosition(bb, direction = "TB") {
-  switch (direction) {
-    case "BT":
-      return {
-        x: (bb.x1 + bb.x2) / 2,
-        y: bb.y1 - 6,
-        translateX: "-50%",
-        translateY: "-100%",
-      };
-    case "LR":
-      return {
-        x: bb.x2 + 6,
-        y: (bb.y1 + bb.y2) / 2,
-        translateX: "0",
-        translateY: "-50%",
-      };
-    case "RL":
-      return {
-        x: bb.x1 - 6,
-        y: (bb.y1 + bb.y2) / 2,
-        translateX: "-100%",
-        translateY: "-50%",
-      };
-    default:
-      return {
-        x: (bb.x1 + bb.x2) / 2,
-        y: bb.y2 + 6,
-        translateX: "-50%",
-        translateY: "0",
-      };
-  }
+export function depthTogglePosition(bb) {
+  return {
+    x: bb.x2 + 8,
+    y: (bb.y1 + bb.y2) / 2,
+    translateX: "0",
+    translateY: "-50%",
+  };
 }
 
 function _updateDepthTogglePositions(cy) {
@@ -2345,7 +2341,6 @@ function _updateDepthTogglePositions(cy) {
     return;
   }
 
-  const direction = localStorage.getItem("graph_direction") || "TB";
   const zoom = typeof cy.zoom === "function" ? cy.zoom() : 1;
   const hideBelowZoom = 0.3;
   const scale = Math.max(0.68, Math.min(1, 0.45 + zoom * 0.55));
@@ -2388,7 +2383,7 @@ function _updateDepthTogglePositions(cy) {
       return;
     }
 
-    const { x, y, translateX, translateY } = depthTogglePosition(bb, direction);
+    const { x, y, translateX, translateY } = depthTogglePosition(bb);
 
     btn.style.display = "";
     btn.style.setProperty("--depth-toggle-scale", scale.toFixed(3));
