@@ -107,6 +107,10 @@ defmodule Dialectic.Workers.LLMWorker do
       result
     catch
       kind, reason ->
+        if attempt >= max_attempts do
+          cleanup_terminal_guided_submission(args, graph, to_node)
+        end
+
         emit_completion_telemetry(job_started_at, provider, :exception)
         :erlang.raise(kind, reason, __STACKTRACE__)
     end
@@ -159,6 +163,10 @@ defmodule Dialectic.Workers.LLMWorker do
           live_view_topic,
           terminal_error_message(provider_mod, result)
         )
+      end
+
+      if terminal_failure?(result, attempt, max_attempts) do
+        cleanup_terminal_guided_submission(args, graph, to_node)
       end
 
       {result, outcome_for_result(result)}
@@ -630,6 +638,17 @@ defmodule Dialectic.Workers.LLMWorker do
 
   defp duration_in_milliseconds(duration) do
     System.convert_time_unit(duration, :native, :millisecond)
+  end
+
+  defp terminal_failure?({:discard, _reason}, _attempt, _max_attempts), do: true
+  defp terminal_failure?({:error, _reason}, attempt, max_attempts), do: attempt >= max_attempts
+  defp terminal_failure?(_result, _attempt, _max_attempts), do: false
+
+  defp cleanup_terminal_guided_submission(args, graph, to_node) do
+    case Map.get(args, "guided_submission") do
+      %{} = metadata -> GraphManager.cleanup_guided_submission(graph, to_node, metadata)
+      _no_guided_submission -> :ok
+    end
   end
 
   defp outcome_for_result(:ok), do: :success

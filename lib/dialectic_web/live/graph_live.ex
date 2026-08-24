@@ -607,7 +607,8 @@ defmodule DialecticWeb.GraphLive do
                     GraphActions.ask_and_answer(
                       graph_action_params(socket, plan_node),
                       path.question,
-                      await_generation: true
+                      await_generation: true,
+                      guided_submission: guided_submission_metadata(plan_node, submission_key)
                     )
 
                   if is_map(answer_node) do
@@ -2243,14 +2244,30 @@ defmodule DialecticWeb.GraphLive do
   defp guided_path_submission_key(path_id), do: "path:#{path_id}"
   defp guided_action_submission_key(action), do: "action:#{action}"
 
+  defp guided_submission_metadata(plan_node, submission_key, cleanup_classes \\ []) do
+    %{
+      plan_node_id: plan_node.id,
+      submission_key: submission_key,
+      cleanup_classes: cleanup_classes
+    }
+  end
+
   defp apply_guided_action(action, plan_node, target_node, socket) do
+    action_opts = [
+      content_override: Map.get(target_node, :content, ""),
+      await_generation: true,
+      guided_submission:
+        guided_submission_metadata(
+          plan_node,
+          guided_action_submission_key(action),
+          GuidedLearningPlan.result_classes(action)
+        )
+    ]
+
     case GuidedLearningPlan.executor(action) do
       {:ok, :branch} ->
         nodes =
-          create_branch_nodes(socket, plan_node,
-            content_override: Map.get(target_node, :content, ""),
-            await_generation: true
-          )
+          create_branch_nodes(socket, plan_node, action_opts)
 
         if nodes == [] do
           release_guided_action(socket, plan_node, action)
@@ -2267,9 +2284,9 @@ defmodule DialecticWeb.GraphLive do
 
       {:ok, :related_ideas} ->
         result_node =
-          GraphActions.related_ideas(graph_action_params(socket, plan_node),
-            content_override: Map.get(target_node, :content, ""),
-            await_generation: true
+          GraphActions.related_ideas(
+            graph_action_params(socket, plan_node),
+            action_opts
           )
 
         if is_map(result_node) do
@@ -2284,8 +2301,7 @@ defmodule DialecticWeb.GraphLive do
           GraphActions.apply_thinking_tool(
             tool,
             graph_action_params(socket, plan_node),
-            content_override: Map.get(target_node, :content, ""),
-            await_generation: true
+            action_opts
           )
 
         case result_node do

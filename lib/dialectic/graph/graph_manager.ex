@@ -718,6 +718,43 @@ defmodule GraphManager do
     )
   end
 
+  def cleanup_guided_submission(path, failed_node_id, metadata) when is_map(metadata) do
+    plan_node_id = guided_metadata_value(metadata, :plan_node_id)
+    submission_key = guided_metadata_value(metadata, :submission_key)
+    cleanup_node_ids = guided_metadata_value(metadata, :cleanup_node_ids) |> List.wrap()
+    cleanup_classes = guided_metadata_value(metadata, :cleanup_classes) |> List.wrap()
+
+    plan_node = find_node_by_id(path, plan_node_id)
+
+    class_node_ids =
+      case plan_node do
+        %{class: "learning_plan"} ->
+          plan_node
+          |> Map.get(:children, [])
+          |> Enum.filter(&(Map.get(&1, :class) in cleanup_classes))
+          |> Enum.map(& &1.id)
+
+        _invalid_plan ->
+          []
+      end
+
+    if is_binary(plan_node_id) and is_binary(submission_key) do
+      release_guided_submission(path, plan_node_id, submission_key)
+    end
+
+    [failed_node_id | cleanup_node_ids ++ class_node_ids]
+    |> Enum.filter(&is_binary/1)
+    |> Enum.uniq()
+    |> Enum.each(&delete_node(path, &1))
+
+    save_graph(path)
+    :ok
+  end
+
+  defp guided_metadata_value(metadata, key) do
+    Map.get(metadata, key) || Map.get(metadata, Atom.to_string(key))
+  end
+
   def set_node_content(path, node_id, content) do
     GenServer.call(via_tuple(path), {:set_node_content, {node_id, content}})
   end

@@ -164,6 +164,12 @@ defmodule Dialectic.Responses.RequestQueue do
       max_tokens: PromptsStructured.max_output_tokens(mode)
     }
 
+    params
+    |> maybe_put_response_contract(opts)
+    |> maybe_put_guided_submission(to_node)
+  end
+
+  defp maybe_put_response_contract(params, opts) do
     case Keyword.get(opts, :response_contract) do
       contract when is_binary(contract) and contract != "" ->
         Map.put(params, :response_contract, contract)
@@ -172,6 +178,15 @@ defmodule Dialectic.Responses.RequestQueue do
         params
     end
   end
+
+  defp maybe_put_guided_submission(params, %{} = to_node) do
+    case Map.get(to_node, :guided_submission) do
+      %{} = guided_submission -> Map.put(params, :guided_submission, guided_submission)
+      _no_guided_submission -> params
+    end
+  end
+
+  defp maybe_put_guided_submission(params, _to_node), do: params
 
   defp request_mode(opts, system_prompt, graph) do
     case Keyword.fetch(opts, :mode) do

@@ -58,6 +58,7 @@ defmodule Dialectic.Graph.Vertex do
             prompt_kind: nil,
             guided_plan: nil,
             guided_submissions: [],
+            guided_submission: nil,
             response_level: nil,
             grounding_metadata: nil
 

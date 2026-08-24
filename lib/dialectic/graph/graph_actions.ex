@@ -445,6 +445,8 @@ defmodule Dialectic.Graph.GraphActions do
         Keyword.put(question_opts, :save, false)
       )
 
+    answer_opts = add_guided_cleanup_node(answer_opts, question_node.id)
+
     answer_node =
       GraphManager.add_child(
         graph_id,
@@ -525,7 +527,38 @@ defmodule Dialectic.Graph.GraphActions do
   end
 
   defp generation_opts(child_opts, opts) do
-    Keyword.merge(child_opts, Keyword.take(opts, [:await_generation]))
+    child_opts
+    |> put_guided_submission(Keyword.get(opts, :guided_submission))
+    |> Keyword.merge(Keyword.take(opts, [:await_generation]))
+  end
+
+  defp put_guided_submission(child_opts, %{} = guided_submission) do
+    Keyword.update(
+      child_opts,
+      :fields,
+      %{guided_submission: guided_submission},
+      &Map.put(&1, :guided_submission, guided_submission)
+    )
+  end
+
+  defp put_guided_submission(child_opts, _guided_submission), do: child_opts
+
+  defp add_guided_cleanup_node(child_opts, cleanup_node_id) do
+    Keyword.update(child_opts, :fields, %{}, fn fields ->
+      case Map.get(fields, :guided_submission) do
+        %{} = guided_submission ->
+          cleanup_node_ids = [cleanup_node_id | Map.get(guided_submission, :cleanup_node_ids, [])]
+
+          Map.put(
+            fields,
+            :guided_submission,
+            Map.put(guided_submission, :cleanup_node_ids, cleanup_node_ids)
+          )
+
+        _no_guided_submission ->
+          fields
+      end
+    end)
   end
 
   defp source_text_opts(source_text, prompt_kind \\ nil) do

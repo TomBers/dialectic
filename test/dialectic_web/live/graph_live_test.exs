@@ -860,7 +860,11 @@ defmodule DialecticWeb.GraphLiveTest do
 
       assert Enum.all?(question_children, fn question ->
                question = GraphManager.find_node_by_id(graph_id, question.id)
-               Enum.any?(question.children, &(&1.class == "answer"))
+               answer = Enum.find(question.children, &(&1.class == "answer"))
+
+               answer.guided_submission.plan_node_id == plan_node.id &&
+                 answer.guided_submission.submission_key in ["path:path-1", "path:path-3"] &&
+                 question.id in answer.guided_submission.cleanup_node_ids
              end)
 
       render_click(view, "node_clicked", %{"id" => plan_node.id})
@@ -930,6 +934,9 @@ defmodule DialecticWeb.GraphLiveTest do
       result_node = :sys.get_state(view.pid).socket.assigns.node
       assert result_node.class == "clarify"
       assert Enum.any?(result_node.parents, &(&1.id == plan_node.id))
+      assert result_node.guided_submission.plan_node_id == plan_node.id
+      assert result_node.guided_submission.submission_key == "action:clarify"
+      assert result_node.guided_submission.cleanup_classes == ["clarify"]
 
       render_click(view, "node_clicked", %{"id" => plan_node.id})
 

@@ -154,7 +154,15 @@ defmodule Dialectic.Responses.GuidedLearningPlanTest do
       RequestQueue.build_params(
         "Create a plan",
         "System prompt",
-        %{id: "plan-1", user: "learner@example.com"},
+        %{
+          id: "plan-1",
+          user: "learner@example.com",
+          guided_submission: %{
+            plan_node_id: "source-plan",
+            submission_key: "path:path-1",
+            cleanup_node_ids: ["question-1"]
+          }
+        },
         "graph-1",
         "topic-1",
         mode: :university,
@@ -162,5 +170,11 @@ defmodule Dialectic.Responses.GuidedLearningPlanTest do
       )
 
     assert params.response_contract == "guided_learning_plan"
+
+    assert params.guided_submission == %{
+             plan_node_id: "source-plan",
+             submission_key: "path:path-1",
+             cleanup_node_ids: ["question-1"]
+           }
   end
 end
