@@ -19,7 +19,7 @@ defmodule Dialectic.Responses.Prompts do
   3. Tasks are framed as continuations, not standalone answers
   """
 
-  alias Dialectic.Responses.PromptsStructured
+  alias Dialectic.Responses.{GuidedLearningPlan, PromptsStructured}
 
   # Maximum character length for context in minimal context prompts.
   # Longer contexts are truncated to this length to keep prompts focused
@@ -120,6 +120,21 @@ defmodule Dialectic.Responses.Prompts do
     Regex.replace(~r/^\s*#+\s*/, s, "")
   end
 
+  defp guided_topic_title(topic) do
+    topic
+    |> sanitize_title()
+    |> String.replace(
+      ~r/^(?:(?:please|can you|could you|would you)\s+)?(?:explain|tell me about|describe|explore|help me understand)\s+/iu,
+      ""
+    )
+    |> String.replace(~r/[?.!]+\s*$/u, "")
+    |> String.trim()
+    |> case do
+      "" -> "this topic"
+      title -> title
+    end
+  end
+
   defp anti_repetition_footer do
     """
     **Important:** Do not repeat or merely rephrase what's in the Foundation section. Focus on adding genuinely new information, perspectives, or insights.
@@ -169,6 +184,38 @@ defmodule Dialectic.Responses.Prompts do
       """,
       citation_encouragement(),
       anti_repetition_footer()
+    ])
+  end
+
+  @doc """
+  Recommend next actions and propose multiple exploration paths in one plan.
+  """
+  @spec guided_learning_plan(String.t(), String.t()) :: String.t()
+  def guided_learning_plan(context, topic) do
+    action_labels = Enum.map_join(GuidedLearningPlan.labels(), "\n", &"- #{&1}")
+
+    join_blocks([
+      frame_context(context),
+      """
+      The learner wants guidance for **#{sanitize_title(topic)}** before receiving more generated content.
+
+      **Your task:** Create one learning plan containing both ranked inquiry actions and several distinct paths through the topic.
+
+      For the action section, choose only from these exact labels:
+      #{action_labels}
+
+      Output requirements:
+      - Start with the exact heading `## Learning plan: #{guided_topic_title(topic)}`.
+      - Add the exact heading `### Best next actions`, followed by exactly three top-level bullets.
+      - Write each action as `**Exact action label** — One specific sentence explaining why this action is useful now.`
+      - Put the best action first and use each action at most once.
+      - Add the exact heading `### Paths to explore`, followed by exactly five top-level bullets.
+      - Write each path as `**Short path title** — A focused standalone question? — One specific sentence explaining why this path matters.`
+      - Keep each path title under 40 characters and each complete bullet under 280 characters.
+      - Ensure every path question ends with a question mark.
+      - Do not perform any action, answer any path question, or add text after the final path.
+      - Do not use an em dash inside labels, questions, or rationales except as the required separators.
+      """
     ])
   end
 
@@ -398,16 +445,25 @@ defmodule Dialectic.Responses.Prompts do
       """
       The exploration has covered: **#{sanitize_title(current_idea_title)}**
 
-      **Your task:** Identify 4-5 substantive directions for further exploration. Deliberately include all of these categories:
+      **Your task:** Broaden the reader's horizons with exactly four genuinely distinct directions for further exploration, using one direction from each lens:
 
       1. **Historical or intellectual foundation:** an earlier event, debate, thinker, or primary text that shaped the idea.
       2. **Empirical or scientific connection:** relevant observations, research, mechanisms, or testable questions.
       3. **Opposing framework:** a serious rival explanation, tradition, or critic that changes how the idea is evaluated.
       4. **Cross-disciplinary or practical direction:** a connection to another field, institution, decision, or application.
 
-      For each direction, name its category, explain the non-obvious connection, and state what question or insight it opens. Include a source lead only when confident it exists and is relevant; never invent a thinker, work, study, publication detail, or URL to complete the list.
+      Make every direction a specific idea, thinker, debate, mechanism, case, or application—not merely the name of its lens. Prefer connections that are illuminating or surprising while remaining clearly relevant to the current idea.
 
-      Prioritize genuinely new directions rather than variations on what the Foundation already covered.
+      Use this exact compact structure for each direction:
+
+      ## [Specific, memorable name of the direction]
+      *Lens: [one lens from the list above]*
+      **Why it connects:** [one or two concise sentences explaining the non-obvious connection]
+      **Explore:** [one focused question that would take the inquiry somewhere new]
+
+      Give no introductory survey or concluding recap. Do not repeat the lens name as the heading or add a redundant `Category` field. Keep the four directions meaningfully different rather than offering variations on territory the Foundation already covered.
+
+      Check names and relationships carefully: do not conflate people, works, schools, findings, or dates. Do not use vague claims such as "research shows" without identifying a well-established body of work. Include a source lead only when confident it exists and directly supports the connection; omit uncertain specifics rather than inventing a thinker, work, study, publication detail, or URL.
       """
     ])
   end
@@ -421,16 +477,25 @@ defmodule Dialectic.Responses.Prompts do
       frame_minimal_context(context),
       frame_selection(selection_text),
       """
-      **Your task:** Identify 4-5 substantive directions specifically related to the selected text. Deliberately include all of these categories:
+      **Your task:** Broaden the reader's horizons with exactly four genuinely distinct directions specifically related to the selected text, using one direction from each lens:
 
       1. **Historical or intellectual foundation:** an earlier event, debate, thinker, or primary text that shaped the idea.
       2. **Empirical or scientific connection:** relevant observations, research, mechanisms, or testable questions.
       3. **Opposing framework:** a serious rival explanation, tradition, or critic that changes how the idea is evaluated.
       4. **Cross-disciplinary or practical direction:** a connection to another field, institution, decision, or application.
 
-      For each direction, name its category, explain the non-obvious connection, and state what question or insight it opens. Include a source lead only when confident it exists and is relevant; never invent a thinker, work, study, publication detail, or URL to complete the list.
+      Make every direction a specific idea, thinker, debate, mechanism, case, or application—not merely the name of its lens. Prefer connections that are illuminating or surprising while remaining clearly relevant to the selected text.
 
-      Prioritize genuinely new directions rather than variations on the Foundation or selection.
+      Use this exact compact structure for each direction:
+
+      ## [Specific, memorable name of the direction]
+      *Lens: [one lens from the list above]*
+      **Why it connects:** [one or two concise sentences explaining the non-obvious connection]
+      **Explore:** [one focused question that would take the inquiry somewhere new]
+
+      Give no introductory survey or concluding recap. Do not repeat the lens name as the heading or add a redundant `Category` field. Keep the four directions meaningfully different rather than offering variations on the Foundation or selection.
+
+      Check names and relationships carefully: do not conflate people, works, schools, findings, or dates. Do not use vague claims such as "research shows" without identifying a well-established body of work. Include a source lead only when confident it exists and directly supports the connection; omit uncertain specifics rather than inventing a thinker, work, study, publication detail, or URL.
       """
     ])
   end

@@ -31,7 +31,7 @@ defmodule Dialectic.Workers.LLMWorker do
 
   alias Dialectic.LLM.Grounding
   alias Dialectic.Responses.Utils
-  alias Dialectic.Responses.{ModeServer, PromptsStructured}
+  alias Dialectic.Responses.{GuidedLearningPlan, ModeServer, PromptsStructured}
 
   @buffer_size 200
   @stream_flush_min_interval_ms 100
@@ -107,6 +107,10 @@ defmodule Dialectic.Workers.LLMWorker do
       result
     catch
       kind, reason ->
+        if attempt >= max_attempts do
+          cleanup_terminal_guided_submission(args, graph, to_node)
+        end
+
         emit_completion_telemetry(job_started_at, provider, :exception)
         :erlang.raise(kind, reason, __STACKTRACE__)
     end
@@ -137,6 +141,7 @@ defmodule Dialectic.Workers.LLMWorker do
     else
       GraphManager.update_vertex_fields(graph, to_node, %{
         content: "",
+        guided_plan: nil,
         grounding_metadata: nil
       })
 
@@ -160,6 +165,10 @@ defmodule Dialectic.Workers.LLMWorker do
         )
       end
 
+      if terminal_failure?(result, attempt, max_attempts) do
+        cleanup_terminal_guided_submission(args, graph, to_node)
+      end
+
       {result, outcome_for_result(result)}
     end
   end
@@ -175,6 +184,7 @@ defmodule Dialectic.Workers.LLMWorker do
          provider_mod
        ) do
     question = Map.get(args, "question", "")
+    buffer_response? = guided_learning_plan_contract?(args)
 
     # Validate configuration early to surface clear messages
     {api_key_ok?, api_key_val} =
@@ -250,13 +260,15 @@ defmodule Dialectic.Workers.LLMWorker do
           # lost partial updates or GraphManager restarts).
           flush_started_at = System.monotonic_time(:millisecond)
 
-          {final_full_text, final_buf, _, _last_flush_at, stream_updates, grounding_metadata} =
+          {final_chunks, _final_size, final_buffer_size, _, _last_flush_at, stream_updates,
+           grounding_metadata} =
             Enum.reduce(
               stream_resp.stream,
-              {"", "", false, flush_started_at, 0, nil},
+              {[], 0, 0, false, flush_started_at, 0, nil},
               fn
                 %ReqLLM.StreamChunk{type: :content, text: token},
-                {full_text, buf, ttft_logged?, last_flush_at, stream_updates, grounding_metadata} ->
+                {chunks, full_size, buffer_size, ttft_logged?, last_flush_at, stream_updates,
+                 grounding_metadata} ->
                   chunk =
                     case token do
                       t when is_binary(t) -> t
@@ -275,24 +287,35 @@ defmodule Dialectic.Workers.LLMWorker do
                       ttft_logged?
                     end
 
-                  new_full_text = full_text <> chunk
-                  new_buf = buf <> chunk
+                  chunk_size = byte_size(chunk)
+                  new_chunks = [chunk | chunks]
+                  new_full_size = full_size + chunk_size
+                  new_buffer_size = buffer_size + chunk_size
                   now = System.monotonic_time(:millisecond)
                   elapsed_ms = now - last_flush_at
 
-                  if should_flush_stream?(full_text == "", byte_size(new_buf), elapsed_ms) do
-                    Utils.set_node_content(graph, to_node, new_full_text, live_view_topic)
-                    {new_full_text, "", ttft_logged?, now, stream_updates + 1, grounding_metadata}
+                  if should_flush_stream?(full_size == 0, new_buffer_size, elapsed_ms) do
+                    if buffer_response? do
+                      {new_chunks, new_full_size, 0, ttft_logged?, now, stream_updates,
+                       grounding_metadata}
+                    else
+                      full_text = new_chunks |> Enum.reverse() |> IO.iodata_to_binary()
+                      Utils.set_node_content(graph, to_node, full_text, live_view_topic)
+
+                      {new_chunks, new_full_size, 0, ttft_logged?, now, stream_updates + 1,
+                       grounding_metadata}
+                    end
                   else
-                    {new_full_text, new_buf, ttft_logged?, last_flush_at, stream_updates,
-                     grounding_metadata}
+                    {new_chunks, new_full_size, new_buffer_size, ttft_logged?, last_flush_at,
+                     stream_updates, grounding_metadata}
                   end
 
                 %ReqLLM.StreamChunk{type: :meta, metadata: metadata},
-                {full_text, buf, ttft_logged?, last_flush_at, stream_updates, grounding_metadata} ->
+                {chunks, full_size, buffer_size, ttft_logged?, last_flush_at, stream_updates,
+                 grounding_metadata} ->
                   grounding_metadata = Grounding.merge(grounding_metadata, metadata)
 
-                  {full_text, buf, ttft_logged?, last_flush_at, stream_updates,
+                  {chunks, full_size, buffer_size, ttft_logged?, last_flush_at, stream_updates,
                    grounding_metadata}
 
                 _chunk, state ->
@@ -300,10 +323,16 @@ defmodule Dialectic.Workers.LLMWorker do
               end
             )
 
+          final_full_text = final_chunks |> Enum.reverse() |> IO.iodata_to_binary()
+
           stream_updates =
-            if final_buf != "" do
-              Utils.set_node_content(graph, to_node, final_full_text, live_view_topic)
-              stream_updates + 1
+            if final_buffer_size > 0 do
+              if buffer_response? do
+                stream_updates
+              else
+                Utils.set_node_content(graph, to_node, final_full_text, live_view_topic)
+                stream_updates + 1
+              end
             else
               stream_updates
             end
@@ -312,15 +341,17 @@ defmodule Dialectic.Workers.LLMWorker do
             if grounding? do
               cleaned_text = Grounding.strip_sources(final_full_text)
 
-              Utils.set_node_response(
-                graph,
-                to_node,
-                cleaned_text,
-                grounding_metadata,
-                live_view_topic
-              )
+              unless buffer_response? do
+                Utils.set_node_response(
+                  graph,
+                  to_node,
+                  cleaned_text,
+                  grounding_metadata,
+                  live_view_topic
+                )
+              end
 
-              {cleaned_text, stream_updates + 1}
+              {cleaned_text, if(buffer_response?, do: stream_updates, else: stream_updates + 1)}
             else
               {final_full_text, stream_updates}
             end
@@ -355,6 +386,20 @@ defmodule Dialectic.Workers.LLMWorker do
               )
 
               {:error, {:incomplete_stream, finish_reason}}
+
+            buffer_response? ->
+              handle_guided_learning_plan_response(
+                job_id,
+                job_started_at,
+                args,
+                final_full_text,
+                grounding_metadata,
+                graph,
+                to_node,
+                live_view_topic,
+                provider_mod,
+                finish_reason
+              )
 
             missing_required_follow_ups?(instruction, final_full_text) ->
               final_full_text = append_fallback_follow_ups(final_full_text, instruction)
@@ -393,6 +438,113 @@ defmodule Dialectic.Workers.LLMWorker do
           {:error, err}
       end
     end
+  end
+
+  defp handle_guided_learning_plan_response(
+         job_id,
+         job_started_at,
+         args,
+         response,
+         grounding_metadata,
+         graph,
+         to_node,
+         live_view_topic,
+         provider_mod,
+         finish_reason
+       ) do
+    case guided_learning_plan_response_action(args, response) do
+      {:accept, plan} ->
+        {:ok, canonical_content} = GuidedLearningPlan.render(plan)
+        GraphManager.update_vertex_fields(graph, to_node, %{guided_plan: plan})
+
+        if is_nil(grounding_metadata) do
+          Utils.set_node_content(graph, to_node, canonical_content, live_view_topic)
+        else
+          Utils.set_node_response(
+            graph,
+            to_node,
+            canonical_content,
+            grounding_metadata,
+            live_view_topic
+          )
+        end
+
+        total_ms =
+          job_started_at
+          |> elapsed_duration()
+          |> duration_in_milliseconds()
+
+        Logger.info(
+          "[LLMWorker] job_id=#{job_id} completed validated guided learning plan total=#{total_ms}ms bytes=#{byte_size(canonical_content)} finish_reason=#{inspect(finish_reason)}"
+        )
+
+        finalize(graph, to_node, live_view_topic)
+        :ok
+
+      {:reject, errors} ->
+        Logger.error(
+          "[LLMWorker] job_id=#{job_id} guided learning plan failed validation after repair: #{inspect(errors)}"
+        )
+
+        persist_stream_error(
+          graph,
+          to_node,
+          live_view_topic,
+          "We couldn't create a valid learning plan. Please try again."
+        )
+
+        {:discard, :invalid_guided_learning_plan}
+
+      {:repair, repair_instruction, errors} ->
+        Logger.warning(
+          "[LLMWorker] job_id=#{job_id} guided learning plan failed validation; attempting one repair: #{inspect(errors)}"
+        )
+
+        repair_args =
+          args
+          |> Map.put("instruction", repair_instruction)
+          |> Map.put("guided_plan_repair_attempt", true)
+
+        GraphManager.update_vertex_fields(graph, to_node, %{
+          content: "",
+          guided_plan: nil,
+          grounding_metadata: nil
+        })
+
+        do_llm_request(
+          job_id,
+          job_started_at,
+          repair_args,
+          graph,
+          to_node,
+          live_view_topic,
+          provider_mod
+        )
+    end
+  end
+
+  @doc false
+  def guided_learning_plan_response_action(args, response) do
+    case GuidedLearningPlan.validate(response) do
+      {:ok, plan} ->
+        {:accept, plan}
+
+      {:error, errors} ->
+        if Map.get(args, "guided_plan_repair_attempt", false) do
+          {:reject, errors}
+        else
+          original_instruction = Map.get(args, "instruction", Map.get(args, "question", ""))
+
+          repair_instruction =
+            GuidedLearningPlan.repair_prompt(original_instruction, response, errors)
+
+          {:repair, repair_instruction, errors}
+        end
+    end
+  end
+
+  defp guided_learning_plan_contract?(args) do
+    Map.get(args, "response_contract") == "guided_learning_plan"
   end
 
   def skip_existing_response?(1, content) when is_binary(content), do: byte_size(content) > 50
@@ -488,6 +640,17 @@ defmodule Dialectic.Workers.LLMWorker do
     System.convert_time_unit(duration, :native, :millisecond)
   end
 
+  defp terminal_failure?({:discard, _reason}, _attempt, _max_attempts), do: true
+  defp terminal_failure?({:error, _reason}, attempt, max_attempts), do: attempt >= max_attempts
+  defp terminal_failure?(_result, _attempt, _max_attempts), do: false
+
+  defp cleanup_terminal_guided_submission(args, graph, to_node) do
+    case Map.get(args, "guided_submission") do
+      %{} = metadata -> GraphManager.cleanup_guided_submission(graph, to_node, metadata)
+      _no_guided_submission -> :ok
+    end
+  end
+
   defp outcome_for_result(:ok), do: :success
   defp outcome_for_result({:discard, _reason}), do: :discard
   defp outcome_for_result({:error, _reason}), do: :error
@@ -532,7 +695,7 @@ defmodule Dialectic.Workers.LLMWorker do
     topic = extract_initial_topic(instruction)
     text = strip_follow_up_section(text)
 
-    questions = [
+    [first_question, second_question, third_question] = [
       "What historical context most changes how we should understand #{topic}?",
       "Which interpretation of #{topic} is most contested, and why?",
       "What detail about #{topic} would be most rewarding to explore next?"
@@ -541,9 +704,9 @@ defmodule Dialectic.Workers.LLMWorker do
     [
       String.trim_trailing(text),
       "## Follow-up questions",
-      "1. #{Enum.at(questions, 0)}",
-      "2. #{Enum.at(questions, 1)}",
-      "3. #{Enum.at(questions, 2)}"
+      "1. #{first_question}",
+      "2. #{second_question}",
+      "3. #{third_question}"
     ]
     |> Enum.join("\n\n")
   end

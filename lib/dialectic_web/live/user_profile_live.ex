@@ -533,8 +533,7 @@ defmodule DialecticWeb.UserProfileLive do
                 aria-hidden="true"
                 class="h-1.5 w-1.5 shrink-0 rounded-full"
                 style={"background-color: " <> tag_color_hex(tag)}
-              >
-              </span>
+              ></span>
               {tag}
             </span>
           <% end %>
@@ -1129,8 +1128,7 @@ defmodule DialecticWeb.UserProfileLive do
                                       do: "bg-amber-500 ring-amber-100",
                                       else: "bg-indigo-500 ring-indigo-100"
                                     )
-                                  ]}>
-                                  </span>
+                                  ]}></span>
                                   <.link
                                     navigate={node_group.path}
                                     id={node_group.link_id}
@@ -1183,8 +1181,7 @@ defmodule DialecticWeb.UserProfileLive do
                                         id={"profile-highlight-#{highlight.id}"}
                                         class="group/item flex items-start gap-3 px-4 py-3.5 transition hover:bg-indigo-50/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-indigo-600 sm:px-5"
                                       >
-                                        <span class="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-slate-300">
-                                        </span>
+                                        <span class="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-slate-300"></span>
                                         <span class="min-w-0 flex-1">
                                           <blockquote
                                             id={"profile-highlight-quote-#{highlight.id}"}

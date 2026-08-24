@@ -98,7 +98,7 @@ defmodule DialecticWeb.ComponentsSmokeTest do
       assert html =~ "Existing note"
     end
 
-    test "shows summary stats and linked ideas for saved highlights" do
+    test "shows linked ideas without a redundant summary panel" do
       highlight = %{
         id: 789,
         node_id: "node_ghi789",
@@ -118,7 +118,9 @@ defmodule DialecticWeb.ComponentsSmokeTest do
           visible_node_ids: ["node_ghi789"]
         )
 
-      assert html =~ "Highlights"
+      refute html =~ ~s(id="highlights-summary")
+      assert html =~ ~s(id="highlight-jump-789")
+      assert html =~ ~s(id="highlight-link-789-node_xyz")
       assert html =~ "Question"
       assert html =~ "Open question"
       assert html =~ "Visible in the current view"

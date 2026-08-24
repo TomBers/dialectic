@@ -6,6 +6,55 @@ import { showToast, copyToClipboard } from "./toast.js";
 import { syncGraphAppearanceStorage } from "./appearance_preferences.js";
 
 const RIGHT_DRAWER_SELECTOR = "[data-right-drawer]";
+const GRAPH_VIEWPORT_STORAGE_PREFIX = "dialectic:graph-viewport:";
+
+const readStoredGraphViewport = (graphId, pathKey) => {
+  if (!graphId) return null;
+
+  try {
+    const stored = JSON.parse(
+      sessionStorage.getItem(`${GRAPH_VIEWPORT_STORAGE_PREFIX}${graphId}`) ||
+        "null",
+    );
+
+    if (
+      !stored ||
+      stored.pathKey !== pathKey ||
+      !Number.isFinite(stored.zoom) ||
+      !Number.isFinite(stored.pan?.x) ||
+      !Number.isFinite(stored.pan?.y)
+    ) {
+      return null;
+    }
+
+    return stored;
+  } catch (_e) {
+    return null;
+  }
+};
+
+const storeGraphViewport = (graphId, pathKey, cy) => {
+  if (!graphId || !cy || cy.destroyed?.()) return;
+
+  try {
+    const selected = cy
+      .$("node.selected")
+      .filter((node) => !node.isParent())
+      .first();
+    const anchor =
+      selected && selected.length > 0
+        ? {
+            nodeId: selected.id(),
+            renderedPosition: selected.renderedPosition(),
+          }
+        : null;
+
+    sessionStorage.setItem(
+      `${GRAPH_VIEWPORT_STORAGE_PREFIX}${graphId}`,
+      JSON.stringify({ zoom: cy.zoom(), pan: cy.pan(), pathKey, anchor }),
+    );
+  } catch (_e) {}
+};
 
 const getRightDrawers = () =>
   Array.from(document.querySelectorAll(RIGHT_DRAWER_SELECTOR));
@@ -296,6 +345,7 @@ const graphHook = {
 
     const container =
       this.el.querySelector(`#${div}`) || document.getElementById(div);
+    this._container = container;
 
     container.dataset.graphReady = "false";
     container.setAttribute("aria-busy", "true");
@@ -307,8 +357,30 @@ const graphHook = {
       }
 
       if (!container.isConnected) return;
-      container.dataset.graphReady = "true";
-      container.removeAttribute("aria-busy");
+
+      const finishReady = () => {
+        if (!container.isConnected) return;
+        container.dataset.graphReady = "true";
+        container.removeAttribute("aria-busy");
+      };
+
+      if (
+        initialFocusPathIds.length === 0 &&
+        this._pendingStoredViewport &&
+        !this._storedViewportRestoreScheduled
+      ) {
+        this._storedViewportRestoreScheduled = true;
+        setTimeout(() => {
+          requestAnimationFrame(() => {
+            this._restorePendingStoredViewport();
+            this._setReaderPathTransitionPending(false);
+            finishReady();
+          });
+        }, 0);
+        return;
+      }
+
+      finishReady();
     };
 
     const viewMode = appearance.graphViewMode;
@@ -318,6 +390,16 @@ const graphHook = {
       initialPresentationMode === "presenting" && initialPresentationIds.length > 0
         ? this._buildPresentationElements(initialPresentationIds, graph)
         : this._parseGraphElements(graph);
+    const initialFocusPathIds =
+      initialPresentationMode === "presenting" ? [] : this._readReaderPathIds();
+    this._initialReaderPathSyncPending = initialFocusPathIds.length > 0;
+    this._pendingStoredViewport = readStoredGraphViewport(
+      graphId,
+      initialFocusPathIds.join(","),
+    );
+    this._setReaderPathTransitionPending(
+      initialFocusPathIds.length > 0 || Boolean(this._pendingStoredViewport),
+    );
     const initialDrawOptions =
       initialPresentationMode === "presenting" && initialPresentationIds.length > 0
         ? {
@@ -330,6 +412,7 @@ const graphHook = {
             onInitialLayoutReady: markInitialGraphReady,
             reduceMotion: this._reduceMotion,
             highContrast: this._highContrast,
+            animateInitialLayout: initialFocusPathIds.length === 0,
           };
 
     this.cy = draw_graph(
@@ -348,9 +431,6 @@ const graphHook = {
     this._lastViewMode = viewMode;
     this._lastGraphDirection = graphDirection;
 
-    // Store container reference for reinitializing
-    this._container = container;
-
     // Link back so layoutGraph can update running state
     try {
       this.cy._ownerHook = this;
@@ -361,39 +441,6 @@ const graphHook = {
       initialPresentationIds,
     );
     this._scheduleFontAwareRedraw();
-
-    this.handleEvent("request_screenshot", () => {
-      if (this.cy) {
-        const stateSelected = this.cy.$(":selected");
-        const classSelected = this.cy.$(".selected");
-        const contextSelected = this.cy.$(".selected-neighbor, .selected-edge");
-
-        stateSelected.unselect();
-        classSelected.removeClass("selected");
-        contextSelected.removeClass("selected-neighbor selected-edge");
-
-        setTimeout(() => {
-          if (!this.cy) return;
-          const png = this.cy.png({
-            output: "base64uri",
-            full: true,
-            scale: 1.5,
-            bg: "white",
-          });
-
-          stateSelected.select();
-          classSelected.addClass("selected");
-          contextSelected.forEach((ele) => {
-            if (ele.isEdge && ele.isEdge()) {
-              ele.addClass("selected-edge");
-            } else {
-              ele.addClass("selected-neighbor");
-            }
-          });
-          this.pushEvent("save_screenshot", { image: png });
-        }, 200);
-      }
-    });
 
     // Handle view mode changes from client-side toggle via custom DOM event
     // Handle view mode changes via custom event
@@ -439,6 +486,7 @@ const graphHook = {
       });
     }
     this._pendingCenterId = null;
+    this._syncReaderPathFocus({ force: true });
     this._centerOnNodeVisible = (id) => {
       try {
         const n = this.cy.getElementById(id);
@@ -742,13 +790,6 @@ const graphHook = {
       };
     }
 
-    if (!this._downloadGraphPngHandler) {
-      this._downloadGraphPngHandler = (event) => {
-        this._exportGraphPng(event?.detail?.filename || "");
-      };
-      window.addEventListener("download-graph-png", this._downloadGraphPngHandler);
-    }
-
     if (!this._exportPngHandler) {
       this._exportPngHandler = (e) => {
         e.preventDefault();
@@ -869,24 +910,10 @@ const graphHook = {
         this.cy.elements().removeClass("selected");
         const nodeToCenter = this.cy.getElementById(id);
         if (nodeToCenter.length > 0) {
-          // Track whether we need a full reflow
-          let needsReflow = false;
-
-          // If the node is inside a collapsed compound group, expand it
-          if (
-            nodeToCenter.hasClass("hidden") &&
-            typeof this.cy.ensureGroupVisible === "function"
-          ) {
-            needsReflow = this.cy.ensureGroupVisible(id) || needsReflow;
-          }
-          // If the node is depth-hidden, expand its ancestors to make it visible
-          if (
-            nodeToCenter.hasClass("depth-hidden") &&
-            typeof this.cy.ensureDepthVisible === "function"
-          ) {
-            this.cy.ensureDepthVisible(id);
-            needsReflow = true;
-          }
+          const needsReflow =
+            typeof this.cy.ensureNodeVisible === "function"
+              ? this.cy.ensureNodeVisible(id)
+              : false;
           nodeToCenter.addClass("selected");
           if (typeof this.cy.applySelectionContext === "function") {
             this.cy.applySelectionContext(nodeToCenter);
@@ -902,18 +929,22 @@ const graphHook = {
           if (needsReflow) {
             this._pendingCenterId = id;
             this._layoutRunning = true;
-            layoutGraph(this.cy, {}, () => {
+            const onReflowDone = () => {
+              this._layoutRunning = false;
               this._pendingCenterId = null;
-              // Force Cytoscape to recalculate all styles and re-render
-              // node textures so that text on newly-expanded parents
-              // isn't blurry from stale cached label bitmaps.
               try {
                 this.cy.style().update();
               } catch (_e) {}
               requestAnimationFrame(() =>
                 ensureVisible(this.cy, container, id),
               );
-            });
+            };
+
+            if (typeof this.cy.reflowAfterVisibilityChange === "function") {
+              this.cy.reflowAfterVisibilityChange(onReflowDone);
+            } else {
+              layoutGraph(this.cy, {}, onReflowDone);
+            }
             return;
           }
 
@@ -983,21 +1014,12 @@ const graphHook = {
         allNodes.forEach((n) => {
           if (idSet.has(n.id())) {
             n.addClass("search-match");
-            // If the node is depth-hidden or group-hidden, reveal it
+            // Reveal matched nodes and reflow once after all visibility changes.
             if (
-              n.hasClass("depth-hidden") &&
-              typeof this.cy.ensureDepthVisible === "function"
+              typeof this.cy.ensureNodeVisible === "function" &&
+              this.cy.ensureNodeVisible(n.id())
             ) {
-              this.cy.ensureDepthVisible(n.id());
               needsReflow = true;
-            }
-            if (
-              n.hasClass("hidden") &&
-              typeof this.cy.ensureGroupVisible === "function"
-            ) {
-              if (this.cy.ensureGroupVisible(n.id())) {
-                needsReflow = true;
-              }
             }
           } else {
             n.addClass("search-dimmed");
@@ -1019,12 +1041,18 @@ const graphHook = {
         // reflow so they don't overlap, then refresh styles.
         if (needsReflow) {
           this._layoutRunning = true;
-          layoutGraph(this.cy, {}, () => {
+          const onReflowDone = () => {
             this._layoutRunning = false;
             try {
               this.cy.style().update();
             } catch (_e) {}
-          });
+          };
+
+          if (typeof this.cy.reflowAfterVisibilityChange === "function") {
+            this.cy.reflowAfterVisibilityChange(onReflowDone);
+          } else {
+            layoutGraph(this.cy, {}, onReflowDone);
+          }
         }
       } catch (_e) {}
     });
@@ -1189,19 +1217,10 @@ const graphHook = {
       if (!n || n.length === 0) return;
 
       if (
-        n.hasClass("depth-hidden") &&
-        typeof this.cy.ensureDepthVisible === "function"
+        typeof this.cy.ensureNodeVisible === "function" &&
+        this.cy.ensureNodeVisible(id)
       ) {
-        this.cy.ensureDepthVisible(id);
         needsReflow = true;
-      }
-      if (
-        n.hasClass("hidden") &&
-        typeof this.cy.ensureGroupVisible === "function"
-      ) {
-        if (this.cy.ensureGroupVisible(id)) {
-          needsReflow = true;
-        }
       }
     });
 
@@ -1270,11 +1289,17 @@ const graphHook = {
     // If we expanded any collapsed/depth-hidden nodes, run a reflow
     // so the revealed nodes get proper positions.
     if (needsReflow) {
-      layoutGraph(this.cy, {}, () => {
+      const onReflowDone = () => {
         try {
           this.cy.style().update();
         } catch (_e) {}
-      });
+      };
+
+      if (typeof this.cy.reflowAfterVisibilityChange === "function") {
+        this.cy.reflowAfterVisibilityChange(onReflowDone);
+      } else {
+        layoutGraph(this.cy, {}, onReflowDone);
+      }
     }
   },
 
@@ -1373,6 +1398,130 @@ const graphHook = {
         this._badgeElements.set(id, badge);
       }
     });
+  },
+
+  _restorePendingStoredViewport() {
+    if (!this.cy || !this._pendingStoredViewport) return false;
+
+    const stored = this._pendingStoredViewport;
+    this._pendingStoredViewport = null;
+
+    try {
+      this.cy.zoom(stored.zoom);
+      const anchorNode = stored.anchor?.nodeId
+        ? this.cy.getElementById(stored.anchor.nodeId)
+        : null;
+
+      if (
+        anchorNode &&
+        anchorNode.length > 0 &&
+        Number.isFinite(stored.anchor.renderedPosition?.x) &&
+        Number.isFinite(stored.anchor.renderedPosition?.y)
+      ) {
+        const position = anchorNode.position();
+        this.cy.pan({
+          x: stored.anchor.renderedPosition.x - position.x * stored.zoom,
+          y: stored.anchor.renderedPosition.y - position.y * stored.zoom,
+        });
+      } else {
+        this.cy.pan(stored.pan);
+      }
+      return true;
+    } catch (_e) {
+      return false;
+    }
+  },
+
+  _setReaderPathTransitionPending(pending) {
+    if (!this._container) return;
+
+    if (pending) {
+      this._container.style.transition = "none";
+      this._container.style.opacity = "0";
+      return;
+    }
+
+    this._container.style.transition = "none";
+    this._container.style.opacity = "1";
+  },
+
+  _readReaderPathIds() {
+    try {
+      const parsed = JSON.parse(this.el.dataset.readerPathIds || "[]");
+      return Array.isArray(parsed) ? parsed.map((id) => String(id)) : [];
+    } catch (_e) {
+      return [];
+    }
+  },
+
+  _syncReaderPathFocus({ force = false } = {}) {
+    if (!this.cy) return;
+
+    const ids = this._readReaderPathIds();
+    const idsKey = ids.join(",");
+    if (!force && idsKey === this._lastReaderPathIdsKey) return;
+    this._lastReaderPathIdsKey = idsKey;
+
+    if (this._readerPathFocusTimer) {
+      clearTimeout(this._readerPathFocusTimer);
+      this._readerPathFocusTimer = null;
+    }
+
+    const localEndpoint = this._localReaderPathEndpoint;
+    const requestedEndpoint = ids.at(-1);
+    if (localEndpoint && localEndpoint === requestedEndpoint) {
+      const requestedIds = new Set(ids);
+      const focusedNodeIds = this.cy
+        .nodes()
+        .filter((node) => !node.isParent() && !node.hasClass("focus-hidden"))
+        .map((node) => node.id());
+      const alreadyFocused = focusedNodeIds.every((id) => requestedIds.has(id));
+
+      this._localReaderPathEndpoint = null;
+      if (alreadyFocused) {
+        this._setReaderPathTransitionPending(false);
+        return;
+      }
+    }
+
+    if (ids.length === 0) {
+      this._setReaderPathTransitionPending(false);
+      if (this.cy._readerPathFocus) {
+        this.cy._readerPathFocus = false;
+        this.cy.clearBranchFocus?.();
+      }
+      return;
+    }
+
+    this._setReaderPathTransitionPending(true);
+    const cy = this.cy;
+    const initialPathSync = this._initialReaderPathSyncPending === true;
+    this._initialReaderPathSyncPending = false;
+    let applied = false;
+    const applyFocus = () => {
+      if (applied || this.cy !== cy || cy.destroyed?.()) return;
+      applied = true;
+      if (this._readerPathFocusTimer) {
+        clearTimeout(this._readerPathFocusTimer);
+        this._readerPathFocusTimer = null;
+      }
+      const focused = cy.focusPath?.(
+        ids,
+        () => {
+          this._restorePendingStoredViewport();
+          this._setReaderPathTransitionPending(false);
+        },
+        { animate: false, preserveViewport: !initialPathSync },
+      );
+      if (focused === false) this._setReaderPathTransitionPending(false);
+    };
+
+    if (this._layoutRunning) {
+      cy.one("layoutstop", () => requestAnimationFrame(applyFocus));
+      this._readerPathFocusTimer = setTimeout(applyFocus, 400);
+    } else {
+      requestAnimationFrame(applyFocus);
+    }
   },
 
   _readPresentationState() {
@@ -2014,6 +2163,9 @@ const graphHook = {
   },
 
   _handleViewModeChange(currentViewMode, graphStr, currentNode) {
+    const readerPathIds = this._readReaderPathIds();
+    this._setReaderPathTransitionPending(readerPathIds.length > 0);
+
     // Store the current zoom and pan
     const zoom = this.cy ? this.cy.zoom() : 1;
     const pan = this.cy ? this.cy.pan() : { x: 0, y: 0 };
@@ -2037,6 +2189,7 @@ const graphHook = {
       {
         reduceMotion: this._reduceMotion,
         highContrast: this._highContrast,
+        animateInitialLayout: readerPathIds.length === 0,
       },
     );
 
@@ -2080,6 +2233,8 @@ const graphHook = {
         this.cy.applySelectionContext(currentNode);
       }
     }
+
+    this._syncReaderPathFocus({ force: true });
   },
 
   _handleGraphDirectionChange(newDirection) {
@@ -2323,10 +2478,22 @@ const graphHook = {
       this._bindPngButtons();
     }
 
+    this._syncReaderPathFocus();
+
     // Debug redraw of bounds on update (no pan to avoid jitter)
     if (this._debugRedraw) this._debugRedraw();
   },
   destroyed() {
+    storeGraphViewport(
+      this.el?.dataset?.graphId,
+      this._readReaderPathIds().join(","),
+      this.cy,
+    );
+
+    if (this._readerPathFocusTimer) {
+      clearTimeout(this._readerPathFocusTimer);
+      this._readerPathFocusTimer = null;
+    }
     if (this._onViewModeChange) {
       this.el.removeEventListener("viewModeChanged", this._onViewModeChange);
     }
@@ -2394,10 +2561,6 @@ const graphHook = {
         el.removeEventListener("click", handler);
       });
       this._btnPngHandlers = null;
-    }
-    if (this._downloadGraphPngHandler) {
-      window.removeEventListener("download-graph-png", this._downloadGraphPngHandler);
-      this._downloadGraphPngHandler = null;
     }
     if (this._exploreBtnEl && this._exploreClickHandler) {
       this._exploreBtnEl.removeEventListener(

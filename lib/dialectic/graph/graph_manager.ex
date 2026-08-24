@@ -334,6 +334,72 @@ defmodule GraphManager do
     end
   end
 
+  def handle_call(
+        {:reserve_guided_submission, {node_id, submission_key}},
+        _from,
+        {graph_struct, graph}
+      ) do
+    case :digraph.vertex(graph, node_id) do
+      {_id, %{class: "learning_plan", deleted: false} = vertex}
+      when is_binary(submission_key) ->
+        valid_submission? =
+          submission_key == "regeneration" || is_map(Map.get(vertex, :guided_plan))
+
+        submissions = Map.get(vertex, :guided_submissions, []) |> List.wrap()
+
+        submission_conflict? =
+          submission_key in submissions ||
+            (submission_key == "regeneration" && submissions != []) ||
+            (submission_key != "regeneration" && "regeneration" in submissions)
+
+        cond do
+          !valid_submission? ->
+            {:reply, {:error, :invalid_guided_plan}, {graph_struct, graph}}
+
+          submission_conflict? ->
+            {:reply, {:error, :already_reserved}, {graph_struct, graph}}
+
+          true ->
+            updated_vertex =
+              Map.put(vertex, :guided_submissions, [submission_key | submissions])
+
+            :digraph.add_vertex(graph, node_id, updated_vertex)
+            {:reply, :ok, {graph_struct, graph}}
+        end
+
+      {_id, _vertex} ->
+        {:reply, {:error, :invalid_guided_plan}, {graph_struct, graph}}
+
+      false ->
+        {:reply, {:error, :node_not_found}, {graph_struct, graph}}
+    end
+  end
+
+  def handle_call(
+        {:release_guided_submission, {node_id, submission_key}},
+        _from,
+        {graph_struct, graph}
+      ) do
+    case :digraph.vertex(graph, node_id) do
+      {_id, %{class: "learning_plan"} = vertex} when is_binary(submission_key) ->
+        submissions =
+          vertex
+          |> Map.get(:guided_submissions, [])
+          |> List.wrap()
+          |> List.delete(submission_key)
+
+        updated_vertex = Map.put(vertex, :guided_submissions, submissions)
+        :digraph.add_vertex(graph, node_id, updated_vertex)
+        {:reply, :ok, {graph_struct, graph}}
+
+      {_id, _vertex} ->
+        {:reply, {:error, :invalid_guided_plan}, {graph_struct, graph}}
+
+      false ->
+        {:reply, {:error, :node_not_found}, {graph_struct, graph}}
+    end
+  end
+
   def handle_call({:toggle_graph_locked}, _from, {graph_struct, graph}) do
     updated_graph_struct = Dialectic.DbActions.Graphs.toggle_graph_locked(graph_struct)
     {:reply, updated_graph_struct, {updated_graph_struct, graph}}
@@ -590,17 +656,37 @@ defmodule GraphManager do
     result = add_edges(graph_id, node, parents)
 
     # Ensure the structural edge exists before generation can update or persist the child.
-    if Application.get_env(:dialectic, :sync_tasks_for_testing, false) do
-      llm_fn.(result)
-    else
-      Task.Supervisor.start_child(Dialectic.TaskSupervisor, fn -> llm_fn.(result) end)
-    end
+    generation_result =
+      if Application.get_env(:dialectic, :sync_tasks_for_testing, false) ||
+           Keyword.get(opts, :await_generation, false) do
+        llm_fn.(result)
+      else
+        Task.Supervisor.start_child(Dialectic.TaskSupervisor, fn -> llm_fn.(result) end)
+      end
+
+    result =
+      case {Keyword.get(opts, :await_generation, false), generation_result} do
+        {true, {:error, _reason}} ->
+          cleanup_failed_child(graph_id, result, opts)
+          nil
+
+        {_await_generation?, _queued_or_async} ->
+          result
+      end
 
     if Keyword.get(opts, :save, true) do
       save_graph(graph_id)
     end
 
     result
+  end
+
+  defp cleanup_failed_child(graph_id, child, opts) do
+    cleanup_node_ids = Keyword.get(opts, :cleanup_on_failure, [])
+
+    Enum.each([child.id | cleanup_node_ids], fn node_id ->
+      delete_node(graph_id, node_id)
+    end)
   end
 
   defp put_response_level(fields, _graph_id, class) when class in ["user", "question", "origin"],
@@ -616,6 +702,57 @@ defmodule GraphManager do
 
   def update_vertex_fields(path, node_id, fields) do
     GenServer.call(via_tuple(path), {:update_vertex_fields, {node_id, fields}})
+  end
+
+  def reserve_guided_submission(path, node_id, submission_key) do
+    GenServer.call(
+      via_tuple(path),
+      {:reserve_guided_submission, {node_id, submission_key}}
+    )
+  end
+
+  def release_guided_submission(path, node_id, submission_key) do
+    GenServer.call(
+      via_tuple(path),
+      {:release_guided_submission, {node_id, submission_key}}
+    )
+  end
+
+  def cleanup_guided_submission(path, failed_node_id, metadata) when is_map(metadata) do
+    plan_node_id = guided_metadata_value(metadata, :plan_node_id)
+    submission_key = guided_metadata_value(metadata, :submission_key)
+    cleanup_node_ids = guided_metadata_value(metadata, :cleanup_node_ids) |> List.wrap()
+    cleanup_classes = guided_metadata_value(metadata, :cleanup_classes) |> List.wrap()
+
+    plan_node = find_node_by_id(path, plan_node_id)
+
+    class_node_ids =
+      case plan_node do
+        %{class: "learning_plan"} ->
+          plan_node
+          |> Map.get(:children, [])
+          |> Enum.filter(&(Map.get(&1, :class) in cleanup_classes))
+          |> Enum.map(& &1.id)
+
+        _invalid_plan ->
+          []
+      end
+
+    if is_binary(plan_node_id) and is_binary(submission_key) do
+      release_guided_submission(path, plan_node_id, submission_key)
+    end
+
+    [failed_node_id | cleanup_node_ids ++ class_node_ids]
+    |> Enum.filter(&is_binary/1)
+    |> Enum.uniq()
+    |> Enum.each(&delete_node(path, &1))
+
+    save_graph(path)
+    :ok
+  end
+
+  defp guided_metadata_value(metadata, key) do
+    Map.get(metadata, key) || Map.get(metadata, Atom.to_string(key))
   end
 
   def set_node_content(path, node_id, content) do

@@ -93,7 +93,7 @@ defmodule DialecticWeb.UserResetPasswordLiveTest do
 
       {:ok, conn} =
         lv
-        |> element(~s|main a:fl-contains("Back to log in")|)
+        |> element("#reset-password-login-link")
         |> render_click()
         |> follow_redirect(conn, ~p"/users/log_in")
 
@@ -108,7 +108,7 @@ defmodule DialecticWeb.UserResetPasswordLiveTest do
 
       {:ok, conn} =
         lv
-        |> element(~s|main a:fl-contains("Create an account")|)
+        |> element("#reset-password-registration-link")
         |> render_click()
         |> follow_redirect(conn, ~p"/users/register")
 

@@ -71,17 +71,41 @@ defmodule DialecticWeb.OutlineGraphLive do
 
   @impl true
   def handle_params(params, _uri, socket) do
-    selected_node = resolve_target_node(socket.assigns.graph_id, params)
+    path_endpoint = current_selected_node(socket.assigns.graph_id, params["path"])
+
+    selected_node =
+      if params["node"] do
+        resolve_target_node(socket.assigns.graph_id, params)
+      else
+        path_endpoint || resolve_target_node(socket.assigns.graph_id, params)
+      end
+
     previous_node_id = socket.assigns.selected_node_id
+
     highlight_id = Map.get(params, "highlight")
 
     share_highlight =
       HighlightShare.highlight_for_graph(socket.assigns.graph_struct, highlight_id)
 
+    requested_path_ids =
+      if path_endpoint do
+        socket.assigns.graph_id
+        |> build_selected_path(path_endpoint)
+        |> Enum.map(& &1.id)
+      else
+        []
+      end
+
+    path_focus_ids =
+      if selected_node && selected_node.id in requested_path_ids,
+        do: requested_path_ids,
+        else: []
+
     socket =
       socket
+      |> assign(:path_focus_ids, path_focus_ids)
       |> assign_selected_node(selected_node)
-      |> maybe_scroll_to_top(previous_node_id, selected_node)
+      |> maybe_scroll_to_reader_node(previous_node_id, selected_node)
       |> push_highlights()
       |> maybe_scroll_to_highlight(highlight_id)
       |> assign_share_metadata(share_highlight)
@@ -180,6 +204,66 @@ defmodule DialecticWeb.OutlineGraphLive do
   end
 
   @impl true
+  def handle_event("reader_node_viewed", %{"id" => node_id}, socket) do
+    reading_node =
+      Enum.find(socket.assigns.visible_reading_chain, fn node -> node.id == node_id end)
+
+    if reading_node do
+      selected_path = build_selected_path(socket.assigns.graph_id, reading_node)
+      selected_path_ids = MapSet.new(Enum.map(selected_path, & &1.id))
+
+      focused_outline_nodes =
+        build_chapter_outline_nodes(socket.assigns.outline_nodes, selected_path)
+
+      can_choose_path? =
+        can_choose_path?(
+          socket.assigns.outline_nodes,
+          focused_outline_nodes,
+          reading_node.id
+        )
+
+      {:noreply,
+       assign(socket,
+         selected_node_id: node_id,
+         share_node: reading_node,
+         selected_path: selected_path,
+         selected_path_ids: selected_path_ids,
+         selected_focus_outline_nodes: focused_outline_nodes,
+         can_choose_path?: can_choose_path?
+       )}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  @impl true
+  def handle_event("choose_path", _params, socket) do
+    if socket.assigns.can_choose_path? do
+      params = Keyword.put(socket.assigns.nav_params, :path, socket.assigns.selected_node_id)
+
+      {:noreply,
+       push_patch(socket,
+         to: graph_path(socket.assigns.graph_struct, socket.assigns.selected_node_id, params)
+       )}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  @impl true
+  def handle_event("show_all_paths", _params, socket) do
+    {:noreply,
+     push_patch(socket,
+       to:
+         graph_path(
+           socket.assigns.graph_struct,
+           socket.assigns.selected_node_id,
+           socket.assigns.nav_params
+         )
+     )}
+  end
+
+  @impl true
   def handle_event("note", %{"node" => node_id}, socket) do
     update_reader_bookmark(socket, node_id, :note)
   end
@@ -264,11 +348,9 @@ defmodule DialecticWeb.OutlineGraphLive do
       socket
       |> clear_reader_search()
       |> then(fn current_socket ->
-        if current_socket.assigns.selected_node_id == node_id do
-          push_event(current_socket, "scroll_to_top", %{})
-        else
-          navigate_to_node(current_socket, node_id)
-        end
+        if current_socket.assigns.selected_node_id == node_id,
+          do: current_socket,
+          else: navigate_to_node(current_socket, node_id)
       end)
 
     {:noreply, socket}
@@ -371,12 +453,18 @@ defmodule DialecticWeb.OutlineGraphLive do
       nav_params: token_params(token_param),
       can_edit: !graph_db.is_locked,
       outline_nodes: outline_nodes,
+      visible_outline_nodes: outline_nodes,
+      selected_focus_outline_nodes: outline_nodes,
+      path_focus_ids: [],
+      paths_filtered?: false,
+      can_choose_path?: false,
       selected_node_id: nil,
       node: nil,
+      share_node: nil,
       selected_path: [],
-      displayed_node_ids: MapSet.new(),
       highlight_node_ids: MapSet.new(),
       reading_chain: [],
+      visible_reading_chain: [],
       reading_terminal: nil,
       next_choices: [],
       compare_context: nil,
@@ -499,70 +587,118 @@ defmodule DialecticWeb.OutlineGraphLive do
     assign(socket,
       selected_node_id: nil,
       node: nil,
+      share_node: nil,
       selected_path: [],
       selected_path_ids: MapSet.new(),
-      displayed_node_ids: MapSet.new(),
       highlight_node_ids: MapSet.new(),
       reading_chain: [],
+      visible_reading_chain: [],
       reading_terminal: nil,
       next_choices: [],
       compare_context: nil,
-      compare_branches: []
+      compare_branches: [],
+      visible_outline_nodes: socket.assigns.outline_nodes,
+      selected_focus_outline_nodes: socket.assigns.outline_nodes,
+      path_focus_ids: [],
+      paths_filtered?: false,
+      can_choose_path?: false
     )
   end
 
   defp assign_selected_node(socket, selected_node) do
     selected_node = enrich_node(selected_node)
 
-    selected_path =
-      socket.assigns.graph_id
-      |> GraphManager.path_to_node(selected_node)
-      |> Enum.reverse()
-      |> Enum.filter(&visible_node?/1)
-      |> Enum.map(&enrich_node/1)
+    selected_path = build_selected_path(socket.assigns.graph_id, selected_node)
 
-    reading_chain = build_reading_chain(socket.assigns.graph_id, selected_node)
+    continuation = build_reading_chain(socket.assigns.graph_id, selected_node)
+
+    reading_chain =
+      selected_path
+      |> Enum.drop(-1)
+      |> Kernel.++(continuation)
+      |> Enum.uniq_by(& &1.id)
+
     reading_terminal = List.last(reading_chain)
     next_choices = build_next_choices(socket.assigns.graph_id, reading_terminal)
 
     {compare_context, compare_branches} =
       build_compare_state(socket.assigns.graph_id, selected_node, selected_path)
 
-    displayed_node_ids =
-      selected_path
-      |> Enum.map(& &1.id)
-      |> Kernel.++(Enum.map(reading_chain, & &1.id))
-      |> MapSet.new()
+    selected_path_ids = MapSet.new(Enum.map(selected_path, & &1.id))
+
+    focused_outline_nodes =
+      build_chapter_outline_nodes(socket.assigns.outline_nodes, selected_path)
+
+    can_choose_path? =
+      can_choose_path?(
+        socket.assigns.outline_nodes,
+        focused_outline_nodes,
+        selected_node.id
+      )
+
+    active_focus_outline_nodes =
+      outline_rows_for_ids(socket.assigns.outline_nodes, socket.assigns.path_focus_ids)
+
+    paths_filtered? =
+      socket.assigns.path_focus_ids != [] and
+        Enum.map(active_focus_outline_nodes, & &1.id) !=
+          Enum.map(socket.assigns.outline_nodes, & &1.id)
+
+    visible_outline_nodes =
+      if paths_filtered?, do: active_focus_outline_nodes, else: socket.assigns.outline_nodes
+
+    visible_reading_chain =
+      if paths_filtered? do
+        reader_nodes_for_ids(socket.assigns.graph_id, socket.assigns.path_focus_ids)
+      else
+        reading_chain
+      end
 
     highlight_node_ids =
-      reading_chain
+      visible_reading_chain
       |> Enum.filter(&highlight_container_mounted?/1)
       |> Enum.map(& &1.id)
       |> MapSet.new()
 
-    selected_path_ids = MapSet.new(Enum.map(selected_path, & &1.id))
-
     assign(socket,
       selected_node_id: selected_node.id,
       node: selected_node,
+      share_node: selected_node,
       selected_path: selected_path,
       selected_path_ids: selected_path_ids,
-      displayed_node_ids: displayed_node_ids,
       highlight_node_ids: highlight_node_ids,
       reading_chain: reading_chain,
+      visible_reading_chain: visible_reading_chain,
       reading_terminal: reading_terminal,
       next_choices: next_choices,
       compare_context: compare_context,
-      compare_branches: compare_branches
+      compare_branches: compare_branches,
+      visible_outline_nodes: visible_outline_nodes,
+      selected_focus_outline_nodes: focused_outline_nodes,
+      paths_filtered?: paths_filtered?,
+      can_choose_path?: can_choose_path?
     )
   end
 
-  defp maybe_scroll_to_top(socket, nil, _selected_node), do: socket
-  defp maybe_scroll_to_top(socket, _previous_node_id, nil), do: socket
+  defp can_choose_path?(outline_nodes, focused_outline_nodes, selected_node_id) do
+    focused_path? =
+      Enum.map(focused_outline_nodes, & &1.id) != Enum.map(outline_nodes, & &1.id)
 
-  defp maybe_scroll_to_top(socket, previous_node_id, selected_node) do
+    terminal_node? =
+      case List.last(outline_nodes) do
+        nil -> false
+        node -> node.id == selected_node_id
+      end
+
+    focused_path? or terminal_node?
+  end
+
+  defp maybe_scroll_to_reader_node(socket, nil, _selected_node), do: socket
+  defp maybe_scroll_to_reader_node(socket, _previous_node_id, nil), do: socket
+
+  defp maybe_scroll_to_reader_node(socket, previous_node_id, selected_node) do
     if previous_node_id != selected_node.id do
-      push_event(socket, "scroll_to_top", %{})
+      push_event(socket, "scroll_to_reader_node", %{id: selected_node.id})
     else
       socket
     end
@@ -677,7 +813,44 @@ defmodule DialecticWeb.OutlineGraphLive do
     end)
   end
 
-  defp build_reading_chain(_graph_id, nil), do: []
+  defp build_selected_path(graph_id, selected_node) do
+    graph_id
+    |> GraphManager.path_to_node(selected_node)
+    |> Enum.reverse()
+    |> Enum.filter(&visible_node?/1)
+    |> Enum.map(&enrich_node/1)
+  end
+
+  defp reader_nodes_for_ids(graph_id, ids) do
+    ids
+    |> Enum.map(&GraphActions.find_node(graph_id, &1))
+    |> Enum.filter(&visible_node?/1)
+    |> Enum.map(&enrich_node/1)
+  end
+
+  defp build_chapter_outline_nodes(outline_nodes, selected_path) do
+    outline_rows_for_ids(outline_nodes, Enum.map(selected_path, & &1.id))
+  end
+
+  defp outline_rows_for_ids(outline_nodes, ids) do
+    rows_by_id = Map.new(outline_nodes, &{&1.id, &1})
+
+    ids
+    |> Enum.reduce({[], MapSet.new()}, fn id, {rows, seen} ->
+      cond do
+        MapSet.member?(seen, id) ->
+          {rows, seen}
+
+        row = Map.get(rows_by_id, id) ->
+          chapter = row |> Map.put(:indent, 0) |> Map.put(:branch?, false)
+          {rows ++ [chapter], MapSet.put(seen, id)}
+
+        true ->
+          {rows, seen}
+      end
+    end)
+    |> elem(0)
+  end
 
   defp build_reading_chain(graph_id, selected_node) do
     graph_id
@@ -865,17 +1038,20 @@ defmodule DialecticWeb.OutlineGraphLive do
       |> to_string()
       |> String.replace(~r/\r\n|\r/, "\n")
 
+    [title_line | body_lines] = String.split(normalized_content, "\n")
+
     rest =
-      normalized_content
-      |> String.split("\n")
-      |> Enum.drop(1)
+      body_lines
       |> Enum.join("\n")
       |> String.trim_leading()
 
     case String.split(rest, "\n") do
       [first_line | remaining_lines] ->
-        if String.match?(first_line, ~r/^\s*\#{1,6}\s+\S/) or
-             String.match?(first_line, ~r/^\s*title\b\s*:?\s*/i) do
+        duplicate_heading? =
+          String.match?(first_line, ~r/^\s*\#{1,6}\s+\S/) and
+            normalized_title_line(first_line) == normalized_title_line(title_line)
+
+        if duplicate_heading? or String.match?(first_line, ~r/^\s*title\b\s*:?\s*/i) do
           Enum.join(remaining_lines, "\n")
         else
           rest
@@ -906,6 +1082,14 @@ defmodule DialecticWeb.OutlineGraphLive do
       |> Enum.join(" ")
       |> Kernel.<>("…")
     end
+  end
+
+  defp normalized_title_line(line) do
+    line
+    |> String.replace(~r/^\s*\#{1,6}\s*/, "")
+    |> String.replace(~r/^\s*title\s*:?\s*/i, "")
+    |> String.trim()
+    |> String.downcase()
   end
 
   defp pluralize(1, singular, _plural), do: singular
@@ -989,7 +1173,12 @@ defmodule DialecticWeb.OutlineGraphLive do
       node ->
         push_patch(
           socket,
-          to: graph_path(socket.assigns.graph_struct, node.id, socket.assigns.nav_params)
+          to:
+            graph_path(
+              socket.assigns.graph_struct,
+              node.id,
+              reader_nav_params(socket.assigns.nav_params, socket.assigns.path_focus_ids)
+            )
         )
     end
   end
@@ -998,7 +1187,9 @@ defmodule DialecticWeb.OutlineGraphLive do
     graph_path(
       socket.assigns.graph_struct,
       node_id,
-      Keyword.put(socket.assigns.nav_params, :highlight, highlight_id)
+      socket.assigns.nav_params
+      |> reader_nav_params(socket.assigns.path_focus_ids)
+      |> Keyword.put(:highlight, highlight_id)
     )
   end
 
@@ -1046,7 +1237,7 @@ defmodule DialecticWeb.OutlineGraphLive do
     label =
       class
       |> ColUtils.node_type_label()
-      |> String.split("/")
+      |> String.split("/", parts: 2)
       |> List.first()
       |> String.trim()
       |> String.downcase()
@@ -1055,6 +1246,12 @@ defmodule DialecticWeb.OutlineGraphLive do
   end
 
   defp challenge_action_label(_node), do: "Challenge node"
+
+  defp reader_nav_params(nav_params, []), do: nav_params
+
+  defp reader_nav_params(nav_params, path_focus_ids) do
+    Keyword.put(nav_params, :path, List.last(path_focus_ids))
+  end
 
   defp token_params(token) when is_binary(token) and token != "", do: [token: token]
   defp token_params(_token), do: []

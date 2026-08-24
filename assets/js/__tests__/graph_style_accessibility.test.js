@@ -20,6 +20,29 @@ describe("graph accessibility styles", () => {
     expect(styleFor(highContrast, "edge").opacity).toBeGreaterThan(
       styleFor(regular, "edge").opacity,
     );
+    expect(styleFor(highContrast, "edge")["line-gradient-stop-colors"]).not.toBe(
+      styleFor(regular, "edge")["line-gradient-stop-colors"],
+    );
+  });
+
+  it("keeps highlighted relationships readable on a solid accent colour", () => {
+    const styles = graphStyle("spaced", "Example");
+    const highContrast = graphStyle("spaced", "Example", {
+      highContrast: true,
+    });
+
+    expect(styleFor(styles, ".edge-hover")["line-fill"]).toBe("solid");
+    expect(styleFor(styles, "edge.selected-edge")["line-fill"]).toBe("solid");
+    expect(styleFor(styles, "edge.presentation-edge")["line-fill"]).toBe("solid");
+    expect(styleFor(styles, "edge.presentation-edge-active")["line-fill"]).toBe(
+      "solid",
+    );
+    expect(
+      styleFor(highContrast, "edge.selected-edge")["text-background-opacity"],
+    ).toBe(1);
+    expect(styleFor(highContrast, "edge.selected-edge")["text-border-width"]).toBe(
+      1,
+    );
   });
 
   it("removes Cytoscape style transitions when reduced motion is enabled", () => {

@@ -164,7 +164,7 @@ defmodule Dialectic.Graph.GraphActions do
   def branch({graph_id, node, user, live_view_topic}, opts \\ []) do
     content_override = opts |> Keyword.get(:content_override) |> normalize_source_text()
 
-    child_opts = source_text_opts(content_override)
+    child_opts = generation_opts(source_text_opts(content_override), opts)
 
     thesis_node =
       GraphManager.add_child(
@@ -190,7 +190,18 @@ defmodule Dialectic.Graph.GraphActions do
         child_opts
       )
 
-    [thesis_node, antithesis_node]
+    nodes = [thesis_node, antithesis_node]
+
+    if Keyword.get(opts, :await_generation, false) && Enum.any?(nodes, &is_nil/1) do
+      nodes
+      |> Enum.filter(&is_map/1)
+      |> Enum.each(&GraphManager.delete_node(graph_id, &1.id))
+
+      GraphManager.save_graph(graph_id)
+      []
+    else
+      nodes
+    end
   end
 
   @doc """
@@ -240,7 +251,7 @@ defmodule Dialectic.Graph.GraphActions do
       end,
       "ideas",
       user,
-      source_text_opts(content_override)
+      generation_opts(source_text_opts(content_override), opts)
     )
   end
 
@@ -275,7 +286,7 @@ defmodule Dialectic.Graph.GraphActions do
       {^tool_key, class, llm_fn, _doc} ->
         content_override = opts |> Keyword.get(:content_override) |> normalize_source_text()
 
-        add_child_opts = source_text_opts(content_override)
+        add_child_opts = generation_opts(source_text_opts(content_override), opts)
 
         GraphManager.add_child(
           graph_id,
@@ -405,11 +416,23 @@ defmodule Dialectic.Graph.GraphActions do
   """
   def ask_and_answer({graph_id, node, user, live_view_topic}, question_text, opts \\ []) do
     minimal_context = Keyword.get(opts, :minimal_context, false)
+    guided_learning = Keyword.get(opts, :guided_learning, false)
     source_text = opts |> Keyword.get(:source_text) |> normalize_source_text()
-    question_prompt_kind = if minimal_context, do: "selection_explain_question", else: "question"
-    answer_prompt_kind = if minimal_context, do: "selection_explain", else: "answer"
+
+    {question_prompt_kind, answer_prompt_kind} =
+      cond do
+        guided_learning ->
+          {"guided_learning_plan_question", "guided_learning_plan"}
+
+        minimal_context ->
+          {"selection_explain_question", "selection_explain"}
+
+        true ->
+          {"question", "answer"}
+      end
+
     question_opts = source_text_opts(source_text, question_prompt_kind)
-    answer_opts = source_text_opts(source_text, answer_prompt_kind)
+    answer_opts = generation_opts(source_text_opts(source_text, answer_prompt_kind), opts)
 
     # Use a 'question' node for follow-up questions
     question_node =
@@ -422,20 +445,32 @@ defmodule Dialectic.Graph.GraphActions do
         Keyword.put(question_opts, :save, false)
       )
 
+    answer_opts = add_guided_cleanup_node(answer_opts, question_node.id)
+
     answer_node =
       GraphManager.add_child(
         graph_id,
         [question_node],
         fn n ->
-          if minimal_context do
-            LlmInterface.gen_response_minimal_context(question_node, n, graph_id, live_view_topic)
-          else
-            LlmInterface.gen_response(question_node, n, graph_id, live_view_topic)
+          cond do
+            guided_learning ->
+              LlmInterface.gen_guided_learning_plan(question_node, n, graph_id, live_view_topic)
+
+            minimal_context ->
+              LlmInterface.gen_response_minimal_context(
+                question_node,
+                n,
+                graph_id,
+                live_view_topic
+              )
+
+            true ->
+              LlmInterface.gen_response(question_node, n, graph_id, live_view_topic)
           end
         end,
-        "answer",
+        if(guided_learning, do: "learning_plan", else: "answer"),
         user,
-        answer_opts
+        Keyword.put(answer_opts, :cleanup_on_failure, [question_node.id])
       )
 
     {nil, answer_node}
@@ -491,6 +526,41 @@ defmodule Dialectic.Graph.GraphActions do
     {nil, answer_node}
   end
 
+  defp generation_opts(child_opts, opts) do
+    child_opts
+    |> put_guided_submission(Keyword.get(opts, :guided_submission))
+    |> Keyword.merge(Keyword.take(opts, [:await_generation]))
+  end
+
+  defp put_guided_submission(child_opts, %{} = guided_submission) do
+    Keyword.update(
+      child_opts,
+      :fields,
+      %{guided_submission: guided_submission},
+      &Map.put(&1, :guided_submission, guided_submission)
+    )
+  end
+
+  defp put_guided_submission(child_opts, _guided_submission), do: child_opts
+
+  defp add_guided_cleanup_node(child_opts, cleanup_node_id) do
+    Keyword.update(child_opts, :fields, %{}, fn fields ->
+      case Map.get(fields, :guided_submission) do
+        %{} = guided_submission ->
+          cleanup_node_ids = [cleanup_node_id | Map.get(guided_submission, :cleanup_node_ids, [])]
+
+          Map.put(
+            fields,
+            :guided_submission,
+            Map.put(guided_submission, :cleanup_node_ids, cleanup_node_ids)
+          )
+
+        _no_guided_submission ->
+          fields
+      end
+    end)
+  end
+
   defp source_text_opts(source_text, prompt_kind \\ nil) do
     fields =
       case normalize_source_text(source_text) do
@@ -535,7 +605,7 @@ defmodule Dialectic.Graph.GraphActions do
           do: {true, nil},
           else: {false, "Need at least 2 parent nodes for synthesis"}
 
-      class in ["thesis", "antithesis", "ideas", "answer", "explain"] or
+      class in ["thesis", "antithesis", "ideas", "answer", "learning_plan", "explain"] or
           class in thinking_tool_classes ->
         if List.first(parents) != nil,
           do: {true, nil},
@@ -565,6 +635,9 @@ defmodule Dialectic.Graph.GraphActions do
     case GraphManager.find_node_by_id(graph_id, stuck_node_id) do
       nil ->
         {:error, "Node not found"}
+
+      %{deleted: true} ->
+        {:error, "Node is no longer available"}
 
       stuck_node ->
         parents = stuck_node.parents
@@ -676,20 +749,32 @@ defmodule Dialectic.Graph.GraphActions do
       "ideas" ->
         related_ideas({graph_id, parent, user, live_view_topic}, content_override: source_text)
 
+      "learning_plan" ->
+        GraphManager.add_child(
+          graph_id,
+          [parent],
+          fn n -> LlmInterface.gen_guided_learning_plan(parent, n, graph_id, live_view_topic) end,
+          "learning_plan",
+          user,
+          source_text_opts
+        )
+
       "answer" ->
-        if source_text do
-          GraphManager.add_child(
-            graph_id,
-            [parent],
-            fn n ->
-              LlmInterface.gen_response_minimal_context(parent, n, graph_id, live_view_topic)
-            end,
-            "answer",
-            user,
-            source_text_opts
-          )
-        else
-          answer({graph_id, parent, user, live_view_topic})
+        cond do
+          source_text ->
+            GraphManager.add_child(
+              graph_id,
+              [parent],
+              fn n ->
+                LlmInterface.gen_response_minimal_context(parent, n, graph_id, live_view_topic)
+              end,
+              "answer",
+              user,
+              source_text_opts
+            )
+
+          true ->
+            answer({graph_id, parent, user, live_view_topic})
         end
 
       "explain" ->

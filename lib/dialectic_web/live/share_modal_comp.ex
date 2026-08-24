@@ -11,9 +11,11 @@ defmodule DialecticWeb.ShareModalComp do
       socket
       |> assign(assigns)
       |> assign_new(:share_target, fn -> :editor end)
+      |> assign_new(:reader_path_endpoint, fn -> nil end)
       |> assign_new(:presentation_mode, fn -> nil end)
       |> assign_new(:show_preview, fn -> true end)
       |> assign_new(:selected_highlight, fn -> nil end)
+      |> assign_new(:share_image_orientation, fn -> :landscape end)
 
     # Only run expensive DB queries (ensure_share_token, list_shares) when
     # the modal is actually visible. Every parent re-render (e.g. node click)
@@ -93,6 +95,12 @@ defmodule DialecticWeb.ShareModalComp do
   @impl true
   def handle_event("toggle_share_node", _, socket) do
     {:noreply, assign(socket, share_node: !socket.assigns.share_node)}
+  end
+
+  @impl true
+  def handle_event("select_share_image_orientation", %{"orientation" => orientation}, socket) do
+    orientation = if orientation == "portrait", do: :portrait, else: :landscape
+    {:noreply, assign(socket, share_image_orientation: orientation)}
   end
 
   @impl true
@@ -200,8 +208,57 @@ defmodule DialecticWeb.ShareModalComp do
                     <% end %>
                   </div>
 
-                  <%= if preview_image(assigns) || @show_preview || quote_share?(@selected_highlight) do %>
-                    <% preview_image = preview_image(assigns) %>
+                  <div
+                    id="share-image-orientation"
+                    class="mt-4 flex items-center justify-between gap-3"
+                  >
+                    <div>
+                      <p class="text-xs font-semibold text-slate-700">Image format</p>
+                      <p class="mt-0.5 text-[11px] text-slate-500">Choose where you’ll share it.</p>
+                    </div>
+                    <div
+                      class="inline-flex rounded-lg bg-slate-100 p-1"
+                      role="group"
+                      aria-label="Image format"
+                    >
+                      <button
+                        id="share-image-landscape"
+                        type="button"
+                        phx-click="select_share_image_orientation"
+                        phx-value-orientation="landscape"
+                        phx-target={@myself}
+                        aria-pressed={to_string(@share_image_orientation == :landscape)}
+                        class={[
+                          "rounded-md px-2.5 py-1.5 text-[11px] font-semibold transition",
+                          if(@share_image_orientation == :landscape,
+                            do: "bg-white text-slate-950 shadow-sm",
+                            else: "text-slate-500 hover:text-slate-800"
+                          )
+                        ]}
+                      >
+                        Landscape
+                      </button>
+                      <button
+                        id="share-image-portrait"
+                        type="button"
+                        phx-click="select_share_image_orientation"
+                        phx-value-orientation="portrait"
+                        phx-target={@myself}
+                        aria-pressed={to_string(@share_image_orientation == :portrait)}
+                        class={[
+                          "rounded-md px-2.5 py-1.5 text-[11px] font-semibold transition",
+                          if(@share_image_orientation == :portrait,
+                            do: "bg-white text-slate-950 shadow-sm",
+                            else: "text-slate-500 hover:text-slate-800"
+                          )
+                        ]}
+                      >
+                        Portrait
+                      </button>
+                    </div>
+                  </div>
+
+                  <%= if @show_preview || quote_share?(@selected_highlight) || reader_share?(assigns) do %>
                     <div class={[
                       "mt-4 overflow-hidden rounded-2xl shadow-sm",
                       if(quote_share?(@selected_highlight),
@@ -209,28 +266,29 @@ defmodule DialecticWeb.ShareModalComp do
                         else: "border border-slate-200 bg-gray-50"
                       )
                     ]}>
-                      <%= if preview_image do %>
-                        <%= if quote_share?(@selected_highlight) do %>
-                          <object
-                            data={preview_image}
-                            type="image/svg+xml"
-                            aria-label={preview_image_alt(assigns)}
-                            class="block w-full"
-                          >
-                            {preview_image_alt(assigns)}
-                          </object>
-                        <% else %>
-                          <img
-                            src={preview_image}
-                            alt={preview_image_alt(assigns)}
-                            class="block w-full object-contain max-h-48"
-                          />
-                        <% end %>
-                      <% else %>
-                        <div class="mt-4 flex items-center justify-center h-32 bg-gray-50 border border-dashed border-gray-300 rounded-lg text-gray-400 text-sm">
-                          <span class="animate-pulse">Generating preview...</span>
-                        </div>
-                      <% end %>
+                      <canvas
+                        id={
+                          if(quote_share?(@selected_highlight),
+                            do: "quote-share-preview",
+                            else: "grid-share-preview"
+                          )
+                        }
+                        data-share-card-canvas
+                        data-orientation={@share_image_orientation}
+                        data-card-text={share_image_text(assigns)}
+                        data-card-grid-title={share_image_grid_title(assigns)}
+                        data-card-source={share_image_source(assigns)}
+                        data-favicon-src={~p"/images/favicon-32.png"}
+                        role="img"
+                        aria-label={share_image_alt(assigns)}
+                        class={[
+                          "block h-auto bg-slate-950",
+                          if(@share_image_orientation == :portrait,
+                            do: "mx-auto aspect-[4/5] max-h-[28rem] w-auto max-w-full",
+                            else: "aspect-[1200/630] w-full"
+                          )
+                        ]}
+                      />
                     </div>
                   <% end %>
                   <!-- Public Link Section -->
@@ -264,8 +322,7 @@ defmodule DialecticWeb.ShareModalComp do
                             <span class={[
                               "pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
                               if(@share_node, do: "translate-x-4", else: "translate-x-0")
-                            ]}>
-                            </span>
+                            ]}></span>
                           </button>
                           <span>
                             Link to current node
@@ -329,35 +386,23 @@ defmodule DialecticWeb.ShareModalComp do
                         <.icon name="hero-share" class="w-5 h-5" /> Share via your device...
                       </button>
 
-                      <%= cond do %>
-                        <% quote_share?(@selected_highlight) -> %>
-                          <button
-                            type="button"
-                            data-download-svg-png={download_image_url(assigns)}
-                            data-download-filename={download_filename(assigns)}
-                            class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-slate-300 shadow-sm text-sm font-medium rounded-lg text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors disabled:cursor-wait disabled:opacity-60"
-                          >
-                            <.icon name="hero-arrow-down-tray" class="w-5 h-5" /> Download PNG
-                          </button>
-                        <% reader_share?(assigns) -> %>
-                          <button
-                            type="button"
-                            data-download-svg-png={download_image_url(assigns)}
-                            data-download-filename={download_filename(assigns)}
-                            class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-slate-300 shadow-sm text-sm font-medium rounded-lg text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors disabled:cursor-wait disabled:opacity-60"
-                          >
-                            <.icon name="hero-arrow-down-tray" class="w-5 h-5" /> Download image
-                          </button>
-                        <% true -> %>
-                          <button
-                            type="button"
-                            data-download-grid-png
-                            data-download-filename={download_filename(assigns)}
-                            class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-slate-300 shadow-sm text-sm font-medium rounded-lg text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
-                          >
-                            <.icon name="hero-arrow-down-tray" class="w-5 h-5" /> Download image
-                          </button>
-                      <% end %>
+                      <button
+                        type="button"
+                        data-download-share-card={
+                          if(quote_share?(@selected_highlight),
+                            do: "quote-share-preview",
+                            else: "grid-share-preview"
+                          )
+                        }
+                        data-download-filename={download_filename(assigns)}
+                        class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-slate-300 shadow-sm text-sm font-medium rounded-lg text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors disabled:cursor-wait disabled:opacity-60"
+                      >
+                        <.icon name="hero-arrow-down-tray" class="w-5 h-5" />
+                        {if(quote_share?(@selected_highlight),
+                          do: "Download PNG",
+                          else: "Download image"
+                        )}
+                      </button>
                     </div>
                   </div>
                   <!-- Social Share Section -->
@@ -583,6 +628,15 @@ defmodule DialecticWeb.ShareModalComp do
               p
             end
           end)
+          |> then(fn params ->
+            if assigns[:share_target] == :reader &&
+                 is_binary(assigns[:reader_path_endpoint]) &&
+                 assigns[:reader_path_endpoint] != "" do
+              Keyword.put(params, :path, assigns.reader_path_endpoint)
+            else
+              params
+            end
+          end)
 
         path =
           case assigns[:share_target] do
@@ -600,49 +654,61 @@ defmodule DialecticWeb.ShareModalComp do
   defp reader_share?(%{share_target: :reader}), do: true
   defp reader_share?(_assigns), do: false
 
-  defp preview_image(%{selected_highlight: %{id: _id} = highlight, graph_struct: graph}) do
-    DialecticWeb.Endpoint.url() <> preview_image_path(graph, highlight)
+  defp share_image_alt(%{selected_highlight: %{id: _id}}), do: "Quote share preview"
+  defp share_image_alt(_assigns), do: "Grid share image preview"
+
+  defp share_image_text(%{selected_highlight: %{id: _id} = highlight}) do
+    highlight
+    |> Map.get(:selected_text_snapshot, "")
+    |> sanitize_canvas_text(800)
   end
 
-  defp preview_image(%{share_target: :reader, graph_struct: graph}) do
-    HighlightShare.graph_image_url(graph)
+  defp share_image_text(%{graph_struct: graph}),
+    do: sanitize_canvas_text(graph.title, 300)
+
+  defp share_image_source(%{selected_highlight: %{id: _id} = highlight, graph_struct: graph}) do
+    graph
+    |> HighlightShare.node_title(Map.get(highlight, :node_id))
+    |> sanitize_canvas_text(:infinity)
   end
 
-  defp preview_image(%{graph_struct: graph_struct}) do
-    Map.get(graph_struct.data || %{}, "preview_image")
+  defp share_image_source(_assigns), do: ""
+
+  defp share_image_grid_title(%{graph_struct: graph}),
+    do: sanitize_canvas_text(graph.title, :infinity)
+
+  defp sanitize_canvas_text(text, max_length) do
+    text =
+      text
+      |> to_string()
+      |> String.replace(~r/\s+/, " ")
+      |> String.trim()
+
+    if max_length == :infinity, do: text, else: String.slice(text, 0, max_length)
   end
 
-  defp preview_image_path(graph, highlight), do: HighlightShare.image_path(graph, highlight)
-
-  defp preview_image_alt(%{selected_highlight: %{id: _id}}), do: "Quote share preview"
-  defp preview_image_alt(%{share_target: :reader}), do: "Grid share image preview"
-  defp preview_image_alt(_assigns), do: "Grid Preview"
-
-  defp download_image_url(%{selected_highlight: %{id: _id} = highlight, graph_struct: graph}) do
-    DialecticWeb.Endpoint.url() <> preview_image_path(graph, highlight)
-  end
-
-  defp download_image_url(%{graph_struct: graph}) do
-    HighlightShare.graph_image_url(graph)
-  end
-
-  defp download_filename(%{graph_struct: graph_struct, selected_highlight: %{id: highlight_id}}) do
+  defp download_filename(
+         %{graph_struct: graph_struct, selected_highlight: %{id: highlight_id}} = assigns
+       ) do
     title_slug =
       graph_struct.title
       |> slugify_filename()
       |> truncate_filename_slug()
 
-    "#{title_slug}-quote-#{highlight_id}.png"
+    "#{title_slug}-quote-#{highlight_id}#{image_orientation_suffix(assigns)}.png"
   end
 
-  defp download_filename(%{graph_struct: graph_struct}) do
+  defp download_filename(%{graph_struct: graph_struct} = assigns) do
     title_slug =
       graph_struct.title
       |> slugify_filename()
       |> truncate_filename_slug()
 
-    "#{title_slug}-grid.png"
+    "#{title_slug}-grid#{image_orientation_suffix(assigns)}.png"
   end
+
+  defp image_orientation_suffix(%{share_image_orientation: :portrait}), do: "-portrait"
+  defp image_orientation_suffix(_assigns), do: ""
 
   defp slugify_filename(title) do
     title

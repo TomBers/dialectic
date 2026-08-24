@@ -82,6 +82,7 @@ defmodule DialecticWeb.GraphPresentation do
       "origin" -> "Stream"
       "user" -> "Comment"
       "answer" -> "Response"
+      "learning_plan" -> "Learning Plan"
       "explain" -> "Explanation"
       "blind_spots" -> "Blind Spots"
       "steel_man" -> "Steel Man"

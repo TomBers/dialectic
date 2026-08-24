@@ -166,6 +166,16 @@ defmodule DialecticWeb.GraphNavPanelComp do
                 </div>
               </div>
               <div class="flex items-start gap-2">
+                <div class={"w-3 h-3 rounded-full flex-shrink-0 mt-0.5 ring-2 ring-offset-1 ring-opacity-30 " <> DialecticWeb.ColUtils.dot_class("learning_plan") <> " ring-indigo-400"}>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-xs font-medium text-gray-800">
+                    {DialecticWeb.ColUtils.node_type_label("learning_plan")}
+                  </div>
+                  <div class="text-[10px] text-gray-500 leading-tight">Interactive next steps</div>
+                </div>
+              </div>
+              <div class="flex items-start gap-2">
                 <div class={"w-3 h-3 rounded-full flex-shrink-0 mt-0.5 ring-2 ring-offset-1 ring-opacity-30 " <> DialecticWeb.ColUtils.dot_class("thesis") <> " ring-green-400"}>
                 </div>
                 <div class="flex-1 min-w-0">

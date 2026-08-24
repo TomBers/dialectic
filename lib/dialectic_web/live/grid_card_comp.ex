@@ -280,8 +280,7 @@ defmodule DialecticWeb.GridCardComp do
                   aria-hidden="true"
                   class="h-1.5 w-1.5 shrink-0 rounded-full"
                   style={"background-color: " <> tag_color(tag)}
-                >
-                </span>
+                ></span>
                 {tag}
               </span>
             <% end %>
@@ -391,8 +390,7 @@ defmodule DialecticWeb.GridCardComp do
                     aria-hidden="true"
                     class="h-1.5 w-1.5 shrink-0 rounded-full"
                     style={"background-color: " <> tag_color(tag)}
-                  >
-                  </span>
+                  ></span>
                   {tag}
                 </span>
               <% end %>

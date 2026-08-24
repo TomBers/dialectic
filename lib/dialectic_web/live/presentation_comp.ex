@@ -64,7 +64,11 @@ defmodule DialecticWeb.PresentationComp do
           >
             Title
           </label>
-          <form phx-change="update_presentation_title" phx-submit="update_presentation_title">
+          <form
+            id="presentation-title-form"
+            phx-change="update_presentation_title"
+            phx-submit="update_presentation_title"
+          >
             <input
               type="text"
               name="title"

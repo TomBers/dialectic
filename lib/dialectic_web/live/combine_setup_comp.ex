@@ -173,6 +173,7 @@ defmodule DialecticWeb.CombineSetupComp do
       "origin" -> "Stream"
       "user" -> "Comment"
       "answer" -> "Response"
+      "learning_plan" -> "Learning Plan"
       "explain" -> "Explanation"
       other -> String.capitalize(other)
     end

@@ -11,6 +11,8 @@ defmodule Dialectic.Graph.Vertex do
              :deleted,
              :source_text,
              :prompt_kind,
+             :guided_plan,
+             :guided_submissions,
              :response_level,
              :grounding_metadata
            ]}
@@ -19,6 +21,7 @@ defmodule Dialectic.Graph.Vertex do
     "antithesis",
     "synthesis",
     "answer",
+    "learning_plan",
     "assumption",
     "premise",
     "conclusion",
@@ -53,6 +56,9 @@ defmodule Dialectic.Graph.Vertex do
             compound: false,
             source_text: nil,
             prompt_kind: nil,
+            guided_plan: nil,
+            guided_submissions: [],
+            guided_submission: nil,
             response_level: nil,
             grounding_metadata: nil
 
@@ -76,6 +82,8 @@ defmodule Dialectic.Graph.Vertex do
       compound: vertex.compound,
       source_text: source_text_value,
       prompt_kind: vertex.prompt_kind,
+      guided_plan: Map.get(vertex, :guided_plan),
+      guided_submissions: Map.get(vertex, :guided_submissions, []),
       response_level: Map.get(vertex, :response_level),
       grounding_metadata: Map.get(vertex, :grounding_metadata)
     }
@@ -98,6 +106,8 @@ defmodule Dialectic.Graph.Vertex do
       compound: data["compound"],
       source_text: source_text_value,
       prompt_kind: data["prompt_kind"],
+      guided_plan: data["guided_plan"],
+      guided_submissions: data["guided_submissions"] || [],
       response_level: data["response_level"],
       grounding_metadata: data["grounding_metadata"]
     }
@@ -139,13 +149,10 @@ defmodule Dialectic.Graph.Vertex do
   def build_context(node, graph, limit) do
     allowed_parent = Map.get(node, :parent)
 
-    context =
-      collect_parents(graph, node.id, allowed_parent)
-      |> Enum.map(&add_node_context(&1, graph))
-      |> enforce_limit(limit)
-      |> Enum.join("\n\n")
-
-    context
+    collect_parents(graph, node.id, allowed_parent)
+    |> Enum.map(&add_node_context(&1, graph))
+    |> enforce_limit(limit)
+    |> Enum.join("\n\n")
   end
 
   defp enforce_limit([], _limit), do: []
@@ -383,68 +390,56 @@ defmodule Dialectic.Graph.Vertex do
 
     # Convert vertices to cytoscape nodes format
     nodes =
-      Enum.reduce(vertices, [], fn vertex, acc ->
+      Enum.flat_map(vertices, fn vertex ->
         # Get the vertex label/data from the digraph
         case :digraph.vertex(graph, vertex) do
-          {vid, dat} ->
+          {vid, %{deleted: false} = dat} ->
             # Create cytoscape node format
-            case dat.deleted do
-              true ->
-                acc
-
-              false ->
-                acc ++
-                  [
-                    %{
-                      classes: dat.class,
-                      data:
-                        %{
-                          id: vid,
-                          parent: Map.get(dat, :parent, ""),
-                          content: dat.content
-                        }
-                        |> then(fn m ->
-                          if Map.get(dat, :compound, false),
-                            do: Map.put(m, :compound, true),
-                            else: m
-                        end)
-                    }
-                  ]
-            end
+            [
+              %{
+                classes: dat.class,
+                data:
+                  %{
+                    id: vid,
+                    parent: Map.get(dat, :parent, ""),
+                    content: dat.content
+                  }
+                  |> then(fn m ->
+                    if Map.get(dat, :compound, false),
+                      do: Map.put(m, :compound, true),
+                      else: m
+                  end)
+              }
+            ]
 
           _ ->
-            acc
+            []
         end
       end)
 
     # Convert edges to cytoscape edges format
     edges =
-      Enum.reduce(edges, [], fn edge, acc ->
+      Enum.flat_map(edges, fn edge ->
         with {_, v1, v2, _} <- :digraph.edge(graph, edge),
-             {source_id, s_dat} <- :digraph.vertex(graph, v1),
-             {target_id, t_dat} <- :digraph.vertex(graph, v2) do
+             {source_id, %{deleted: false}} <- :digraph.vertex(graph, v1),
+             {target_id, %{deleted: false} = target_data} <- :digraph.vertex(graph, v2) do
           # Create edge ID from source and target names
           edge_id = source_id <> "_" <> target_id
 
           # Create cytoscape edge format
-          case !(s_dat.deleted or t_dat.deleted) do
-            true ->
-              acc ++
-                [
-                  %{
-                    data: %{
-                      id: edge_id,
-                      source: source_id,
-                      target: target_id
-                    }
-                  }
-                ]
-
-            false ->
-              acc
-          end
+          [
+            %{
+              data: %{
+                id: edge_id,
+                source: source_id,
+                target: target_id,
+                relation:
+                  Map.get(target_data, :prompt_kind) || Map.get(target_data, :class, "related")
+              }
+            }
+          ]
         else
-          _ -> acc
+          _ -> []
         end
       end)
 

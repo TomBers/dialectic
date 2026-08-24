@@ -5,18 +5,14 @@ defmodule Dialectic.Workers.LocalWorker do
   # Tests and dev flows continue to rely on the "question" arg for echo behavior.
 
   def perform(%Oban.Job{
-        args:
-          args = %{
-            "question" => question,
-            "to_node" => node,
-            "graph" => graph,
-            "module" => _worker_module,
-            "live_view_topic" => live_view_topic
-          }
+        args: %{
+          "question" => question,
+          "to_node" => node,
+          "graph" => graph,
+          "module" => _worker_module,
+          "live_view_topic" => live_view_topic
+        }
       }) do
-    # Explicitly ignore optional instruction/system_prompt keys if present
-    _ = Map.get(args, "instruction")
-    _ = Map.get(args, "system_prompt")
     updated_vertex = GraphManager.update_vertex(graph, node, question)
 
     # Broadcast :stream_chunk_broadcast directly with nil sender_pid to avoid

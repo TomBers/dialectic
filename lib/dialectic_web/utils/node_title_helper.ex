@@ -36,7 +36,7 @@ defmodule DialecticWeb.Utils.NodeTitleHelper do
       c when is_binary(c) and c != "" ->
         c
         |> String.replace(~r/\r\n|\r/, "\n")
-        |> String.split("\n")
+        |> String.split("\n", parts: 2)
         |> List.first()
         |> Kernel.||("")
         |> String.replace(~r/^\s*\#{1,6}\s*/, "")

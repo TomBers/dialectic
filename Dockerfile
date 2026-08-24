@@ -7,23 +7,28 @@
 # This file is based on these images:
 #
 #   - https://hub.docker.com/r/hexpm/elixir/tags - for the build image
-#   - https://hub.docker.com/_/debian?tab=tags&page=1&name=bookworm-20250721-slim - for the release image
+#   - https://hub.docker.com/_/debian?tab=tags&page=1&name=bookworm-20260803-slim - for the release image
+#   - https://hub.docker.com/_/node?tab=tags&page=1&name=24.15.0-bookworm-slim - for Node.js
 #   - https://pkgs.org/ - resource for finding needed packages
-#   - Ex: hexpm/elixir:1.18.4-erlang-27.3.4.2-debian-bookworm-20250721-slim
+#   - Ex: hexpm/elixir:1.20.3-erlang-29.0.5-debian-bookworm-20260803-slim
 #
-ARG ELIXIR_VERSION=1.18.4
-ARG OTP_VERSION=27.3.4.2
-ARG DEBIAN_VERSION=bookworm-20250721-slim
+ARG ELIXIR_VERSION=1.20.3
+ARG OTP_VERSION=29.0.5
+ARG DEBIAN_VERSION=bookworm-20260803-slim
+ARG NODE_VERSION=24.15.0
 
 ARG BUILDER_IMAGE="hexpm/elixir:${ELIXIR_VERSION}-erlang-${OTP_VERSION}-debian-${DEBIAN_VERSION}"
 ARG RUNNER_IMAGE="debian:${DEBIAN_VERSION}"
+ARG NODE_IMAGE="node:${NODE_VERSION}-bookworm-slim"
 
+FROM ${NODE_IMAGE} AS node
 FROM ${BUILDER_IMAGE} AS builder
 
-# install build dependencies
-RUN apt-get update -y && apt-get install -y build-essential git nodejs npm ca-certificates \
+# install build dependencies and copy the pinned Node.js toolchain
+RUN apt-get update -y && apt-get install -y --no-install-recommends build-essential git ca-certificates \
     && update-ca-certificates \
-    && apt-get clean && rm -f /var/lib/apt/lists/*_*
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+COPY --from=node /usr/local/ /usr/local/
 
 # prepare build dir
 WORKDIR /app
@@ -50,9 +55,9 @@ COPY priv priv
 
 COPY lib lib
 
+COPY assets/package.json assets/package-lock.json assets/
+RUN npm ci --omit=dev --prefix assets
 COPY assets assets
-
-RUN cd assets && npm install
 
 # compile assets
 RUN mix assets.deploy
@@ -71,15 +76,15 @@ RUN mix release
 FROM ${RUNNER_IMAGE}
 
 RUN apt-get update -y && \
-    apt-get install -y libstdc++6 openssl libncurses5 locales ca-certificates \
-    && apt-get clean && rm -f /var/lib/apt/lists/*_*
+    apt-get install -y --no-install-recommends libstdc++6 openssl libncurses6 locales ca-certificates \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Set the locale
 RUN sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && locale-gen
 
-ENV LANG en_US.UTF-8
-ENV LANGUAGE en_US:en
-ENV LC_ALL en_US.UTF-8
+ENV LANG=en_US.UTF-8
+ENV LANGUAGE=en_US:en
+ENV LC_ALL=en_US.UTF-8
 
 WORKDIR "/app"
 RUN chown nobody /app

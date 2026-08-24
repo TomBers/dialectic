@@ -38,6 +38,7 @@ defmodule DialecticWeb.AskFormComp do
       |> assign_new(:show_hint, fn -> true end)
       |> assign_new(:prompt_mode, fn -> "structured" end)
       |> assign_new(:node, fn -> nil end)
+      |> assign_new(:current_user, fn -> nil end)
       |> assign_new(:show_context, fn -> true end)
       |> assign_new(:embedded, fn -> false end)
       |> assign_new(:show_tools, fn -> false end)
@@ -203,6 +204,43 @@ defmodule DialecticWeb.AskFormComp do
               </div>
             </div>
           </div>
+        </div>
+
+        <div :if={@embedded && !@disabled} class="mt-2 px-1">
+          <%= if @current_user do %>
+            <.input
+              type="checkbox"
+              id={"#{@id}-guided-learning"}
+              name="guided_learning"
+              value="false"
+              variant="learning_plan"
+              label="Guide my learning"
+              description="On adds ranked next actions and tailored exploration paths."
+              badge="Learning plan"
+            />
+          <% else %>
+            <button
+              id={"#{@id}-guided-learning-signup"}
+              type="button"
+              phx-click="show_login_required"
+              class="flex w-full items-center gap-2.5 rounded-xl border border-indigo-200 bg-indigo-50/70 px-3 py-2 text-left transition hover:border-indigo-300 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2"
+            >
+              <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-indigo-700 text-white shadow-sm">
+                <.icon name="hero-sparkles" class="h-3.5 w-3.5" />
+              </span>
+              <span class="min-w-0 flex-1">
+                <span class="block text-xs font-semibold text-indigo-950">
+                  Get a personal learning plan
+                </span>
+                <span class="block text-[11px] leading-4 text-indigo-700">
+                  Create a free account to unlock next actions and exploration paths.
+                </span>
+              </span>
+              <span class="shrink-0 rounded-full bg-white px-2 py-1 text-[10px] font-bold text-indigo-700 ring-1 ring-indigo-200">
+                Free
+              </span>
+            </button>
+          <% end %>
         </div>
       </.form>
     </div>

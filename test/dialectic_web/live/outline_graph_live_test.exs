@@ -411,10 +411,11 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
 
     assert has_element?(
              view,
-             "#outline-layout[data-reading-density='comfortable'][data-reading-font='sans'][data-graph-view-mode='spaced'][data-graph-direction='TB'][data-reduce-motion='false']"
+             "#outline-layout[data-reading-density='comfortable'][data-reading-font='serif'][data-graph-view-mode='spaced'][data-graph-direction='TB'][data-reduce-motion='false']"
            )
 
-    assert has_element?(view, "#outline-scroll-shell[phx-hook='ScrollReset']")
+    assert has_element?(view, "#outline-scroll-shell[phx-hook='ReaderScroll']")
+    assert has_element?(view, "#outline-detail[phx-hook='ReaderScroll']")
     assert has_element?(view, "#outline-tree[phx-hook='OutlineNav']")
     assert has_element?(view, "#outline-mobile-nav")
     assert has_element?(view, "#outline-detail")
@@ -444,7 +445,7 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert assigns.selected_node_id == "3"
     assert assigns.node.id == "3"
     assert Enum.map(assigns.selected_path, & &1.id) == ["1", "2", "3"]
-    assert Enum.map(assigns.reading_chain, & &1.id) == ["3"]
+    assert Enum.map(assigns.reading_chain, & &1.id) == ["1", "2", "3"]
     assert assigns.compare_context.root.id == "2"
     assert Enum.find(assigns.compare_branches, &(&1.id == "3")).active?
     assert has_element?(view, "#outline-node-3")
@@ -461,7 +462,10 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
              "In-depth"
            )
 
-    assert has_element?(view, "#reading-node-3")
+    assert has_element?(view, "#reading-node-1")
+    assert has_element?(view, "#reading-node-2")
+    assert has_element?(view, "#reading-node-3[data-reading-selected='true']")
+    refute render(view) =~ "Selected point"
 
     assert has_element?(
              view,
@@ -484,7 +488,7 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assigns = :sys.get_state(view.pid).socket.assigns
 
     assert assigns.selected_node_id == "2"
-    assert Enum.map(assigns.reading_chain, & &1.id) == ["2"]
+    assert Enum.map(assigns.reading_chain, & &1.id) == ["1", "2"]
     assert assigns.compare_context.root.id == "2"
     assert Enum.map(assigns.next_choices, & &1.id) == ["3", "4"]
     assert has_element?(view, "#outline-next-choices")
@@ -493,6 +497,13 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert has_element?(view, "#next-choice-3 [data-path-action]", "Read this path")
     refute has_element?(view, "#outline-branch-compare")
     refute has_element?(view, "#outline-end-state")
+
+    view |> element("#outline-choose-path") |> render_click()
+
+    refute has_element?(view, "#outline-next-choices")
+    refute has_element?(view, "#outline-end-state")
+    refute has_element?(view, "#outline-branch-compare")
+    assert has_element?(view, "#outline-show-all-paths")
   end
 
   test "reader expands a single-child path until the leaf", %{conn: conn} do
@@ -502,11 +513,13 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assigns = :sys.get_state(view.pid).socket.assigns
 
     assert assigns.selected_node_id == "4"
-    assert Enum.map(assigns.reading_chain, & &1.id) == ["4", "5"]
+    assert Enum.map(assigns.reading_chain, & &1.id) == ["1", "2", "4", "5"]
     assert assigns.reading_terminal.id == "5"
     assert assigns.next_choices == []
     assert assigns.compare_context.root.id == "2"
-    assert has_element?(view, "#reading-node-4")
+    assert has_element?(view, "#reading-node-1")
+    assert has_element?(view, "#reading-node-2")
+    assert has_element?(view, "#reading-node-4[data-reading-selected='true']")
     assert has_element?(view, "#reading-node-5")
     assert has_element?(view, "#outline-end-state")
     assert has_element?(view, "#outline-end-editor-link")
@@ -521,6 +534,125 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert has_element?(view, "#branch-compare-card-3[data-phx-link='patch']")
     assert has_element?(view, "#branch-compare-card-3 [data-path-action]", "Read this path")
     refute has_element?(view, "#outline-next-choices")
+
+    view |> element("#outline-choose-path") |> render_click()
+
+    assert has_element?(view, "#reading-node-1")
+    assert has_element?(view, "#reading-node-2")
+    assert has_element?(view, "#reading-node-4[data-reading-selected='true']")
+    refute has_element?(view, "#reading-node-5")
+    refute has_element?(view, "#outline-node-3")
+    refute has_element?(view, "#outline-node-5")
+  end
+
+  test "scrolling the document updates the active outline node without rebuilding it", %{
+    conn: conn
+  } do
+    graph = create_graph()
+
+    {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=4")
+
+    original_chain =
+      view.pid
+      |> :sys.get_state()
+      |> then(& &1.socket.assigns.reading_chain)
+      |> Enum.map(& &1.id)
+
+    render_hook(view, "reader_node_viewed", %{"id" => "2"})
+
+    assigns = :sys.get_state(view.pid).socket.assigns
+    assert assigns.selected_node_id == "2"
+    assert Enum.map(assigns.selected_path, & &1.id) == ["1", "2"]
+    assert Enum.map(assigns.reading_chain, & &1.id) == original_chain
+    assert has_element?(view, "#outline-node-2[data-outline-selected='true']")
+    assert has_element?(view, "#reading-node-2[data-reading-selected='true']")
+    assert has_element?(view, "#reading-node-4")
+  end
+
+  test "chooses one reader path and restores all outline paths", %{conn: conn} do
+    graph = create_graph()
+
+    {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=3")
+
+    assert has_element?(
+             view,
+             "#outline-node-3 + #outline-choose-path",
+             "Choose this path"
+           )
+
+    assert has_element?(
+             view,
+             "#outline-mobile-node-3 + #outline-mobile-choose-path",
+             "Choose this path"
+           )
+
+    assert has_element?(view, "#outline-node-4")
+    assert has_element?(view, "#outline-node-5")
+
+    view |> element("#outline-choose-path") |> render_click()
+
+    assert_patch(view, ~p"/g/#{graph.slug}?node=3&path=3")
+    assert has_element?(view, "#outline-node-1")
+    assert has_element?(view, "#outline-node-2")
+    assert has_element?(view, "#outline-node-3[data-outline-selected='true']")
+    assert has_element?(view, "#outline-node-1[style='padding-left: 0.75rem;']")
+    assert has_element?(view, "#outline-node-2[style='padding-left: 0.75rem;']")
+    assert has_element?(view, "#outline-node-3[style='padding-left: 0.75rem;']")
+    refute has_element?(view, "#outline-node-2", "Split")
+    refute has_element?(view, "#outline-node-3", "Here")
+    refute has_element?(view, "#outline-node-4")
+    refute has_element?(view, "#outline-node-5")
+    refute has_element?(view, "#outline-mobile-node-4")
+    assert has_element?(view, "#outline-show-all-paths", "Clear path filter")
+    assert has_element?(view, "#outline-mobile-show-all-paths", "Clear filter")
+
+    view |> element("#outline-node-2") |> render_click()
+
+    assert_patch(view, ~p"/g/#{graph.slug}?node=2&path=3")
+    assert has_element?(view, "#outline-node-2[data-outline-selected='true']")
+    assert has_element?(view, "#outline-node-3")
+    refute has_element?(view, "#outline-node-4")
+    refute has_element?(view, "#outline-node-5")
+    assert has_element?(view, "#outline-show-all-paths")
+
+    view |> element("#outline-show-all-paths") |> render_click()
+
+    assert_patch(view, ~p"/g/#{graph.slug}?node=2")
+    assert has_element?(view, "#outline-node-4")
+    assert has_element?(view, "#outline-node-5")
+    assert has_element?(view, "#outline-node-2[data-outline-selected='true']")
+    refute has_element?(view, "#outline-show-all-paths")
+  end
+
+  test "offers path selection for the final outline node", %{conn: conn} do
+    graph = create_graph(long_title_graph_data())
+
+    {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=2")
+
+    assert has_element?(view, "#outline-node-2 + #outline-choose-path")
+    assert has_element?(view, "#outline-mobile-node-2 + #outline-mobile-choose-path")
+  end
+
+  test "restores a shared reader path from the URL", %{conn: conn} do
+    graph = create_graph()
+
+    {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=2&path=4")
+    assigns = :sys.get_state(view.pid).socket.assigns
+
+    assert assigns.paths_filtered?
+    assert assigns.path_focus_ids == ["1", "2", "4"]
+    assert Enum.map(assigns.visible_outline_nodes, & &1.id) == ["1", "2", "4"]
+    assert Enum.map(assigns.visible_reading_chain, & &1.id) == ["1", "2", "4"]
+    assert assigns.selected_node_id == "2"
+    assert has_element?(view, "#outline-node-2[data-outline-selected='true']")
+    assert has_element?(view, ~s(#outline-node-4[href="/g/#{graph.slug}?node=4&path=4"]))
+
+    assert has_element?(
+             view,
+             ~s(#reader-workspace-bar-graph[href="/g/#{graph.slug}/graph?node=2&path=4"])
+           )
+
+    assert has_element?(view, "#outline-show-all-paths")
   end
 
   test "compare branches keep their own lead nodes when branches reconverge", %{conn: conn} do
@@ -538,7 +670,7 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert branch_leads["4"] == "4"
   end
 
-  test "patching to a different node pushes a scroll reset event", %{conn: conn} do
+  test "patching from the outline jumps to the selected document section", %{conn: conn} do
     graph = create_graph()
 
     {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=2")
@@ -548,7 +680,11 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     |> render_click()
 
     assert_patch(view, ~p"/g/#{graph.slug}?node=3")
-    assert_push_event(view, "scroll_to_top", %{})
+    assert_push_event(view, "scroll_to_reader_node", %{id: "3"})
+
+    assigns = :sys.get_state(view.pid).socket.assigns
+    assert Enum.map(assigns.reading_chain, & &1.id) == ["1", "2", "3"]
+    assert has_element?(view, "#reading-node-3[data-reading-selected='true']")
   end
 
   test "deep outlines stay flat and navigable without nesting controls", %{conn: conn} do
@@ -598,6 +734,21 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     refute render(view) =~ "Generating preview..."
   end
 
+  test "share button includes the chosen path and viewed chapter", %{conn: conn} do
+    graph = create_graph()
+
+    {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=3&path=3")
+    render_hook(view, "reader_node_viewed", %{"id" => "2"})
+
+    view
+    |> element("#reader-workspace-bar-share")
+    |> render_click()
+
+    share_url = "#{DialecticWeb.Endpoint.url()}/g/#{graph.slug}?node=2&path=3"
+
+    assert has_element?(view, ~s(#share-url-input[value="#{share_url}"]))
+  end
+
   test "highlight share button opens the share modal for the selected quote", %{conn: conn} do
     graph = create_graph(highlight_graph_data())
     user = user_fixture()
@@ -624,7 +775,11 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert has_element?(view, "#share-modal-hook")
     assert render(view) =~ "Share Quote"
     assert has_element?(view, ~s(#share-url-input[value="#{share_url}"]))
-    assert render(view) =~ "/g/#{graph.slug}/highlights/#{highlight.id}/share-card.svg?v="
+
+    assert has_element?(
+             view,
+             ~s(#quote-share-preview[data-share-card-canvas][data-card-text="Meaning is use."])
+           )
   end
 
   test "reader search opens from the top bar and patches to the selected result", %{conn: conn} do
@@ -775,8 +930,8 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
 
     assert has_element?(view, "#reader-workspace-bar-highlights")
     assert has_element?(view, "#reader-workspace-bar-highlights", "1")
-    assert render(view) =~ "Reading key"
-    assert render(view) =~ "Highlights"
+    assert has_element?(view, "#highlights-drawer", "1 saved passage and connected ideas")
+    assert has_element?(view, "#reader-highlights-close")
   end
 
   test "reader loads highlight data for rendered nodes", %{conn: conn} do

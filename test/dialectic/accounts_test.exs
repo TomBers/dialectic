@@ -849,7 +849,7 @@ defmodule Dialectic.AccountsTest do
     test "uses defaults when there is no signed-in user" do
       assert User.appearance_preferences(nil) == %{
                reading_density: "comfortable",
-               reading_font: "sans",
+               reading_font: "serif",
                graph_view_mode: "spaced",
                graph_direction: "TB",
                reduce_motion: false,

@@ -507,8 +507,7 @@ defmodule DialecticWeb.RightPanelComp do
                 class="grid grid-cols-[0.75rem_minmax(0,1fr)] gap-2.5 py-3"
               >
                 <% node_ref = activity_node_ref(log, @graph_id) %>
-                <span class="mt-1.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-amber-500 ring-1 ring-amber-200">
-                </span>
+                <span class="mt-1.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-amber-500 ring-1 ring-amber-200"></span>
                 <div class="min-w-0">
                   <p class="text-xs leading-5 text-slate-700">
                     <span id={"grid-activity-actor-#{log.id}"} class="font-semibold text-slate-950">

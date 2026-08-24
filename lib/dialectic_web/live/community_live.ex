@@ -211,6 +211,7 @@ defmodule DialecticWeb.CommunityLive do
                   </p>
                 </div>
                 <form
+                  id="community-search-form"
                   phx-change="search"
                   phx-submit="search"
                   class="relative w-full lg:w-80"
@@ -422,8 +423,7 @@ defmodule DialecticWeb.CommunityLive do
                 aria-hidden="true"
                 class="h-1.5 w-1.5 shrink-0 rounded-full"
                 style={"background-color: " <> tag_color_hex(tag)}
-              >
-              </span>
+              ></span>
               {tag}
             </span>
           <% end %>

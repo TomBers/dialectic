@@ -19,6 +19,36 @@ function markdownElement() {
 }
 
 describe("Markdown hook LiveView updates", () => {
+  it("preserves the first section heading in body-only mode", () => {
+    const element = markdownElement();
+    element.setAttribute(
+      "data-md",
+      "# Related ideas\n\n## A surprising connection\n\nUseful detail.",
+    );
+    const hook = { el: element, pushEvent: vi.fn() };
+
+    Markdown.mounted.call(hook);
+
+    expect(element.querySelector("h1")).toBeNull();
+    expect(element.querySelector("h2")?.textContent).toBe(
+      "A surprising connection",
+    );
+  });
+
+  it("removes a duplicate heading after the title", () => {
+    const element = markdownElement();
+    element.setAttribute(
+      "data-md",
+      "# Related ideas\n\n## Related ideas\n\nUseful detail.",
+    );
+    const hook = { el: element, pushEvent: vi.fn() };
+
+    Markdown.mounted.call(hook);
+
+    expect(element.querySelector("h1, h2")).toBeNull();
+    expect(element.textContent).toContain("Useful detail.");
+  });
+
   it("rerenders when LiveView restores the server fallback with unchanged Markdown", () => {
     const element = markdownElement();
     const hook = { el: element, pushEvent: vi.fn() };

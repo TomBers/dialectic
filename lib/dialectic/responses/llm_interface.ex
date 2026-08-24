@@ -133,6 +133,18 @@ defmodule Dialectic.Responses.LlmInterface do
     queue_response("initial_explainer", instruction, child, graph_id, live_view_topic)
   end
 
+  @doc false
+  @spec gen_guided_learning_plan(map(), map(), String.t(), String.t()) :: request_result()
+  def gen_guided_learning_plan(node, child, graph_id, live_view_topic) do
+    context = GraphManager.build_context(graph_id, node)
+    instruction = Prompts.guided_learning_plan(context, node.content || "")
+
+    queue_response("guided_learning_plan", instruction, child, graph_id, live_view_topic,
+      mode: :high_school,
+      response_contract: "guided_learning_plan"
+    )
+  end
+
   @doc """
   Generate a response with minimal context for selected text explanations.
 
@@ -424,11 +436,11 @@ defmodule Dialectic.Responses.LlmInterface do
     |> String.trim()
   end
 
-  defp queue_response(action, instruction, child, graph_id, live_view_topic) do
-    mode = response_mode(child, graph_id)
+  defp queue_response(action, instruction, child, graph_id, live_view_topic, opts \\ []) do
+    {mode, request_opts} = Keyword.pop_lazy(opts, :mode, fn -> response_mode(child, graph_id) end)
     system_prompt = PromptsStructured.system_preamble(mode)
     log_prompt(action, graph_id, mode, system_prompt, instruction)
-    ask_model(instruction, system_prompt, child, graph_id, live_view_topic, mode)
+    ask_model(instruction, system_prompt, child, graph_id, live_view_topic, mode, request_opts)
   end
 
   defp response_mode(child, graph_id) do
@@ -469,13 +481,13 @@ defmodule Dialectic.Responses.LlmInterface do
         :error -> ModeServer.get_mode(graph_id)
       end
 
-    ask_model(instruction, system_prompt, to_node, graph_id, live_view_topic, mode)
+    ask_model(instruction, system_prompt, to_node, graph_id, live_view_topic, mode, [])
   end
 
   @doc false
   @spec ask_model(String.t(), String.t(), map(), String.t(), String.t(), ModeServer.mode()) ::
           request_result()
-  def ask_model(instruction, system_prompt, to_node, graph_id, live_view_topic, mode) do
+  def ask_model(instruction, system_prompt, to_node, graph_id, live_view_topic, mode, opts \\ []) do
     node_id = if is_map(to_node), do: to_node.id, else: to_node
     response_level = mode |> PromptsStructured.response_profile() |> Map.fetch!(:key)
     GraphManager.update_vertex_fields(graph_id, node_id, %{response_level: response_level})
@@ -486,7 +498,7 @@ defmodule Dialectic.Responses.LlmInterface do
       to_node,
       graph_id,
       live_view_topic,
-      mode: mode
+      Keyword.put(opts, :mode, mode)
     )
   end
 end

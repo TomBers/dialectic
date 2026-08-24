@@ -42,6 +42,105 @@ defmodule Dialectic.Graph.VertexTest do
     end
   end
 
+  test "round-trips structured learning-plan data" do
+    guided_plan = %{
+      version: 1,
+      title: "Test topic",
+      actions: [%{key: "clarify", reason: "Define the topic."}],
+      paths: [
+        %{
+          id: "path-1",
+          label: "Foundation",
+          question: "What comes first?",
+          reason: "It establishes context."
+        }
+      ]
+    }
+
+    vertex = %Vertex{
+      id: "plan-1",
+      class: "learning_plan",
+      guided_plan: guided_plan,
+      guided_submissions: ["action:clarify"]
+    }
+
+    serialized = Vertex.serialize(vertex)
+
+    assert serialized.guided_plan == guided_plan
+    assert serialized.guided_submissions == ["action:clarify"]
+
+    deserialized = serialized |> Jason.encode!() |> Jason.decode!() |> Vertex.deserialize()
+    assert deserialized.guided_plan["version"] == 1
+    assert hd(deserialized.guided_plan["actions"])["key"] == "clarify"
+    assert deserialized.guided_submissions == ["action:clarify"]
+  end
+
+  describe "to_cytoscape_format/1" do
+    test "serializes active vertices and edges while excluding deleted graph elements", %{
+      graph: graph
+    } do
+      parent = %Vertex{
+        id: "parent",
+        class: "origin",
+        content: "Parent",
+        compound: true
+      }
+
+      child = %Vertex{
+        id: "child",
+        class: "answer",
+        content: "Child",
+        parent: parent.id,
+        prompt_kind: "selection_explain"
+      }
+
+      deleted = %Vertex{id: "deleted", class: "answer", content: "Deleted", deleted: true}
+
+      :digraph.add_vertex(graph, parent.id, parent)
+      :digraph.add_vertex(graph, child.id, child)
+      :digraph.add_vertex(graph, deleted.id, deleted)
+      :digraph.add_edge(graph, parent.id, child.id)
+      :digraph.add_edge(graph, parent.id, deleted.id)
+
+      elements = Vertex.to_cytoscape_format(graph)
+      nodes = Enum.filter(elements, &Map.has_key?(&1, :classes))
+      edges = Enum.reject(elements, &Map.has_key?(&1, :classes))
+
+      assert Enum.sort_by(nodes, & &1.data.id) == [
+               %{classes: "answer", data: %{content: "Child", id: "child", parent: "parent"}},
+               %{
+                 classes: "origin",
+                 data: %{compound: true, content: "Parent", id: "parent", parent: nil}
+               }
+             ]
+
+      assert edges == [
+               %{
+                 data: %{
+                   id: "parent_child",
+                   relation: "selection_explain",
+                   source: "parent",
+                   target: "child"
+                 }
+               }
+             ]
+    end
+
+    test "falls back to the child class for legacy relation data", %{graph: graph} do
+      parent = %Vertex{id: "parent", class: "origin", content: "Parent"}
+      child = %Vertex{id: "child", class: "clarify", content: "Child"}
+
+      :digraph.add_vertex(graph, parent.id, parent)
+      :digraph.add_vertex(graph, child.id, child)
+      :digraph.add_edge(graph, parent.id, child.id)
+
+      assert [%{data: %{relation: "clarify"}}] =
+               graph
+               |> Vertex.to_cytoscape_format()
+               |> Enum.reject(&Map.has_key?(&1, :classes))
+    end
+  end
+
   describe "build_context/3 question traversal" do
     test "keeps origin history through an omitted question", %{graph: graph} do
       origin = add_vertex(graph, "origin", "Initial framing", "origin")

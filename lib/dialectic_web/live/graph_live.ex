@@ -48,6 +48,7 @@ defmodule DialecticWeb.GraphLive do
   use DialecticWeb.GraphStreaming, preload_highlight_links: true
 
   alias Dialectic.Graph.{Vertex, GraphActions, Siblings}
+  alias Dialectic.Responses.GuidedLearningPlan
   alias Dialectic.Accounts.User
   alias DialecticWeb.GridChat
   alias DialecticWeb.NodeComp
@@ -92,6 +93,7 @@ defmodule DialecticWeb.GraphLive do
     # stale shared links degrade gracefully (correct slide count, no gaps
     # in badge numbering, and an empty-slides fallback when all are gone).
     graph_id = socket.assigns.graph_id
+    socket = assign_reader_path(socket, params["path"])
 
     valid_slide_ids =
       Enum.filter(slide_ids, fn id ->
@@ -129,8 +131,8 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  def handle_params(_params, _uri, socket) do
-    {:noreply, socket}
+  def handle_params(params, _uri, socket) do
+    {:noreply, assign_reader_path(socket, params["path"])}
   end
 
   @impl true
@@ -242,6 +244,14 @@ defmodule DialecticWeb.GraphLive do
 
       {:noreply, assign(socket, prompt_mode: mode_str)}
     end
+  end
+
+  def handle_event("set_reader_path", %{"id" => path_endpoint}, socket) do
+    {:noreply, assign_reader_path(socket, path_endpoint)}
+  end
+
+  def handle_event("clear_reader_path", _params, socket) do
+    {:noreply, assign(socket, reader_path_endpoint: nil, reader_path_ids: [])}
   end
 
   def handle_event("node:join_group", %{"node" => nid, "parent" => gid}, socket) do
@@ -561,6 +571,122 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
+  def handle_event("submit_guided_paths", params, socket) do
+    with :ok <- validate_logged_in(socket),
+         :ok <- validate_can_edit(socket),
+         {:ok, %{class: "learning_plan"} = plan_node} <-
+           find_node_safe(socket.assigns.graph_id, socket.assigns.node.id),
+         {:ok, _guided_plan} <- GuidedLearningPlan.normalize(plan_node.guided_plan),
+         {:ok, target_node} <- guided_action_target(socket.assigns.graph_id, plan_node) do
+      paths =
+        plan_node
+        |> guided_paths()
+        |> annotate_guided_paths(plan_node, target_node)
+
+      selected_paths = selected_guided_paths(params, paths)
+
+      cond do
+        selected_paths == [] ->
+          {:noreply, put_flash(socket, :error, "Please select at least one available path")}
+
+        length(selected_paths) > @max_explore_items ->
+          {:noreply, put_explore_limit_flash(socket)}
+
+        true ->
+          created_paths =
+            Enum.flat_map(selected_paths, fn path ->
+              submission_key = guided_path_submission_key(path.id)
+
+              case GraphManager.reserve_guided_submission(
+                     socket.assigns.graph_id,
+                     plan_node.id,
+                     submission_key
+                   ) do
+                :ok ->
+                  {_graph, answer_node} =
+                    GraphActions.ask_and_answer(
+                      graph_action_params(socket, plan_node),
+                      path.question,
+                      await_generation: true,
+                      guided_submission: guided_submission_metadata(plan_node, submission_key)
+                    )
+
+                  if is_map(answer_node) do
+                    [{path, answer_node}]
+                  else
+                    release_guided_submission(socket, plan_node, submission_key)
+                    []
+                  end
+
+                {:error, _reason} ->
+                  []
+              end
+            end)
+
+          case created_paths do
+            [] ->
+              {:noreply,
+               put_flash(socket, :error, "Those paths are already being explored or completed")}
+
+            created_paths ->
+              begin_background_generations(
+                socket,
+                Enum.map(created_paths, &elem(&1, 1)),
+                "answer",
+                created_paths |> Enum.map(&elem(&1, 0)) |> guided_paths_generation_label()
+              )
+          end
+      end
+    else
+      {:error, :login_required} ->
+        {:noreply, assign(socket, show_login_modal: true)}
+
+      {:error, :locked} ->
+        {:noreply, put_flash(socket, :error, "This graph is locked")}
+
+      _invalid_plan ->
+        {:noreply, put_flash(socket, :error, "The path plan is no longer available")}
+    end
+  end
+
+  def handle_event(
+        "apply_guided_next_action",
+        %{"action" => action, "id" => plan_node_id},
+        socket
+      ) do
+    with :ok <- validate_logged_in(socket),
+         :ok <- validate_can_edit(socket),
+         {:ok, plan_node} <- find_node_safe(socket.assigns.graph_id, plan_node_id),
+         true <- Map.get(plan_node, :class) == "learning_plan",
+         {:ok, _guided_plan} <- GuidedLearningPlan.normalize(plan_node.guided_plan),
+         true <- guided_action_recommended?(plan_node, action),
+         {:ok, target_node} <- guided_action_target(socket.assigns.graph_id, plan_node),
+         false <- guided_action_used?(plan_node, target_node, action),
+         :ok <-
+           GraphManager.reserve_guided_submission(
+             socket.assigns.graph_id,
+             plan_node.id,
+             guided_action_submission_key(action)
+           ) do
+      apply_guided_action(action, plan_node, target_node, socket)
+    else
+      {:error, :login_required} ->
+        {:noreply, assign(socket, show_login_modal: true)}
+
+      {:error, :locked} ->
+        {:noreply, put_flash(socket, :error, "This graph is locked")}
+
+      true ->
+        {:noreply, put_flash(socket, :error, "That action has already been used here")}
+
+      {:error, :already_reserved} ->
+        {:noreply, put_flash(socket, :error, "That action has already been used here")}
+
+      _invalid_recommendation ->
+        {:noreply, put_flash(socket, :error, "That recommended action is no longer available")}
+    end
+  end
+
   def handle_event("open_explore_modal", %{"items" => items}, socket) do
     if !socket.assigns.can_edit do
       {:noreply, socket |> put_flash(:error, "This graph is locked")}
@@ -734,12 +860,14 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_event("node_regenerate", %{"id" => node_id}, socket) do
-    if !socket.assigns.can_edit do
-      {:noreply, socket |> put_flash(:error, "This graph is locked")}
-    else
+    with :ok <- validate_can_edit(socket),
+         {:ok, node} <- find_node_safe(socket.assigns.graph_id, node_id),
+         :ok <- validate_regeneration_access(node, socket),
+         :ok <- reserve_regeneration(node, socket) do
       case GraphActions.regenerate_node(graph_action_params(socket), node_id) do
         {:error, reason} ->
-          {:noreply, socket |> put_flash(:error, reason)}
+          release_regeneration(node, socket)
+          {:noreply, put_flash(socket, :error, reason)}
 
         {:ok, new_node} ->
           socket =
@@ -752,6 +880,21 @@ defmodule DialecticWeb.GraphLive do
 
           update_graph(socket, {nil, new_node}, "regenerate")
       end
+    else
+      {:error, :locked} ->
+        {:noreply, put_flash(socket, :error, "This graph is locked")}
+
+      {:error, :login_required} ->
+        {:noreply, assign(socket, show_login_modal: true)}
+
+      {:error, :node_not_found} ->
+        {:noreply, put_flash(socket, :error, "Node not found")}
+
+      {:error, :already_reserved} ->
+        {:noreply, put_flash(socket, :error, "This learning plan is already being used")}
+
+      {:error, :invalid_guided_plan} ->
+        {:noreply, put_flash(socket, :error, "This learning plan is no longer available")}
     end
   end
 
@@ -769,11 +912,8 @@ defmodule DialecticWeb.GraphLive do
           "node_clicked"
         )
 
-      # Center and expand the node
-      updated_socket =
-        updated_socket
-        |> push_event("center_node", %{id: node_id})
-        |> push_event("expand_node", %{id: node_id})
+      # Reveal only the ancestors needed to make the target visible.
+      updated_socket = push_event(updated_socket, "center_node", %{id: node_id})
 
       {:noreply, updated_socket}
     else
@@ -794,7 +934,6 @@ defmodule DialecticWeb.GraphLive do
       {:noreply,
        updated_socket
        |> push_event("center_node", %{id: node_id})
-       |> push_event("expand_node", %{id: node_id})
        |> push_event("reflow_layout", %{id: node_id})}
     else
       {:noreply, put_flash(socket, :error, "Answer not found")}
@@ -947,9 +1086,7 @@ defmodule DialecticWeb.GraphLive do
           node ->
             {_, socket} = update_graph(socket, {nil, node}, "node_clicked")
 
-            socket
-            |> push_event("center_node", %{id: node.id})
-            |> push_event("expand_node", %{id: node.id})
+            push_event(socket, "center_node", %{id: node.id})
         end
       end
 
@@ -1015,43 +1152,53 @@ defmodule DialecticWeb.GraphLive do
     minimal_context = prefix == "explain"
     highlight_context = Map.get(params, "highlight_context")
 
-    case GraphHelpers.handle_reply_and_answer(socket, answer,
-           minimal_context: minimal_context,
-           highlight_context: highlight_context
-         ) do
-      {:ok, {_graph, node}, operation} ->
-        socket
-        |> reset_ask_form()
-        |> begin_query_generation(
-          node,
-          operation,
-          "Answering #{quoted_selection(answer)}",
-          params
-        )
+    if guided_learning_login_required?(params, socket) do
+      {:noreply, assign(socket, show_login_modal: true)}
+    else
+      case GraphHelpers.handle_reply_and_answer(socket, answer,
+             minimal_context: minimal_context,
+             highlight_context: highlight_context,
+             guided_learning: guided_learning_enabled?(params)
+           ) do
+        {:ok, {_graph, node}, operation} ->
+          socket
+          |> reset_ask_form()
+          |> begin_query_generation(
+            node,
+            operation,
+            "Answering #{quoted_selection(answer)}",
+            params
+          )
 
-      {:error, :locked} ->
-        {:noreply, socket |> put_flash(:error, "This graph is locked")}
+        {:error, :locked} ->
+          {:noreply, socket |> put_flash(:error, "This graph is locked")}
+      end
     end
   end
 
   def handle_event("reply-and-answer", %{"vertex" => %{"content" => answer}} = params, socket) do
     highlight_context = Map.get(params, "highlight_context")
 
-    case GraphHelpers.handle_reply_and_answer(socket, answer,
-           highlight_context: highlight_context
-         ) do
-      {:ok, {_graph, node}, operation} ->
-        socket
-        |> reset_ask_form()
-        |> begin_query_generation(
-          node,
-          operation,
-          "Answering #{quoted_selection(answer)}",
-          params
-        )
+    if guided_learning_login_required?(params, socket) do
+      {:noreply, assign(socket, show_login_modal: true)}
+    else
+      case GraphHelpers.handle_reply_and_answer(socket, answer,
+             highlight_context: highlight_context,
+             guided_learning: guided_learning_enabled?(params)
+           ) do
+        {:ok, {_graph, node}, operation} ->
+          socket
+          |> reset_ask_form()
+          |> begin_query_generation(
+            node,
+            operation,
+            "Answering #{quoted_selection(answer)}",
+            params
+          )
 
-      {:error, :locked} ->
-        {:noreply, socket |> put_flash(:error, "This graph is locked")}
+        {:error, :locked} ->
+          {:noreply, socket |> put_flash(:error, "This graph is locked")}
+      end
     end
   end
 
@@ -1069,21 +1216,7 @@ defmodule DialecticWeb.GraphLive do
       socket.assigns.graph_struct
       |> HighlightShare.highlight_for_graph(Map.get(params, "highlight_id"))
 
-    socket =
-      socket
-      |> assign(show_share_modal: true, selected_share_highlight: share_highlight)
-      |> maybe_request_share_screenshot(share_highlight)
-
-    {:noreply, socket}
-  end
-
-  def handle_event("save_screenshot", %{"image" => image_data}, socket) do
-    graph = socket.assigns.graph_struct
-    # Update in memory only for modal display
-    new_data = Map.put(graph.data || %{}, "preview_image", image_data)
-    updated_graph = %{graph | data: new_data}
-
-    {:noreply, assign(socket, graph_struct: updated_graph)}
+    {:noreply, assign(socket, show_share_modal: true, selected_share_highlight: share_highlight)}
   end
 
   def handle_event("close_share_modal", _params, socket) do
@@ -1958,6 +2091,233 @@ defmodule DialecticWeb.GraphLive do
 
   defp checked_checkbox_value?(value), do: value in ["on", "true", "1", true, 1]
 
+  defp guided_learning_enabled?(params) do
+    checked_checkbox_value?(Map.get(params, "guided_learning"))
+  end
+
+  defp guided_learning_login_required?(params, socket) do
+    is_nil(socket.assigns.current_user) && guided_learning_enabled?(params)
+  end
+
+  defp guided_plan_options(%{class: "learning_plan"} = plan_node) do
+    with {:ok, _guided_plan} <- GuidedLearningPlan.normalize(Map.get(plan_node, :guided_plan)),
+         %{} = target_node <- List.first(Map.get(plan_node, :parents, [])) do
+      actions =
+        plan_node
+        |> guided_next_actions()
+        |> annotate_guided_actions(plan_node, target_node)
+
+      paths =
+        plan_node
+        |> guided_paths()
+        |> annotate_guided_paths(plan_node, target_node)
+
+      {actions, paths}
+    else
+      _invalid_or_missing_target -> {[], []}
+    end
+  end
+
+  defp guided_plan_options(_node), do: {[], []}
+
+  defp guided_paths(%{class: "learning_plan", guided_plan: guided_plan})
+       when is_map(guided_plan) do
+    GuidedLearningPlan.paths(guided_plan)
+  end
+
+  defp guided_paths(_node), do: []
+
+  defp annotate_guided_paths(paths, plan_node, _target_node) do
+    existing_questions =
+      plan_node
+      |> Map.get(:children, [])
+      |> Enum.filter(fn child ->
+        !Map.get(child, :deleted, false) && Map.get(child, :class) == "question"
+      end)
+      |> Enum.map(&normalize_guided_question(Map.get(&1, :content, "")))
+      |> MapSet.new()
+
+    Enum.map(paths, fn path ->
+      reserved? =
+        guided_submission_reserved?(plan_node, guided_path_submission_key(path.id))
+
+      Map.put(
+        path,
+        :disabled,
+        reserved? || MapSet.member?(existing_questions, normalize_guided_question(path.question))
+      )
+    end)
+  end
+
+  defp normalize_guided_question(question) do
+    question
+    |> to_string()
+    |> String.replace(~r/\s+/u, " ")
+    |> String.trim()
+    |> String.downcase()
+  end
+
+  defp selected_guided_paths(params, paths) do
+    selected_ids =
+      case Map.get(params, "paths") do
+        selected when is_map(selected) ->
+          selected
+          |> Enum.flat_map(fn {path_id, value} ->
+            values = if is_list(value), do: value, else: [value]
+
+            if Enum.any?(values, &checked_checkbox_value?/1) do
+              [path_id]
+            else
+              []
+            end
+          end)
+          |> MapSet.new()
+
+        _no_selection ->
+          MapSet.new()
+      end
+
+    Enum.filter(paths, fn path ->
+      !path.disabled && MapSet.member?(selected_ids, path.id)
+    end)
+  end
+
+  defp guided_paths_generation_label([path]), do: "Exploring #{path.label}"
+
+  defp guided_paths_generation_label(paths) do
+    "Exploring #{length(paths)} selected paths"
+  end
+
+  defp guided_next_actions(%{class: "learning_plan", guided_plan: guided_plan})
+       when is_map(guided_plan) do
+    GuidedLearningPlan.actions(guided_plan)
+  end
+
+  defp guided_next_actions(_node), do: []
+
+  defp guided_action_recommended?(plan_node, action) do
+    Enum.any?(guided_next_actions(plan_node), &(&1.action == action))
+  end
+
+  defp guided_action_target(graph_id, plan_node) do
+    case List.first(Map.get(plan_node, :parents, [])) do
+      %{} = parent -> {:ok, parent}
+      parent_id when is_binary(parent_id) -> find_node_safe(graph_id, parent_id)
+      _missing_parent -> {:error, :node_not_found}
+    end
+  end
+
+  defp annotate_guided_actions(actions, plan_node, target_node) do
+    actions
+    |> Enum.map(fn recommendation ->
+      Map.put(
+        recommendation,
+        :disabled,
+        guided_action_used?(plan_node, target_node, recommendation.action)
+      )
+    end)
+    |> Enum.map_reduce(false, fn recommendation, recommendation_assigned? ->
+      recommended? = !recommendation.disabled && !recommendation_assigned?
+
+      {Map.put(recommendation, :recommended, recommended?),
+       recommendation_assigned? || recommended?}
+    end)
+    |> elem(0)
+  end
+
+  defp guided_action_used?(plan_node, _target_node, action) do
+    reserved? =
+      guided_submission_reserved?(plan_node, guided_action_submission_key(action))
+
+    classes = GuidedLearningPlan.result_classes(action)
+
+    reserved? ||
+      Enum.any?(Map.get(plan_node, :children, []), fn child ->
+        !Map.get(child, :deleted, false) && Map.get(child, :class) in classes
+      end)
+  end
+
+  defp guided_submission_reserved?(plan_node, submission_key) do
+    submission_key in Map.get(plan_node, :guided_submissions, [])
+  end
+
+  defp guided_path_submission_key(path_id), do: "path:#{path_id}"
+  defp guided_action_submission_key(action), do: "action:#{action}"
+
+  defp guided_submission_metadata(plan_node, submission_key, cleanup_classes \\ []) do
+    %{
+      plan_node_id: plan_node.id,
+      submission_key: submission_key,
+      cleanup_classes: cleanup_classes
+    }
+  end
+
+  defp apply_guided_action(action, plan_node, target_node, socket) do
+    action_opts = [
+      content_override: Map.get(target_node, :content, ""),
+      await_generation: true,
+      guided_submission:
+        guided_submission_metadata(
+          plan_node,
+          guided_action_submission_key(action),
+          GuidedLearningPlan.result_classes(action)
+        )
+    ]
+
+    case GuidedLearningPlan.executor(action) do
+      {:ok, :branch} ->
+        nodes =
+          create_branch_nodes(socket, plan_node, action_opts)
+
+        if nodes == [] do
+          release_guided_action(socket, plan_node, action)
+          {:noreply, put_flash(socket, :error, "Failed to apply recommended action")}
+        else
+          begin_background_generations(
+            socket,
+            nodes,
+            "branch",
+            "Building the strongest case for and against this idea",
+            target_node_id: plan_node.id
+          )
+        end
+
+      {:ok, :related_ideas} ->
+        result_node =
+          GraphActions.related_ideas(
+            graph_action_params(socket, plan_node),
+            action_opts
+          )
+
+        if is_map(result_node) do
+          begin_foreground_generation(socket, result_node, "ideas")
+        else
+          release_guided_action(socket, plan_node, action)
+          {:noreply, put_flash(socket, :error, "Failed to apply recommended action")}
+        end
+
+      {:ok, {:thinking_tool, tool}} ->
+        result_node =
+          GraphActions.apply_thinking_tool(
+            tool,
+            graph_action_params(socket, plan_node),
+            action_opts
+          )
+
+        case result_node do
+          nil ->
+            release_guided_action(socket, plan_node, action)
+            {:noreply, put_flash(socket, :error, "Failed to apply recommended action")}
+
+          node ->
+            begin_foreground_generation(socket, node, action)
+        end
+
+      :error ->
+        {:noreply, put_flash(socket, :error, "Unknown recommended action")}
+    end
+  end
+
   # =========================================================================
   # Critical Thinking Tools - Helper Functions
   # =========================================================================
@@ -2070,6 +2430,38 @@ defmodule DialecticWeb.GraphLive do
 
   defp validate_can_edit(%{assigns: %{can_edit: true}}), do: :ok
   defp validate_can_edit(_socket), do: {:error, :locked}
+
+  defp validate_logged_in(%{assigns: %{current_user: %User{}}}), do: :ok
+  defp validate_logged_in(_socket), do: {:error, :login_required}
+
+  defp validate_regeneration_access(%{class: "learning_plan"}, socket),
+    do: validate_logged_in(socket)
+
+  defp validate_regeneration_access(_node, _socket), do: :ok
+
+  defp reserve_regeneration(%{class: "learning_plan"} = node, socket) do
+    GraphManager.reserve_guided_submission(socket.assigns.graph_id, node.id, "regeneration")
+  end
+
+  defp reserve_regeneration(_node, _socket), do: :ok
+
+  defp release_regeneration(%{class: "learning_plan"} = node, socket) do
+    GraphManager.release_guided_submission(socket.assigns.graph_id, node.id, "regeneration")
+  end
+
+  defp release_regeneration(_node, _socket), do: :ok
+
+  defp release_guided_action(socket, plan_node, action) do
+    release_guided_submission(socket, plan_node, guided_action_submission_key(action))
+  end
+
+  defp release_guided_submission(socket, plan_node, submission_key) do
+    GraphManager.release_guided_submission(
+      socket.assigns.graph_id,
+      plan_node.id,
+      submission_key
+    )
+  end
 
   defp validate_selected_text(text) when is_binary(text) and byte_size(text) > 0, do: :ok
   defp validate_selected_text(_), do: {:error, :empty_text}
@@ -2486,6 +2878,7 @@ defmodule DialecticWeb.GraphLive do
   defp update_streaming_node(socket, updated_vertex, node_id) do
     new_content = Map.get(updated_vertex, :content, "")
     new_grounding_metadata = Map.get(updated_vertex, :grounding_metadata)
+    new_guided_plan = Map.get(updated_vertex, :guided_plan)
 
     # Check if we've already set the title for this node on this socket
     already_titled = MapSet.member?(socket.assigns.titled_nodes, node_id)
@@ -2506,15 +2899,18 @@ defmodule DialecticWeb.GraphLive do
     if socket.assigns.node && node_id == Map.get(socket.assigns.node, :id) do
       current_content = Map.get(socket.assigns.node, :content, "")
       current_grounding_metadata = Map.get(socket.assigns.node, :grounding_metadata)
+      current_guided_plan = Map.get(socket.assigns.node, :guided_plan)
 
       if current_content == new_content and
-           current_grounding_metadata == new_grounding_metadata do
+           current_grounding_metadata == new_grounding_metadata and
+           current_guided_plan == new_guided_plan do
         socket
       else
         node =
           socket.assigns.node
           |> Map.put(:content, new_content)
           |> Map.put(:grounding_metadata, new_grounding_metadata)
+          |> Map.put(:guided_plan, new_guided_plan)
 
         assign(socket, node: node)
       end
@@ -2569,6 +2965,53 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
+  defp assign_reader_path(socket, path_endpoint) do
+    path_endpoint = normalize_reader_path(path_endpoint)
+    path_ids = reader_path_ids(socket.assigns.graph_id, path_endpoint)
+
+    assign(socket,
+      reader_path_endpoint: if(path_ids == [], do: nil, else: path_endpoint),
+      reader_path_ids: path_ids
+    )
+  end
+
+  defp normalize_reader_path(path_endpoint) when is_binary(path_endpoint) do
+    case String.trim(path_endpoint) do
+      "" -> nil
+      endpoint -> endpoint
+    end
+  end
+
+  defp normalize_reader_path(_path_endpoint), do: nil
+
+  defp reader_path_ids(_graph_id, nil), do: []
+
+  defp reader_path_ids(graph_id, path_endpoint) do
+    case GraphManager.find_node_by_id(graph_id, path_endpoint) do
+      nil ->
+        []
+
+      node ->
+        graph_id
+        |> GraphManager.path_to_node(node)
+        |> Enum.reverse()
+        |> Enum.reject(fn path_node ->
+          Map.get(path_node, :deleted, false) || Map.get(path_node, :compound, false)
+        end)
+        |> Enum.map(& &1.id)
+    end
+  end
+
+  defp graph_nav_params(token, path_endpoint) do
+    []
+    |> then(fn params -> if token, do: Keyword.put(params, :token, token), else: params end)
+    |> then(fn params ->
+      if path_endpoint,
+        do: Keyword.put(params, :path, path_endpoint),
+        else: params
+    end)
+  end
+
   defp assign_defaults(socket) do
     user = UserUtils.current_identity(socket.assigns)
 
@@ -2595,6 +3038,7 @@ defmodule DialecticWeb.GraphLive do
       explore_selected: [],
       explore_form: to_form(%{}, as: :explore),
       max_explore_items: @max_explore_items,
+      guided_path_form: to_form(%{}, as: :guided_paths),
       show_start_stream_modal: false,
       show_help_modal: false,
       show_share_modal: false,
@@ -2641,11 +3085,6 @@ defmodule DialecticWeb.GraphLive do
       |> assign(highlights: highlights)
     end
   end
-
-  defp maybe_request_share_screenshot(socket, %{id: _id}), do: socket
-
-  defp maybe_request_share_screenshot(socket, _highlight),
-    do: push_event(socket, "request_screenshot", %{})
 
   defp serialize_highlights(highlights) do
     Enum.map(highlights, fn h ->

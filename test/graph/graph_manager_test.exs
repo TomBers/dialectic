@@ -204,6 +204,76 @@ defmodule GraphManagerTest do
       assert result == nil
     end
 
+    test "atomically reserves a guided submission once", %{graph: _} do
+      plan =
+        GraphManager.add_node(@graph_id, %Vertex{
+          content: "Learning plan",
+          class: "learning_plan",
+          guided_plan: %{version: 1}
+        })
+
+      results =
+        1..20
+        |> Task.async_stream(
+          fn _index ->
+            GraphManager.reserve_guided_submission(@graph_id, plan.id, "action:clarify")
+          end,
+          timeout: :infinity
+        )
+        |> Enum.map(fn {:ok, result} -> result end)
+
+      assert Enum.count(results, &(&1 == :ok)) == 1
+      assert Enum.count(results, &(&1 == {:error, :already_reserved})) == 19
+
+      refreshed_plan = GraphManager.find_node_by_id(@graph_id, plan.id)
+      assert refreshed_plan.guided_submissions == ["action:clarify"]
+
+      assert :ok =
+               GraphManager.release_guided_submission(
+                 @graph_id,
+                 plan.id,
+                 "action:clarify"
+               )
+
+      assert :ok =
+               GraphManager.reserve_guided_submission(
+                 @graph_id,
+                 plan.id,
+                 "action:clarify"
+               )
+    end
+
+    test "makes regeneration exclusive and rejects deleted learning plans", %{graph: _} do
+      plan =
+        GraphManager.add_node(@graph_id, %Vertex{
+          content: "Learning plan",
+          class: "learning_plan",
+          guided_plan: %{version: 1}
+        })
+
+      assert :ok =
+               GraphManager.reserve_guided_submission(@graph_id, plan.id, "regeneration")
+
+      assert {:error, :already_reserved} =
+               GraphManager.reserve_guided_submission(
+                 @graph_id,
+                 plan.id,
+                 "path:path-1"
+               )
+
+      assert :ok =
+               GraphManager.release_guided_submission(@graph_id, plan.id, "regeneration")
+
+      GraphManager.delete_node(@graph_id, plan.id)
+
+      assert {:error, :invalid_guided_plan} =
+               GraphManager.reserve_guided_submission(
+                 @graph_id,
+                 plan.id,
+                 "action:clarify"
+               )
+    end
+
     test "path_to_node terminates when graph contains a cycle", %{graph: _} do
       first =
         GraphManager.add_node(@graph_id, %Vertex{
@@ -264,6 +334,46 @@ defmodule GraphManagerTest do
       {_, v1, v2, _} = :digraph.edge(updated_graph, edge)
       assert v1 == parent.id
       assert v2 == child.id
+    end
+
+    test "add_child cleans up failed awaited generation nodes", %{graph: _} do
+      parent =
+        GraphManager.add_node(@graph_id, %Vertex{
+          content: "parent",
+          class: "origin",
+          user: @test_user
+        })
+
+      question =
+        GraphManager.add_child(
+          @graph_id,
+          [parent],
+          fn _ -> "question" end,
+          "question",
+          @test_user,
+          save: false
+        )
+
+      assert nil ==
+               GraphManager.add_child(
+                 @graph_id,
+                 [question],
+                 fn _child -> {:error, :too_many_active_requests} end,
+                 "answer",
+                 @test_user,
+                 await_generation: true,
+                 cleanup_on_failure: [question.id]
+               )
+
+      assert GraphManager.find_node_by_id(@graph_id, question.id).deleted
+
+      failed_answer =
+        @graph_id
+        |> GraphManager.vertices()
+        |> Enum.map(&GraphManager.find_node_by_id(@graph_id, &1))
+        |> Enum.find(&(&1.class == "answer"))
+
+      assert failed_answer.deleted
     end
 
     test "add_child preserves the default save and can explicitly skip it", %{graph: _} do

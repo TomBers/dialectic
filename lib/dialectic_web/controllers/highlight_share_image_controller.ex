@@ -16,10 +16,7 @@ defmodule DialecticWeb.HighlightShareImageController do
         send_resp(conn, :forbidden, "Forbidden")
 
       true ->
-        conn
-        |> put_resp_content_type("image/svg+xml")
-        |> put_resp_header("cache-control", cache_control(graph))
-        |> send_resp(200, HighlightShare.graph_image_svg(graph))
+        send_share_card(conn, graph, nil, params)
     end
   end
 
@@ -35,15 +32,27 @@ defmodule DialecticWeb.HighlightShareImageController do
         send_resp(conn, :forbidden, "Forbidden")
 
       highlight = HighlightShare.highlight_for_graph(graph, highlight_id) ->
-        conn
-        |> put_resp_content_type("image/svg+xml")
-        |> put_resp_header("cache-control", cache_control(graph))
-        |> send_resp(200, HighlightShare.image_svg(graph, highlight))
+        send_share_card(conn, graph, highlight, params)
 
       true ->
         send_resp(conn, :not_found, "Not found")
     end
   end
+
+  defp send_share_card(conn, graph, target, params) do
+    conn
+    |> put_resp_content_type("image/svg+xml")
+    |> put_resp_header("cache-control", cache_control(graph))
+    |> send_resp(
+      200,
+      HighlightShare.image_svg(graph, target,
+        orientation: image_orientation(Map.get(params, "orientation"))
+      )
+    )
+  end
+
+  defp image_orientation("portrait"), do: :portrait
+  defp image_orientation(_orientation), do: :landscape
 
   defp has_access?(user, graph, params) do
     token_param = Map.get(params, "token")

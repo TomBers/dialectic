@@ -145,12 +145,13 @@ defmodule Dialectic.Responses.RequestQueue do
     end
   end
 
-  defp build_params(instruction, system_prompt, to_node, graph, request_context, opts) do
+  @doc false
+  def build_params(instruction, system_prompt, to_node, graph, request_context, opts) do
     node_id = if is_map(to_node), do: to_node.id, else: to_node
     {live_view_topic, anonymous_actor_id} = split_request_context(request_context)
     mode = request_mode(opts, system_prompt, graph)
 
-    %{
+    params = %{
       instruction: instruction,
       system_prompt: system_prompt,
       question: instruction,
@@ -162,7 +163,30 @@ defmodule Dialectic.Responses.RequestQueue do
       response_level: mode |> PromptsStructured.response_profile() |> Map.fetch!(:key),
       max_tokens: PromptsStructured.max_output_tokens(mode)
     }
+
+    params
+    |> maybe_put_response_contract(opts)
+    |> maybe_put_guided_submission(to_node)
   end
+
+  defp maybe_put_response_contract(params, opts) do
+    case Keyword.get(opts, :response_contract) do
+      contract when is_binary(contract) and contract != "" ->
+        Map.put(params, :response_contract, contract)
+
+      _no_contract ->
+        params
+    end
+  end
+
+  defp maybe_put_guided_submission(params, %{} = to_node) do
+    case Map.get(to_node, :guided_submission) do
+      %{} = guided_submission -> Map.put(params, :guided_submission, guided_submission)
+      _no_guided_submission -> params
+    end
+  end
+
+  defp maybe_put_guided_submission(params, _to_node), do: params
 
   defp request_mode(opts, system_prompt, graph) do
     case Keyword.fetch(opts, :mode) do
@@ -267,7 +291,7 @@ defmodule Dialectic.Responses.RequestQueue do
   end
 
   defp rate_limited?(actor_key) do
-    case Hammer.check_rate(
+    case Dialectic.RateLimit.hit(
            "llm_admission:#{actor_key}",
            @rate_window_ms,
            max_requests_per_minute()
@@ -275,12 +299,8 @@ defmodule Dialectic.Responses.RequestQueue do
       {:allow, _count} ->
         false
 
-      {:deny, _limit} ->
+      {:deny, _retry_after} ->
         true
-
-      {:error, reason} ->
-        Logger.error("[RequestQueue] Rate limiter unavailable: #{inspect(reason)}")
-        false
     end
   end
 

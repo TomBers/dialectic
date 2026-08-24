@@ -79,7 +79,7 @@ defmodule DialecticWeb.UserRegistrationLiveTest do
 
       {:ok, _login_live, login_html} =
         lv
-        |> element(~s|main a:fl-contains("Log in")|)
+        |> element("#registration-login-link")
         |> render_click()
         |> follow_redirect(conn, ~p"/users/log_in")
 

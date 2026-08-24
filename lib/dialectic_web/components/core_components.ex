@@ -264,6 +264,9 @@ defmodule DialecticWeb.CoreComponents do
   attr :class, :string, default: @default_input_class
 
   attr :label, :string, default: nil
+  attr :description, :string, default: nil
+  attr :badge, :string, default: nil
+  attr :variant, :string, default: "default", values: ~w(default learning_plan)
   attr :value, :any
 
   attr :type, :string,
@@ -302,19 +305,62 @@ defmodule DialecticWeb.CoreComponents do
       end)
 
     ~H"""
-    <div>
-      <label class="flex items-center gap-4 text-sm leading-6 text-zinc-600">
+    <div class={[
+      @variant == "learning_plan" &&
+        "rounded-xl border border-gray-200 bg-white px-3 py-2.5 shadow-sm"
+    ]}>
+      <label class={[
+        @variant == "default" && "flex items-center gap-4 text-sm leading-6 text-zinc-600",
+        @variant == "learning_plan" &&
+          "flex cursor-pointer items-center justify-between gap-3"
+      ]}>
         <input type="hidden" name={@name} value="false" disabled={@rest[:disabled]} />
-        <input
-          type="checkbox"
-          id={@id}
-          name={@name}
-          value="true"
-          checked={@checked}
-          class="rounded border-zinc-300 text-zinc-900 focus:ring-0"
-          {@rest}
-        />
-        {@label}
+        <%= if @variant == "learning_plan" do %>
+          <div class="min-w-0 flex-1">
+            <div class="flex flex-wrap items-center gap-1.5">
+              <span class="text-xs font-semibold text-gray-800">{@label}</span>
+              <.icon name="hero-sparkles" class="h-3.5 w-3.5 text-gray-400" />
+            </div>
+            <p :if={@description} class="mt-0.5 text-[11px] leading-4 text-gray-500">
+              {@description}
+            </p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span
+              :if={@badge}
+              class="inline-flex rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold text-indigo-700"
+            >
+              {@badge}
+            </span>
+
+            <div class="relative shrink-0">
+              <input
+                type="checkbox"
+                id={@id}
+                name={@name}
+                value="true"
+                checked={@checked}
+                class="peer sr-only"
+                {@rest}
+              />
+              <div class="h-6 w-11 rounded-full bg-gray-300 transition peer-checked:bg-indigo-500 peer-focus-visible:ring-2 peer-focus-visible:ring-indigo-500 peer-focus-visible:ring-offset-2">
+              </div>
+              <div class="pointer-events-none absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-transform peer-checked:translate-x-5">
+              </div>
+            </div>
+          </div>
+        <% else %>
+          <input
+            type="checkbox"
+            id={@id}
+            name={@name}
+            value="true"
+            checked={@checked}
+            class="rounded border-zinc-300 text-zinc-900 focus:ring-0"
+            {@rest}
+          />
+          {@label}
+        <% end %>
       </label>
       <.error :for={msg <- @errors}>{msg}</.error>
     </div>

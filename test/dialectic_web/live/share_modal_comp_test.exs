@@ -9,7 +9,7 @@ defmodule DialecticWeb.ShareModalCompTest do
   alias DialecticWeb.ShareModalComp
 
   describe "share links" do
-    test "share modal links to the graph view by default" do
+    test "share modal uses the generated share card in graph mode" do
       graph = GraphFixtures.insert_graph(%{title: "Share Modal Graph"})
 
       html =
@@ -31,8 +31,37 @@ defmodule DialecticWeb.ShareModalCompTest do
 
       assert html =~ ~s(value="#{expected_url}")
       assert html =~ "Download image"
-      assert html =~ "data-download-grid-png"
+      assert html =~ "data-download-share-card"
+      assert html =~ ~s(id="grid-share-preview")
+      assert html =~ "data-share-card-canvas"
+      assert html =~ ~s(data-card-text="Share Modal Graph")
       assert html =~ ~s(data-download-filename="share-modal-graph-grid.png")
+      assert html =~ ~s(id="share-image-landscape")
+      assert html =~ ~s(aria-pressed="true")
+      refute html =~ "data-download-grid-png"
+    end
+
+    test "portrait format updates the preview URL, proportions, and filename" do
+      graph = GraphFixtures.insert_graph(%{title: "Portrait Share Modal Graph", is_public: true})
+
+      html =
+        render_component(ShareModalComp,
+          id: "share-modal",
+          show: true,
+          graph_struct: graph,
+          current_user: nil,
+          selected_node: %{id: "1"},
+          presentation_mode: :off,
+          presentation_slide_ids: [],
+          presentation_title: "",
+          share_node: false,
+          share_image_orientation: :portrait
+        )
+
+      assert html =~ ~s(id="share-image-portrait")
+      assert html =~ ~s(data-orientation="portrait")
+      assert html =~ "aspect-[4/5]"
+      assert html =~ ~s(data-download-filename="portrait-share-modal-graph-grid-portrait.png")
     end
 
     test "reader share downloads a generated grid title image" do
@@ -54,10 +83,9 @@ defmodule DialecticWeb.ShareModalCompTest do
         )
 
       assert html =~ "Download image"
-      assert html =~ "data-download-svg-png"
-      assert html =~ "/g/#{graph.slug}/share-card.svg"
-      assert html =~ ~s(src="http://localhost:4002/g/#{graph.slug}/share-card.svg)
-      assert html =~ ~s(alt="Grid share image preview")
+      assert html =~ "data-download-share-card"
+      assert html =~ ~s(aria-label="Grid share image preview")
+      assert html =~ ~s(data-card-text="Reader Share Modal Graph")
       assert html =~ ~s(data-download-filename="reader-share-modal-graph-grid.png")
       refute html =~ "data-download-grid-png"
     end
@@ -130,25 +158,21 @@ defmodule DialecticWeb.ShareModalCompTest do
         DialecticWeb.Endpoint.url() <>
           DialecticWeb.GraphPathHelper.graph_path(graph, "5", highlight: 77)
 
-      expected_image =
-        DialecticWeb.Endpoint.url() <> "/g/#{graph.slug}/highlights/77/share-card.svg"
-
       escaped_expected_url =
         expected_url
-        |> Phoenix.HTML.html_escape()
-        |> Phoenix.HTML.safe_to_string()
-
-      escaped_expected_image =
-        expected_image
         |> Phoenix.HTML.html_escape()
         |> Phoenix.HTML.safe_to_string()
 
       assert html =~ "Share Quote"
       assert html =~ "Quote Share Link"
       assert html =~ ~s(value="#{escaped_expected_url}")
-      assert html =~ escaped_expected_image
+      assert html =~ ~s(id="quote-share-preview")
+      assert html =~ "data-share-card-canvas"
+      assert html =~ "Philosophy is a battle against the bewitchment"
+      assert html =~ ~s(data-card-grid-title="Quote Share Modal Graph")
+      refute html =~ "<object"
       assert html =~ "Download PNG"
-      assert html =~ ~s(data-download-svg-png="#{escaped_expected_image})
+      assert html =~ ~s(data-download-share-card="quote-share-preview")
       assert html =~ ~s(data-download-filename="quote-share-modal-graph-quote-77.png")
       assert html =~ "Quote link copied to clipboard!"
       refute html =~ "Link to current node"

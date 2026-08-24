@@ -16,8 +16,22 @@ defmodule DialecticWeb.HighlightShareImageControllerTest do
 
     assert get_resp_header(conn, "content-type") |> List.first() =~ "image/svg+xml"
     assert body =~ "Grid Title Share Card"
-    assert body =~ "Grid on RationalGrid"
     assert body =~ "RationalGrid.ai"
+    refute body =~ ">Grid on RationalGrid</text>"
+    assert body =~ "data:image/png;base64,"
+  end
+
+  test "renders the portrait social format on the same endpoint", %{conn: conn} do
+    graph = insert_graph(%{title: "Portrait Grid Share Card", is_public: true})
+
+    body =
+      conn
+      |> get("/g/#{graph.slug}/share-card.svg?orientation=portrait")
+      |> response(200)
+
+    assert body =~ ~s(width="1080" height="1350")
+    assert body =~ ~s(data-orientation="portrait")
+    assert body =~ "Portrait Grid Share Card"
   end
 
   test "requires a token for private grid share cards", %{conn: conn} do

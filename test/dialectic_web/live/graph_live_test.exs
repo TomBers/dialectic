@@ -3,11 +3,26 @@ defmodule DialecticWeb.GraphLiveTest do
   alias Dialectic.Accounts
   alias Dialectic.Follows
   alias Dialectic.GridActivity
+  alias Dialectic.Responses.GuidedLearningPlan
 
   import Phoenix.LiveViewTest
   import Dialectic.AccountsFixtures
 
   @graph_id "Satre"
+  @guided_test_actions """
+  ### Best next actions
+  - **Clarify terms** — Define the central idea before comparing approaches.
+  - **Test with a counterexample** — Examine where the usual explanation fails.
+  - **Find related ideas** — Connect the topic to adjacent concepts.
+  """
+  @guided_test_paths """
+  ### Paths to explore
+  - **Cooling homes** — How can homes stay safe during heat waves? — Compares practical building interventions.
+  - **Public space** — Which street designs reduce dangerous heat? — Connects planning choices to exposure.
+  - **Health systems** — How should clinics prepare for extreme heat? — Tests readiness for vulnerable residents.
+  - **Energy demand** — Can cooling expand without overloading the grid? — Links adaptation to infrastructure.
+  - **Unequal exposure** — Who faces the greatest heat risk and why? — Surfaces distributional consequences.
+  """
 
   defp setup_live(conn) do
     conn =
@@ -32,7 +47,7 @@ defmodule DialecticWeb.GraphLiveTest do
     live(conn, ~p"/g/#{graph.slug}/graph?node=1")
   end
 
-  defp setup_live_with_data(conn, data) do
+  defp setup_live_with_data(conn, data, path_endpoint \\ nil) do
     conn =
       conn
       |> log_in_user(
@@ -45,7 +60,11 @@ defmodule DialecticWeb.GraphLiveTest do
         data: data
       })
 
-    live(conn, ~p"/g/#{graph.slug}/graph?node=1")
+    if path_endpoint do
+      live(conn, ~p"/g/#{graph.slug}/graph?node=#{path_endpoint}&path=#{path_endpoint}")
+    else
+      live(conn, ~p"/g/#{graph.slug}/graph?node=1")
+    end
   end
 
   defp source_text_graph_data do
@@ -78,6 +97,71 @@ defmodule DialecticWeb.GraphLiveTest do
         %{"data" => %{"id" => "1_2", "source" => "1", "target" => "2"}}
       ]
     }
+  end
+
+  defp learning_plan_graph_data do
+    %{
+      "nodes" => [
+        %{
+          "id" => "1",
+          "content" => "## Test topic",
+          "class" => "origin",
+          "user" => nil,
+          "parent" => nil,
+          "noted_by" => [],
+          "deleted" => false,
+          "compound" => false
+        },
+        %{
+          "id" => "2",
+          "content" => "How should I learn this?",
+          "class" => "question",
+          "user" => nil,
+          "parent" => nil,
+          "noted_by" => [],
+          "deleted" => false,
+          "compound" => false
+        },
+        %{
+          "id" => "3",
+          "content" =>
+            "## Learning plan: Test topic\n### Best next actions\n- **Clarify terms** — Define the central idea.",
+          "class" => "learning_plan",
+          "prompt_kind" => "guided_learning_plan",
+          "user" => nil,
+          "parent" => nil,
+          "noted_by" => [],
+          "deleted" => false,
+          "compound" => false
+        }
+      ],
+      "edges" => [
+        %{"data" => %{"id" => "1_2", "source" => "1", "target" => "2"}},
+        %{"data" => %{"id" => "2_3", "source" => "2", "target" => "3"}}
+      ]
+    }
+  end
+
+  defp learning_plan_graph_data(content, guided_plan) do
+    update_in(learning_plan_graph_data(), ["nodes"], fn nodes ->
+      Enum.map(nodes, fn
+        %{"id" => "3"} = node ->
+          Map.merge(node, %{"content" => content, "guided_plan" => guided_plan})
+
+        node ->
+          node
+      end)
+    end)
+  end
+
+  defp set_guided_plan(graph_id, node_id, content) do
+    {:ok, guided_plan} = GuidedLearningPlan.validate(content)
+    {:ok, canonical_content} = GuidedLearningPlan.render(guided_plan)
+
+    GraphManager.update_vertex_fields(graph_id, node_id, %{
+      content: canonical_content,
+      guided_plan: guided_plan
+    })
   end
 
   describe "mount/3" do
@@ -187,6 +271,41 @@ defmodule DialecticWeb.GraphLiveTest do
       assert has_element?(
                view,
                ~s(#graph-workspace-bar-reader[href="/g/#{graph.slug}?node=#{node_id}"])
+             )
+    end
+
+    test "preserves the reader path when switching back from graph view", %{conn: conn} do
+      {:ok, view, _html} = setup_live_with_data(conn, source_text_graph_data(), "2")
+      state = :sys.get_state(view.pid).socket
+      graph = state.assigns.graph_struct
+
+      assert state.assigns.reader_path_endpoint == "2"
+      assert List.last(state.assigns.reader_path_ids) == "2"
+
+      assert has_element?(
+               view,
+               "#cy[data-reader-path-ids='#{Jason.encode!(state.assigns.reader_path_ids)}']"
+             )
+
+      assert has_element?(
+               view,
+               ~s(#graph-workspace-bar-reader[href="/g/#{graph.slug}?node=2&path=2"])
+             )
+    end
+
+    test "manual branch focus updates the reader path link", %{conn: conn} do
+      {:ok, view, _html} = setup_live_with_data(conn, source_text_graph_data())
+      graph = :sys.get_state(view.pid).socket.assigns.graph_struct
+
+      render_hook(view, "set_reader_path", %{"id" => "2"})
+
+      state = :sys.get_state(view.pid).socket
+      assert state.assigns.reader_path_endpoint == "2"
+      assert List.last(state.assigns.reader_path_ids) == "2"
+
+      assert has_element?(
+               view,
+               ~s(#graph-workspace-bar-reader[href="/g/#{graph.slug}?node=1&path=2"])
              )
     end
 
@@ -343,6 +462,538 @@ defmodule DialecticWeb.GraphLiveTest do
       end
 
       assert has_element?(view, "#grid-chat-toggle[aria-label='Open viewer chat, 100 messages']")
+    end
+  end
+
+  describe "guided learning plan" do
+    test "is available as an unchecked opt-in on the ask form", %{conn: conn} do
+      {:ok, view, _html} = setup_live_for_graph(conn, "Guided Exploration Toggle")
+
+      assert has_element?(
+               view,
+               "#global-chat-form-guided-learning[name='guided_learning']:not(:checked)"
+             )
+
+      refute has_element?(view, "#global-chat-form-guidance-mode")
+    end
+
+    test "encourages signed-out users to create an account", %{conn: conn} do
+      graph =
+        Dialectic.GraphFixtures.insert_graph(%{
+          title: "Anonymous Guided Learning #{System.unique_integer([:positive])}"
+        })
+
+      {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}/graph?node=1")
+
+      refute has_element?(view, "#global-chat-form-guided-learning")
+
+      assert has_element?(
+               view,
+               "#global-chat-form-guided-learning-signup",
+               "Create a free account"
+             )
+
+      view
+      |> element("#global-chat-form-guided-learning-signup")
+      |> render_click()
+
+      assert has_element?(view, "#login-modal", "Create account")
+    end
+
+    test "crafted signed-out submissions open the login modal without creating nodes", %{
+      conn: conn
+    } do
+      graph =
+        Dialectic.GraphFixtures.insert_graph(%{
+          title: "Crafted Anonymous Guided Learning #{System.unique_integer([:positive])}"
+        })
+
+      {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}/graph?node=1")
+      vertex_count = length(GraphManager.vertices(graph.title))
+
+      render_click(view, "reply-and-answer", %{
+        "vertex" => %{"content" => "Build me a learning plan"},
+        "guided_learning" => "true",
+        "query_origin" => "node_action_bar"
+      })
+
+      assert has_element?(view, "#login-modal", "Login Required")
+      assert length(GraphManager.vertices(graph.title)) == vertex_count
+    end
+
+    test "signed-out viewers cannot use actions on a valid learning plan", %{conn: conn} do
+      {:ok, guided_plan} =
+        GuidedLearningPlan.validate("""
+        ## Learning plan: Test topic
+        #{@guided_test_actions}
+        #{@guided_test_paths}
+        """)
+
+      {:ok, canonical_content} = GuidedLearningPlan.render(guided_plan)
+
+      graph =
+        Dialectic.GraphFixtures.insert_graph(%{
+          title: "Anonymous Existing Learning Plan #{System.unique_integer([:positive])}",
+          data: learning_plan_graph_data(canonical_content, guided_plan)
+        })
+
+      {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}/graph?node=3")
+      vertex_count = length(GraphManager.vertices(graph.title))
+
+      assert has_element?(view, "#guided-learning-login-3", "Create an account")
+      refute has_element?(view, "#guided-plan-action-0")
+
+      render_click(view, "node_regenerate", %{"id" => "3"})
+
+      assert has_element?(view, "#login-modal", "Login Required")
+      assert length(GraphManager.vertices(graph.title)) == vertex_count
+      assert GraphManager.find_node_by_id(graph.title, "3").deleted == false
+
+      render_click(view, "apply_guided_next_action", %{"id" => "3", "action" => "clarify"})
+
+      assert has_element?(view, "#login-modal", "Login Required")
+      assert length(GraphManager.vertices(graph.title)) == vertex_count
+    end
+
+    test "renders a valid structured plan when annotated options are temporarily unavailable", %{
+      conn: conn
+    } do
+      conn =
+        log_in_user(
+          conn,
+          user_fixture(%{
+            email: "fallback-plan-#{System.unique_integer([:positive])}@example.com"
+          })
+        )
+
+      {:ok, guided_plan} =
+        GuidedLearningPlan.validate("""
+        ## Learning plan: Fallback rendering
+        #{@guided_test_actions}
+        #{@guided_test_paths}
+        """)
+
+      {:ok, canonical_content} = GuidedLearningPlan.render(guided_plan)
+
+      graph_data =
+        canonical_content
+        |> learning_plan_graph_data(guided_plan)
+        |> update_in(["edges"], fn edges ->
+          Enum.reject(edges, &(&1["data"]["target"] == "3"))
+        end)
+
+      graph =
+        Dialectic.GraphFixtures.insert_graph(%{
+          title: "Fallback Learning Plan #{System.unique_integer([:positive])}",
+          data: graph_data
+        })
+
+      {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}/graph?node=3")
+
+      assert has_element?(view, "#guided-learning-plan-3")
+      assert has_element?(view, "#guided-plan-action-0", "Clarify terms")
+      assert has_element?(view, "#guided-plan-path-path-1", "Cooling homes")
+      refute has_element?(view, "#markdown-body-3")
+    end
+
+    test "renders persisted learning-plan errors instead of interactive controls", %{conn: conn} do
+      error = "We couldn't create a valid learning plan. Please try again."
+
+      graph =
+        Dialectic.GraphFixtures.insert_graph(%{
+          title: "Invalid Learning Plan #{System.unique_integer([:positive])}",
+          data: learning_plan_graph_data(error, nil)
+        })
+
+      {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}/graph?node=3")
+
+      assert has_element?(view, "#markdown-body-3[data-md*='valid learning plan']")
+      refute has_element?(view, "#guided-learning-login-3")
+      refute has_element?(view, "#guided-learning-plan-3")
+    end
+
+    test "activates a completed guided plan from its final streaming update", %{conn: conn} do
+      {:ok, view, _html} = setup_live_for_graph(conn, "Guided Streaming Completion")
+      graph_id = :sys.get_state(view.pid).socket.assigns.graph_id
+
+      render_click(view, "reply-and-answer", %{
+        "vertex" => %{"content" => "Help me learn R"},
+        "guided_learning" => "true",
+        "query_origin" => "node_action_bar"
+      })
+
+      plan_node = :sys.get_state(view.pid).socket.assigns.node
+
+      {:ok, guided_plan} =
+        GuidedLearningPlan.validate("""
+        ## Learning plan: R
+        #{@guided_test_actions}
+        #{@guided_test_paths}
+        """)
+
+      {:ok, canonical_content} = GuidedLearningPlan.render(guided_plan)
+
+      updated_vertex =
+        GraphManager.update_vertex_fields(graph_id, plan_node.id, %{
+          content: canonical_content,
+          guided_plan: guided_plan
+        })
+
+      send(
+        view.pid,
+        {:stream_chunk_broadcast, updated_vertex, :node_id, plan_node.id, nil}
+      )
+
+      assert has_element?(view, "#guided-learning-plan-#{plan_node.id}")
+      assert has_element?(view, "#guided-plan-action-0", "Clarify terms")
+      assert has_element?(view, "#guided-plan-path-path-1", "Cooling homes")
+      assert :sys.get_state(view.pid).socket.assigns.node.guided_plan == guided_plan
+    end
+
+    test "regenerates a stalled learning plan for a signed-in user", %{conn: conn} do
+      {:ok, view, _html} = setup_live_for_graph(conn, "Guided Plan Regeneration")
+      graph_id = :sys.get_state(view.pid).socket.assigns.graph_id
+
+      render_click(view, "reply-and-answer", %{
+        "vertex" => %{"content" => "Help me learn graph theory"},
+        "guided_learning" => "true",
+        "query_origin" => "node_action_bar"
+      })
+
+      stalled_plan = :sys.get_state(view.pid).socket.assigns.node
+      assert stalled_plan.class == "learning_plan"
+
+      render_click(view, "node_regenerate", %{"id" => stalled_plan.id})
+
+      replacement =
+        graph_id
+        |> GraphManager.vertices()
+        |> Enum.map(&GraphManager.find_node_by_id(graph_id, &1))
+        |> Enum.find(fn node ->
+          node.class == "learning_plan" && !node.deleted && node.id != stalled_plan.id
+        end)
+
+      assert replacement
+      assert GraphManager.find_node_by_id(graph_id, stalled_plan.id).deleted
+
+      render_click(view, "node_regenerate", %{"id" => stalled_plan.id})
+      assert has_element?(view, "#flash-error", "no longer available")
+
+      active_learning_plans =
+        graph_id
+        |> GraphManager.vertices()
+        |> Enum.map(&GraphManager.find_node_by_id(graph_id, &1))
+        |> Enum.count(&(&1.class == "learning_plan" && !&1.deleted))
+
+      assert active_learning_plans == 1
+    end
+
+    test "disables guided controls while the graph is locked", %{conn: conn} do
+      {:ok, view, _html} = setup_live_for_graph(conn, "Locked Guided Plan")
+      graph_id = :sys.get_state(view.pid).socket.assigns.graph_id
+
+      render_click(view, "reply-and-answer", %{
+        "vertex" => %{"content" => "Help me learn safely"},
+        "guided_learning" => "true",
+        "query_origin" => "node_action_bar"
+      })
+
+      plan_node = :sys.get_state(view.pid).socket.assigns.node
+
+      set_guided_plan(
+        graph_id,
+        plan_node.id,
+        """
+        ## Learning plan: Safe learning
+        #{@guided_test_actions}
+        #{@guided_test_paths}
+        """
+      )
+
+      render_click(view, "node_clicked", %{"id" => plan_node.id})
+      render_click(view, "toggle_lock_graph", %{})
+
+      assert has_element?(view, "#guided-plan-action-0[disabled]")
+      assert has_element?(view, "#guided-plan-path-checkbox-path-1[disabled]")
+      assert has_element?(view, "#guided-plan-path-submit[disabled]")
+
+      vertex_count = length(GraphManager.vertices(graph_id))
+
+      render_click(view, "apply_guided_next_action", %{
+        "id" => plan_node.id,
+        "action" => "clarify"
+      })
+
+      assert has_element?(view, "#flash-error", "This graph is locked")
+      assert length(GraphManager.vertices(graph_id)) == vertex_count
+    end
+
+    test "does not mark unrelated ancestor branches as guided-plan submissions", %{conn: conn} do
+      {:ok, view, _html} = setup_live_for_graph(conn, "Scoped Guided Deduplication")
+      graph_id = :sys.get_state(view.pid).socket.assigns.graph_id
+
+      render_click(view, "reply-and-answer", %{
+        "vertex" => %{"content" => "Help me learn scoped deduplication"},
+        "guided_learning" => "true",
+        "query_origin" => "node_action_bar"
+      })
+
+      plan_node = :sys.get_state(view.pid).socket.assigns.node
+
+      set_guided_plan(
+        graph_id,
+        plan_node.id,
+        """
+        ## Learning plan: Scoped deduplication
+        #{@guided_test_actions}
+        #{@guided_test_paths}
+        """
+      )
+
+      target_node = GraphManager.find_node_by_id(graph_id, List.first(plan_node.parents).id)
+      ancestor_node = List.first(target_node.parents)
+
+      unrelated_action =
+        GraphManager.add_node(graph_id, %Dialectic.Graph.Vertex{
+          content: "An unrelated clarification",
+          class: "clarify"
+        })
+
+      unrelated_path =
+        GraphManager.add_node(graph_id, %Dialectic.Graph.Vertex{
+          content: "How can homes stay safe during heat waves?",
+          class: "question"
+        })
+
+      GraphManager.add_edges(graph_id, unrelated_action, [ancestor_node])
+      GraphManager.add_edges(graph_id, unrelated_path, [ancestor_node])
+
+      render_click(view, "node_clicked", %{"id" => plan_node.id})
+
+      refute has_element?(view, "#guided-plan-action-0[disabled]")
+      refute has_element?(view, "#guided-plan-path-checkbox-path-1[disabled]")
+    end
+
+    test "creates selected paths as parallel question and answer branches", %{conn: conn} do
+      {:ok, view, _html} = setup_live_for_graph(conn, "Guided Multiple Paths")
+      graph_id = :sys.get_state(view.pid).socket.assigns.graph_id
+
+      render_click(view, "reply-and-answer", %{
+        "vertex" => %{"content" => "Explain Rome’s Second Triumvirate"},
+        "guided_learning" => "true",
+        "query_origin" => "node_action_bar"
+      })
+
+      plan_node = :sys.get_state(view.pid).socket.assigns.node
+      assert plan_node.class == "learning_plan"
+      assert plan_node.prompt_kind == "guided_learning_plan"
+
+      set_guided_plan(
+        graph_id,
+        plan_node.id,
+        """
+        ## Learning plan: Rome’s Second Triumvirate
+        ### Best next actions
+        - **Clarify terms** — Define the political powers involved before comparing the triumvirs.
+        - **Test with a counterexample** — Examine where the alliance failed to control events.
+        - **Find related ideas** — Connect the alliance to the wider collapse of the Republic.
+        ### Paths to explore
+        - **Division of power** — How did the triumvirs divide political and territorial control? — Establishes how the alliance functioned.
+        - **Collapse of the alliance** — Why did cooperation between Octavian and Antony become civil war? — Reveals the mechanisms behind its collapse.
+        - **Cleopatra’s role** — How did Cleopatra influence Antony’s strategy and Roman perceptions? — Separates her political role from propaganda.
+        - **Republican institutions** — Which institutions failed to constrain the triumvirs? — Connects personal rivalry to systemic weakness.
+        - **Military loyalty** — Why did Roman armies follow individual commanders? — Explains the power base behind political conflict.
+        """
+      )
+
+      render_click(view, "node_clicked", %{"id" => plan_node.id})
+
+      assert has_element?(view, "#guided-learning-plan-#{plan_node.id}")
+      refute has_element?(view, "#guided-learning-plan-modal")
+      assert has_element?(view, "#guided-plan-action-0", "Clarify terms")
+      assert has_element?(view, "#guided-plan-path-path-1", "Division of power")
+      assert has_element?(view, "#guided-plan-path-path-2", "Collapse of the alliance")
+      assert has_element?(view, "#guided-plan-path-path-3", "Cleopatra’s role")
+
+      vertex_count_before = length(GraphManager.vertices(graph_id))
+
+      view
+      |> element("#guided-plan-path-form")
+      |> render_submit(%{
+        "paths" => %{
+          "path-1" => ["false", "true"],
+          "path-2" => ["false"],
+          "path-3" => ["false", "true"]
+        }
+      })
+
+      assert length(GraphManager.vertices(graph_id)) == vertex_count_before + 4
+
+      [{generation_id, generation}] =
+        :sys.get_state(view.pid).socket.assigns.background_generations |> Enum.to_list()
+
+      most_recent_result_id = List.last(generation.node_ids)
+      assert generation.target_node_id == most_recent_result_id
+
+      Enum.each(generation.node_ids, fn node_id ->
+        send(view.pid, {:llm_request_complete, node_id})
+      end)
+
+      :sys.get_state(view.pid)
+
+      view
+      |> element("#open-background-answer-#{generation_id}")
+      |> render_click()
+
+      assert :sys.get_state(view.pid).socket.assigns.node.id == most_recent_result_id
+      assert_push_event(view, "center_node", %{id: ^most_recent_result_id})
+
+      refreshed_plan = GraphManager.find_node_by_id(graph_id, plan_node.id)
+      question_children = Enum.filter(refreshed_plan.children, &(&1.class == "question"))
+      assert length(question_children) == 2
+
+      assert Enum.any?(
+               question_children,
+               &(&1.content ==
+                   "How did the triumvirs divide political and territorial control?")
+             )
+
+      assert Enum.all?(question_children, fn question ->
+               question = GraphManager.find_node_by_id(graph_id, question.id)
+               answer = Enum.find(question.children, &(&1.class == "answer"))
+
+               answer.guided_submission.plan_node_id == plan_node.id &&
+                 answer.guided_submission.submission_key in ["path:path-1", "path:path-3"] &&
+                 question.id in answer.guided_submission.cleanup_node_ids
+             end)
+
+      render_click(view, "node_clicked", %{"id" => plan_node.id})
+
+      assert has_element?(view, "#guided-plan-path-path-1", "Already explored")
+      assert has_element?(view, "#guided-plan-path-checkbox-path-1[disabled]")
+      refute has_element?(view, "#guided-plan-path-checkbox-path-2[disabled]")
+      assert has_element?(view, "#guided-plan-path-checkbox-path-3[disabled]")
+    end
+
+    test "ranks supported actions and applies the learner's selection", %{conn: conn} do
+      {:ok, view, _html} = setup_live_for_graph(conn, "Guided Exploration Plan")
+      graph_id = :sys.get_state(view.pid).socket.assigns.graph_id
+
+      render_click(view, "reply-and-answer", %{
+        "vertex" => %{"content" => "How should cities adapt to extreme heat?"},
+        "guided_learning" => "true",
+        "query_origin" => "node_action_bar"
+      })
+
+      plan_node = :sys.get_state(view.pid).socket.assigns.node
+      assert plan_node.class == "learning_plan"
+      assert plan_node.prompt_kind == "guided_learning_plan"
+
+      set_guided_plan(
+        graph_id,
+        plan_node.id,
+        """
+        ## Learning plan: How should cities adapt to extreme heat
+        ### Best next actions
+        - **Clarify terms** — Define what successful heat adaptation means before comparing policies.
+        - **Test with a counterexample** — Examine a city where common heat interventions failed.
+        - **Find related ideas** — Connect heat adaptation to housing, transport, and public health.
+        #{@guided_test_paths}
+        """
+      )
+
+      render_click(view, "node_clicked", %{"id" => plan_node.id})
+
+      assert has_element?(view, "#guided-learning-plan-#{plan_node.id}")
+      refute has_element?(view, "#guided-learning-plan-modal")
+      assert has_element?(view, "#guided-plan-action-0", "Clarify terms")
+      assert has_element?(view, "#guided-plan-action-0", "Recommended")
+      assert has_element?(view, "#guided-plan-action-1", "Test with a counterexample")
+      assert has_element?(view, "#guided-plan-action-2", "Find related ideas")
+
+      assert has_element?(
+               view,
+               "#guided-plan-action-0 [data-guided-action-icon='clarify']"
+             )
+
+      assert has_element?(
+               view,
+               "#guided-plan-action-0 [role='tooltip']",
+               "What do we mean?"
+             )
+
+      assert has_element?(
+               view,
+               "#guided-plan-action-2 [data-guided-action-icon='related_ideas']"
+             )
+
+      view
+      |> element("#guided-plan-action-0")
+      |> render_click()
+
+      result_node = :sys.get_state(view.pid).socket.assigns.node
+      assert result_node.class == "clarify"
+      assert Enum.any?(result_node.parents, &(&1.id == plan_node.id))
+      assert result_node.guided_submission.plan_node_id == plan_node.id
+      assert result_node.guided_submission.submission_key == "action:clarify"
+      assert result_node.guided_submission.cleanup_classes == ["clarify"]
+
+      render_click(view, "node_clicked", %{"id" => plan_node.id})
+
+      assert has_element?(view, "#guided-plan-action-0[disabled]", "Already asked")
+      assert has_element?(view, "#guided-plan-action-1", "Recommended")
+
+      vertex_count_before_duplicate = length(GraphManager.vertices(graph_id))
+
+      render_click(view, "apply_guided_next_action", %{
+        "id" => plan_node.id,
+        "action" => "clarify"
+      })
+
+      assert length(GraphManager.vertices(graph_id)) == vertex_count_before_duplicate
+      assert has_element?(view, "#flash-error", "That action has already been used here")
+    end
+
+    test "rejects a supported action that the plan did not recommend", %{conn: conn} do
+      {:ok, view, _html} = setup_live_for_graph(conn, "Guided Recommendation Validation")
+      graph_id = :sys.get_state(view.pid).socket.assigns.graph_id
+
+      render_click(view, "reply-and-answer", %{
+        "vertex" => %{"content" => "How should cities adapt to extreme heat?"},
+        "guided_learning" => "true",
+        "query_origin" => "node_action_bar"
+      })
+
+      plan_node = :sys.get_state(view.pid).socket.assigns.node
+
+      set_guided_plan(
+        graph_id,
+        plan_node.id,
+        """
+        ## Learning plan: How should cities adapt to extreme heat
+        ### Best next actions
+        - **Clarify terms** — Define what successful heat adaptation means before comparing policies.
+        - **Test with a counterexample** — Examine a city where common heat interventions failed.
+        - **Find related ideas** — Connect heat adaptation to housing, transport, and public health.
+        #{@guided_test_paths}
+        """
+      )
+
+      GraphManager.set_node_content(
+        graph_id,
+        plan_node.id,
+        "## Learning plan: Tampered text\n### Best next actions\n- **Surface assumptions** — This text is not canonical."
+      )
+
+      vertex_count_before = length(GraphManager.vertices(graph_id))
+
+      render_click(view, "apply_guided_next_action", %{
+        "id" => plan_node.id,
+        "action" => "assumptions"
+      })
+
+      assert length(GraphManager.vertices(graph_id)) == vertex_count_before
+      assert has_element?(view, "#flash-error", "That recommended action is no longer available")
     end
   end
 

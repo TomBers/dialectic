@@ -1,10 +1,30 @@
 defmodule Dialectic.Responses.PromptsTest do
   use ExUnit.Case, async: true
 
-  alias Dialectic.Responses.Prompts
+  alias Dialectic.Responses.{GuidedLearningPlan, Prompts}
 
   # Note: frame_minimal_context/1 is a private function, so we test it indirectly
   # through the public selection/2 function which uses it internally
+
+  describe "guided_learning_plan/2" do
+    test "combines ranked actions and multiple paths in one response" do
+      prompt =
+        Prompts.guided_learning_plan(
+          "The discussion concerns the late Roman Republic.",
+          "Explain Rome’s Second Triumvirate"
+        )
+
+      assert prompt =~
+               "Start with the exact heading `## Learning plan: Rome’s Second Triumvirate`"
+
+      assert prompt =~ "exact heading `### Best next actions`"
+      assert prompt =~ "exact heading `### Paths to explore`"
+      assert prompt =~ "exactly three top-level bullets"
+      assert prompt =~ "exactly five top-level bullets"
+
+      assert Enum.all?(GuidedLearningPlan.labels(), &String.contains?(prompt, "- #{&1}"))
+    end
+  end
 
   describe "selection/2 - minimal context behavior" do
     test "includes context when shorter than max length (1000 characters)" do
@@ -321,7 +341,30 @@ defmodule Dialectic.Responses.PromptsTest do
       assert result =~ "Empirical or scientific connection"
       assert result =~ "Opposing framework"
       assert result =~ "Cross-disciplinary or practical direction"
-      assert result =~ "never invent a thinker, work, study, publication detail, or URL"
+      assert result =~ "exactly four genuinely distinct directions"
+      assert result =~ "## [Specific, memorable name of the direction]"
+      assert result =~ "**Why it connects:**"
+      assert result =~ "**Explore:**"
+      assert result =~ "Do not repeat the lens name as the heading"
+      assert result =~ "do not conflate people, works, schools, findings, or dates"
+      assert result =~ "omit uncertain specifics rather than inventing"
+      refute result =~ "4-5 substantive directions"
+    end
+
+    test "keeps selection-based related ideas aligned with the same horizon-broadening contract" do
+      result =
+        Prompts.related_ideas_selection(
+          "Current exploration context",
+          "A selected claim"
+        )
+
+      assert result =~ "exactly four genuinely distinct directions"
+      assert result =~ "specifically related to the selected text"
+      assert result =~ "## [Specific, memorable name of the direction]"
+      assert result =~ "**Why it connects:**"
+      assert result =~ "**Explore:**"
+      assert result =~ "Do not repeat the lens name as the heading"
+      assert result =~ "do not conflate people, works, schools, findings, or dates"
     end
   end
 
