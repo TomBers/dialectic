@@ -6,6 +6,55 @@ import { showToast, copyToClipboard } from "./toast.js";
 import { syncGraphAppearanceStorage } from "./appearance_preferences.js";
 
 const RIGHT_DRAWER_SELECTOR = "[data-right-drawer]";
+const GRAPH_VIEWPORT_STORAGE_PREFIX = "dialectic:graph-viewport:";
+
+const readStoredGraphViewport = (graphId, pathKey) => {
+  if (!graphId) return null;
+
+  try {
+    const stored = JSON.parse(
+      sessionStorage.getItem(`${GRAPH_VIEWPORT_STORAGE_PREFIX}${graphId}`) ||
+        "null",
+    );
+
+    if (
+      !stored ||
+      stored.pathKey !== pathKey ||
+      !Number.isFinite(stored.zoom) ||
+      !Number.isFinite(stored.pan?.x) ||
+      !Number.isFinite(stored.pan?.y)
+    ) {
+      return null;
+    }
+
+    return stored;
+  } catch (_e) {
+    return null;
+  }
+};
+
+const storeGraphViewport = (graphId, pathKey, cy) => {
+  if (!graphId || !cy || cy.destroyed?.()) return;
+
+  try {
+    const selected = cy
+      .$("node.selected")
+      .filter((node) => !node.isParent())
+      .first();
+    const anchor =
+      selected && selected.length > 0
+        ? {
+            nodeId: selected.id(),
+            renderedPosition: selected.renderedPosition(),
+          }
+        : null;
+
+    sessionStorage.setItem(
+      `${GRAPH_VIEWPORT_STORAGE_PREFIX}${graphId}`,
+      JSON.stringify({ zoom: cy.zoom(), pan: cy.pan(), pathKey, anchor }),
+    );
+  } catch (_e) {}
+};
 
 const getRightDrawers = () =>
   Array.from(document.querySelectorAll(RIGHT_DRAWER_SELECTOR));
@@ -308,8 +357,30 @@ const graphHook = {
       }
 
       if (!container.isConnected) return;
-      container.dataset.graphReady = "true";
-      container.removeAttribute("aria-busy");
+
+      const finishReady = () => {
+        if (!container.isConnected) return;
+        container.dataset.graphReady = "true";
+        container.removeAttribute("aria-busy");
+      };
+
+      if (
+        initialFocusPathIds.length === 0 &&
+        this._pendingStoredViewport &&
+        !this._storedViewportRestoreScheduled
+      ) {
+        this._storedViewportRestoreScheduled = true;
+        setTimeout(() => {
+          requestAnimationFrame(() => {
+            this._restorePendingStoredViewport();
+            this._setReaderPathTransitionPending(false);
+            finishReady();
+          });
+        }, 0);
+        return;
+      }
+
+      finishReady();
     };
 
     const viewMode = appearance.graphViewMode;
@@ -321,7 +392,14 @@ const graphHook = {
         : this._parseGraphElements(graph);
     const initialFocusPathIds =
       initialPresentationMode === "presenting" ? [] : this._readReaderPathIds();
-    this._setReaderPathTransitionPending(initialFocusPathIds.length > 0);
+    this._initialReaderPathSyncPending = initialFocusPathIds.length > 0;
+    this._pendingStoredViewport = readStoredGraphViewport(
+      graphId,
+      initialFocusPathIds.join(","),
+    );
+    this._setReaderPathTransitionPending(
+      initialFocusPathIds.length > 0 || Boolean(this._pendingStoredViewport),
+    );
     const initialDrawOptions =
       initialPresentationMode === "presenting" && initialPresentationIds.length > 0
         ? {
@@ -1322,6 +1400,38 @@ const graphHook = {
     });
   },
 
+  _restorePendingStoredViewport() {
+    if (!this.cy || !this._pendingStoredViewport) return false;
+
+    const stored = this._pendingStoredViewport;
+    this._pendingStoredViewport = null;
+
+    try {
+      this.cy.zoom(stored.zoom);
+      const anchorNode = stored.anchor?.nodeId
+        ? this.cy.getElementById(stored.anchor.nodeId)
+        : null;
+
+      if (
+        anchorNode &&
+        anchorNode.length > 0 &&
+        Number.isFinite(stored.anchor.renderedPosition?.x) &&
+        Number.isFinite(stored.anchor.renderedPosition?.y)
+      ) {
+        const position = anchorNode.position();
+        this.cy.pan({
+          x: stored.anchor.renderedPosition.x - position.x * stored.zoom,
+          y: stored.anchor.renderedPosition.y - position.y * stored.zoom,
+        });
+      } else {
+        this.cy.pan(stored.pan);
+      }
+      return true;
+    } catch (_e) {
+      return false;
+    }
+  },
+
   _setReaderPathTransitionPending(pending) {
     if (!this._container) return;
 
@@ -1357,6 +1467,23 @@ const graphHook = {
       this._readerPathFocusTimer = null;
     }
 
+    const localEndpoint = this._localReaderPathEndpoint;
+    const requestedEndpoint = ids.at(-1);
+    if (localEndpoint && localEndpoint === requestedEndpoint) {
+      const requestedIds = new Set(ids);
+      const focusedNodeIds = this.cy
+        .nodes()
+        .filter((node) => !node.isParent() && !node.hasClass("focus-hidden"))
+        .map((node) => node.id());
+      const alreadyFocused = focusedNodeIds.every((id) => requestedIds.has(id));
+
+      this._localReaderPathEndpoint = null;
+      if (alreadyFocused) {
+        this._setReaderPathTransitionPending(false);
+        return;
+      }
+    }
+
     if (ids.length === 0) {
       this._setReaderPathTransitionPending(false);
       if (this.cy._readerPathFocus) {
@@ -1368,6 +1495,8 @@ const graphHook = {
 
     this._setReaderPathTransitionPending(true);
     const cy = this.cy;
+    const initialPathSync = this._initialReaderPathSyncPending === true;
+    this._initialReaderPathSyncPending = false;
     let applied = false;
     const applyFocus = () => {
       if (applied || this.cy !== cy || cy.destroyed?.()) return;
@@ -1379,9 +1508,10 @@ const graphHook = {
       const focused = cy.focusPath?.(
         ids,
         () => {
+          this._restorePendingStoredViewport();
           this._setReaderPathTransitionPending(false);
         },
-        { animate: false },
+        { animate: false, preserveViewport: !initialPathSync },
       );
       if (focused === false) this._setReaderPathTransitionPending(false);
     };
@@ -2354,6 +2484,12 @@ const graphHook = {
     if (this._debugRedraw) this._debugRedraw();
   },
   destroyed() {
+    storeGraphViewport(
+      this.el?.dataset?.graphId,
+      this._readReaderPathIds().join(","),
+      this.cy,
+    );
+
     if (this._readerPathFocusTimer) {
       clearTimeout(this._readerPathFocusTimer);
       this._readerPathFocusTimer = null;

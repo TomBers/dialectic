@@ -603,8 +603,8 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     refute has_element?(view, "#outline-node-4")
     refute has_element?(view, "#outline-node-5")
     refute has_element?(view, "#outline-mobile-node-4")
-    assert has_element?(view, "#outline-show-all-paths")
-    assert has_element?(view, "#outline-mobile-show-all-paths")
+    assert has_element?(view, "#outline-show-all-paths", "Clear path filter")
+    assert has_element?(view, "#outline-mobile-show-all-paths", "Clear filter")
 
     view |> element("#outline-node-2") |> render_click()
 
@@ -622,6 +622,15 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert has_element?(view, "#outline-node-5")
     assert has_element?(view, "#outline-node-2[data-outline-selected='true']")
     refute has_element?(view, "#outline-show-all-paths")
+  end
+
+  test "offers path selection for the final outline node", %{conn: conn} do
+    graph = create_graph(long_title_graph_data())
+
+    {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=2")
+
+    assert has_element?(view, "#outline-node-2 + #outline-choose-path")
+    assert has_element?(view, "#outline-mobile-node-2 + #outline-mobile-choose-path")
   end
 
   test "restores a shared reader path from the URL", %{conn: conn} do

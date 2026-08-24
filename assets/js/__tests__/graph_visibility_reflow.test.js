@@ -6,6 +6,7 @@ import {
   focusBranch,
   focusPath,
   reflowAfterVisibilityChange,
+  visibilityControlPositions,
   visibleLayoutElements,
 } from "../draw_graph.js";
 
@@ -24,6 +25,17 @@ describe("graph visibility reflow", () => {
       translateX: "0",
       translateY: "-50%",
     });
+  });
+
+  it("anchors paired visibility controls to the upper and lower right", () => {
+    const bounds = { x1: 100, x2: 220, y1: 80, y2: 160 };
+
+    const positions = visibilityControlPositions(bounds, 0.8);
+
+    expect(positions.x).toBe(228);
+    expect(positions.focusY).toBeCloseTo(92);
+    expect(positions.disclosureY).toBeCloseTo(148);
+    expect(positions.span).toBeCloseTo(56);
   });
 
   it("applies and clears an exact reader path", () => {
@@ -57,7 +69,7 @@ describe("graph visibility reflow", () => {
     cy.destroy();
   });
 
-  it("focuses one branch and restores sibling paths", () => {
+  it("focuses one exact path and restores all paths", () => {
     vi.stubGlobal("requestAnimationFrame", vi.fn());
     window.history.replaceState({}, "", "/g/example/graph?node=branch-a");
     const pushEvent = vi.fn();
@@ -82,14 +94,13 @@ describe("graph visibility reflow", () => {
     expect(new URL(window.location.href).searchParams.get("path")).toBe("branch-a");
     expect(cy.getElementById("root").hasClass("focus-hidden")).toBe(false);
     expect(cy.getElementById("branch-a").hasClass("focus-hidden")).toBe(false);
-    expect(cy.getElementById("leaf-a").hasClass("focus-hidden")).toBe(false);
+    expect(cy.getElementById("leaf-a").hasClass("focus-hidden")).toBe(true);
     expect(cy.getElementById("branch-b").hasClass("focus-hidden")).toBe(true);
     expect(cy.getElementById("leaf-b").hasClass("focus-hidden")).toBe(true);
     expect(cy.getElementById("root-b").hasClass("focus-hidden")).toBe(true);
     expect(visibleLayoutElements(cy).nodes().map((node) => node.id())).toEqual([
       "root",
       "branch-a",
-      "leaf-a",
     ]);
 
     expect(clearBranchFocus(cy, null)).toBe(true);
@@ -169,6 +180,11 @@ describe("graph visibility reflow", () => {
     const container = document.createElement("div");
     document.body.appendChild(container);
     const fitSpy = vi.spyOn(cy, "fit");
+    cy.zoom(1.4);
+    cy.pan({ x: 35, y: 48 });
+    const selectedScreenPosition = cy
+      .getElementById("branch-a")
+      .renderedPosition();
 
     focusBranch(cy, cy.getElementById("branch-a"), container);
     expect(frames).toHaveLength(1);
@@ -186,7 +202,14 @@ describe("graph visibility reflow", () => {
     expect(new Set(positions.map((position) => `${position.x}:${position.y}`)).size).toBe(
       3,
     );
-    expect(fitSpy).toHaveBeenCalledOnce();
+    expect(fitSpy).not.toHaveBeenCalled();
+    expect(cy.zoom()).toBeCloseTo(1.4);
+    expect(cy.getElementById("branch-a").renderedPosition().x).toBeCloseTo(
+      selectedScreenPosition.x,
+    );
+    expect(cy.getElementById("branch-a").renderedPosition().y).toBeCloseTo(
+      selectedScreenPosition.y,
+    );
 
     cy.destroy();
     container.remove();

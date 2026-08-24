@@ -1251,9 +1251,10 @@ export function draw_graph(
       }
       cy._depthToggleOverlay = null;
       cy._depthToggleButtons = null;
-      if (cy._focusControls && cy._focusControls.parentNode) {
-        cy._focusControls.parentNode.removeChild(cy._focusControls);
+      if (cy._focusOverlay && cy._focusOverlay.parentNode) {
+        cy._focusOverlay.parentNode.removeChild(cy._focusOverlay);
       }
+      cy._focusOverlay = null;
       cy._focusControls = null;
       _depthToggleRafPending = false;
     } catch (_e) {}
@@ -1663,13 +1664,45 @@ function applyPathFocusState(cy, ids) {
   return pathIds;
 }
 
+function captureViewportAnchor(cy, node) {
+  if (!cy || !node || node.length === 0) return null;
+
+  return {
+    nodeId: node.id(),
+    renderedPosition: node.renderedPosition(),
+    zoom: cy.zoom(),
+  };
+}
+
+function restoreViewportAnchor(cy, anchor) {
+  if (!cy || !anchor) return false;
+
+  const node = cy.getElementById(anchor.nodeId);
+  if (!node || node.length === 0) return false;
+
+  const position = node.position();
+  cy.zoom(anchor.zoom);
+  cy.pan({
+    x: anchor.renderedPosition.x - position.x * anchor.zoom,
+    y: anchor.renderedPosition.y - position.y * anchor.zoom,
+  });
+  return true;
+}
+
 export function focusPath(
   cy,
   ids,
   container = cy.container?.(),
   onDone,
-  { animate = true } = {},
+  { animate = true, preserveViewport = false } = {},
 ) {
+  const selectedBeforeFocus = cy
+    .$("node.selected")
+    .filter((node) => !node.isParent())
+    .first();
+  const viewportAnchor = preserveViewport
+    ? captureViewportAnchor(cy, selectedBeforeFocus)
+    : null;
   const pathIds = applyPathFocusState(cy, ids);
   if (pathIds.length === 0) return false;
 
@@ -1679,41 +1712,28 @@ export function focusPath(
     _rebuildFocusControls(cy, container);
     const selected = cy.$("node.selected").filter((node) => !node.isParent());
     if (selected.length > 0) cy.applySelectionContext?.(selected[0]);
-    if (container) {
+    if (container && !preserveViewport) {
       fitVisibleGraph(cy, container, 84, {
         focusNodeId:
           selected.length > 0 ? selected[0].id() : pathIds[pathIds.length - 1],
       });
     }
     onDone?.();
-  }, { animate });
+  }, { animate, viewportAnchor });
   return true;
 }
 
 export function focusBranch(cy, node, container = cy.container?.()) {
   if (!node || node.length === 0 || node.isParent()) return false;
 
-  cy.elements().removeClass("focus-hidden");
-
   const ancestors = node.predecessors().filter((element) => element.isNode());
-  const descendants = node.successors().filter((element) => element.isNode());
-  let keptNodes = node.union(ancestors).union(descendants);
-  keptNodes = keptNodes.union(keptNodes.ancestors());
-
-  cy.nodes().difference(keptNodes).addClass("focus-hidden");
-  cy.edges().forEach((edge) => {
-    if (
-      edge.source().hasClass("focus-hidden") ||
-      edge.target().hasClass("focus-hidden")
-    ) {
-      edge.addClass("focus-hidden");
-    }
-  });
-
-  cy._focusedBranchId = node.id();
+  const pathIds = ancestors.union(node).map((pathNode) => pathNode.id());
+  const viewportAnchor = captureViewportAnchor(cy, node);
+  applyPathFocusState(cy, pathIds);
 
   if (cy._ownerHook?.pushEvent) {
     cy._readerPathFocus = true;
+    cy._ownerHook._localReaderPathEndpoint = node.id();
     cy._ownerHook.pushEvent("set_reader_path", { id: node.id() });
 
     const url = new URL(window.location.href);
@@ -1727,10 +1747,7 @@ export function focusBranch(cy, node, container = cy.container?.()) {
   reflowAfterVisibilityChange(cy, () => {
     _rebuildFocusControls(cy, container);
     cy.applySelectionContext?.(node);
-    if (container) {
-      fitVisibleGraph(cy, container, 84, { focusNodeId: node.id() });
-    }
-  });
+  }, { animate: false, viewportAnchor });
   return true;
 }
 
@@ -1747,20 +1764,17 @@ function clearReaderPathState(cy) {
 }
 
 export function clearBranchFocus(cy, container = cy.container?.()) {
+  const selected = cy.$("node.selected").filter((node) => !node.isParent());
+  const viewportAnchor = captureViewportAnchor(cy, selected.first());
   if (!clearBranchFocusState(cy)) return false;
 
   clearReaderPathState(cy);
+  _rebuildDepthToggleOverlays(cy, container);
   _rebuildFocusControls(cy, container);
   reflowAfterVisibilityChange(cy, () => {
     _rebuildFocusControls(cy, container);
-    const selected = cy.$("node.selected").filter((node) => !node.isParent());
     if (selected.length > 0) cy.applySelectionContext?.(selected[0]);
-    if (container) {
-      fitVisibleGraph(cy, container, 84, {
-        focusNodeId: selected.length > 0 ? selected[0].id() : null,
-      });
-    }
-  });
+  }, { animate: false, viewportAnchor });
   return true;
 }
 
@@ -1950,7 +1964,11 @@ function _spreadOverlappingCompoundNodes(cy) {
  * Internal helper: re-run the dagre layout after a depth visibility change
  * so that visible nodes reposition into a clean arrangement.
  */
-export function reflowAfterVisibilityChange(cy, onDone, { animate } = {}) {
+export function reflowAfterVisibilityChange(
+  cy,
+  onDone,
+  { animate, viewportAnchor } = {},
+) {
   if (typeof onDone === "function") {
     cy._visibilityReflowCallbacks ||= [];
     cy._visibilityReflowCallbacks.push(onDone);
@@ -1960,6 +1978,10 @@ export function reflowAfterVisibilityChange(cy, onDone, { animate } = {}) {
     cy._visibilityReflowAnimate = false;
   } else if (cy._visibilityReflowAnimate === undefined && animate === true) {
     cy._visibilityReflowAnimate = true;
+  }
+
+  if (viewportAnchor) {
+    cy._visibilityReflowViewportAnchor = viewportAnchor;
   }
 
   if (cy._visibilityReflowPending) return;
@@ -1981,9 +2003,14 @@ export function reflowAfterVisibilityChange(cy, onDone, { animate } = {}) {
       cy._visibilityReflowAnimate = undefined;
       const callbacks = cy._visibilityReflowCallbacks || [];
       cy._visibilityReflowCallbacks = [];
+      const pendingViewportAnchor = cy._visibilityReflowViewportAnchor;
+      cy._visibilityReflowViewportAnchor = null;
 
-      if (callbacks.length > 0) {
-        cy.one("layoutstop", () => callbacks.forEach((callback) => callback()));
+      if (callbacks.length > 0 || pendingViewportAnchor) {
+        cy.one("layoutstop", () => {
+          restoreViewportAnchor(cy, pendingViewportAnchor);
+          callbacks.forEach((callback) => callback());
+        });
       }
 
       _relayoutAfterDepthChange(cy, { animate: reflowAnimate });
@@ -2056,10 +2083,10 @@ function _injectDepthToggleStyles() {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
+  width: 28px;
+  height: 28px;
   padding: 0;
-  border-radius: 10px;
+  border-radius: 12px;
   background: #ffffff;
   border: 1.5px solid #cbd5e1;
   color: #475569;
@@ -2078,8 +2105,8 @@ function _injectDepthToggleStyles() {
 }
 
 .depth-chevron {
-  width: 7px;
-  height: 7px;
+  width: 9px;
+  height: 9px;
   border-right: 2px solid currentColor;
   border-bottom: 2px solid currentColor;
   transition: transform 0.15s ease;
@@ -2123,6 +2150,63 @@ function _injectDepthToggleStyles() {
 }
 .graph-focus-controls {
   position: absolute;
+  z-index: 9;
+  pointer-events: none;
+  transform: translate(0, -50%) scale(var(--depth-toggle-scale, 1));
+  transform-origin: center center;
+}
+.graph-focus-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 11;
+  overflow: hidden;
+  pointer-events: none;
+}
+.graph-focus-controls.visibility-control-stack::before {
+  position: absolute;
+  top: 23px;
+  left: 13px;
+  z-index: -1;
+  width: 2px;
+  height: max(0px, calc(var(--visibility-stack-span, 28px) - 18px));
+  border-radius: 9999px;
+  background: #cbd5e1;
+  content: "";
+}
+.graph-focus-controls button {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1.5px solid #0f766e;
+  border-radius: 12px;
+  background: #0f766e;
+  color: #ffffff;
+  cursor: pointer;
+  pointer-events: auto;
+  box-shadow: 0 1px 3px rgba(15,118,110,0.3);
+  transition: background 0.15s ease, border-color 0.15s ease,
+              box-shadow 0.15s ease;
+}
+.graph-focus-controls button:hover {
+  background: #115e59;
+  border-color: #115e59;
+  box-shadow: 0 2px 6px rgba(15,118,110,0.4);
+}
+.graph-focus-controls button.branch-focused-btn {
+  border-color: #2563eb;
+  background: #2563eb;
+  box-shadow: 0 1px 3px rgba(37,99,235,0.3);
+}
+.graph-focus-controls button.branch-focused-btn:hover {
+  border-color: #1d4ed8;
+  background: #1d4ed8;
+}
+.graph-focus-controls.graph-clear-focus-controls {
   top: 12px;
   left: 50%;
   z-index: 12;
@@ -2139,17 +2223,36 @@ function _injectDepthToggleStyles() {
   box-shadow: 0 2px 8px rgba(15,23,42,0.12);
   font: 600 11px/1 ui-sans-serif, system-ui, -apple-system, sans-serif;
 }
-.graph-focus-controls button {
+.graph-focus-controls.graph-clear-focus-controls button {
+  width: auto;
+  height: auto;
   border: 0;
   border-radius: 9999px;
-  background: #0f766e;
   padding: 5px 9px;
-  color: #ffffff;
-  cursor: pointer;
+  background: #2563eb;
+  box-shadow: none;
   font: inherit;
 }
-.graph-focus-controls button:hover {
-  background: #115e59;
+.graph-focus-controls.graph-clear-focus-controls button:hover {
+  background: #1d4ed8;
+}
+.branch-focus-icon {
+  position: relative;
+  width: 12px;
+  height: 12px;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+}
+.branch-focus-icon::after {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: currentColor;
+  content: "";
+  transform: translate(-50%, -50%);
 }`;
   document.head.appendChild(s);
 }
@@ -2159,15 +2262,30 @@ function _rebuildFocusControls(cy, container) {
 
   _injectDepthToggleStyles();
 
-  let controls = container.querySelector(".graph-focus-controls");
+  let focusOverlay = container.querySelector(".graph-focus-overlay");
+  if (!focusOverlay) {
+    focusOverlay = document.createElement("div");
+    focusOverlay.className = "graph-focus-overlay";
+    container.appendChild(focusOverlay);
+  }
+
+  cy._focusOverlay = focusOverlay;
+
+  let controls = focusOverlay.querySelector(".graph-focus-controls");
   if (!controls) {
     controls = document.createElement("div");
     controls.className = "graph-focus-controls";
-    container.appendChild(controls);
+    focusOverlay.appendChild(controls);
   }
 
   cy._focusControls = controls;
   controls.replaceChildren();
+  controls.className = "graph-focus-controls";
+  delete controls.dataset.nodeId;
+  controls.style.removeProperty("left");
+  controls.style.removeProperty("top");
+  controls.style.removeProperty("--depth-toggle-scale");
+  controls.style.removeProperty("--visibility-stack-span");
 
   const presentationMode = cy?._ownerHook?.el?.dataset?.presentationMode || "off";
   if (presentationMode === "presenting") {
@@ -2194,31 +2312,55 @@ function _rebuildFocusControls(cy, container) {
   controls.style.display = "flex";
 
   if (focused) {
+    controls.classList.add("graph-clear-focus-controls");
+
     const status = document.createElement("span");
     status.textContent = "Focused branch";
     controls.appendChild(status);
+
+    const clearButton = document.createElement("button");
+    clearButton.type = "button";
+    clearButton.textContent = "Show all paths";
+    clearButton.setAttribute("aria-label", "Show all graph paths");
+    clearButton.addEventListener("mousedown", (event) => event.stopPropagation());
+    clearButton.addEventListener("pointerdown", (event) => event.stopPropagation());
+    clearButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      clearBranchFocus(cy, container);
+    });
+    controls.appendChild(clearButton);
+    return;
   }
 
   const button = document.createElement("button");
   button.type = "button";
-  button.textContent = focused ? "Show all paths" : "Focus branch";
-  button.setAttribute(
-    "aria-label",
-    focused ? "Show all graph paths" : "Focus the selected graph branch",
-  );
+  button.title = "Focus this path and hide the others";
+  button.setAttribute("aria-label", "Focus the selected graph branch");
+
+  const icon = document.createElement("span");
+  icon.className = "branch-focus-icon";
+  icon.setAttribute("aria-hidden", "true");
+  button.appendChild(icon);
   button.addEventListener("mousedown", (event) => event.stopPropagation());
   button.addEventListener("pointerdown", (event) => event.stopPropagation());
   button.addEventListener("click", (event) => {
     event.preventDefault();
     event.stopPropagation();
 
-    if (focused) {
-      clearBranchFocus(cy, container);
-    } else {
-      focusBranch(cy, selected[0], container);
-    }
+    focusBranch(cy, selected[0], container);
   });
   controls.appendChild(button);
+  const controlNode =
+    selected.length > 0
+      ? selected[0]
+      : cy.getElementById(cy._focusedBranchId || "");
+  controls.dataset.nodeId = controlNode.id();
+  controls.classList.toggle(
+    "visibility-control-stack",
+    controlNode.outgoers("node").filter((node) => !node.isParent()).length > 0,
+  );
+  _updateDepthTogglePositions(cy);
 }
 
 /**
@@ -2253,6 +2395,14 @@ function _rebuildDepthToggleOverlays(cy, container) {
   }
 
   overlay.style.display = "";
+
+  if (cy._focusedBranchId) {
+    overlay.replaceChildren();
+    overlay.style.display = "none";
+    cy._depthToggleOverlay = overlay;
+    cy._depthToggleButtons = new Map();
+    return;
+  }
 
   // Store refs on the cy instance for position updates
   cy._depthToggleOverlay = overlay;
@@ -2332,18 +2482,30 @@ export function depthTogglePosition(bb) {
   };
 }
 
+export function visibilityControlPositions(bb, scale = 1) {
+  const inset = 15 * scale;
+  const top = bb.y1 + inset;
+  const bottom = bb.y2 - inset;
+  const minimumSpan = 34 * scale;
+  const center = (bb.y1 + bb.y2) / 2;
+  const span = Math.max(minimumSpan, bottom - top);
+
+  return {
+    x: bb.x2 + 10 * scale,
+    focusY: center - span / 2,
+    disclosureY: center + span / 2,
+    span,
+  };
+}
+
 function _updateDepthTogglePositions(cy) {
-  if (
-    !cy ||
-    (typeof cy.destroyed === "function" && cy.destroyed()) ||
-    !cy._depthToggleButtons
-  ) {
+  if (!cy || (typeof cy.destroyed === "function" && cy.destroyed())) {
     return;
   }
 
   const zoom = typeof cy.zoom === "function" ? cy.zoom() : 1;
   const hideBelowZoom = 0.3;
-  const scale = Math.max(0.68, Math.min(1, 0.45 + zoom * 0.55));
+  const scale = Math.max(0.5, Math.min(1.5, zoom));
   const presentationMode = cy?._ownerHook?.el?.dataset?.presentationMode || "off";
 
   if (presentationMode === "presenting") {
@@ -2354,10 +2516,16 @@ function _updateDepthTogglePositions(cy) {
   }
 
   if (cy._depthToggleOverlay) {
-    cy._depthToggleOverlay.style.display = "";
+    cy._depthToggleOverlay.style.display = cy._focusedBranchId ? "none" : "";
   }
 
-  cy._depthToggleButtons.forEach((btn, nodeId) => {
+  const focusControls = cy._focusControls;
+  const focusNodeId = focusControls?.dataset?.nodeId;
+  const stackedControls = focusControls?.classList.contains(
+    "visibility-control-stack",
+  );
+
+  cy._depthToggleButtons?.forEach((btn, nodeId) => {
     const node = cy.getElementById(nodeId);
     if (
       !node ||
@@ -2389,7 +2557,55 @@ function _updateDepthTogglePositions(cy) {
     btn.style.setProperty("--depth-toggle-scale", scale.toFixed(3));
     btn.style.setProperty("--depth-toggle-translate-x", translateX);
     btn.style.setProperty("--depth-toggle-translate-y", translateY);
-    btn.style.left = `${x}px`;
-    btn.style.top = `${y}px`;
+    if (stackedControls && nodeId === focusNodeId) {
+      const pairedPosition = visibilityControlPositions(bb, scale);
+      btn.style.left = `${pairedPosition.x}px`;
+      btn.style.top = `${pairedPosition.disclosureY}px`;
+    } else {
+      btn.style.left = `${x}px`;
+      btn.style.top = `${y}px`;
+    }
   });
+
+  if (focusControls?.classList.contains("graph-clear-focus-controls")) {
+    focusControls.style.display = "flex";
+    return;
+  }
+
+  const focusNode = focusNodeId ? cy.getElementById(focusNodeId) : null;
+
+  if (
+    !focusControls ||
+    !focusNode ||
+    focusNode.length === 0 ||
+    focusNode.hasClass("depth-hidden") ||
+    focusNode.hasClass("focus-hidden") ||
+    focusNode.hasClass("hidden") ||
+    zoom < hideBelowZoom
+  ) {
+    if (focusControls) focusControls.style.display = "none";
+    return;
+  }
+
+  const focusBounds = focusNode.renderedBoundingBox({ includeLabels: false });
+  if (
+    !focusBounds ||
+    focusBounds.w === 0 ||
+    Math.max(focusBounds.w, focusBounds.h) < 24
+  ) {
+    focusControls.style.display = "none";
+    return;
+  }
+
+  const focusPosition = visibilityControlPositions(focusBounds, scale);
+  focusControls.style.display = "";
+  focusControls.style.setProperty("--depth-toggle-scale", scale.toFixed(3));
+  focusControls.style.setProperty(
+    "--visibility-stack-span",
+    `${focusPosition.span / scale}px`,
+  );
+  focusControls.style.left = `${focusPosition.x}px`;
+  focusControls.style.top = `${
+    stackedControls ? focusPosition.focusY : (focusBounds.y1 + focusBounds.y2) / 2
+  }px`;
 }

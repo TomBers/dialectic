@@ -216,8 +216,11 @@ defmodule DialecticWeb.OutlineGraphLive do
         build_chapter_outline_nodes(socket.assigns.outline_nodes, selected_path)
 
       can_choose_path? =
-        Enum.map(focused_outline_nodes, & &1.id) !=
-          Enum.map(socket.assigns.outline_nodes, & &1.id)
+        can_choose_path?(
+          socket.assigns.outline_nodes,
+          focused_outline_nodes,
+          reading_node.id
+        )
 
       {:noreply,
        assign(socket,
@@ -627,8 +630,11 @@ defmodule DialecticWeb.OutlineGraphLive do
       build_chapter_outline_nodes(socket.assigns.outline_nodes, selected_path)
 
     can_choose_path? =
-      Enum.map(focused_outline_nodes, & &1.id) !=
-        Enum.map(socket.assigns.outline_nodes, & &1.id)
+      can_choose_path?(
+        socket.assigns.outline_nodes,
+        focused_outline_nodes,
+        selected_node.id
+      )
 
     active_focus_outline_nodes =
       outline_rows_for_ids(socket.assigns.outline_nodes, socket.assigns.path_focus_ids)
@@ -672,6 +678,19 @@ defmodule DialecticWeb.OutlineGraphLive do
       paths_filtered?: paths_filtered?,
       can_choose_path?: can_choose_path?
     )
+  end
+
+  defp can_choose_path?(outline_nodes, focused_outline_nodes, selected_node_id) do
+    focused_path? =
+      Enum.map(focused_outline_nodes, & &1.id) != Enum.map(outline_nodes, & &1.id)
+
+    terminal_node? =
+      case List.last(outline_nodes) do
+        nil -> false
+        node -> node.id == selected_node_id
+      end
+
+    focused_path? or terminal_node?
   end
 
   defp maybe_scroll_to_reader_node(socket, nil, _selected_node), do: socket
