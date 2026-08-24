@@ -21,7 +21,7 @@ defmodule Dialectic.Accounts.User do
     field :profile_links, :map, default: %{"links" => []}
     field :is_admin, :boolean, default: false
     field :reading_density, :string, default: "comfortable"
-    field :reading_font, :string, default: "sans"
+    field :reading_font, :string, default: "serif"
     field :graph_view_mode, :string, default: "spaced"
     field :graph_direction, :string, default: "TB"
     field :reduce_motion, :boolean, default: false
@@ -300,7 +300,7 @@ defmodule Dialectic.Accounts.User do
   def appearance_preferences(_user) do
     %{
       reading_density: "comfortable",
-      reading_font: "sans",
+      reading_font: "serif",
       graph_view_mode: "spaced",
       graph_direction: "TB",
       reduce_motion: false,

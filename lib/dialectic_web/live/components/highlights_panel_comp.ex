@@ -126,16 +126,6 @@ defmodule DialecticWeb.HighlightsPanelComp do
     highlight.node_id in (visible_node_ids || [])
   end
 
-  defp note_count(highlights) do
-    Enum.count(highlights, &note_present?/1)
-  end
-
-  defp total_link_count(highlights) do
-    Enum.reduce(highlights, 0, fn highlight, total ->
-      total + length(highlight.links || [])
-    end)
-  end
-
   defp resolve_node_titles(new_assigns, current_assigns, graph_id) do
     node_titles =
       Map.merge(current_assigns[:node_titles] || %{}, new_assigns[:node_titles] || %{})
@@ -173,41 +163,12 @@ defmodule DialecticWeb.HighlightsPanelComp do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="flex flex-col gap-3 pb-4">
+    <div class="flex flex-col gap-4 pb-6">
       <%= if length(@highlights) > 0 do %>
-        <div class="rounded-xl border border-slate-200 bg-white shadow-sm">
-          <div class="grid grid-cols-3 divide-x divide-slate-200">
-            <div class="px-2.5 py-1.5">
-              <p class="text-[9px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                Highlights
-              </p>
-              <p class="mt-1 text-lg font-semibold leading-none tracking-tight text-slate-950">
-                {length(@highlights)}
-              </p>
-            </div>
-            <div class="px-2.5 py-1.5">
-              <p class="text-[9px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                Notes
-              </p>
-              <p class="mt-1 text-lg font-semibold leading-none tracking-tight text-slate-950">
-                {note_count(@highlights)}
-              </p>
-            </div>
-            <div class="px-2.5 py-1.5">
-              <p class="text-[9px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                Links
-              </p>
-              <p class="mt-1 text-lg font-semibold leading-none tracking-tight text-slate-950">
-                {total_link_count(@highlights)}
-              </p>
-            </div>
-          </div>
-        </div>
-
         <%= for highlight <- @highlights do %>
           <div
             id={"highlight-card-#{highlight.id}"}
-            class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-colors hover:border-slate-300"
+            class="group overflow-hidden rounded-[1.4rem] border border-slate-200 bg-white shadow-[0_14px_32px_-26px_rgba(15,23,42,0.4)] transition duration-200 hover:border-slate-300 hover:shadow-[0_18px_38px_-26px_rgba(15,23,42,0.48)]"
           >
             <%= if @editing_highlight_id == highlight.id do %>
               <.form
@@ -215,20 +176,20 @@ defmodule DialecticWeb.HighlightsPanelComp do
                 id={"highlight-note-form-#{highlight.id}"}
                 phx-submit="save_note"
                 phx-target={@myself}
-                class="flex flex-col gap-3 p-4"
+                class="flex flex-col gap-4 p-4"
               >
                 <input type="hidden" name="highlight_id" value={highlight.id} />
                 <div class="space-y-1">
                   <label
                     for={"highlight-note-#{highlight.id}"}
-                    class="text-xs font-semibold text-gray-700"
+                    class="text-xs font-semibold text-slate-700"
                   >
                     Note
                   </label>
                   <textarea
                     id={"highlight-note-#{highlight.id}"}
                     name="note"
-                    class="w-full text-sm border border-indigo-200 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500 min-h-[6rem] bg-indigo-50/30"
+                    class="min-h-[7rem] w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 shadow-inner placeholder:text-slate-400 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-100"
                     rows="4"
                     placeholder="Why this matters"
                     autofocus
@@ -240,14 +201,14 @@ defmodule DialecticWeb.HighlightsPanelComp do
                     type="button"
                     phx-click="cancel_edit"
                     phx-target={@myself}
-                    class="px-3 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200"
+                    class="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
                   >
                     Cancel
                   </button>
                   <button
                     id={"highlight-note-save-#{highlight.id}"}
                     type="submit"
-                    class="px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
+                    class="inline-flex items-center justify-center rounded-full bg-slate-950 px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-slate-800"
                   >
                     Save Note
                   </button>
@@ -256,18 +217,23 @@ defmodule DialecticWeb.HighlightsPanelComp do
             <% else %>
               <div class="flex flex-col">
                 <button
+                  id={"highlight-jump-#{highlight.id}"}
                   type="button"
-                  class="mx-4 mt-3 rounded-xl border border-slate-200 border-t-4 border-t-blue-500 bg-slate-50 px-4 py-3 text-left transition hover:border-slate-300 hover:border-t-blue-600 hover:bg-slate-100"
+                  class="relative m-2.5 rounded-2xl bg-slate-50 px-4 py-4 text-left ring-1 ring-inset ring-slate-200 transition hover:bg-teal-50/60 hover:ring-teal-200"
                   phx-click="highlight_clicked"
                   phx-value-id={highlight.id}
                   phx-value-node-id={highlight.node_id}
                   title="Go to highlight"
                 >
-                  <blockquote class="border-l-2 border-slate-300 pl-4 font-serif italic text-[15px] leading-7 text-slate-900 break-words sm:text-base">
+                  <blockquote class="border-l-2 border-teal-500 pl-3.5 font-serif text-[15px] italic leading-7 text-slate-900 break-words sm:text-base">
                     “{highlight.selected_text_snapshot}”
                   </blockquote>
-                  <div class="mt-3 flex items-start gap-2 pl-4">
-                    <p class="min-w-0 text-xs font-medium leading-4 text-slate-500 break-words">
+                  <div class="mt-3 flex items-start gap-2 pl-3.5">
+                    <.icon
+                      name="hero-document-text"
+                      class="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400"
+                    />
+                    <p class="min-w-0 text-[11px] font-medium leading-4 text-slate-500 break-words">
                       {node_title(@node_titles, highlight.node_id)}
                     </p>
                     <%= if visible_in_view?(highlight, @visible_node_ids) do %>
@@ -281,31 +247,35 @@ defmodule DialecticWeb.HighlightsPanelComp do
                 </button>
 
                 <%= if note_present?(highlight) do %>
-                  <div class="mx-4 mt-2.5 rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700 break-words">
-                    <div class="mb-1.5 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                      <.icon name="hero-chat-bubble-left-ellipsis" class="h-3.5 w-3.5" /> Note
+                  <div class="mx-3 mt-0 rounded-xl bg-amber-50/70 p-3 text-xs leading-5 text-slate-700 ring-1 ring-inset ring-amber-200/70 break-words">
+                    <div class="mb-1.5 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-700">
+                      <.icon name="hero-chat-bubble-left-ellipsis" class="h-3.5 w-3.5" /> Your note
                     </div>
                     <p>{highlight.note}</p>
                   </div>
                 <% end %>
 
-                <div class="flex flex-col gap-2.5 px-4 py-3">
+                <div class="flex flex-col gap-3 px-3 pb-3 pt-2.5">
                   <%= if has_links?(highlight) do %>
-                    <div class="rounded-xl border border-slate-200 bg-slate-50/80 p-2.5">
+                    <div class="rounded-xl border border-slate-100 bg-white p-1">
+                      <p class="px-2 pb-1 pt-1.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                        Connected ideas
+                      </p>
                       <div class="flex flex-wrap gap-2">
                         <%= for link <- highlight.links do %>
                           <button
+                            id={"highlight-link-#{highlight.id}-#{link.node_id}"}
                             type="button"
                             phx-click="navigate_to_node"
                             phx-value-node_id={link.node_id}
                             title={"Navigate to " <> link_type_label(link.link_type)}
-                            class="inline-flex max-w-full items-center gap-1 rounded-full border border-white bg-white px-2.5 py-1.5 text-left shadow-sm transition hover:border-slate-300 hover:bg-slate-100"
+                            class="inline-flex max-w-full items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1.5 text-left transition hover:bg-slate-200"
                           >
                             <.icon
                               name={link_type_icon(link.link_type)}
                               class={"h-3.5 w-3.5 shrink-0 " <> link_type_color(link.link_type)}
                             />
-                            <span class="truncate text-[10px] text-slate-500">
+                            <span class="truncate text-[10px] font-medium text-slate-600">
                               {node_title(@node_titles, link.node_id)}
                             </span>
                           </button>
@@ -314,13 +284,13 @@ defmodule DialecticWeb.HighlightsPanelComp do
                     </div>
                   <% end %>
 
-                  <div class="flex items-center justify-end gap-1.5 border-t border-slate-100 pt-1">
+                  <div class="flex items-center justify-end gap-1.5 border-t border-slate-100 pt-2.5">
                     <button
                       id={"highlight-share-#{highlight.id}"}
                       type="button"
                       phx-click="open_share_modal"
                       phx-value-highlight_id={highlight.id}
-                      class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
+                      class="inline-flex items-center gap-1 rounded-full px-2.5 py-1.5 text-[11px] font-semibold text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
                       title="Share quote"
                     >
                       <.icon name="hero-share" class="h-3.5 w-3.5" />
@@ -334,7 +304,7 @@ defmodule DialecticWeb.HighlightsPanelComp do
                         phx-click="edit_highlight"
                         phx-target={@myself}
                         phx-value-id={highlight.id}
-                        class="inline-flex items-center gap-1 rounded-full border border-slate-200 px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+                        class="inline-flex items-center gap-1 rounded-full px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
                         title={if note_present?(highlight), do: "Edit note", else: "Add note"}
                         aria-label={
                           if note_present?(highlight),
@@ -354,7 +324,7 @@ defmodule DialecticWeb.HighlightsPanelComp do
                         phx-target={@myself}
                         phx-value-id={highlight.id}
                         data-confirm="Are you sure you want to delete this highlight?"
-                        class="inline-flex items-center gap-1 rounded-full border border-transparent px-2.5 py-1.5 text-[11px] font-semibold text-slate-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700"
+                        class="inline-flex items-center gap-1 rounded-full px-2.5 py-1.5 text-[11px] font-semibold text-slate-400 transition hover:bg-red-50 hover:text-red-700"
                         title="Delete highlight"
                       >
                         <.icon name="hero-trash" class="h-3.5 w-3.5" />
@@ -368,9 +338,9 @@ defmodule DialecticWeb.HighlightsPanelComp do
           </div>
         <% end %>
       <% else %>
-        <div class="flex flex-col items-center justify-center rounded-3xl border border-dashed border-slate-300 bg-white px-4 py-14 text-center shadow-sm">
-          <div class="rounded-full bg-slate-100 p-3">
-            <.icon name="hero-bookmark" class="h-6 w-6 text-slate-400" />
+        <div class="flex flex-col items-center justify-center rounded-[1.5rem] border border-dashed border-slate-300 bg-white px-5 py-14 text-center shadow-[0_14px_32px_-28px_rgba(15,23,42,0.4)]">
+          <div class="rounded-2xl bg-teal-50 p-3 text-teal-700 ring-1 ring-inset ring-teal-200/70">
+            <.icon name="hero-bookmark" class="h-6 w-6" />
           </div>
           <h3 class="mt-4 text-sm font-semibold text-slate-900">No highlights yet</h3>
           <p class="mt-2 max-w-xs text-xs leading-5 text-slate-500">

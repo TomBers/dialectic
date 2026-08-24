@@ -1,6 +1,6 @@
 export const DEFAULT_APPEARANCE = Object.freeze({
   readingDensity: "comfortable",
-  readingFont: "sans",
+  readingFont: "serif",
   graphViewMode: "spaced",
   graphDirection: "TB",
   reduceMotion: false,

@@ -411,7 +411,7 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
 
     assert has_element?(
              view,
-             "#outline-layout[data-reading-density='comfortable'][data-reading-font='sans'][data-graph-view-mode='spaced'][data-graph-direction='TB'][data-reduce-motion='false']"
+             "#outline-layout[data-reading-density='comfortable'][data-reading-font='serif'][data-graph-view-mode='spaced'][data-graph-direction='TB'][data-reduce-motion='false']"
            )
 
     assert has_element?(view, "#outline-scroll-shell[phx-hook='ReaderScroll']")
@@ -917,8 +917,8 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
 
     assert has_element?(view, "#reader-workspace-bar-highlights")
     assert has_element?(view, "#reader-workspace-bar-highlights", "1")
-    assert render(view) =~ "Reading key"
-    assert render(view) =~ "Highlights"
+    assert has_element?(view, "#highlights-drawer", "1 saved passage and connected ideas")
+    assert has_element?(view, "#reader-highlights-close")
   end
 
   test "reader loads highlight data for rendered nodes", %{conn: conn} do

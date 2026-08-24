@@ -655,18 +655,27 @@
     <div
       id="highlights-drawer"
       data-right-drawer
-      class="fixed inset-y-0 right-0 z-50 w-0 overflow-hidden border-l border-slate-200 bg-white opacity-0 transform translate-x-full transition-all duration-300 ease-in-out lg:absolute"
+      class="fixed inset-y-0 right-0 z-50 w-0 overflow-hidden border-l border-slate-200 bg-slate-50 opacity-0 shadow-[-20px_0_45px_-32px_rgba(15,23,42,0.35)] transform translate-x-full transition-all duration-300 ease-in-out lg:absolute"
     >
-      <div class="flex h-full flex-col px-3 pb-3 pt-3">
-        <div class="flex items-start justify-between gap-3 border-b border-slate-200 px-1 pb-3">
-          <div>
-            <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-              Reading key
-            </p>
-            <h2 class="mt-1 text-sm font-semibold text-slate-950">Highlights</h2>
+      <div class="flex h-full flex-col">
+        <div class="flex items-center justify-between gap-4 border-b border-slate-200 bg-white px-5 py-4">
+          <div class="flex min-w-0 items-center gap-3">
+            <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-700 ring-1 ring-inset ring-teal-200/70">
+              <.icon name="hero-bookmark" class="h-5 w-5" />
+            </span>
+            <div class="min-w-0">
+              <h2 class="text-base font-semibold tracking-tight text-slate-950">Highlights</h2>
+              <p class="mt-0.5 text-xs leading-5 text-slate-500">
+                {length(@highlights)} saved {if(length(@highlights) == 1,
+                  do: "passage",
+                  else: "passages"
+                )} and connected ideas
+              </p>
+            </div>
           </div>
 
           <button
+            id="reader-highlights-close"
             type="button"
             phx-click={
               JS.dispatch("toggle-panel",
@@ -674,7 +683,7 @@
                 detail: %{id: "highlights-drawer"}
               )
             }
-            class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50"
+            class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600"
             aria-label="Close highlights panel"
             title="Close panel"
           >
@@ -682,7 +691,7 @@
           </button>
         </div>
 
-        <div class="min-h-0 flex-1 overflow-y-auto pt-3">
+        <div class="min-h-0 flex-1 overflow-y-auto px-4 pt-4 sm:px-5">
           <.live_component
             module={DialecticWeb.HighlightsPanelComp}
             id="reader-highlights-panel"
