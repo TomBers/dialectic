@@ -833,18 +833,20 @@ function renderMdInto(el, askQuestion) {
     return;
   }
 
-  // Body-only mode: drop first line, and optionally a second heading/title line
+  // Body-only mode: drop the title line and an optional duplicate title line.
+  // Preserve the first genuine section heading.
   if (el.getAttribute("data-body-only") === "true") {
     const norm = md.replace(/\r\n|\r/g, "\n");
     const parts = norm.split("\n");
+    const title = extractTitle(parts[0] || "").trim().toLowerCase();
     const rest = parts.slice(1).join("\n").replace(/^\n+/, "");
     const lines2 = rest.split("\n");
     if (lines2.length > 0) {
       const first2 = lines2[0];
-      if (
-        /^\s*#{1,6}\s+\S/.test(first2) ||
-        /^\s*title\b\s*:?\s*/i.test(first2)
-      ) {
+      const secondTitle = extractTitle(first2).trim().toLowerCase();
+      const duplicateHeading =
+        /^\s*#{1,6}\s+\S/.test(first2) && secondTitle === title;
+      if (/^\s*title\b\s*:?\s*/i.test(first2) || duplicateHeading) {
         md = lines2.slice(1).join("\n");
       } else {
         md = rest;

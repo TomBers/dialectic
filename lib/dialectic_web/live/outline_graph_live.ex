@@ -1038,17 +1038,20 @@ defmodule DialecticWeb.OutlineGraphLive do
       |> to_string()
       |> String.replace(~r/\r\n|\r/, "\n")
 
+    [title_line | body_lines] = String.split(normalized_content, "\n")
+
     rest =
-      normalized_content
-      |> String.split("\n")
-      |> Enum.drop(1)
+      body_lines
       |> Enum.join("\n")
       |> String.trim_leading()
 
     case String.split(rest, "\n") do
       [first_line | remaining_lines] ->
-        if String.match?(first_line, ~r/^\s*\#{1,6}\s+\S/) or
-             String.match?(first_line, ~r/^\s*title\b\s*:?\s*/i) do
+        duplicate_heading? =
+          String.match?(first_line, ~r/^\s*\#{1,6}\s+\S/) and
+            normalized_title_line(first_line) == normalized_title_line(title_line)
+
+        if duplicate_heading? or String.match?(first_line, ~r/^\s*title\b\s*:?\s*/i) do
           Enum.join(remaining_lines, "\n")
         else
           rest
@@ -1079,6 +1082,14 @@ defmodule DialecticWeb.OutlineGraphLive do
       |> Enum.join(" ")
       |> Kernel.<>("…")
     end
+  end
+
+  defp normalized_title_line(line) do
+    line
+    |> String.replace(~r/^\s*\#{1,6}\s*/, "")
+    |> String.replace(~r/^\s*title\s*:?\s*/i, "")
+    |> String.trim()
+    |> String.downcase()
   end
 
   defp pluralize(1, singular, _plural), do: singular

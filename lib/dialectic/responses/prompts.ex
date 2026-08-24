@@ -445,16 +445,25 @@ defmodule Dialectic.Responses.Prompts do
       """
       The exploration has covered: **#{sanitize_title(current_idea_title)}**
 
-      **Your task:** Identify 4-5 substantive directions for further exploration. Deliberately include all of these categories:
+      **Your task:** Broaden the reader's horizons with exactly four genuinely distinct directions for further exploration, using one direction from each lens:
 
       1. **Historical or intellectual foundation:** an earlier event, debate, thinker, or primary text that shaped the idea.
       2. **Empirical or scientific connection:** relevant observations, research, mechanisms, or testable questions.
       3. **Opposing framework:** a serious rival explanation, tradition, or critic that changes how the idea is evaluated.
       4. **Cross-disciplinary or practical direction:** a connection to another field, institution, decision, or application.
 
-      For each direction, name its category, explain the non-obvious connection, and state what question or insight it opens. Include a source lead only when confident it exists and is relevant; never invent a thinker, work, study, publication detail, or URL to complete the list.
+      Make every direction a specific idea, thinker, debate, mechanism, case, or application—not merely the name of its lens. Prefer connections that are illuminating or surprising while remaining clearly relevant to the current idea.
 
-      Prioritize genuinely new directions rather than variations on what the Foundation already covered.
+      Use this exact compact structure for each direction:
+
+      ## [Specific, memorable name of the direction]
+      *Lens: [one lens from the list above]*
+      **Why it connects:** [one or two concise sentences explaining the non-obvious connection]
+      **Explore:** [one focused question that would take the inquiry somewhere new]
+
+      Give no introductory survey or concluding recap. Do not repeat the lens name as the heading or add a redundant `Category` field. Keep the four directions meaningfully different rather than offering variations on territory the Foundation already covered.
+
+      Check names and relationships carefully: do not conflate people, works, schools, findings, or dates. Do not use vague claims such as "research shows" without identifying a well-established body of work. Include a source lead only when confident it exists and directly supports the connection; omit uncertain specifics rather than inventing a thinker, work, study, publication detail, or URL.
       """
     ])
   end
@@ -468,16 +477,25 @@ defmodule Dialectic.Responses.Prompts do
       frame_minimal_context(context),
       frame_selection(selection_text),
       """
-      **Your task:** Identify 4-5 substantive directions specifically related to the selected text. Deliberately include all of these categories:
+      **Your task:** Broaden the reader's horizons with exactly four genuinely distinct directions specifically related to the selected text, using one direction from each lens:
 
       1. **Historical or intellectual foundation:** an earlier event, debate, thinker, or primary text that shaped the idea.
       2. **Empirical or scientific connection:** relevant observations, research, mechanisms, or testable questions.
       3. **Opposing framework:** a serious rival explanation, tradition, or critic that changes how the idea is evaluated.
       4. **Cross-disciplinary or practical direction:** a connection to another field, institution, decision, or application.
 
-      For each direction, name its category, explain the non-obvious connection, and state what question or insight it opens. Include a source lead only when confident it exists and is relevant; never invent a thinker, work, study, publication detail, or URL to complete the list.
+      Make every direction a specific idea, thinker, debate, mechanism, case, or application—not merely the name of its lens. Prefer connections that are illuminating or surprising while remaining clearly relevant to the selected text.
 
-      Prioritize genuinely new directions rather than variations on the Foundation or selection.
+      Use this exact compact structure for each direction:
+
+      ## [Specific, memorable name of the direction]
+      *Lens: [one lens from the list above]*
+      **Why it connects:** [one or two concise sentences explaining the non-obvious connection]
+      **Explore:** [one focused question that would take the inquiry somewhere new]
+
+      Give no introductory survey or concluding recap. Do not repeat the lens name as the heading or add a redundant `Category` field. Keep the four directions meaningfully different rather than offering variations on the Foundation or selection.
+
+      Check names and relationships carefully: do not conflate people, works, schools, findings, or dates. Do not use vague claims such as "research shows" without identifying a well-established body of work. Include a source lead only when confident it exists and directly supports the connection; omit uncertain specifics rather than inventing a thinker, work, study, publication detail, or URL.
       """
     ])
   end
