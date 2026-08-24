@@ -94,8 +94,7 @@ if config_env() == :prod do
       "https://www.rationalgrid.ai",
       "https://mudg.fly.dev"
     ],
-    secret_key_base: secret_key_base,
-    force_ssl: [hsts: true, rewrite_on: [:x_forwarded_proto]]
+    secret_key_base: secret_key_base
 
   # ## SSL Support
   #
