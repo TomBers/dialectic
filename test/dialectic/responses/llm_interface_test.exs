@@ -62,6 +62,26 @@ defmodule Dialectic.Responses.LlmInterfaceTest do
       assert persisted_job.args["response_level"] == "expert"
       assert persisted_job.args["max_tokens"] == PromptsStructured.max_output_tokens(:expert)
     end
+
+    test "always uses the Simple level for guided learning plans" do
+      {graph_id, _containing_node, question_node} = setup_context_graph()
+      :ok = ModeServer.set_mode(graph_id, :expert)
+      on_exit(fn -> ModeServer.delete_mode(graph_id) end)
+
+      child = %{child_vertex("guided-plan") | response_level: "expert", class: "learning_plan"}
+
+      assert {:ok, job} =
+               LlmInterface.gen_guided_learning_plan(question_node, child, graph_id, "topic")
+
+      persisted_job = Repo.get!(Oban.Job, job.id)
+      assert persisted_job.args["system_prompt"] =~ "Complexity level: Essential"
+      assert persisted_job.args["response_level"] == "high_school"
+
+      assert persisted_job.args["max_tokens"] ==
+               PromptsStructured.max_output_tokens(:high_school)
+
+      assert ModeServer.get_mode(graph_id) == :expert
+    end
   end
 
   describe "gen_response_minimal_context/4" do

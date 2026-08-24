@@ -140,6 +140,7 @@ defmodule Dialectic.Responses.LlmInterface do
     instruction = Prompts.guided_learning_plan(context, node.content || "")
 
     queue_response("guided_learning_plan", instruction, child, graph_id, live_view_topic,
+      mode: :high_school,
       response_contract: "guided_learning_plan"
     )
   end
@@ -436,10 +437,10 @@ defmodule Dialectic.Responses.LlmInterface do
   end
 
   defp queue_response(action, instruction, child, graph_id, live_view_topic, opts \\ []) do
-    mode = response_mode(child, graph_id)
+    {mode, request_opts} = Keyword.pop_lazy(opts, :mode, fn -> response_mode(child, graph_id) end)
     system_prompt = PromptsStructured.system_preamble(mode)
     log_prompt(action, graph_id, mode, system_prompt, instruction)
-    ask_model(instruction, system_prompt, child, graph_id, live_view_topic, mode, opts)
+    ask_model(instruction, system_prompt, child, graph_id, live_view_topic, mode, request_opts)
   end
 
   defp response_mode(child, graph_id) do
