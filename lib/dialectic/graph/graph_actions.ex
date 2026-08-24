@@ -164,7 +164,7 @@ defmodule Dialectic.Graph.GraphActions do
   def branch({graph_id, node, user, live_view_topic}, opts \\ []) do
     content_override = opts |> Keyword.get(:content_override) |> normalize_source_text()
 
-    child_opts = source_text_opts(content_override)
+    child_opts = generation_opts(source_text_opts(content_override), opts)
 
     thesis_node =
       GraphManager.add_child(
@@ -190,7 +190,18 @@ defmodule Dialectic.Graph.GraphActions do
         child_opts
       )
 
-    [thesis_node, antithesis_node]
+    nodes = [thesis_node, antithesis_node]
+
+    if Keyword.get(opts, :await_generation, false) && Enum.any?(nodes, &is_nil/1) do
+      nodes
+      |> Enum.filter(&is_map/1)
+      |> Enum.each(&GraphManager.delete_node(graph_id, &1.id))
+
+      GraphManager.save_graph(graph_id)
+      []
+    else
+      nodes
+    end
   end
 
   @doc """
@@ -240,7 +251,7 @@ defmodule Dialectic.Graph.GraphActions do
       end,
       "ideas",
       user,
-      source_text_opts(content_override)
+      generation_opts(source_text_opts(content_override), opts)
     )
   end
 
@@ -275,7 +286,7 @@ defmodule Dialectic.Graph.GraphActions do
       {^tool_key, class, llm_fn, _doc} ->
         content_override = opts |> Keyword.get(:content_override) |> normalize_source_text()
 
-        add_child_opts = source_text_opts(content_override)
+        add_child_opts = generation_opts(source_text_opts(content_override), opts)
 
         GraphManager.add_child(
           graph_id,
@@ -421,7 +432,7 @@ defmodule Dialectic.Graph.GraphActions do
       end
 
     question_opts = source_text_opts(source_text, question_prompt_kind)
-    answer_opts = source_text_opts(source_text, answer_prompt_kind)
+    answer_opts = generation_opts(source_text_opts(source_text, answer_prompt_kind), opts)
 
     # Use a 'question' node for follow-up questions
     question_node =
@@ -457,7 +468,7 @@ defmodule Dialectic.Graph.GraphActions do
         end,
         if(guided_learning, do: "learning_plan", else: "answer"),
         user,
-        answer_opts
+        Keyword.put(answer_opts, :cleanup_on_failure, [question_node.id])
       )
 
     {nil, answer_node}
@@ -511,6 +522,10 @@ defmodule Dialectic.Graph.GraphActions do
       )
 
     {nil, answer_node}
+  end
+
+  defp generation_opts(child_opts, opts) do
+    Keyword.merge(child_opts, Keyword.take(opts, [:await_generation]))
   end
 
   defp source_text_opts(source_text, prompt_kind \\ nil) do

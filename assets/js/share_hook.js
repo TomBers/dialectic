@@ -285,7 +285,12 @@ function ellipsizeCanvasLine(ctx, text, maxWidth) {
   return characters.join("").trimEnd() + ellipsis;
 }
 
+const shareCardRenderTokens = new WeakMap();
+
 export function renderShareCard(canvas, card) {
+  const renderToken = Symbol("share-card-render");
+  shareCardRenderTokens.set(canvas, renderToken);
+
   const portrait = card.orientation === "portrait";
   const width = portrait ? 1080 : 1200;
   const height = portrait ? 1350 : 630;
@@ -297,7 +302,11 @@ export function renderShareCard(canvas, card) {
 
   if (card.faviconSrc) {
     const favicon = new Image();
-    favicon.onload = () => drawShareCard(ctx, width, height, card, favicon);
+    favicon.onload = () => {
+      if (shareCardRenderTokens.get(canvas) === renderToken) {
+        drawShareCard(ctx, width, height, card, favicon);
+      }
+    };
     favicon.src = card.faviconSrc;
   }
 }

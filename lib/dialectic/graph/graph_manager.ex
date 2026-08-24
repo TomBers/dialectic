@@ -656,17 +656,37 @@ defmodule GraphManager do
     result = add_edges(graph_id, node, parents)
 
     # Ensure the structural edge exists before generation can update or persist the child.
-    if Application.get_env(:dialectic, :sync_tasks_for_testing, false) do
-      llm_fn.(result)
-    else
-      Task.Supervisor.start_child(Dialectic.TaskSupervisor, fn -> llm_fn.(result) end)
-    end
+    generation_result =
+      if Application.get_env(:dialectic, :sync_tasks_for_testing, false) ||
+           Keyword.get(opts, :await_generation, false) do
+        llm_fn.(result)
+      else
+        Task.Supervisor.start_child(Dialectic.TaskSupervisor, fn -> llm_fn.(result) end)
+      end
+
+    result =
+      case {Keyword.get(opts, :await_generation, false), generation_result} do
+        {true, {:error, _reason}} ->
+          cleanup_failed_child(graph_id, result, opts)
+          nil
+
+        {_await_generation?, _queued_or_async} ->
+          result
+      end
 
     if Keyword.get(opts, :save, true) do
       save_graph(graph_id)
     end
 
     result
+  end
+
+  defp cleanup_failed_child(graph_id, child, opts) do
+    cleanup_node_ids = Keyword.get(opts, :cleanup_on_failure, [])
+
+    Enum.each([child.id | cleanup_node_ids], fn node_id ->
+      delete_node(graph_id, node_id)
+    end)
   end
 
   defp put_response_level(fields, _graph_id, class) when class in ["user", "question", "origin"],

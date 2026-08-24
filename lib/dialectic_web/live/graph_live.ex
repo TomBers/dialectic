@@ -606,7 +606,8 @@ defmodule DialecticWeb.GraphLive do
                   {_graph, answer_node} =
                     GraphActions.ask_and_answer(
                       graph_action_params(socket, plan_node),
-                      path.question
+                      path.question,
+                      await_generation: true
                     )
 
                   if is_map(answer_node) do
@@ -2247,7 +2248,8 @@ defmodule DialecticWeb.GraphLive do
       {:ok, :branch} ->
         nodes =
           create_branch_nodes(socket, plan_node,
-            content_override: Map.get(target_node, :content, "")
+            content_override: Map.get(target_node, :content, ""),
+            await_generation: true
           )
 
         if nodes == [] do
@@ -2266,7 +2268,8 @@ defmodule DialecticWeb.GraphLive do
       {:ok, :related_ideas} ->
         result_node =
           GraphActions.related_ideas(graph_action_params(socket, plan_node),
-            content_override: Map.get(target_node, :content, "")
+            content_override: Map.get(target_node, :content, ""),
+            await_generation: true
           )
 
         if is_map(result_node) do
@@ -2281,7 +2284,8 @@ defmodule DialecticWeb.GraphLive do
           GraphActions.apply_thinking_tool(
             tool,
             graph_action_params(socket, plan_node),
-            content_override: Map.get(target_node, :content, "")
+            content_override: Map.get(target_node, :content, ""),
+            await_generation: true
           )
 
         case result_node do

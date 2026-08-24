@@ -37,7 +37,7 @@ describe("appearance preferences", () => {
   it("falls back to guest defaults for missing or invalid values", () => {
     expect(appearanceFromDataset({ graphDirection: "diagonal" })).toEqual({
       readingDensity: "comfortable",
-      readingFont: "sans",
+      readingFont: "serif",
       graphViewMode: "spaced",
       graphDirection: "TB",
       reduceMotion: false,

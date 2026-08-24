@@ -1,7 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   balanceCanvasLines,
   fitCanvasText,
+  renderShareCard,
   wrapCanvasText,
 } from "../share_hook.js";
 
@@ -14,6 +15,58 @@ function measuredContext() {
     },
   };
 }
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
+describe("share card canvas rendering", () => {
+  it("ignores stale favicon loads, including after a render without a favicon", () => {
+    const images = [];
+
+    vi.stubGlobal(
+      "Image",
+      class {
+        constructor() {
+          images.push(this);
+        }
+      },
+    );
+
+    const drawImage = vi.fn();
+    const gradient = { addColorStop: vi.fn() };
+    const ctx = {
+      beginPath: vi.fn(),
+      createLinearGradient: vi.fn(() => gradient),
+      createRadialGradient: vi.fn(() => gradient),
+      drawImage,
+      fill: vi.fn(),
+      fillRect: vi.fn(),
+      fillText: vi.fn(),
+      lineTo: vi.fn(),
+      measureText: (text) => ({ width: Array.from(text).length * 10 }),
+      moveTo: vi.fn(),
+      roundRect: vi.fn(),
+      stroke: vi.fn(),
+    };
+    const canvas = { getContext: () => ctx };
+    const card = { orientation: "landscape", text: "Current idea", source: "" };
+
+    renderShareCard(canvas, { ...card, faviconSrc: "/old.ico" });
+    const staleImage = images[0];
+
+    renderShareCard(canvas, card);
+    staleImage.onload();
+
+    expect(drawImage).not.toHaveBeenCalled();
+
+    renderShareCard(canvas, { ...card, faviconSrc: "/current.ico" });
+    images[1].onload();
+
+    expect(drawImage).toHaveBeenCalledTimes(1);
+    expect(drawImage).toHaveBeenCalledWith(images[1], expect.any(Number), 76, 26, 26);
+  });
+});
 
 describe("share card canvas typography", () => {
   it("wraps using measured text width", () => {

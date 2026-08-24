@@ -336,6 +336,46 @@ defmodule GraphManagerTest do
       assert v2 == child.id
     end
 
+    test "add_child cleans up failed awaited generation nodes", %{graph: _} do
+      parent =
+        GraphManager.add_node(@graph_id, %Vertex{
+          content: "parent",
+          class: "origin",
+          user: @test_user
+        })
+
+      question =
+        GraphManager.add_child(
+          @graph_id,
+          [parent],
+          fn _ -> "question" end,
+          "question",
+          @test_user,
+          save: false
+        )
+
+      assert nil ==
+               GraphManager.add_child(
+                 @graph_id,
+                 [question],
+                 fn _child -> {:error, :too_many_active_requests} end,
+                 "answer",
+                 @test_user,
+                 await_generation: true,
+                 cleanup_on_failure: [question.id]
+               )
+
+      assert GraphManager.find_node_by_id(@graph_id, question.id).deleted
+
+      failed_answer =
+        @graph_id
+        |> GraphManager.vertices()
+        |> Enum.map(&GraphManager.find_node_by_id(@graph_id, &1))
+        |> Enum.find(&(&1.class == "answer"))
+
+      assert failed_answer.deleted
+    end
+
     test "add_child preserves the default save and can explicitly skip it", %{graph: _} do
       parent =
         GraphManager.add_node(@graph_id, %Vertex{
