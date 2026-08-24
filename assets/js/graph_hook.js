@@ -364,39 +364,6 @@ const graphHook = {
     );
     this._scheduleFontAwareRedraw();
 
-    this.handleEvent("request_screenshot", () => {
-      if (this.cy) {
-        const stateSelected = this.cy.$(":selected");
-        const classSelected = this.cy.$(".selected");
-        const contextSelected = this.cy.$(".selected-neighbor, .selected-edge");
-
-        stateSelected.unselect();
-        classSelected.removeClass("selected");
-        contextSelected.removeClass("selected-neighbor selected-edge");
-
-        setTimeout(() => {
-          if (!this.cy) return;
-          const png = this.cy.png({
-            output: "base64uri",
-            full: true,
-            scale: 1.5,
-            bg: "white",
-          });
-
-          stateSelected.select();
-          classSelected.addClass("selected");
-          contextSelected.forEach((ele) => {
-            if (ele.isEdge && ele.isEdge()) {
-              ele.addClass("selected-edge");
-            } else {
-              ele.addClass("selected-neighbor");
-            }
-          });
-          this.pushEvent("save_screenshot", { image: png });
-        }, 200);
-      }
-    });
-
     // Handle view mode changes from client-side toggle via custom DOM event
     // Handle view mode changes via custom event
     this._onViewModeChange = (e) => {
@@ -743,13 +710,6 @@ const graphHook = {
           // no-op
         }
       };
-    }
-
-    if (!this._downloadGraphPngHandler) {
-      this._downloadGraphPngHandler = (event) => {
-        this._exportGraphPng(event?.detail?.filename || "");
-      };
-      window.addEventListener("download-graph-png", this._downloadGraphPngHandler);
     }
 
     if (!this._exportPngHandler) {
@@ -2465,10 +2425,6 @@ const graphHook = {
         el.removeEventListener("click", handler);
       });
       this._btnPngHandlers = null;
-    }
-    if (this._downloadGraphPngHandler) {
-      window.removeEventListener("download-graph-png", this._downloadGraphPngHandler);
-      this._downloadGraphPngHandler = null;
     }
     if (this._exploreBtnEl && this._exploreClickHandler) {
       this._exploreBtnEl.removeEventListener(

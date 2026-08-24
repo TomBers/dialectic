@@ -1214,21 +1214,7 @@ defmodule DialecticWeb.GraphLive do
       socket.assigns.graph_struct
       |> HighlightShare.highlight_for_graph(Map.get(params, "highlight_id"))
 
-    socket =
-      socket
-      |> assign(show_share_modal: true, selected_share_highlight: share_highlight)
-      |> maybe_request_share_screenshot(share_highlight)
-
-    {:noreply, socket}
-  end
-
-  def handle_event("save_screenshot", %{"image" => image_data}, socket) do
-    graph = socket.assigns.graph_struct
-    # Update in memory only for modal display
-    new_data = Map.put(graph.data || %{}, "preview_image", image_data)
-    updated_graph = %{graph | data: new_data}
-
-    {:noreply, assign(socket, graph_struct: updated_graph)}
+    {:noreply, assign(socket, show_share_modal: true, selected_share_highlight: share_highlight)}
   end
 
   def handle_event("close_share_modal", _params, socket) do
@@ -3079,11 +3065,6 @@ defmodule DialecticWeb.GraphLive do
       |> assign(highlights: highlights)
     end
   end
-
-  defp maybe_request_share_screenshot(socket, %{id: _id}), do: socket
-
-  defp maybe_request_share_screenshot(socket, _highlight),
-    do: push_event(socket, "request_screenshot", %{})
 
   defp serialize_highlights(highlights) do
     Enum.map(highlights, fn h ->

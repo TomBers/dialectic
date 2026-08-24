@@ -766,7 +766,11 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert has_element?(view, "#share-modal-hook")
     assert render(view) =~ "Share Quote"
     assert has_element?(view, ~s(#share-url-input[value="#{share_url}"]))
-    assert render(view) =~ "/g/#{graph.slug}/highlights/#{highlight.id}/share-card.svg?v="
+
+    assert has_element?(
+             view,
+             ~s(#quote-share-preview[data-share-card-canvas][data-card-text="Meaning is use."])
+           )
   end
 
   test "reader search opens from the top bar and patches to the selected result", %{conn: conn} do
