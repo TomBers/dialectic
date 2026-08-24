@@ -42,3 +42,6 @@ kill_signal = 'SIGTERM'
   method = "GET"
   timeout = "10s"
   path = "/health"
+
+  [http_service.checks.headers]
+    X-Forwarded-Proto = "https"
