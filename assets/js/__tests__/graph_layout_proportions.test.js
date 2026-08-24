@@ -132,6 +132,18 @@ describe("graph layout proportions", () => {
       data: (key) => (key === "relation" ? "counterexample" : undefined),
       target: () => ({ classes: () => [] }),
     };
+    const relatedIdeasEdge = {
+      data: (key) => (key === "relation" ? "ideas" : undefined),
+      target: () => ({ classes: () => [] }),
+    };
+    const answerEdge = {
+      data: (key) => (key === "relation" ? "answer" : undefined),
+      target: () => ({ classes: () => [] }),
+    };
+    const explanationEdge = {
+      data: (key) => (key === "relation" ? "explain" : undefined),
+      target: () => ({ classes: () => [] }),
+    };
     const legacyEdge = {
       data: () => undefined,
       target: () => ({ classes: () => ["clarify"] }),
@@ -144,6 +156,9 @@ describe("graph layout proportions", () => {
     expect(edgeStyle.label).toBe("");
     expect(hoverStyle.label(relationEdge)).toBe("tests with a counterexample");
     expect(selectedStyle.label(relationEdge)).toBe("tests with a counterexample");
+    expect(hoverStyle.label(relatedIdeasEdge)).toBe("explores related ideas");
+    expect(hoverStyle.label(answerEdge)).toBe("is answered by");
+    expect(hoverStyle.label(explanationEdge)).toBe("is explained by");
     expect(hoverStyle.label(legacyEdge)).toBe("clarifies");
     expect(hoverStyle.label(unknownEdge)).toBe("leads to");
     expect(hoverStyle["text-rotation"]).toBe("none");
