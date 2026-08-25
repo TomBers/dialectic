@@ -929,6 +929,13 @@ defmodule DialecticWeb.GraphLive do
     if node do
       socket = clear_completed_background_generations(socket)
 
+      socket =
+        if socket.assigns.reader_path_ids == [] do
+          socket
+        else
+          assign_reader_path(socket, node_id)
+        end
+
       {:noreply, updated_socket} = update_graph(socket, {nil, node}, "node_clicked")
 
       {:noreply,

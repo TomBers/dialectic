@@ -40,6 +40,21 @@ describe("syncSelectedNodeUrl", () => {
     expect(readerUrl.searchParams.get("token")).toBe("share");
   });
 
+  it("moves the selected path endpoint with a server-driven node change", () => {
+    document.body.innerHTML = `
+      <a id="graph-workspace-bar-reader" href="/g/test-topic?node=1&token=share&path=9">Read</a>
+    `;
+
+    syncSelectedNodeUrl("32", "32");
+
+    expect(window.location.search).toBe("?node=32&token=share&path=32");
+    const readerUrl = new URL(
+      document.getElementById("graph-workspace-bar-reader").href,
+    );
+    expect(readerUrl.searchParams.get("node")).toBe("32");
+    expect(readerUrl.searchParams.get("path")).toBe("32");
+  });
+
   it("removes a stale path from the reader link", () => {
     document.body.innerHTML = `
       <a id="graph-workspace-bar-reader" href="/g/test-topic?node=1&path=9">Read</a>

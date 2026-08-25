@@ -1209,6 +1209,41 @@ defmodule DialecticWeb.GraphLiveTest do
       refute Map.has_key?(viewed_state.socket.assigns.background_generations, answer_node.id)
     end
 
+    test "viewing a background answer extends an active reader path to the answer", %{conn: conn} do
+      {:ok, view, _html} = setup_live_with_data(conn, source_text_graph_data(), "2")
+      initial_state = :sys.get_state(view.pid).socket.assigns
+
+      assert initial_state.reader_path_endpoint == "2"
+
+      render_click(view, "reply-and-answer", %{
+        "vertex" => %{"content" => "How does this follow?"},
+        "query_origin" => "selection"
+      })
+
+      generation =
+        view.pid
+        |> :sys.get_state()
+        |> then(& &1.socket.assigns.background_generations)
+        |> Map.values()
+        |> List.first()
+
+      send(view.pid, {:llm_request_complete, generation.target_node_id})
+      :sys.get_state(view.pid)
+
+      view
+      |> element("#open-background-answer-#{generation.id}")
+      |> render_click()
+
+      viewed_state = :sys.get_state(view.pid).socket.assigns
+      assert viewed_state.reader_path_endpoint == generation.target_node_id
+      assert List.last(viewed_state.reader_path_ids) == generation.target_node_id
+
+      assert has_element?(
+               view,
+               "#cy[data-reader-path-endpoint='#{generation.target_node_id}']"
+             )
+    end
+
     test "custom question uses the selection event node when the current node is stale", %{
       conn: conn
     } do
