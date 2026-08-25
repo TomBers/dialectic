@@ -339,7 +339,7 @@ const graphHook = {
     const appearance = syncGraphAppearanceStorage(this.el.dataset);
     this._reduceMotion = appearance.reduceMotion;
     this._highContrast = appearance.highContrast;
-    syncSelectedNodeUrl(node);
+    syncSelectedNodeUrl(node, this.el.dataset.readerPathEndpoint);
     const { mode: initialPresentationMode, ids: initialPresentationIds } =
       this._readPresentationState();
 
@@ -2267,7 +2267,7 @@ const graphHook = {
 
   updated() {
     const { graph, node, operation } = this.el.dataset;
-    syncSelectedNodeUrl(node);
+    syncSelectedNodeUrl(node, this.el.dataset.readerPathEndpoint);
     const { mode: presentationMode, ids: presentationIds } =
       this._readPresentationState();
 
@@ -2478,7 +2478,9 @@ const graphHook = {
       this._bindPngButtons();
     }
 
-    this._syncReaderPathFocus();
+    // Replacing Cytoscape elements drops the focus-hidden classes even when the
+    // server-side path IDs are unchanged, so graph updates must reapply them.
+    this._syncReaderPathFocus({ force: !sameGraph });
 
     // Debug redraw of bounds on update (no pan to avoid jitter)
     if (this._debugRedraw) this._debugRedraw();

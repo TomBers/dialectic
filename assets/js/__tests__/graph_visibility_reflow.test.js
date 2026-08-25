@@ -69,6 +69,49 @@ describe("graph visibility reflow", () => {
     cy.destroy();
   });
 
+  it("can reapply an unchanged reader path after graph elements are replaced", () => {
+    vi.stubGlobal("requestAnimationFrame", (callback) => {
+      callback();
+      return 1;
+    });
+    const cy = cytoscape({
+      headless: true,
+      elements: [
+        { data: { id: "root" } },
+        { data: { id: "path-node" } },
+        { data: { id: "sibling" } },
+        { data: { id: "root-path", source: "root", target: "path-node" } },
+        { data: { id: "root-sibling", source: "root", target: "sibling" } },
+      ],
+    });
+
+    focusPath(cy, ["root", "path-node"], null, undefined, { animate: false });
+    expect(cy.getElementById("sibling").hasClass("focus-hidden")).toBe(true);
+
+    cy.json({
+      elements: [
+        { data: { id: "root" } },
+        { data: { id: "path-node" } },
+        { data: { id: "sibling" } },
+        { data: { id: "new-node" } },
+        { data: { id: "root-path", source: "root", target: "path-node" } },
+        { data: { id: "root-sibling", source: "root", target: "sibling" } },
+        { data: { id: "sibling-new", source: "sibling", target: "new-node" } },
+      ],
+    });
+
+    expect(cy.getElementById("sibling").hasClass("focus-hidden")).toBe(true);
+    expect(cy.getElementById("new-node").hasClass("focus-hidden")).toBe(false);
+    expect(cy.getElementById("sibling-new").hasClass("focus-hidden")).toBe(false);
+    focusPath(cy, ["root", "path-node"], null, undefined, { animate: false });
+    expect(cy.getElementById("sibling").hasClass("focus-hidden")).toBe(true);
+    expect(cy.getElementById("new-node").hasClass("focus-hidden")).toBe(true);
+    expect(cy.getElementById("root-sibling").hasClass("focus-hidden")).toBe(true);
+    expect(cy.getElementById("sibling-new").hasClass("focus-hidden")).toBe(true);
+
+    cy.destroy();
+  });
+
   it("focuses one exact path and restores all paths", () => {
     vi.stubGlobal("requestAnimationFrame", vi.fn());
     window.history.replaceState({}, "", "/g/example/graph?node=branch-a");

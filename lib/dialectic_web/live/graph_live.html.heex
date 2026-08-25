@@ -428,6 +428,7 @@
         data-graph={@f_graph}
         data-node={if @node, do: @node.id, else: nil}
         data-reader-path-ids={Jason.encode!(@reader_path_ids)}
+        data-reader-path-endpoint={@reader_path_endpoint}
         data-operation={@graph_operation}
         data-presentation-mode={@presentation_mode}
         data-presentation-slide-ids={Jason.encode!(@presentation_slide_ids)}
