@@ -149,14 +149,16 @@ defmodule DialecticWeb.HomeLiveTest do
   test "renders a focused benefit-led hero", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/")
 
+    assert has_element?(view, "#home-hero-logo")
+    assert has_element?(view, "#home-hero-brand", "RationalGrid")
+    assert has_element?(view, "#home-hero-tagline", "See what you think.")
+
     assert has_element?(
              view,
-             "#home-hero-title",
-             "For questions that matter, make up your own mind."
+             "#home-hero-subheading",
+             "Explore with AI to discover new information, then keep, find, and share what matters."
            )
 
-    assert has_element?(view, "#home-video-hero", "Explore with AI to discover new information")
-    assert has_element?(view, "#home-video-hero", "keep, find, and share what matters")
     assert has_element?(view, "#home-video-hero", "Explore a question")
     refute has_element?(view, "#home-video-hero video")
 
@@ -209,7 +211,7 @@ defmodule DialecticWeb.HomeLiveTest do
     assert has_element?(
              view,
              "footer p.text-slate-400",
-             "Questions, evidence, and reasoning—connected."
+             "See what you think."
            )
   end
 
