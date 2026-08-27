@@ -292,14 +292,38 @@ defmodule DialecticWeb.HomeLive do
           <div class="max-w-4xl">
             <h1
               id="home-hero-title"
-              class="text-balance font-serif text-5xl font-semibold leading-[0.98] tracking-tight text-white sm:text-7xl lg:text-[5.4rem]"
+              class="flex items-start gap-4 text-white sm:gap-6"
             >
-              For questions that matter, make up your own mind.
+              <img
+                id="home-hero-logo"
+                src={~p"/images/favicon-56.webp"}
+                alt=""
+                width="56"
+                height="56"
+                class="mt-1 h-16 w-16 shrink-0 sm:h-24 sm:w-24"
+              />
+              <span class="min-w-0">
+                <span
+                  id="home-hero-brand"
+                  class="block text-4xl font-semibold leading-none tracking-[-0.035em] sm:text-6xl"
+                >
+                  RationalGrid
+                </span>
+                <span
+                  id="home-hero-tagline"
+                  class="mt-3 block text-2xl font-normal leading-none tracking-tight text-slate-300 sm:text-4xl"
+                >
+                  See what you think.
+                </span>
+              </span>
             </h1>
-            <p class="mt-5 max-w-2xl text-balance text-lg leading-8 text-slate-200 sm:text-xl">
+            <p
+              id="home-hero-subheading"
+              class="mt-8 text-lg leading-8 text-slate-200"
+            >
               Explore with AI to discover new information, then keep, find, and share what matters.
             </p>
-            <div class="mt-7 flex flex-wrap items-center gap-3">
+            <div class="mt-12 flex flex-wrap items-center gap-4">
               <.link
                 href="#start-here"
                 class="inline-flex items-center gap-2 rounded-md bg-teal-300 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-teal-200"
@@ -557,7 +581,7 @@ defmodule DialecticWeb.HomeLive do
             />
             <div>
               <p class="font-semibold text-white">RationalGrid</p>
-              <p class="text-xs text-slate-400">Questions, evidence, and reasoning—connected.</p>
+              <p class="text-xs text-slate-400">See what you think.</p>
             </div>
           </div>
           <nav aria-label="Homepage footer" class="flex flex-wrap gap-x-5 gap-y-2 text-sm">
