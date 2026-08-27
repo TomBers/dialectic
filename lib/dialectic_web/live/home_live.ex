@@ -296,11 +296,11 @@ defmodule DialecticWeb.HomeLive do
             >
               <img
                 id="home-hero-logo"
-                src={~p"/images/favicon-56.webp"}
+                src={~p"/images/brandmark.svg"}
                 alt=""
                 width="56"
                 height="56"
-                class="mt-1 h-16 w-16 shrink-0 sm:h-24 sm:w-24"
+                class="mt-1 h-8 w-8 shrink-0 sm:mt-2 sm:h-12 sm:w-12"
               />
               <span class="min-w-0">
                 <span
@@ -573,7 +573,7 @@ defmodule DialecticWeb.HomeLive do
         <div class="mx-auto flex w-full max-w-7xl flex-col gap-5 px-5 py-8 sm:flex-row sm:items-center sm:justify-between sm:px-8 lg:px-10">
           <div class="flex items-center gap-3">
             <img
-              src={~p"/images/favicon-56.webp"}
+              src={~p"/images/brandmark.svg"}
               alt="RationalGrid"
               width="56"
               height="56"
