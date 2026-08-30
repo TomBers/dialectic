@@ -24,6 +24,12 @@ defmodule DialecticWeb.HomeLive do
       question: "How does RationalGrid use sources?",
       answer:
         "Simple answers do not perform source research unless you ask for it. Expanded and In-depth answers are prompted to ground material claims in relevant primary, scholarly, or official sources, but AI can be wrong and important claims should be checked."
+    },
+    %{
+      id: "chat-assistants",
+      question: "Why not just use ChatGPT or Claude?",
+      answer:
+        "You can—and sometimes should. ChatGPT or Claude is often simpler for a quick answer, draft, or short conversation. RationalGrid is useful when the path matters: it keeps questions, sources, notes, and branches connected so you can return, check evidence, compare views, share, and build with others."
     }
   ]
 
@@ -570,23 +576,6 @@ defmodule DialecticWeb.HomeLive do
         </div>
       </section>
 
-      <section id="home-testimonial" class="border-b border-stone-300 bg-white">
-        <div class="mx-auto w-full max-w-5xl px-5 py-12 sm:px-8 sm:py-16">
-          <figure class="border-l-4 border-teal-500 pl-6 sm:pl-8">
-            <blockquote class="font-serif text-2xl leading-relaxed text-slate-900 sm:text-3xl">
-              “An amazing free specialised AI tool to explore philosophical ideas around pretty much
-              anything—from academic questions to films to… hamsters! All at one’s fingertips, in a
-              matter of seconds, with in-built tools for a sophisticated, yet accessible dialectic.
-              Bravo!”
-            </blockquote>
-            <figcaption class="mt-5 text-sm font-semibold text-slate-600">
-              Alexandra Konoplyanik
-              <span class="font-normal">— Philosophy for All and RationalGrid adviser</span>
-            </figcaption>
-          </figure>
-        </div>
-      </section>
-
       <section id="home-research-case-study" class="border-b border-stone-300 bg-[#f4f1e9]">
         <div class="mx-auto grid w-full max-w-6xl gap-7 px-5 py-12 sm:px-8 sm:py-16 lg:grid-cols-[15rem_minmax(0,1fr)] lg:px-10">
           <div>
@@ -625,6 +614,23 @@ defmodule DialecticWeb.HomeLive do
               </a>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section id="home-testimonial" class="border-b border-stone-300 bg-white">
+        <div class="mx-auto w-full max-w-5xl px-5 py-12 sm:px-8 sm:py-16">
+          <figure class="border-l-4 border-teal-500 pl-6 sm:pl-8">
+            <blockquote class="font-serif text-2xl leading-relaxed text-slate-900 sm:text-3xl">
+              “An amazing free specialised AI tool to explore philosophical ideas around pretty much
+              anything—from academic questions to films to… hamsters! All at one’s fingertips, in a
+              matter of seconds, with in-built tools for a sophisticated, yet accessible dialectic.
+              Bravo!”
+            </blockquote>
+            <figcaption class="mt-5 text-sm font-semibold text-slate-600">
+              Alexandra Konoplyanik
+              <span class="font-normal">— Philosophy for All and RationalGrid adviser</span>
+            </figcaption>
+          </figure>
         </div>
       </section>
 
@@ -671,6 +677,19 @@ defmodule DialecticWeb.HomeLive do
         </div>
       </section>
 
+      <section id="home-definition" class="border-b border-slate-800 bg-slate-900 text-white">
+        <div class="mx-auto w-full max-w-7xl px-5 py-10 sm:px-8 sm:py-12 lg:px-10">
+          <h2 class="font-serif text-3xl font-semibold tracking-tight sm:text-4xl">
+            What is RationalGrid?
+          </h2>
+          <p class="mt-4 max-w-3xl text-base leading-7 text-slate-300">
+            RationalGrid is a free, non-profit, AI-assisted research and argument-mapping tool. It
+            helps students and researchers organize claims and evidence into structured, shareable
+            formats.
+          </p>
+        </div>
+      </section>
+
       <section id="home-ai-limits-faq" class="border-b border-stone-300 bg-[#f4f1e9]">
         <div class="mx-auto w-full max-w-5xl px-5 py-12 sm:px-8 sm:py-16">
           <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
@@ -701,16 +720,33 @@ defmodule DialecticWeb.HomeLive do
         </div>
       </section>
 
-      <section id="home-definition" class="border-b border-slate-800 bg-slate-900 text-white">
-        <div class="mx-auto w-full max-w-7xl px-5 py-10 sm:px-8 sm:py-12 lg:px-10">
-          <h2 class="font-serif text-3xl font-semibold tracking-tight sm:text-4xl">
-            What is RationalGrid?
-          </h2>
-          <p class="mt-4 max-w-3xl text-base leading-7 text-slate-300">
-            RationalGrid is a free, non-profit, AI-assisted research and argument-mapping tool. It
-            helps students and researchers organize claims and evidence into structured, shareable
-            formats.
-          </p>
+      <section id="home-final-cta" class="border-b border-slate-700 bg-slate-950 text-white">
+        <div class="mx-auto flex w-full max-w-5xl flex-col gap-6 px-5 py-12 sm:flex-row sm:items-center sm:justify-between sm:px-8 sm:py-14">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-300">
+              Follow the reasoning
+            </p>
+            <h2 class="mt-2 font-serif text-3xl font-semibold tracking-tight sm:text-4xl">
+              Start with a question that matters.
+            </h2>
+          </div>
+          <%= if @current_user do %>
+            <.link
+              id="home-final-start-grid-link"
+              href="#start-here"
+              class="inline-flex shrink-0 items-center justify-center gap-2 rounded-md bg-teal-300 px-6 py-3.5 text-base font-semibold text-slate-950 transition hover:bg-teal-200"
+            >
+              Start a grid <.icon name="hero-arrow-up" class="h-4 w-4" />
+            </.link>
+          <% else %>
+            <.link
+              id="home-final-sign-up-link"
+              navigate={~p"/users/register"}
+              class="inline-flex shrink-0 items-center justify-center gap-2 rounded-md bg-teal-300 px-6 py-3.5 text-base font-semibold text-slate-950 transition hover:bg-teal-200"
+            >
+              Sign up free <.icon name="hero-arrow-right" class="h-4 w-4" />
+            </.link>
+          <% end %>
         </div>
       </section>
 

@@ -41,7 +41,7 @@ defmodule DialecticWeb.HomeLiveTest do
     assert product["isAccessibleForFree"] == true
     assert product["offers"]["price"] == "0.00"
     assert product["offers"]["priceCurrency"] == "USD"
-    assert length(faq_page["mainEntity"]) == 3
+    assert length(faq_page["mainEntity"]) == 4
 
     assert Enum.any?(faq_page["mainEntity"], fn question ->
              question["name"] == "What are the AI usage limits?" and
@@ -197,6 +197,13 @@ defmodule DialecticWeb.HomeLiveTest do
 
     assert has_element?(view, "#home-video-hero", "Explore a question")
     assert has_element?(view, ~s(#home-sign-up-link[href="/users/register"]), "Sign up free")
+
+    assert has_element?(
+             view,
+             ~s(#home-final-sign-up-link[href="/users/register"]),
+             "Sign up free"
+           )
+
     refute has_element?(view, "#home-video-hero video")
 
     assert has_element?(
@@ -226,7 +233,9 @@ defmodule DialecticWeb.HomeLiveTest do
       |> live(~p"/")
 
     assert has_element?(view, ~s(#home-start-grid-link[href="#start-here"]), "Start a grid")
+    assert has_element?(view, ~s(#home-final-start-grid-link[href="#start-here"]), "Start a grid")
     refute has_element?(view, "#home-sign-up-link")
+    refute has_element?(view, "#home-final-sign-up-link")
   end
 
   test "shows the product briefly and links to the detailed pages", %{conn: conn} do
@@ -298,6 +307,14 @@ defmodule DialecticWeb.HomeLiveTest do
 
     assert has_element?(
              view,
+             "#home-faq-chat-assistants",
+             "Why not just use ChatGPT or Claude?"
+           )
+
+    assert has_element?(view, "#home-faq-chat-assistants", "when the path matters")
+
+    assert has_element?(
+             view,
              ~s(#home-ai-limits-details-link[href="/intro/ai"]),
              "Learn how AI and sources work"
            )
@@ -318,6 +335,15 @@ defmodule DialecticWeb.HomeLiveTest do
              view,
              "footer p.text-slate-400",
              "See what you think."
+           )
+  end
+
+  test "orders explanation, proof, examples, reassurance, and final action", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/")
+
+    assert has_element?(
+             view,
+             "#home-product-preview + #home-research-case-study + #home-testimonial + #popular-grids + #home-definition + #home-ai-limits-faq + #home-final-cta + footer"
            )
   end
 
