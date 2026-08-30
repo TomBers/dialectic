@@ -298,7 +298,8 @@ defmodule DialecticWeb.HomeLiveTest do
     assert has_element?(view, "#popular-grids", "See what other people explored.")
 
     assert has_element?(view, "#home-testimonial", "An amazing free specialised AI tool")
-    assert has_element?(view, "#home-testimonial", "Philosophy for All and RationalGrid adviser")
+    assert has_element?(view, "#home-testimonial figcaption", "Alexandra Konoplyanik")
+    assert has_element?(view, "#home-testimonial figcaption", "RationalGrid adviser")
 
     assert has_element?(
              view,
@@ -323,11 +324,17 @@ defmodule DialecticWeb.HomeLiveTest do
     assert has_element?(
              view,
              "#home-research-case-study",
-             "From an article to 35 connected lines of inquiry."
+             "How Philosophy Now mapped one article into 35 connected ideas."
            )
 
     assert has_element?(view, "#home-research-case-study", "Ignacio Gonzalez")
     assert has_element?(view, "#home-research-case-study", "psychological susceptibility")
+
+    assert has_element?(
+             view,
+             ~s(#home-case-study-heading-organization-link[href="https://philosophynow.org/"][target="_blank"]),
+             "Philosophy Now"
+           )
 
     assert has_element?(
              view,

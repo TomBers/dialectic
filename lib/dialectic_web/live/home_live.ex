@@ -868,7 +868,15 @@ defmodule DialecticWeb.HomeLive do
                 Research case study
               </p>
               <h3 class="mt-3 font-serif text-3xl font-semibold tracking-tight">
-                From an article to 35 connected lines of inquiry.
+                How
+                <a
+                  id="home-case-study-heading-organization-link"
+                  href="https://philosophynow.org/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-teal-800 underline decoration-teal-500 underline-offset-4 transition hover:text-teal-950 hover:decoration-teal-700"
+                >Philosophy Now</a>
+                mapped one article into 35 connected ideas.
               </h3>
             </div>
             <div class="border-l-2 border-teal-600 pl-5 sm:pl-7">
@@ -919,22 +927,25 @@ defmodule DialecticWeb.HomeLive do
             class="hidden border-l-4 border-teal-500 pl-6 sm:pl-8"
             hidden
           >
-            <blockquote class="font-serif text-2xl leading-relaxed text-slate-900 sm:text-3xl">
+            <blockquote class="max-w-4xl font-serif text-xl leading-relaxed text-slate-800 sm:text-2xl">
               “An amazing free specialised AI tool to explore philosophical ideas around pretty much
               anything—from academic questions to films to… hamsters! All at one’s fingertips, in a
               matter of seconds, with in-built tools for a sophisticated, yet accessible dialectic.
               Bravo!”
             </blockquote>
-            <figcaption class="mt-5 text-sm font-semibold text-slate-600">
-              Alexandra Konoplyanik —
-              <a
-                id="home-testimonial-organization-link"
-                href="https://pfalondon.org/"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="underline decoration-stone-400 underline-offset-4 hover:decoration-teal-700 hover:text-teal-800"
-              >Philosophy for All</a>
-              <span class="font-normal">and RationalGrid adviser</span>
+            <figcaption class="mt-6">
+              <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                <span class="text-lg font-bold text-slate-950">Alexandra Konoplyanik</span>
+                <span class="text-slate-400" aria-hidden="true">—</span>
+                <a
+                  id="home-testimonial-organization-link"
+                  href="https://pfalondon.org/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="font-bold text-teal-800 underline decoration-teal-500 underline-offset-4 transition hover:text-teal-950 hover:decoration-teal-700"
+                >Philosophy for All</a>
+              </div>
+              <p class="mt-1 text-sm text-slate-600">RationalGrid adviser</p>
             </figcaption>
           </figure>
         </div>
