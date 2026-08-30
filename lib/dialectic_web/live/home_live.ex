@@ -39,6 +39,7 @@ defmodule DialecticWeb.HomeLive do
        focus_new_grid: params["focus"] == "grid",
        preview_seed: home_preview_seed(),
        curated_grids: [],
+       json_ld: homepage_json_ld(),
        page_description:
          "For questions that matter, compare views, trace claims to sources, and keep your reasoning in a grid you can revisit and share."
      )}
@@ -664,6 +665,48 @@ defmodule DialecticWeb.HomeLive do
       </div>
     </section>
     """
+  end
+
+  defp homepage_json_ld do
+    base_url = DialecticWeb.Endpoint.url()
+    organization_id = base_url <> "/#organization"
+    product_id = base_url <> "/#product"
+
+    Jason.encode!(%{
+      "@context" => "https://schema.org",
+      "@graph" => [
+        %{
+          "@type" => "Organization",
+          "@id" => organization_id,
+          "name" => "RationalGrid",
+          "url" => base_url,
+          "logo" => base_url <> ~p"/images/brandmark.svg",
+          "description" =>
+            "RationalGrid is a not-for-profit, open-source project for mapping questions, arguments, and sources.",
+          "sameAs" => ["https://github.com/TomBers/dialectic"]
+        },
+        %{
+          "@type" => ["Product", "SoftwareApplication"],
+          "@id" => product_id,
+          "name" => "RationalGrid",
+          "url" => base_url,
+          "image" => base_url <> ~p"/images/graph_live.webp",
+          "description" =>
+            "A free AI-assisted argument mapping tool for comparing views, tracing claims to sources, and sharing the reasoning behind a conclusion.",
+          "applicationCategory" => "EducationalApplication",
+          "operatingSystem" => "Web",
+          "isAccessibleForFree" => true,
+          "brand" => %{"@id" => organization_id},
+          "offers" => %{
+            "@type" => "Offer",
+            "url" => base_url,
+            "price" => "0.00",
+            "priceCurrency" => "USD",
+            "availability" => "https://schema.org/InStock"
+          }
+        }
+      ]
+    })
   end
 
   defp home_preview_seed do

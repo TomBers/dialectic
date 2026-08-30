@@ -14,6 +14,33 @@ defmodule DialecticWeb.HomeLiveTest do
     assert html =~ "/assets/app.js"
   end
 
+  test "publishes organization and free product structured data", %{conn: conn} do
+    {:ok, _view, html} = live(conn, ~p"/")
+
+    json_ld =
+      html
+      |> LazyHTML.from_fragment()
+      |> LazyHTML.filter(~s(script[type="application/ld+json"]))
+      |> LazyHTML.text()
+      |> Jason.decode!()
+
+    assert json_ld["@context"] == "https://schema.org"
+
+    organization = Enum.find(json_ld["@graph"], &(Map.get(&1, "@type") == "Organization"))
+
+    product =
+      Enum.find(json_ld["@graph"], fn entity ->
+        "Product" in List.wrap(Map.get(entity, "@type"))
+      end)
+
+    assert organization["name"] == "RationalGrid"
+    assert organization["url"] == DialecticWeb.Endpoint.url()
+    assert product["name"] == "RationalGrid"
+    assert product["isAccessibleForFree"] == true
+    assert product["offers"]["price"] == "0.00"
+    assert product["offers"]["priceCurrency"] == "USD"
+  end
+
   test "ignores graph search and filter parameters", %{conn: conn} do
     unique = System.unique_integer([:positive])
 
