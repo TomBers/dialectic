@@ -156,10 +156,11 @@ defmodule DialecticWeb.HomeLiveTest do
     assert has_element?(
              view,
              "#home-hero-subheading",
-             "Explore with AI to discover new information, then keep, find, and share what matters."
+             "Know what you think—and show how you got there."
            )
 
     assert has_element?(view, "#home-video-hero", "Explore a question")
+    assert has_element?(view, ~s(#home-sign-up-link[href="/users/register"]), "Sign up free")
     refute has_element?(view, "#home-video-hero video")
 
     assert has_element?(
@@ -180,10 +181,29 @@ defmodule DialecticWeb.HomeLiveTest do
     refute has_element?(view, "#home-value-summary")
   end
 
+  test "shows a start-grid hero action instead of signup when signed in", %{conn: conn} do
+    user = user_fixture()
+
+    {:ok, view, _html} =
+      conn
+      |> log_in_user(user)
+      |> live(~p"/")
+
+    assert has_element?(view, ~s(#home-start-grid-link[href="#start-here"]), "Start a grid")
+    refute has_element?(view, "#home-sign-up-link")
+  end
+
   test "shows the product briefly and links to the detailed pages", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/")
 
     assert has_element?(view, "#home-learning-loop", "Explore. Keep. Reconsider.")
+    assert has_element?(view, "#home-learning-loop", "Questions branch into answers")
+
+    assert has_element?(
+             view,
+             "#home-chat-distinction",
+             "instead of leaving it in another disappearing chat"
+           )
 
     assert has_element?(
              view,
@@ -207,6 +227,9 @@ defmodule DialecticWeb.HomeLiveTest do
 
     refute has_element?(view, "#home-example-video iframe")
     assert has_element?(view, "#popular-grids", "See what other people explored.")
+
+    assert has_element?(view, "#home-testimonial", "An amazing free specialised AI tool")
+    assert has_element?(view, "#home-testimonial", "Philosophy for All and RationalGrid adviser")
 
     assert has_element?(
              view,

@@ -223,10 +223,11 @@
             <% end %>
           <% else %>
             <.link
+              id="global-sign-up-link"
               href={~p"/users/register"}
-              class="hidden h-full items-center border-b-2 border-transparent px-2 font-medium text-slate-300 transition hover:border-slate-500 hover:text-white sm:inline-flex"
+              class="hidden h-7 items-center rounded-md bg-teal-300 px-3 font-semibold text-slate-950 transition hover:bg-teal-200 sm:inline-flex"
             >
-              Register
+              Sign up free
             </.link>
             <.link
               href={~p"/users/log_in"}

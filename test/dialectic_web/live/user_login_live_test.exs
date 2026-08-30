@@ -9,7 +9,8 @@ defmodule DialecticWeb.UserLoginLiveTest do
       {:ok, lv, html} = live(conn, ~p"/users/log_in")
 
       assert html =~ "Log in"
-      assert html =~ "Register"
+      assert html =~ "Sign up free"
+      assert has_element?(lv, ~s(#login-sign-up-link[href="/users/register"]), "Sign up")
       assert html =~ "Forgot password?"
       assert has_element?(lv, "#user_remember_me[checked]")
     end
@@ -59,7 +60,7 @@ defmodule DialecticWeb.UserLoginLiveTest do
   end
 
   describe "login navigation" do
-    test "redirects to registration page when the Register button is clicked", %{conn: conn} do
+    test "redirects to registration page when the sign-up link is clicked", %{conn: conn} do
       {:ok, lv, _html} = live(conn, ~p"/users/log_in")
 
       {:ok, _login_live, login_html} =
@@ -68,7 +69,7 @@ defmodule DialecticWeb.UserLoginLiveTest do
         |> render_click()
         |> follow_redirect(conn, ~p"/users/register")
 
-      assert login_html =~ "Register"
+      assert login_html =~ "Create an account"
     end
 
     test "redirects to forgot password page when the Forgot Password button is clicked", %{

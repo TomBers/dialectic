@@ -74,8 +74,8 @@ defmodule DialecticWeb.AboutLiveTest do
              )
 
       assert has_element?(view, "#about-audiences", "Who is it for?")
-      assert has_element?(view, "#about-audience-students", "Students and lifelong learners")
-      assert has_element?(view, "#about-audience-teachers", "Teachers and tutors")
+      assert has_element?(view, "#about-audience-students", "Students")
+      refute has_element?(view, "#about-audience-teachers")
 
       assert has_element?(
                view,
@@ -83,15 +83,11 @@ defmodule DialecticWeb.AboutLiveTest do
                "Researchers, journalists, and writers"
              )
 
-      assert has_element?(view, "#about-audience-debate-organisers", "Debate and discussion")
-      assert has_element?(view, "#about-audience-teams", "Teams and decision-makers")
-      assert has_element?(view, "#about-audience-book-clubs", "Book clubs and study groups")
-
-      assert has_element?(
-               view,
-               "#about-audience-critical-thinkers",
-               "Philosophers and critical thinkers"
-             )
+      refute has_element?(view, "#about-audience-debate-organisers")
+      refute has_element?(view, "#about-audience-teams")
+      refute has_element?(view, "#about-audience-book-clubs")
+      refute has_element?(view, "#about-audience-critical-thinkers")
+      assert has_element?(view, "#about-tools", "How AI and sources work")
 
       assert has_element?(view, ~s(#about-start-grid-link[href="/?focus=grid#start-here"]))
     end

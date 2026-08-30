@@ -321,12 +321,31 @@ defmodule DialecticWeb.HomeLive do
               id="home-hero-subheading"
               class="mt-8 text-lg leading-8 text-slate-200"
             >
-              Explore with AI to discover new information, then keep, find, and share what matters.
+              Know what you think—and show how you got there. Compare views, trace claims to sources,
+              and keep the path open for you or others to question.
             </p>
             <div class="mt-12 flex flex-wrap items-center gap-4">
+              <%= if @current_user do %>
+                <.link
+                  id="home-start-grid-link"
+                  href="#start-here"
+                  class="inline-flex items-center gap-2 rounded-md bg-teal-300 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-teal-200"
+                >
+                  Start a grid <.icon name="hero-arrow-down" class="h-4 w-4" />
+                </.link>
+              <% else %>
+                <.link
+                  id="home-sign-up-link"
+                  navigate={~p"/users/register"}
+                  class="inline-flex items-center gap-2 rounded-md bg-teal-300 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-teal-200"
+                >
+                  Sign up free <.icon name="hero-arrow-right" class="h-4 w-4" />
+                </.link>
+              <% end %>
               <.link
+                id="home-explore-question-link"
                 href="#start-here"
-                class="inline-flex items-center gap-2 rounded-md bg-teal-300 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-teal-200"
+                class="inline-flex items-center gap-2 border-b border-slate-400 px-1 py-2 text-sm font-semibold text-white transition hover:border-teal-300 hover:text-teal-200"
               >
                 Explore a question <.icon name="hero-arrow-down" class="h-4 w-4" />
               </.link>
@@ -469,7 +488,12 @@ defmodule DialecticWeb.HomeLive do
               Explore. Keep. Reconsider.
             </h2>
             <p class="mt-4 max-w-xl text-base leading-7 text-slate-300">
-              Questions, sources, and notes stay connected as your view develops.
+              Questions branch into answers, challenges, evidence, sources, and further questions—so
+              the reasoning stays visible as your view develops.
+            </p>
+            <p id="home-chat-distinction" class="mt-3 max-w-xl text-sm leading-6 text-slate-400">
+              AI helps you find paths to investigate. The grid preserves, connects, and shares the
+              thinking instead of leaving it in another disappearing chat.
             </p>
             <div class="mt-5 flex flex-wrap gap-x-5 gap-y-3">
               <.link
@@ -523,6 +547,23 @@ defmodule DialecticWeb.HomeLive do
               </button>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section id="home-testimonial" class="border-b border-stone-300 bg-white">
+        <div class="mx-auto w-full max-w-5xl px-5 py-12 sm:px-8 sm:py-16">
+          <figure class="border-l-4 border-teal-500 pl-6 sm:pl-8">
+            <blockquote class="font-serif text-2xl leading-relaxed text-slate-900 sm:text-3xl">
+              “An amazing free specialised AI tool to explore philosophical ideas around pretty much
+              anything—from academic questions to films to… hamsters! All at one’s fingertips, in a
+              matter of seconds, with in-built tools for a sophisticated, yet accessible dialectic.
+              Bravo!”
+            </blockquote>
+            <figcaption class="mt-5 text-sm font-semibold text-slate-600">
+              Alexandra Konoplyanik
+              <span class="font-normal">— Philosophy for All and RationalGrid adviser</span>
+            </figcaption>
+          </figure>
         </div>
       </section>
 

@@ -1,0 +1,23 @@
+# RationalGrid
+
+> RationalGrid is a free, open-source, not-for-profit tool for exploring questions in persistent, shareable argument maps.
+
+RationalGrid helps people compare views, trace claims to sources, and keep the path of their reasoning open to question. AI can suggest answers, questions, and directions; users decide what to save, check, connect, and share. A grid can contain questions, answers, challenges, evidence, sources, highlights, and notes.
+
+## Product
+
+- [RationalGrid](https://rationalgrid.ai/): Explore a question, see selected public grids, and create a free account.
+- [About RationalGrid](https://rationalgrid.ai/about): Purpose, features, audiences, team, and project principles.
+- [Guide](https://rationalgrid.ai/intro/how): How to create, explore, edit, and share a grid.
+- [How AI and sources work](https://rationalgrid.ai/intro/ai): How RationalGrid differs from a chatbot, how it uses sources, and the limits of AI-generated material.
+
+## Explore
+
+- [Community grids](https://rationalgrid.ai/community): Public argument maps created by the RationalGrid community.
+- [Infographic gallery](https://rationalgrid.ai/gallery): Visual material made from public grids.
+- [Inspiration](https://rationalgrid.ai/inspiration): Questions and topics to explore.
+
+## Project
+
+- [Source code](https://github.com/TomBers/dialectic): RationalGrid's open-source Phoenix application.
+- [Sitemap](https://rationalgrid.ai/sitemap.xml): Index of public pages and published grids.
