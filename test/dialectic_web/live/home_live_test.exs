@@ -278,6 +278,26 @@ defmodule DialecticWeb.HomeLiveTest do
 
     assert has_element?(
              view,
+             "#home-proof-carousel[phx-hook='ProofCarousel'][phx-update='ignore']"
+           )
+
+    assert has_element?(view, "#home-proof-previous")
+    assert has_element?(view, "#home-proof-next")
+
+    assert has_element?(
+             view,
+             ~s(#home-case-study-organization-link[href="https://philosophynow.org/"]),
+             "Philosophy Now"
+           )
+
+    assert has_element?(
+             view,
+             ~s(#home-testimonial-organization-link[href="https://pfalondon.org/"]),
+             "Philosophy for All"
+           )
+
+    assert has_element?(
+             view,
              "#home-research-case-study",
              "From an article to 35 connected lines of inquiry."
            )
@@ -343,7 +363,7 @@ defmodule DialecticWeb.HomeLiveTest do
 
     assert has_element?(
              view,
-             "#home-product-preview + #home-research-case-study + #home-testimonial + #popular-grids + #home-definition + #home-ai-limits-faq + #home-final-cta + footer"
+             "#home-product-preview + #home-proof-carousel + #popular-grids + #home-definition + #home-ai-limits-faq + #home-final-cta + footer"
            )
   end
 

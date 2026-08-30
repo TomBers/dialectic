@@ -576,63 +576,7 @@ defmodule DialecticWeb.HomeLive do
         </div>
       </section>
 
-      <section id="home-research-case-study" class="border-b border-stone-300 bg-[#f4f1e9]">
-        <div class="mx-auto grid w-full max-w-6xl gap-7 px-5 py-12 sm:px-8 sm:py-16 lg:grid-cols-[15rem_minmax(0,1fr)] lg:px-10">
-          <div>
-            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
-              Research case study
-            </p>
-            <h2 class="mt-3 font-serif text-3xl font-semibold tracking-tight">
-              From an article to 35 connected lines of inquiry.
-            </h2>
-          </div>
-          <div class="border-l-2 border-teal-600 pl-5 sm:pl-7">
-            <p class="text-base leading-7 text-slate-700">
-              Philosophy Now began with physicist and former semiconductor researcher Ignacio
-              Gonzalez’s article about why some narratives spread and survive. Using RationalGrid,
-              it turned the argument into a 35-point map branching into memetic fitness, human
-              agency, psychological susceptibility, narrative complexity, talking points, and moral
-              motivation. The result keeps competing explanations and follow-up questions connected,
-              giving readers paths to inspect instead of a single linear summary.
-            </p>
-            <div class="mt-5 flex flex-wrap gap-5 text-sm font-semibold">
-              <a
-                id="home-case-study-grid-link"
-                href="https://rationalgrid.ai/g/inspired-by-the-philosophy-now-article-a-memetic-664759?node=1"
-                class="inline-flex items-center gap-2 border-b border-slate-500 pb-1 text-slate-900 hover:border-teal-700 hover:text-teal-800"
-              >
-                Explore the 35-point grid <.icon name="hero-arrow-up-right" class="h-4 w-4" />
-              </a>
-              <a
-                id="home-case-study-source-link"
-                href="https://philosophynow.org/issues/173/A_Memetic_Analysis_of_Narratives_and_Conspiracies"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="inline-flex items-center gap-2 border-b border-slate-500 pb-1 text-slate-900 hover:border-teal-700 hover:text-teal-800"
-              >
-                Read the source article <.icon name="hero-arrow-up-right" class="h-4 w-4" />
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="home-testimonial" class="border-b border-stone-300 bg-white">
-        <div class="mx-auto w-full max-w-5xl px-5 py-12 sm:px-8 sm:py-16">
-          <figure class="border-l-4 border-teal-500 pl-6 sm:pl-8">
-            <blockquote class="font-serif text-2xl leading-relaxed text-slate-900 sm:text-3xl">
-              “An amazing free specialised AI tool to explore philosophical ideas around pretty much
-              anything—from academic questions to films to… hamsters! All at one’s fingertips, in a
-              matter of seconds, with in-built tools for a sophisticated, yet accessible dialectic.
-              Bravo!”
-            </blockquote>
-            <figcaption class="mt-5 text-sm font-semibold text-slate-600">
-              Alexandra Konoplyanik
-              <span class="font-normal">— Philosophy for All and RationalGrid adviser</span>
-            </figcaption>
-          </figure>
-        </div>
-      </section>
+      <.proof_carousel />
 
       <section
         id="popular-grids"
@@ -783,6 +727,152 @@ defmodule DialecticWeb.HomeLive do
         </div>
       </footer>
     </div>
+    """
+  end
+
+  defp proof_carousel(assigns) do
+    ~H"""
+    <section
+      id="home-proof-carousel"
+      class="border-b border-stone-300 bg-[#f4f1e9]"
+      phx-hook="ProofCarousel"
+      phx-update="ignore"
+      aria-label="RationalGrid in use"
+    >
+      <div class="mx-auto w-full max-w-6xl px-5 py-12 sm:px-8 sm:py-16 lg:px-10">
+        <div class="flex items-end justify-between gap-6 border-b border-stone-300 pb-5">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
+              Evidence from the community
+            </p>
+            <h2 class="mt-2 font-serif text-3xl font-semibold tracking-tight sm:text-4xl">
+              RationalGrid in use.
+            </h2>
+          </div>
+          <div class="flex shrink-0 items-center gap-2">
+            <button
+              id="home-proof-previous"
+              type="button"
+              data-carousel-previous
+              class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-stone-400 bg-white text-slate-800 transition hover:border-teal-700 hover:text-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700"
+              aria-label="Previous proof"
+            >
+              <.icon name="hero-arrow-left" class="h-4 w-4" />
+            </button>
+            <button
+              id="home-proof-next"
+              type="button"
+              data-carousel-next
+              class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-stone-400 bg-white text-slate-800 transition hover:border-teal-700 hover:text-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700"
+              aria-label="Next proof"
+            >
+              <.icon name="hero-arrow-right" class="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+
+        <div class="mt-8" data-carousel-slides>
+          <article
+            id="home-research-case-study"
+            data-carousel-slide
+            role="group"
+            aria-roledescription="slide"
+            aria-label="1 of 2"
+            class="grid gap-7 lg:grid-cols-[15rem_minmax(0,1fr)]"
+          >
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
+                Research case study
+              </p>
+              <h3 class="mt-3 font-serif text-3xl font-semibold tracking-tight">
+                From an article to 35 connected lines of inquiry.
+              </h3>
+            </div>
+            <div class="border-l-2 border-teal-600 pl-5 sm:pl-7">
+              <p class="text-base leading-7 text-slate-700">
+                <a
+                  id="home-case-study-organization-link"
+                  href="https://philosophynow.org/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="font-semibold text-slate-900 underline decoration-stone-400 underline-offset-4 hover:decoration-teal-700 hover:text-teal-800"
+                >Philosophy Now</a>
+                began with physicist and former semiconductor researcher Ignacio Gonzalez’s article
+                about why some narratives spread and survive. Using RationalGrid, it turned the
+                argument into a 35-point map branching into memetic fitness, human agency,
+                psychological susceptibility, narrative complexity, talking points, and moral
+                motivation. The result keeps competing explanations and follow-up questions
+                connected, giving readers paths to inspect instead of a single linear summary.
+              </p>
+              <div class="mt-5 flex flex-wrap gap-5 text-sm font-semibold">
+                <a
+                  id="home-case-study-grid-link"
+                  href="https://rationalgrid.ai/g/inspired-by-the-philosophy-now-article-a-memetic-664759?node=1"
+                  class="inline-flex items-center gap-2 border-b border-slate-500 pb-1 text-slate-900 hover:border-teal-700 hover:text-teal-800"
+                >
+                  Explore the 35-point grid <.icon name="hero-arrow-up-right" class="h-4 w-4" />
+                </a>
+                <a
+                  id="home-case-study-source-link"
+                  href="https://philosophynow.org/issues/173/A_Memetic_Analysis_of_Narratives_and_Conspiracies"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="inline-flex items-center gap-2 border-b border-slate-500 pb-1 text-slate-900 hover:border-teal-700 hover:text-teal-800"
+                >
+                  Read the source article <.icon name="hero-arrow-up-right" class="h-4 w-4" />
+                </a>
+              </div>
+            </div>
+          </article>
+
+          <figure
+            id="home-testimonial"
+            data-carousel-slide
+            role="group"
+            aria-roledescription="slide"
+            aria-label="2 of 2"
+            class="hidden border-l-4 border-teal-500 pl-6 sm:pl-8"
+            hidden
+          >
+            <blockquote class="font-serif text-2xl leading-relaxed text-slate-900 sm:text-3xl">
+              “An amazing free specialised AI tool to explore philosophical ideas around pretty much
+              anything—from academic questions to films to… hamsters! All at one’s fingertips, in a
+              matter of seconds, with in-built tools for a sophisticated, yet accessible dialectic.
+              Bravo!”
+            </blockquote>
+            <figcaption class="mt-5 text-sm font-semibold text-slate-600">
+              Alexandra Konoplyanik —
+              <a
+                id="home-testimonial-organization-link"
+                href="https://pfalondon.org/"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="underline decoration-stone-400 underline-offset-4 hover:decoration-teal-700 hover:text-teal-800"
+              >Philosophy for All</a>
+              <span class="font-normal">and RationalGrid adviser</span>
+            </figcaption>
+          </figure>
+        </div>
+
+        <div class="mt-7 flex items-center justify-center gap-3" aria-label="Choose proof slide">
+          <button
+            type="button"
+            data-carousel-indicator="0"
+            class="h-2.5 w-8 rounded-full bg-teal-700 transition"
+            aria-label="Show research case study"
+            aria-current="true"
+          ></button>
+          <button
+            type="button"
+            data-carousel-indicator="1"
+            class="h-2.5 w-8 rounded-full bg-stone-300 transition"
+            aria-label="Show testimonial"
+            aria-current="false"
+          ></button>
+          <span class="sr-only" data-carousel-status aria-live="polite">1 of 2</span>
+        </div>
+      </div>
+    </section>
     """
   end
 
