@@ -557,19 +557,37 @@ defmodule DialecticWeb.HomeLive do
         <div class="mx-auto grid w-full max-w-7xl gap-10 px-5 py-12 sm:px-8 sm:py-16 lg:grid-cols-[minmax(20rem,0.72fr)_minmax(0,1.28fr)] lg:items-center lg:px-10">
           <div id="home-learning-loop">
             <p class="inline-block border-l-2 border-teal-300 pl-3 text-sm font-bold uppercase tracking-[0.14em] text-teal-200">
-              See it in use
+              How RationalGrid supports learning
             </p>
-            <h2 class="mt-3 font-serif text-4xl font-semibold tracking-tight sm:text-5xl">
-              Explore. Keep. Reconsider.
-            </h2>
-            <p class="mt-4 max-w-xl text-base leading-7 text-slate-300">
-              Questions branch into answers, challenges, evidence, sources, and further questions—so
-              the reasoning stays visible as your view develops.
-            </p>
-            <p id="home-chat-distinction" class="mt-3 max-w-xl text-sm leading-6 text-slate-400">
-              AI helps you find paths to investigate. The grid preserves, connects, and shares the
-              thinking instead of leaving it in another disappearing chat.
-            </p>
+            <ul
+              id="home-learning-overview"
+              class="mt-6 max-w-xl space-y-5 text-base leading-7 text-slate-300"
+            >
+              <li class="border-l-2 border-sky-400 pl-4">
+                <strong class="text-white">Discover.</strong>
+                Use AI to find new information and open paths worth investigating.
+              </li>
+              <li class="border-l-2 border-violet-400 pl-4">
+                <strong class="text-white">Connect.</strong>
+                Branch questions into answers, challenges, evidence, sources, and further questions.
+              </li>
+              <li class="border-l-2 border-teal-300 pl-4">
+                <strong class="text-white">Recall.</strong>
+                Bookmark nodes and highlight passages; they collect in
+                <%= if @current_user do %>
+                  <.link
+                    id="home-saved-for-recall-link"
+                    navigate={~p"/u/#{@current_user.username}" <> "#profile-thinking-library"}
+                    class="font-semibold text-teal-200 underline decoration-teal-500 underline-offset-4 hover:text-teal-100"
+                  >
+                    Saved for recall
+                  </.link>
+                <% else %>
+                  <span class="font-semibold text-teal-200">Saved for recall</span>
+                <% end %>
+                so the right idea is there when you need it.
+              </li>
+            </ul>
             <div class="mt-5 flex flex-wrap gap-x-5 gap-y-3">
               <.link
                 id="home-features-link"

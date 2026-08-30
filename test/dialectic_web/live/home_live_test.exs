@@ -253,14 +253,24 @@ defmodule DialecticWeb.HomeLiveTest do
   test "shows the product briefly and links to the detailed pages", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/")
 
-    assert has_element?(view, "#home-learning-loop", "Explore. Keep. Reconsider.")
-    assert has_element?(view, "#home-learning-loop", "Questions branch into answers")
+    refute has_element?(view, "#home-learning-loop h2")
+    assert has_element?(view, "#home-learning-loop > p", "How RationalGrid supports learning")
 
     assert has_element?(
              view,
-             "#home-chat-distinction",
-             "instead of leaving it in another disappearing chat"
+             "#home-learning-overview",
+             "Discover. Use AI to find new information"
            )
+
+    assert has_element?(
+             view,
+             "#home-learning-overview",
+             "Connect. Branch questions into answers, challenges, evidence, sources"
+           )
+
+    assert has_element?(view, "#home-learning-overview", "Saved for recall")
+    refute has_element?(view, "#home-chat-distinction")
+    refute has_element?(view, "#home-retrieval-learning")
 
     assert has_element?(
              view,
