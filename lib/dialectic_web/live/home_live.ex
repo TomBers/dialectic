@@ -556,12 +556,12 @@ defmodule DialecticWeb.HomeLive do
         </div>
         <div class="mx-auto grid w-full max-w-7xl gap-10 px-5 py-12 sm:px-8 sm:py-16 lg:grid-cols-[minmax(20rem,0.72fr)_minmax(0,1.28fr)] lg:items-center lg:px-10">
           <div id="home-learning-loop">
-            <p class="inline-block border-l-2 border-teal-300 pl-3 text-sm font-bold uppercase tracking-[0.14em] text-teal-200">
+            <p class="inline-flex rounded-full border border-teal-300/40 bg-teal-300/10 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.14em] text-teal-100 shadow-sm">
               How RationalGrid supports learning
             </p>
             <ul
               id="home-learning-overview"
-              class="mt-6 max-w-xl space-y-5 text-base leading-7 text-slate-300"
+              class="mt-8 max-w-xl space-y-5 text-base leading-7 text-slate-300"
             >
               <li class="border-l-2 border-sky-400 pl-4">
                 <strong class="text-white">Discover.</strong>
