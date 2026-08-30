@@ -24,6 +24,7 @@ defmodule DialecticWeb.NewIdeaFormComp do
       |> assign_new(:autofocus, fn -> false end)
       |> assign_new(:minimal, fn -> false end)
       |> assign_new(:authenticated, fn -> false end)
+      |> assign_new(:public_grid_warning, fn -> nil end)
       |> assign_new(:selected_mode, fn -> "high_school" end)
       |> assign_new(:show_level_prompt, fn -> false end)
       |> assign_new(:content, fn %{form: form} ->
@@ -223,6 +224,14 @@ defmodule DialecticWeb.NewIdeaFormComp do
                 <% end %>
               </div>
             </div>
+
+            <p
+              :if={@public_grid_warning}
+              id="home-public-grid-note"
+              class="mt-3 border-l-2 border-amber-500 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-950"
+            >
+              {@public_grid_warning}
+            </p>
 
             <div class="mt-3 flex justify-end">
               <button

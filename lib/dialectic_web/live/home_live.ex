@@ -7,6 +7,26 @@ defmodule DialecticWeb.HomeLive do
   import DialecticWeb.GridCardComp
   require Logger
 
+  @homepage_faqs [
+    %{
+      id: "cost",
+      question: "How much does RationalGrid cost?",
+      answer: "RationalGrid is free to use. There are no paid pricing tiers."
+    },
+    %{
+      id: "ai-usage-limits",
+      question: "What are the AI usage limits?",
+      answer:
+        "Signed-out visitors can use Simple answers. A free account unlocks Expanded and In-depth answers. Each person can have up to three AI requests in progress and make up to ten AI requests per minute; if a limit is reached, wait and try again."
+    },
+    %{
+      id: "sources",
+      question: "How does RationalGrid use sources?",
+      answer:
+        "Simple answers do not perform source research unless you ask for it. Expanded and In-depth answers are prompted to ground material claims in relevant primary, scholarly, or official sources, but AI can be wrong and important claims should be checked."
+    }
+  ]
+
   on_mount {DialecticWeb.UserAuth, :mount_current_user}
 
   @impl true
@@ -39,6 +59,7 @@ defmodule DialecticWeb.HomeLive do
        focus_new_grid: params["focus"] == "grid",
        preview_seed: home_preview_seed(),
        curated_grids: [],
+       homepage_faqs: @homepage_faqs,
        json_ld: homepage_json_ld(),
        page_description:
          "For questions that matter, compare views, trace claims to sources, and keep your reasoning in a grid you can revisit and share."
@@ -461,10 +482,8 @@ defmodule DialecticWeb.HomeLive do
                   autofocus={@focus_new_grid}
                   minimal={true}
                   authenticated={!is_nil(@current_user)}
+                  public_grid_warning="New grids are public and editable by default. Anyone can read them and, while editing is on, add to them. Sign in first if you want to control access in Settings; never include sensitive information."
                 />
-                <p id="home-public-grid-note" class="mt-3 text-xs leading-5 text-slate-500">
-                  New grids are public and editable by default. Anyone can read them and, while editing is on, add to them. Sign in first if you want to control access in Settings; never include sensitive information.
-                </p>
               </div>
             </div>
           </div>
@@ -611,6 +630,49 @@ defmodule DialecticWeb.HomeLive do
         </div>
       </section>
 
+      <section id="home-ai-limits-faq" class="border-b border-stone-300 bg-[#f4f1e9]">
+        <div class="mx-auto w-full max-w-5xl px-5 py-12 sm:px-8 sm:py-16">
+          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
+            Free to explore
+          </p>
+          <h2 class="mt-3 font-serif text-4xl font-semibold tracking-tight">
+            AI and source limits
+          </h2>
+          <div class="mt-7 divide-y divide-stone-300 border-y border-stone-300">
+            <details :for={faq <- @homepage_faqs} id={"home-faq-#{faq.id}"} class="group py-5">
+              <summary class="flex cursor-pointer list-none items-center justify-between gap-4 font-semibold text-slate-950">
+                {faq.question}
+                <.icon
+                  name="hero-plus"
+                  class="h-5 w-5 shrink-0 text-teal-700 transition group-open:rotate-45"
+                />
+              </summary>
+              <p class="mt-3 max-w-3xl text-sm leading-6 text-slate-600">{faq.answer}</p>
+            </details>
+          </div>
+          <.link
+            id="home-ai-limits-details-link"
+            navigate={~p"/intro/ai"}
+            class="mt-5 inline-flex items-center gap-2 border-b border-slate-500 pb-1 text-sm font-semibold text-slate-800 transition hover:border-teal-700 hover:text-teal-800"
+          >
+            Learn how AI and sources work <.icon name="hero-arrow-right" class="h-4 w-4" />
+          </.link>
+        </div>
+      </section>
+
+      <section id="home-definition" class="border-b border-slate-800 bg-slate-900 text-white">
+        <div class="mx-auto w-full max-w-7xl px-5 py-10 sm:px-8 sm:py-12 lg:px-10">
+          <h2 class="font-serif text-3xl font-semibold tracking-tight sm:text-4xl">
+            What is RationalGrid?
+          </h2>
+          <p class="mt-4 max-w-3xl text-base leading-7 text-slate-300">
+            RationalGrid is a free, non-profit, AI-assisted research and argument-mapping tool. It
+            helps students and researchers organize claims and evidence into structured, shareable
+            formats.
+          </p>
+        </div>
+      </section>
+
       <footer class="bg-slate-950 text-slate-300">
         <div class="mx-auto flex w-full max-w-7xl flex-col gap-5 px-5 py-8 sm:flex-row sm:items-center sm:justify-between sm:px-8 lg:px-10">
           <div class="flex items-center gap-3">
@@ -704,6 +766,21 @@ defmodule DialecticWeb.HomeLive do
             "priceCurrency" => "USD",
             "availability" => "https://schema.org/InStock"
           }
+        },
+        %{
+          "@type" => "FAQPage",
+          "@id" => base_url <> "/#ai-and-source-limits",
+          "mainEntity" =>
+            Enum.map(@homepage_faqs, fn faq ->
+              %{
+                "@type" => "Question",
+                "name" => faq.question,
+                "acceptedAnswer" => %{
+                  "@type" => "Answer",
+                  "text" => faq.answer
+                }
+              }
+            end)
         }
       ]
     })

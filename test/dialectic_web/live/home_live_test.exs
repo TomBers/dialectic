@@ -33,12 +33,21 @@ defmodule DialecticWeb.HomeLiveTest do
         "Product" in List.wrap(Map.get(entity, "@type"))
       end)
 
+    faq_page = Enum.find(json_ld["@graph"], &(Map.get(&1, "@type") == "FAQPage"))
+
     assert organization["name"] == "RationalGrid"
     assert organization["url"] == DialecticWeb.Endpoint.url()
     assert product["name"] == "RationalGrid"
     assert product["isAccessibleForFree"] == true
     assert product["offers"]["price"] == "0.00"
     assert product["offers"]["priceCurrency"] == "USD"
+    assert length(faq_page["mainEntity"]) == 3
+
+    assert Enum.any?(faq_page["mainEntity"], fn question ->
+             question["name"] == "What are the AI usage limits?" and
+               question["acceptedAnswer"]["text"] =~ "three AI requests in progress" and
+               question["acceptedAnswer"]["text"] =~ "ten AI requests per minute"
+           end)
   end
 
   test "ignores graph search and filter parameters", %{conn: conn} do
@@ -204,7 +213,7 @@ defmodule DialecticWeb.HomeLiveTest do
            )
 
     assert has_element?(view, "#home-ai-scepticism-link", "where it can go wrong")
-    assert has_element?(view, "#home-public-grid-note", "public and editable by default")
+    refute has_element?(view, "#home-public-grid-note")
     refute has_element?(view, "#home-value-summary")
   end
 
@@ -258,6 +267,32 @@ defmodule DialecticWeb.HomeLiveTest do
     assert has_element?(view, "#home-testimonial", "An amazing free specialised AI tool")
     assert has_element?(view, "#home-testimonial", "Philosophy for All and RationalGrid adviser")
 
+    assert has_element?(view, "#home-definition h2", "What is RationalGrid?")
+
+    assert has_element?(view, "#home-ai-limits-faq h2", "AI and source limits")
+    assert has_element?(view, "#home-faq-cost", "How much does RationalGrid cost?")
+    assert has_element?(view, "#home-faq-ai-usage-limits", "What are the AI usage limits?")
+    assert has_element?(view, "#home-faq-ai-usage-limits", "three AI requests in progress")
+    assert has_element?(view, "#home-faq-sources", "How does RationalGrid use sources?")
+
+    assert has_element?(
+             view,
+             ~s(#home-ai-limits-details-link[href="/intro/ai"]),
+             "Learn how AI and sources work"
+           )
+
+    assert has_element?(
+             view,
+             "#home-definition",
+             "RationalGrid is a free, non-profit, AI-assisted research and argument-mapping tool."
+           )
+
+    assert has_element?(
+             view,
+             "#home-definition",
+             "It helps students and researchers organize claims and evidence into structured, shareable formats."
+           )
+
     assert has_element?(
              view,
              "footer p.text-slate-400",
@@ -279,6 +314,8 @@ defmodule DialecticWeb.HomeLiveTest do
     assert has_element?(view, "#new-idea-mode-university", "Expanded")
     assert has_element?(view, "#new-idea-mode-expert", "In-depth")
     assert has_element?(view, "#new-idea-mode-expert", "Rigorous analysis")
+    assert has_element?(view, "#new-idea-level-step #home-public-grid-note")
+    assert has_element?(view, "#home-public-grid-note", "public and editable by default")
     assert has_element?(view, "#new-idea-mode-university[data-requires-login='true']")
     assert has_element?(view, "#new-idea-mode-expert[data-requires-login='true']")
 
