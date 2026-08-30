@@ -117,6 +117,8 @@ defmodule DialecticWeb.NewIdeaFormComp do
                 <button
                   type="submit"
                   id="new-idea-submit"
+                  data-analytics-event="grid_prompt_continued"
+                  data-analytics-location="question_form"
                   phx-disable-with="Next..."
                   class="inline-flex min-h-[2.35rem] w-full items-center justify-center rounded-md border border-transparent bg-slate-900 px-0 py-1.5 text-sm font-semibold leading-none text-white shadow-sm transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
@@ -131,6 +133,8 @@ defmodule DialecticWeb.NewIdeaFormComp do
               <button
                 type="submit"
                 id="new-idea-submit-mobile"
+                data-analytics-event="grid_prompt_continued"
+                data-analytics-location="question_form_mobile"
                 phx-disable-with="Next..."
                 class="inline-flex w-full items-center justify-center gap-2 rounded-md border border-transparent bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-transform active:scale-[0.98] hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
@@ -237,6 +241,8 @@ defmodule DialecticWeb.NewIdeaFormComp do
               <button
                 type="submit"
                 id="new-idea-create-submit"
+                data-analytics-event="grid_creation_requested"
+                data-analytics-location="question_form"
                 phx-disable-with="Starting..."
                 class="inline-flex w-full items-center justify-center gap-2 rounded-md border border-transparent bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
               >

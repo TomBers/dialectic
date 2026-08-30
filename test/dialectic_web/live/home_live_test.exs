@@ -177,6 +177,9 @@ defmodule DialecticWeb.HomeLiveTest do
 
     assert has_element?(view, "#start-here h2", "Start with a question.")
     assert has_element?(view, "#home-start-panel #new-idea-form")
+    assert has_element?(view, ~s(#home-community-secondary-link[href="/community"]))
+    assert has_element?(view, "#home-mobile-community-start", "currently read-only on mobile")
+    assert has_element?(view, ~s(#home-mobile-community-link[href="/community"]))
     refute has_element?(view, "#home-start-steps")
     refute has_element?(view, "#start-here", "Step 1 of 2")
     refute has_element?(view, ~s(#start-here a[href="/intro/how"]))
@@ -197,6 +200,7 @@ defmodule DialecticWeb.HomeLiveTest do
 
     assert has_element?(view, "#home-video-hero", "Explore a question")
     assert has_element?(view, ~s(#home-sign-up-link[href="/users/register"]), "Sign up free")
+    assert has_element?(view, "#home-sign-up-reassurance", "No payment details")
 
     assert has_element?(
              view,
@@ -233,6 +237,14 @@ defmodule DialecticWeb.HomeLiveTest do
       |> live(~p"/")
 
     assert has_element?(view, ~s(#home-start-grid-link[href="#start-here"]), "Start a grid")
+
+    assert has_element?(
+             view,
+             ~s(#home-browse-examples-link[href="/community"]),
+             "Browse examples"
+           )
+
+    refute has_element?(view, "#home-explore-question-link")
     assert has_element?(view, ~s(#home-final-start-grid-link[href="#start-here"]), "Start a grid")
     refute has_element?(view, "#home-sign-up-link")
     refute has_element?(view, "#home-final-sign-up-link")
@@ -342,7 +354,7 @@ defmodule DialecticWeb.HomeLiveTest do
     assert has_element?(
              view,
              "#home-definition",
-             "RationalGrid is a free, non-profit, AI-assisted research and argument-mapping tool."
+             "RationalGrid is a free, not-for-profit, AI-assisted research and argument-mapping tool."
            )
 
     assert has_element?(

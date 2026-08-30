@@ -13,6 +13,8 @@ defmodule DialecticWeb.UserLoginLiveTest do
       assert has_element?(lv, ~s(#login-sign-up-link[href="/users/register"]), "Sign up")
       assert html =~ "Forgot password?"
       assert has_element?(lv, "#user_remember_me[checked]")
+      assert has_element?(lv, "#login-page", "Pick up the thread where you left it")
+      assert has_element?(lv, "#login-google-link[data-analytics-event=login_google_clicked]")
     end
 
     test "redirects if already logged in", %{conn: conn} do

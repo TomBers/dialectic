@@ -50,3 +50,24 @@ export const initDelayedAnalytics = () => {
 
   return cleanup;
 };
+
+export const initAnalyticsEventTracking = () => {
+  const track = (event) => {
+    const target = event.target.closest?.("[data-analytics-event]");
+
+    if (!target) return;
+
+    loadGoogleAnalytics();
+    window.gtag("event", target.dataset.analyticsEvent, {
+      event_location: target.dataset.analyticsLocation || window.location.pathname,
+    });
+  };
+
+  document.addEventListener("click", track);
+  document.addEventListener("submit", track);
+
+  return () => {
+    document.removeEventListener("click", track);
+    document.removeEventListener("submit", track);
+  };
+};

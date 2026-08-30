@@ -46,9 +46,13 @@ import DismissibleHintHook from "./dismissible_hint_hook.js";
 import GenerationStatusHook from "./generation_status_hook.js";
 import ProofCarouselHook from "./proof_carousel_hook.js";
 import { syncGraphAppearanceStorage } from "./appearance_preferences.js";
-import { initDelayedAnalytics } from "./analytics.js";
+import {
+  initAnalyticsEventTracking,
+  initDelayedAnalytics,
+} from "./analytics.js";
 
 initDelayedAnalytics();
+initAnalyticsEventTracking();
 
 let hooks = {};
 
