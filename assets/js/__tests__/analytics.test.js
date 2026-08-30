@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   initAnalyticsEventTracking,
   initDelayedAnalytics,
+  initProductAnalytics,
   loadGoogleAnalytics,
 } from "../analytics.js";
 
@@ -15,9 +16,12 @@ beforeEach(() => {
   cleanups = [];
   delete window.gtag;
   delete window.dataLayer;
+  delete window.pendingAnalyticsEvents;
   document.head
     .querySelectorAll("script[data-google-analytics]")
     .forEach((script) => script.remove());
+  document.body.innerHTML = "";
+  sessionStorage.clear();
 });
 
 afterEach(() => {
@@ -44,15 +48,12 @@ describe("delayed Google Analytics", () => {
     expect(window.dataLayer).toHaveLength(2);
   });
 
-  it("loads five seconds after window load when there is no interaction", () => {
+  it("does not load after time passes without human interaction", () => {
     cleanups.push(initDelayedAnalytics());
     window.dispatchEvent(new Event("load"));
 
-    vi.advanceTimersByTime(4999);
+    vi.advanceTimersByTime(60_000);
     expect(analyticsScripts()).toHaveLength(0);
-
-    vi.advanceTimersByTime(1);
-    expect(analyticsScripts()).toHaveLength(1);
   });
 
   it("deduplicates direct and independently scheduled load attempts", () => {
@@ -66,11 +67,11 @@ describe("delayed Google Analytics", () => {
     expect(window.dataLayer).toHaveLength(2);
   });
 
-  it("cancels interaction listeners and the fallback timer during cleanup", () => {
+  it("cancels interaction listeners during cleanup", () => {
     const cleanup = initDelayedAnalytics();
     cleanup();
 
-    window.dispatchEvent(new Event("scroll"));
+    window.dispatchEvent(new Event("pointerdown"));
     window.dispatchEvent(new Event("load"));
     vi.advanceTimersByTime(5000);
 
@@ -85,7 +86,8 @@ describe("conversion event tracking", () => {
         Sign up
       </a>
     `;
-    cleanups.push(initAnalyticsEventTracking());
+    cleanups.push(initAnalyticsEventTracking(), initDelayedAnalytics());
+    window.dispatchEvent(new Event("pointerdown"));
 
     document.querySelector("a").click();
 
@@ -96,16 +98,64 @@ describe("conversion event tracking", () => {
     ]);
   });
 
+  it("includes declared privacy-safe event parameters", () => {
+    document.body.innerHTML = `
+      <button data-analytics-event="answer_depth_selected"
+        data-analytics-location="question_form"
+        data-analytics-answer-depth="expert">Expert</button>
+    `;
+    cleanups.push(initAnalyticsEventTracking(), initDelayedAnalytics());
+    window.dispatchEvent(new Event("keydown"));
+
+    document.querySelector("button").click();
+
+    expect(window.dataLayer.at(-1)[2]).toEqual({
+      event_location: "question_form",
+      answer_depth: "expert",
+    });
+  });
+
   it("tracks forms submitted without a click", () => {
     document.body.innerHTML = `
       <form data-analytics-event="registration_form_submitted"></form>
     `;
-    cleanups.push(initAnalyticsEventTracking());
+    cleanups.push(initAnalyticsEventTracking(), initDelayedAnalytics());
+    window.dispatchEvent(new Event("touchstart"));
 
     document.querySelector("form").dispatchEvent(
       new Event("submit", { bubbles: true, cancelable: true }),
     );
 
     expect(window.dataLayer.at(-1)[1]).toBe("registration_form_submitted");
+  });
+
+  it("queues confirmed LiveView events until the visitor engages", () => {
+    cleanups.push(initProductAnalytics(), initDelayedAnalytics());
+
+    window.dispatchEvent(
+      new CustomEvent("phx:analytics", {
+        detail: { event: "grid_created", params: { answer_depth: "university" } },
+      }),
+    );
+
+    expect(analyticsScripts()).toHaveLength(0);
+    window.dispatchEvent(new Event("pointerdown"));
+
+    expect(window.dataLayer.at(-1)).toEqual([
+      "event",
+      "grid_created",
+      { answer_depth: "university" },
+    ]);
+  });
+
+  it("records a pending authentication outcome after authenticated navigation", () => {
+    document.body.innerHTML = '<a aria-label="My Profile"></a>';
+    sessionStorage.setItem("pending_auth_event", "sign_up_completed");
+
+    cleanups.push(initProductAnalytics(), initDelayedAnalytics());
+    window.dispatchEvent(new Event("pointerdown"));
+
+    expect(window.dataLayer.at(-1)[1]).toBe("sign_up_completed");
+    expect(sessionStorage.getItem("pending_auth_event")).toBeNull();
   });
 });

@@ -346,6 +346,9 @@ defmodule DialecticWeb.ShareModalComp do
                         class="inline-flex items-center px-3 py-2 border border-l-0 border-gray-300 rounded-r-md bg-gray-50 text-gray-500 text-sm hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                         data-share-copy={share_url(assigns)}
                         data-share-toast={copy_toast(assigns)}
+                        data-analytics-event="grid_shared"
+                        data-analytics-location="share_modal_copy"
+                        data-analytics-share-method="copy_link"
                         aria-label="Copy to clipboard"
                         id="share-copy-btn"
                       >
@@ -381,6 +384,9 @@ defmodule DialecticWeb.ShareModalComp do
                         data-share-title={share_title(assigns)}
                         data-share-text={share_text(assigns)}
                         data-share-url={share_url(assigns)}
+                        data-analytics-event="grid_shared"
+                        data-analytics-location="share_modal_native"
+                        data-analytics-share-method="native_share"
                         class="hidden w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-indigo-300 shadow-sm text-sm font-medium rounded-lg text-indigo-700 bg-indigo-50 hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
                       >
                         <.icon name="hero-share" class="w-5 h-5" /> Share via your device...

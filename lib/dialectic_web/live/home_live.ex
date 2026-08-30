@@ -101,7 +101,16 @@ defmodule DialecticWeb.HomeLive do
         {:noreply, put_flash(socket, :error, "Grid not found after creation")}
 
       graph ->
-        {:noreply, redirect(socket, to: graph_path(graph))}
+        {:noreply,
+         socket
+         |> push_event("analytics", %{
+           event: "grid_created",
+           params: %{
+             answer_depth: socket.assigns.prompt_mode,
+             user_state: if(socket.assigns.current_user, do: "authenticated", else: "anonymous")
+           }
+         })
+         |> redirect(to: graph_path(graph))}
     end
   end
 

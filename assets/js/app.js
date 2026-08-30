@@ -49,10 +49,12 @@ import { syncGraphAppearanceStorage } from "./appearance_preferences.js";
 import {
   initAnalyticsEventTracking,
   initDelayedAnalytics,
+  initProductAnalytics,
 } from "./analytics.js";
 
 initDelayedAnalytics();
 initAnalyticsEventTracking();
+initProductAnalytics();
 
 let hooks = {};
 

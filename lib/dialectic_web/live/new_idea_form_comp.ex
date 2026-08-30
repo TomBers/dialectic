@@ -196,6 +196,9 @@ defmodule DialecticWeb.NewIdeaFormComp do
                     phx-value-mode={mode}
                     phx-target={@myself}
                     data-requires-login={to_string(!@authenticated && restricted_mode?(mode))}
+                    data-analytics-event="answer_depth_selected"
+                    data-analytics-location="question_form"
+                    data-analytics-answer-depth={mode}
                     title={
                       if(!@authenticated && restricted_mode?(mode),
                         do: "Sign in to unlock #{label}",

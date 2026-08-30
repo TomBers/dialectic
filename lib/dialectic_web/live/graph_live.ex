@@ -392,12 +392,29 @@ defmodule DialecticWeb.GraphLive do
   def handle_event("toggle_lock_graph", _, socket) do
     graph_struct = GraphActions.toggle_graph_locked(graph_action_params(socket))
     can_edit = !graph_struct.is_locked
-    {:noreply, socket |> assign(graph_struct: graph_struct, can_edit: can_edit)}
+
+    {:noreply,
+     socket
+     |> assign(graph_struct: graph_struct, can_edit: can_edit)
+     |> push_event("analytics", %{
+       event: "access_settings_changed",
+       params: %{setting: "editing", enabled: to_string(can_edit)}
+     })}
   end
 
   def handle_event("toggle_public_graph", _, socket) do
     graph_struct = GraphActions.toggle_graph_public(graph_action_params(socket))
-    {:noreply, socket |> assign(graph_struct: graph_struct)}
+
+    {:noreply,
+     socket
+     |> assign(graph_struct: graph_struct)
+     |> push_event("analytics", %{
+       event: "access_settings_changed",
+       params: %{
+         setting: "visibility",
+         visibility: if(graph_struct.is_public, do: "public", else: "private")
+       }
+     })}
   end
 
   def handle_event("follow_graph", _params, socket) do
@@ -1126,7 +1143,9 @@ defmodule DialecticWeb.GraphLive do
   def handle_event("answer", %{"vertex" => %{"content" => answer}}, socket) do
     case GraphHelpers.handle_answer(socket, answer) do
       {:ok, graph_result, operation} ->
-        update_graph(socket, graph_result, operation)
+        socket
+        |> push_event("analytics", %{event: "claim_added", params: %{entry_method: "post"}})
+        |> update_graph(graph_result, operation)
 
       {:error, :locked} ->
         {:noreply, socket |> put_flash(:error, "This graph is locked")}
@@ -1144,7 +1163,9 @@ defmodule DialecticWeb.GraphLive do
       ) do
     case GraphHelpers.handle_answer(socket, answer) do
       {:ok, graph_result, operation} ->
-        update_graph(socket, graph_result, operation)
+        socket
+        |> push_event("analytics", %{event: "claim_added", params: %{entry_method: "post"}})
+        |> update_graph(graph_result, operation)
 
       {:error, :locked} ->
         {:noreply, socket |> put_flash(:error, "This graph is locked")}
@@ -1169,6 +1190,7 @@ defmodule DialecticWeb.GraphLive do
            ) do
         {:ok, {_graph, node}, operation} ->
           socket
+          |> push_event("analytics", %{event: "question_added", params: %{ai_requested: "true"}})
           |> reset_ask_form()
           |> begin_query_generation(
             node,
@@ -1195,6 +1217,7 @@ defmodule DialecticWeb.GraphLive do
            ) do
         {:ok, {_graph, node}, operation} ->
           socket
+          |> push_event("analytics", %{event: "question_added", params: %{ai_requested: "true"}})
           |> reset_ask_form()
           |> begin_query_generation(
             node,
@@ -1721,6 +1744,7 @@ defmodule DialecticWeb.GraphLive do
 
     socket =
       socket
+      |> push_event("analytics", %{event: "ai_response_completed", params: %{}})
       |> assign(streaming_nodes: MapSet.delete(socket.assigns.streaming_nodes, node_id))
       |> assign(work_streams: list_streams(socket.assigns.graph_id))
 
@@ -1746,7 +1770,10 @@ defmodule DialecticWeb.GraphLive do
 
     updated_vertex = GraphManager.find_node_by_id(socket.assigns.graph_id, node_id)
 
-    socket = mark_background_generation_failed(socket, node_id)
+    socket =
+      socket
+      |> push_event("analytics", %{event: "ai_response_failed", params: %{}})
+      |> mark_background_generation_failed(node_id)
 
     if updated_vertex && socket.assigns.node && node_id == Map.get(socket.assigns.node, :id) do
       label = NodeTitleHelper.extract_node_title(updated_vertex)
@@ -2542,11 +2569,18 @@ defmodule DialecticWeb.GraphLive do
          _label,
          %{"query_origin" => "node_action_bar"}
        ) do
-    begin_foreground_generation(socket, node, operation)
+    socket
+    |> push_event("analytics", %{
+      event: "ai_response_requested",
+      params: %{origin: "node_action_bar"}
+    })
+    |> begin_foreground_generation(node, operation)
   end
 
   defp begin_query_generation(socket, node, operation, label, _params) do
-    begin_background_generation(socket, node, operation, label)
+    socket
+    |> push_event("analytics", %{event: "ai_response_requested", params: %{origin: "question"}})
+    |> begin_background_generation(node, operation, label)
   end
 
   defp begin_foreground_generation(socket, node, operation) do
