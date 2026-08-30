@@ -269,6 +269,8 @@ defmodule DialecticWeb.HomeLiveTest do
            )
 
     assert has_element?(view, "#home-learning-overview", "Saved for recall")
+    assert has_element?(view, "#home-learning-overview", "Share. Send a complete grid")
+    assert has_element?(view, "#home-learning-overview", "a specific highlight")
     refute has_element?(view, "#home-chat-distinction")
     refute has_element?(view, "#home-retrieval-learning")
 

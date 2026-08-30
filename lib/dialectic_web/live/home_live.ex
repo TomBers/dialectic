@@ -587,6 +587,11 @@ defmodule DialecticWeb.HomeLive do
                 <% end %>
                 so the right idea is there when you need it.
               </li>
+              <li class="border-l-2 border-amber-300 pl-4">
+                <strong class="text-white">Share.</strong>
+                Send a complete grid or a specific highlight so others can follow the idea in its
+                original context.
+              </li>
             </ul>
             <div class="mt-5 flex flex-wrap gap-x-5 gap-y-3">
               <.link
