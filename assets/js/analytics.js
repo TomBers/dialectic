@@ -81,14 +81,14 @@ export const initAnalyticsEventTracking = () => {
 
     trackAnalyticsEvent(target.dataset.analyticsEvent, params);
 
-    const completedEvent = {
-      registration_form_submitted: "sign_up_completed",
-      registration_google_clicked: "sign_up_completed",
-      login_form_submitted: "login_completed",
-      login_google_clicked: "login_completed",
+    const pendingAuth = {
+      registration_form_submitted: { event: "sign_up_completed", method: "password" },
+      registration_google_clicked: { event: "sign_up_completed", method: "google" },
+      login_form_submitted: { event: "login_completed", method: "password" },
+      login_google_clicked: { event: "login_completed", method: "google" },
     }[target.dataset.analyticsEvent];
 
-    if (completedEvent) sessionStorage.setItem("pending_auth_event", completedEvent);
+    if (pendingAuth) sessionStorage.setItem("pending_auth_event", JSON.stringify(pendingAuth));
   };
 
   document.addEventListener("click", track);
@@ -104,11 +104,24 @@ export const initProductAnalytics = () => {
   let lastGridPath;
 
   const reconcileAuth = () => {
-    const eventName = sessionStorage.getItem("pending_auth_event");
-    if (!eventName || !document.querySelector('[aria-label="My Profile"]')) return;
+    const storedAuth = sessionStorage.getItem("pending_auth_event");
+    if (!storedAuth || !document.querySelector('[aria-label="My Profile"]')) return;
+
+    let pendingAuth;
+
+    try {
+      pendingAuth = JSON.parse(storedAuth);
+    } catch {
+      pendingAuth = { event: storedAuth, method: "unknown" };
+    }
+
+    if (!["sign_up_completed", "login_completed"].includes(pendingAuth.event)) {
+      sessionStorage.removeItem("pending_auth_event");
+      return;
+    }
 
     sessionStorage.removeItem("pending_auth_event");
-    trackAnalyticsEvent(eventName, { method: eventName.startsWith("sign_up") ? "account" : "login" });
+    trackAnalyticsEvent(pendingAuth.event, { method: pendingAuth.method || "unknown" });
   };
 
   const trackGridView = () => {

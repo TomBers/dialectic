@@ -127,6 +127,25 @@ describe("conversion event tracking", () => {
     );
 
     expect(window.dataLayer.at(-1)[1]).toBe("registration_form_submitted");
+    expect(JSON.parse(sessionStorage.getItem("pending_auth_event"))).toEqual({
+      event: "sign_up_completed",
+      method: "password",
+    });
+  });
+
+  it("preserves Google as the pending authentication method", () => {
+    document.body.innerHTML = `
+      <a data-analytics-event="login_google_clicked">Continue with Google</a>
+    `;
+    cleanups.push(initAnalyticsEventTracking(), initDelayedAnalytics());
+    window.dispatchEvent(new Event("pointerdown"));
+
+    document.querySelector("a").click();
+
+    expect(JSON.parse(sessionStorage.getItem("pending_auth_event"))).toEqual({
+      event: "login_completed",
+      method: "google",
+    });
   });
 
   it("queues confirmed LiveView events until the visitor engages", () => {
@@ -150,12 +169,33 @@ describe("conversion event tracking", () => {
 
   it("records a pending authentication outcome after authenticated navigation", () => {
     document.body.innerHTML = '<a aria-label="My Profile"></a>';
-    sessionStorage.setItem("pending_auth_event", "sign_up_completed");
+    sessionStorage.setItem(
+      "pending_auth_event",
+      JSON.stringify({ event: "sign_up_completed", method: "google" }),
+    );
 
     cleanups.push(initProductAnalytics(), initDelayedAnalytics());
     window.dispatchEvent(new Event("pointerdown"));
 
-    expect(window.dataLayer.at(-1)[1]).toBe("sign_up_completed");
+    expect(window.dataLayer.at(-1)).toEqual([
+      "event",
+      "sign_up_completed",
+      { method: "google" },
+    ]);
     expect(sessionStorage.getItem("pending_auth_event")).toBeNull();
+  });
+
+  it("handles pending events stored by the previous string format", () => {
+    document.body.innerHTML = '<a aria-label="My Profile"></a>';
+    sessionStorage.setItem("pending_auth_event", "login_completed");
+
+    cleanups.push(initProductAnalytics(), initDelayedAnalytics());
+    window.dispatchEvent(new Event("pointerdown"));
+
+    expect(window.dataLayer.at(-1)).toEqual([
+      "event",
+      "login_completed",
+      { method: "unknown" },
+    ]);
   });
 });
