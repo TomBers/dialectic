@@ -1575,6 +1575,45 @@ button[type="submit"]:active {
     color: #475569;
 }
 
+.reader-prose.reader-prose-dark {
+    color: #e2e8f0;
+}
+
+.reader-prose.reader-prose-dark
+    [phx-hook="Markdown"][data-body-only="true"]
+    :where(p, li) {
+    color: #cbd5e1;
+}
+
+.reader-prose.reader-prose-dark
+    [phx-hook="Markdown"][data-body-only="true"]
+    > p:first-of-type,
+.reader-prose.reader-prose-dark
+    [phx-hook="Markdown"][data-body-only="true"]
+    :where(h2, h3, strong) {
+    color: #f8fafc;
+}
+
+.reader-prose.reader-prose-dark
+    [phx-hook="Markdown"][data-body-only="true"]
+    :where(li)::marker {
+    color: #94a3b8;
+}
+
+.reader-prose.reader-prose-dark
+    [phx-hook="Markdown"][data-body-only="true"]
+    :where(a) {
+    color: #5eead4;
+    text-decoration-color: #2dd4bf;
+}
+
+.reader-prose.reader-prose-dark
+    [phx-hook="Markdown"][data-body-only="true"]
+    :where(blockquote) {
+    border-color: #64748b;
+    color: #cbd5e1;
+}
+
 .reader-prose [phx-hook="Markdown"] :where(pre) {
     display: none;
 }

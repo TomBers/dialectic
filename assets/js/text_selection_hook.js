@@ -276,9 +276,10 @@ const textSelectionHook = {
 
   scrollHighlightIntoView(span) {
     const scrollContainer = this.findScrollContainer(span);
+    const behavior = this.highlightScrollBehavior(span);
 
     if (!scrollContainer) {
-      span.scrollIntoView({ behavior: "smooth", block: "center" });
+      span.scrollIntoView({ behavior, block: "center" });
       return;
     }
 
@@ -291,8 +292,13 @@ const textSelectionHook = {
 
     scrollContainer.scrollTo({
       top: Math.max(0, targetScrollTop),
-      behavior: "smooth",
+      behavior,
     });
+  },
+
+  highlightScrollBehavior(span) {
+    const layout = span.closest("[data-reduce-motion]");
+    return layout?.dataset.reduceMotion === "true" ? "auto" : "smooth";
   },
 
   isHighlightInView(span) {

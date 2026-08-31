@@ -130,6 +130,7 @@ defmodule DialecticWeb.OutlineGraphLive do
     {:noreply,
      socket
      |> assign(highlights: highlights)
+     |> assign_visible_highlights()
      |> push_highlights()}
   end
 
@@ -145,6 +146,7 @@ defmodule DialecticWeb.OutlineGraphLive do
     {:noreply,
      socket
      |> assign(highlights: highlights)
+     |> assign_visible_highlights()
      |> push_highlights()}
   end
 
@@ -158,6 +160,7 @@ defmodule DialecticWeb.OutlineGraphLive do
     {:noreply,
      socket
      |> assign(highlights: highlights)
+     |> assign_visible_highlights()
      |> push_highlights()}
   end
 
@@ -484,6 +487,7 @@ defmodule DialecticWeb.OutlineGraphLive do
       search_results: [],
       following_graph?: following_graph?(socket.assigns[:current_user], graph_db),
       highlights: highlights,
+      visible_highlights: highlights,
       page_title: graph_db.title,
       page_description: description,
       default_page_description: description,
@@ -591,7 +595,8 @@ defmodule DialecticWeb.OutlineGraphLive do
   end
 
   defp assign_selected_node(socket, nil) do
-    assign(socket,
+    socket
+    |> assign(
       selected_node_id: nil,
       node: nil,
       share_node: nil,
@@ -610,6 +615,7 @@ defmodule DialecticWeb.OutlineGraphLive do
       paths_filtered?: false,
       can_choose_path?: false
     )
+    |> assign_visible_highlights()
   end
 
   defp assign_selected_node(socket, selected_node) do
@@ -667,7 +673,8 @@ defmodule DialecticWeb.OutlineGraphLive do
       |> Enum.map(& &1.id)
       |> MapSet.new()
 
-    assign(socket,
+    socket
+    |> assign(
       selected_node_id: selected_node.id,
       node: selected_node,
       share_node: selected_node,
@@ -685,6 +692,7 @@ defmodule DialecticWeb.OutlineGraphLive do
       paths_filtered?: paths_filtered?,
       can_choose_path?: can_choose_path?
     )
+    |> assign_visible_highlights()
   end
 
   defp can_choose_path?(outline_nodes, focused_outline_nodes, selected_node_id) do
@@ -711,9 +719,23 @@ defmodule DialecticWeb.OutlineGraphLive do
     end
   end
 
+  defp assign_visible_highlights(socket) do
+    highlights = socket.assigns.highlights || []
+
+    visible_highlights =
+      if socket.assigns.paths_filtered? do
+        path_node_ids = MapSet.new(socket.assigns.path_focus_ids)
+        Enum.filter(highlights, &MapSet.member?(path_node_ids, &1.node_id))
+      else
+        highlights
+      end
+
+    assign(socket, :visible_highlights, visible_highlights)
+  end
+
   defp push_highlights(socket) do
     push_event(socket, "highlights_loaded", %{
-      highlights: serialize_highlights(socket.assigns.highlights || [])
+      highlights: serialize_highlights(socket.assigns.visible_highlights || [])
     })
   end
 

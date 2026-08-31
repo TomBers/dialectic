@@ -55,7 +55,7 @@
                   detail: %{id: "highlights-drawer"}
                 )
               }
-              highlights_count={length(@highlights)}
+              highlights_count={length(@visible_highlights)}
               highlights_panel_id="highlights-drawer"
               share_click="open_share_modal"
               compact
@@ -384,7 +384,8 @@
             <%= for {reading_node, index} <- Enum.with_index(@visible_reading_chain) do %>
               <% reading_response_level = Map.get(reading_node, :response_level) %>
               <% selected_reading_node? = reading_node.id == @selected_node_id %>
-              <% node_highlights = Enum.filter(@highlights, &(&1.node_id == reading_node.id)) %>
+              <% node_highlights =
+                Enum.filter(@visible_highlights, &(&1.node_id == reading_node.id)) %>
               <% node_highlight_count = length(node_highlights) %>
               <article
                 id={"reading-node-#{reading_node.id}"}
@@ -422,7 +423,7 @@
                         data-mudg-id={@graph_id}
                         data-highlights-only="false"
                       >
-                        <article class="reader-prose prose prose-invert max-w-none prose-headings:tracking-tight prose-a:break-words">
+                        <article class="reader-prose reader-prose-dark prose prose-invert max-w-none prose-headings:tracking-tight prose-a:break-words">
                           <div
                             phx-hook="Markdown"
                             id={"outline-markdown-body-#{reading_node.id}"}
@@ -788,7 +789,7 @@
             <div class="min-w-0">
               <h2 class="text-base font-semibold tracking-tight text-slate-950">Highlights</h2>
               <p class="mt-0.5 text-xs leading-5 text-slate-500">
-                {length(@highlights)} saved {if(length(@highlights) == 1,
+                {length(@visible_highlights)} saved {if(length(@visible_highlights) == 1,
                   do: "passage",
                   else: "passages"
                 )} and connected ideas
@@ -817,7 +818,7 @@
           <.live_component
             module={DialecticWeb.HighlightsPanelComp}
             id="reader-highlights-panel"
-            highlights={@highlights}
+            highlights={@visible_highlights}
             current_user={@current_user}
             graph_struct={@graph_struct}
             graph_id={@graph_id}

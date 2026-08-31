@@ -935,6 +935,86 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert has_element?(view, "#reader-highlights-close")
   end
 
+  test "reader toggles highlights for a non-root node", %{conn: conn} do
+    graph = create_graph(highlight_graph_data())
+    user = user_fixture()
+
+    {:ok, _highlight} =
+      Highlights.create_highlight(%{
+        mudg_id: graph.title,
+        node_id: "5",
+        text_source_type: "node",
+        selection_start: 0,
+        selection_end: 5,
+        selected_text_snapshot: "Maybe",
+        created_by_user_id: user.id
+      })
+
+    {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=4")
+    toggle = "#reader-node-5-highlights"
+    list = "#reader-node-5-highlight-list"
+
+    assert has_element?(view, "#{toggle}[aria-expanded='false']")
+    refute has_element?(view, list)
+
+    view
+    |> element(toggle)
+    |> render_click()
+
+    assert has_element?(view, "#{toggle}[aria-expanded='true']")
+    assert has_element?(view, list, "Maybe")
+
+    view
+    |> element(toggle)
+    |> render_click()
+
+    assert has_element?(view, "#{toggle}[aria-expanded='false']")
+    refute has_element?(view, list)
+  end
+
+  test "reader filters highlights to the selected path", %{conn: conn} do
+    graph = create_graph(highlight_graph_data())
+    user = user_fixture()
+
+    {:ok, visible_highlight} =
+      Highlights.create_highlight(%{
+        mudg_id: graph.title,
+        node_id: "5",
+        text_source_type: "node",
+        selection_start: 0,
+        selection_end: 5,
+        selected_text_snapshot: "Maybe",
+        created_by_user_id: user.id
+      })
+
+    {:ok, hidden_highlight} =
+      Highlights.create_highlight(%{
+        mudg_id: graph.title,
+        node_id: "3",
+        text_source_type: "node",
+        selection_start: 0,
+        selection_end: 5,
+        selected_text_snapshot: "It describes",
+        created_by_user_id: user.id
+      })
+
+    {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=4&path=5")
+
+    assert has_element?(view, "#reader-workspace-bar-highlights", "1")
+    assert has_element?(view, "#highlights-drawer", "1 saved passage and connected ideas")
+    assert has_element?(view, "#highlight-card-#{visible_highlight.id}")
+    refute has_element?(view, "#highlight-card-#{hidden_highlight.id}")
+
+    view
+    |> element("#outline-show-all-paths")
+    |> render_click()
+
+    assert_patch(view, ~p"/g/#{graph.slug}?node=4")
+    assert has_element?(view, "#reader-workspace-bar-highlights", "2")
+    assert has_element?(view, "#highlight-card-#{visible_highlight.id}")
+    assert has_element?(view, "#highlight-card-#{hidden_highlight.id}")
+  end
+
   test "reader loads highlight data for rendered nodes", %{conn: conn} do
     graph = create_graph(highlight_graph_data())
     user = user_fixture()
