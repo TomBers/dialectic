@@ -7,6 +7,32 @@ defmodule DialecticWeb.HomeLive do
   import DialecticWeb.GridCardComp
   require Logger
 
+  @homepage_faqs [
+    %{
+      id: "cost",
+      question: "How much does RationalGrid cost?",
+      answer: "RationalGrid is free to use. There are no paid pricing tiers."
+    },
+    %{
+      id: "ai-usage-limits",
+      question: "What are the AI usage limits?",
+      answer:
+        "Signed-out visitors can use Simple answers. A free account unlocks Expanded and In-depth answers. Each person can have up to three AI requests in progress and make up to ten AI requests per minute; if a limit is reached, wait and try again."
+    },
+    %{
+      id: "sources",
+      question: "How does RationalGrid use sources?",
+      answer:
+        "Simple answers do not perform source research unless you ask for it. Expanded and In-depth answers are prompted to ground material claims in relevant primary, scholarly, or official sources, but AI can be wrong and important claims should be checked."
+    },
+    %{
+      id: "chat-assistants",
+      question: "Why not just use ChatGPT or Claude?",
+      answer:
+        "You can—and sometimes should. ChatGPT or Claude is often simpler for a quick answer, draft, or short conversation. RationalGrid is useful when the path matters: it keeps questions, sources, notes, and branches connected so you can return, check evidence, compare views, share, and build with others."
+    }
+  ]
+
   on_mount {DialecticWeb.UserAuth, :mount_current_user}
 
   @impl true
@@ -39,6 +65,8 @@ defmodule DialecticWeb.HomeLive do
        focus_new_grid: params["focus"] == "grid",
        preview_seed: home_preview_seed(),
        curated_grids: [],
+       homepage_faqs: @homepage_faqs,
+       json_ld: homepage_json_ld(),
        page_description:
          "For questions that matter, compare views, trace claims to sources, and keep your reasoning in a grid you can revisit and share."
      )}
@@ -73,7 +101,16 @@ defmodule DialecticWeb.HomeLive do
         {:noreply, put_flash(socket, :error, "Grid not found after creation")}
 
       graph ->
-        {:noreply, redirect(socket, to: graph_path(graph))}
+        {:noreply,
+         socket
+         |> push_event("analytics", %{
+           event: "grid_created",
+           params: %{
+             answer_depth: socket.assigns.prompt_mode,
+             user_state: if(socket.assigns.current_user, do: "authenticated", else: "anonymous")
+           }
+         })
+         |> redirect(to: graph_path(graph))}
     end
   end
 
@@ -321,15 +358,53 @@ defmodule DialecticWeb.HomeLive do
               id="home-hero-subheading"
               class="mt-8 text-lg leading-8 text-slate-200"
             >
-              Explore with AI to discover new information, then keep, find, and share what matters.
+              Use AI to answer questions, then go beyond a one-off chat: explore competing views and
+              build a durable map of your learning that you can expand, revisit, and share—with
+              tools to help when you get stuck.
             </p>
             <div class="mt-12 flex flex-wrap items-center gap-4">
-              <.link
-                href="#start-here"
-                class="inline-flex items-center gap-2 rounded-md bg-teal-300 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-teal-200"
-              >
-                Explore a question <.icon name="hero-arrow-down" class="h-4 w-4" />
-              </.link>
+              <%= if @current_user do %>
+                <.link
+                  id="home-start-grid-link"
+                  href="#start-here"
+                  data-analytics-event="start_grid_clicked"
+                  data-analytics-location="home_hero"
+                  class="inline-flex items-center gap-2 rounded-md bg-teal-300 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-teal-200"
+                >
+                  Start a grid <.icon name="hero-arrow-down" class="h-4 w-4" />
+                </.link>
+              <% else %>
+                <.link
+                  id="home-sign-up-link"
+                  navigate={~p"/users/register"}
+                  data-analytics-event="sign_up_cta_clicked"
+                  data-analytics-location="home_hero"
+                  class="inline-flex items-center gap-2 rounded-md bg-teal-300 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-teal-200"
+                >
+                  Sign up free <.icon name="hero-arrow-right" class="h-4 w-4" />
+                </.link>
+              <% end %>
+              <%= if @current_user do %>
+                <.link
+                  id="home-browse-examples-link"
+                  navigate={~p"/community"}
+                  data-analytics-event="community_clicked"
+                  data-analytics-location="home_hero"
+                  class="inline-flex items-center gap-2 border-b border-slate-400 px-1 py-2 text-sm font-semibold text-white transition hover:border-teal-300 hover:text-teal-200"
+                >
+                  Browse examples <.icon name="hero-arrow-right" class="h-4 w-4" />
+                </.link>
+              <% else %>
+                <.link
+                  id="home-explore-question-link"
+                  href="#start-here"
+                  data-analytics-event="explore_question_clicked"
+                  data-analytics-location="home_hero"
+                  class="inline-flex items-center gap-2 border-b border-slate-400 px-1 py-2 text-sm font-semibold text-white transition hover:border-teal-300 hover:text-teal-200"
+                >
+                  Explore a question <.icon name="hero-arrow-down" class="h-4 w-4" />
+                </.link>
+              <% end %>
               <.link
                 id="home-about-link"
                 navigate={~p"/about"}
@@ -338,6 +413,13 @@ defmodule DialecticWeb.HomeLive do
                 Why RationalGrid? <.icon name="hero-arrow-right" class="h-4 w-4" />
               </.link>
             </div>
+            <p
+              :if={is_nil(@current_user)}
+              id="home-sign-up-reassurance"
+              class="mt-4 text-sm text-slate-400"
+            >
+              Free account. No payment details. Save your grids, unlock deeper answers, and control access.
+            </p>
             <.link
               id="home-ai-scepticism-link"
               navigate={~p"/intro/ai"}
@@ -405,20 +487,23 @@ defmodule DialecticWeb.HomeLive do
         <div class="mx-auto w-full max-w-3xl px-5 py-12 sm:px-8 sm:py-16">
           <div id="home-mobile-community-start" class="text-center md:hidden">
             <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
-              Start here
+              Explore on mobile
             </p>
             <h2 class="mt-3 font-serif text-4xl font-semibold leading-tight tracking-tight">
-              Choose a question.
+              Follow a line of thought.
             </h2>
             <p class="mx-auto mt-4 max-w-md text-base leading-7 text-slate-600">
-              Browse public grids and follow the ideas that interest you.
+              RationalGrid is currently read-only on mobile. Browse public grids here, then use a
+              larger screen when you want to create or edit one.
             </p>
             <.link
               id="home-mobile-community-link"
               navigate={~p"/community"}
+              data-analytics-event="community_clicked"
+              data-analytics-location="mobile_read_only_prompt"
               class="mt-6 inline-flex min-h-11 items-center gap-2 rounded-md bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
             >
-              Browse community grids <.icon name="hero-arrow-right" class="h-4 w-4" />
+              Browse public grids <.icon name="hero-arrow-right" class="h-4 w-4" />
             </.link>
           </div>
 
@@ -441,12 +526,22 @@ defmodule DialecticWeb.HomeLive do
                   autofocus={@focus_new_grid}
                   minimal={true}
                   authenticated={!is_nil(@current_user)}
+                  public_grid_warning="New grids are public and editable by default. Anyone can read them and, while editing is on, add to them. Sign in first if you want to control access in Settings; never include sensitive information."
                 />
-                <p id="home-public-grid-note" class="mt-3 text-xs leading-5 text-slate-500">
-                  New grids are public and editable by default. Anyone can read them and, while editing is on, add to them. Sign in first if you want to control access in Settings; never include sensitive information.
-                </p>
               </div>
             </div>
+            <p class="mt-5 text-center text-sm text-slate-600">
+              Prefer to look around first?
+              <.link
+                id="home-community-secondary-link"
+                navigate={~p"/community"}
+                data-analytics-event="community_clicked"
+                data-analytics-location="question_form"
+                class="font-semibold text-teal-800 underline decoration-teal-400 underline-offset-4 hover:text-teal-950"
+              >
+                Browse public grids
+              </.link>
+            </p>
           </div>
         </div>
       </section>
@@ -462,15 +557,43 @@ defmodule DialecticWeb.HomeLive do
         </div>
         <div class="mx-auto grid w-full max-w-7xl gap-10 px-5 py-12 sm:px-8 sm:py-16 lg:grid-cols-[minmax(20rem,0.72fr)_minmax(0,1.28fr)] lg:items-center lg:px-10">
           <div id="home-learning-loop">
-            <p class="inline-block border-l-2 border-teal-300 pl-3 text-sm font-bold uppercase tracking-[0.14em] text-teal-200">
-              See it in use
+            <p class="inline-flex rounded-full border border-teal-300/40 bg-teal-300/10 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.14em] text-teal-100 shadow-sm">
+              How RationalGrid supports learning
             </p>
-            <h2 class="mt-3 font-serif text-4xl font-semibold tracking-tight sm:text-5xl">
-              Explore. Keep. Reconsider.
-            </h2>
-            <p class="mt-4 max-w-xl text-base leading-7 text-slate-300">
-              Questions, sources, and notes stay connected as your view develops.
-            </p>
+            <ul
+              id="home-learning-overview"
+              class="mt-8 max-w-xl space-y-5 text-base leading-7 text-slate-300"
+            >
+              <li class="border-l-2 border-sky-400 pl-4">
+                <strong class="text-white">Discover.</strong>
+                Use AI to find new information and open paths worth investigating.
+              </li>
+              <li class="border-l-2 border-violet-400 pl-4">
+                <strong class="text-white">Connect.</strong>
+                Branch questions into answers, challenges, evidence, sources, and further questions.
+              </li>
+              <li class="border-l-2 border-teal-300 pl-4">
+                <strong class="text-white">Recall.</strong>
+                Bookmark nodes and highlight passages; they collect in
+                <%= if @current_user do %>
+                  <.link
+                    id="home-saved-for-recall-link"
+                    navigate={~p"/u/#{@current_user.username}" <> "#profile-thinking-library"}
+                    class="font-semibold text-teal-200 underline decoration-teal-500 underline-offset-4 hover:text-teal-100"
+                  >
+                    Saved for recall
+                  </.link>
+                <% else %>
+                  <span class="font-semibold text-teal-200">Saved for recall</span>
+                <% end %>
+                so the right idea is there when you need it.
+              </li>
+              <li class="border-l-2 border-amber-300 pl-4">
+                <strong class="text-white">Share.</strong>
+                Send a complete grid or a specific highlight so others can follow the idea in its
+                original context.
+              </li>
+            </ul>
             <div class="mt-5 flex flex-wrap gap-x-5 gap-y-3">
               <.link
                 id="home-features-link"
@@ -526,6 +649,8 @@ defmodule DialecticWeb.HomeLive do
         </div>
       </section>
 
+      <.proof_carousel />
+
       <section
         id="popular-grids"
         class="relative isolate overflow-hidden border-b border-stone-300 bg-[#fbfaf6]"
@@ -569,6 +694,83 @@ defmodule DialecticWeb.HomeLive do
         </div>
       </section>
 
+      <section id="home-definition" class="border-b border-slate-800 bg-slate-900 text-white">
+        <div class="mx-auto w-full max-w-7xl px-5 py-10 sm:px-8 sm:py-12 lg:px-10">
+          <h2 class="font-serif text-3xl font-semibold tracking-tight sm:text-4xl">
+            What is RationalGrid?
+          </h2>
+          <p class="mt-4 max-w-3xl text-base leading-7 text-slate-300">
+            RationalGrid is a free, not-for-profit, AI-assisted research and argument-mapping tool. It
+            helps students and researchers organize claims and evidence into structured, shareable
+            formats.
+          </p>
+        </div>
+      </section>
+
+      <section id="home-ai-limits-faq" class="border-b border-stone-300 bg-[#f4f1e9]">
+        <div class="mx-auto w-full max-w-5xl px-5 py-12 sm:px-8 sm:py-16">
+          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
+            Free to explore
+          </p>
+          <h2 class="mt-3 font-serif text-4xl font-semibold tracking-tight">
+            AI and source limits
+          </h2>
+          <div class="mt-7 divide-y divide-stone-300 border-y border-stone-300">
+            <details :for={faq <- @homepage_faqs} id={"home-faq-#{faq.id}"} class="group py-5">
+              <summary class="flex cursor-pointer list-none items-center justify-between gap-4 font-semibold text-slate-950">
+                {faq.question}
+                <.icon
+                  name="hero-plus"
+                  class="h-5 w-5 shrink-0 text-teal-700 transition group-open:rotate-45"
+                />
+              </summary>
+              <p class="mt-3 max-w-3xl text-sm leading-6 text-slate-600">{faq.answer}</p>
+            </details>
+          </div>
+          <.link
+            id="home-ai-limits-details-link"
+            navigate={~p"/intro/ai"}
+            class="mt-5 inline-flex items-center gap-2 border-b border-slate-500 pb-1 text-sm font-semibold text-slate-800 transition hover:border-teal-700 hover:text-teal-800"
+          >
+            Learn how AI and sources work <.icon name="hero-arrow-right" class="h-4 w-4" />
+          </.link>
+        </div>
+      </section>
+
+      <section id="home-final-cta" class="border-b border-slate-700 bg-slate-950 text-white">
+        <div class="mx-auto flex w-full max-w-5xl flex-col gap-6 px-5 py-12 sm:flex-row sm:items-center sm:justify-between sm:px-8 sm:py-14">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-300">
+              Follow the reasoning
+            </p>
+            <h2 class="mt-2 font-serif text-3xl font-semibold tracking-tight sm:text-4xl">
+              Start with a question that matters.
+            </h2>
+          </div>
+          <%= if @current_user do %>
+            <.link
+              id="home-final-start-grid-link"
+              href="#start-here"
+              data-analytics-event="start_grid_clicked"
+              data-analytics-location="home_final_cta"
+              class="inline-flex shrink-0 items-center justify-center gap-2 rounded-md bg-teal-300 px-6 py-3.5 text-base font-semibold text-slate-950 transition hover:bg-teal-200"
+            >
+              Start a grid <.icon name="hero-arrow-up" class="h-4 w-4" />
+            </.link>
+          <% else %>
+            <.link
+              id="home-final-sign-up-link"
+              navigate={~p"/users/register"}
+              data-analytics-event="sign_up_cta_clicked"
+              data-analytics-location="home_final_cta"
+              class="inline-flex shrink-0 items-center justify-center gap-2 rounded-md bg-teal-300 px-6 py-3.5 text-base font-semibold text-slate-950 transition hover:bg-teal-200"
+            >
+              Sign up free <.icon name="hero-arrow-right" class="h-4 w-4" />
+            </.link>
+          <% end %>
+        </div>
+      </section>
+
       <footer class="bg-slate-950 text-slate-300">
         <div class="mx-auto flex w-full max-w-7xl flex-col gap-5 px-5 py-8 sm:flex-row sm:items-center sm:justify-between sm:px-8 lg:px-10">
           <div class="flex items-center gap-3">
@@ -586,10 +788,17 @@ defmodule DialecticWeb.HomeLive do
           </div>
           <nav aria-label="Homepage footer" class="flex flex-wrap gap-x-5 gap-y-2 text-sm">
             <.link navigate={~p"/intro/how"} class="hover:text-white">Guide</.link>
-            <.link navigate={~p"/intro/ai"} class="hover:text-white">AI and exploration</.link>
+            <.link navigate={~p"/intro/ai"} class="hover:text-white">AI &amp; data use</.link>
             <.link navigate={~p"/about"} class="hover:text-white">About</.link>
             <.link navigate={~p"/community"} class="hover:text-white">Community</.link>
             <.link navigate={~p"/gallery"} class="hover:text-white">Gallery</.link>
+            <.link
+              id="home-footer-contact-link"
+              href="mailto:hello@rationalgrid.ai"
+              class="hover:text-white"
+            >
+              Contact
+            </.link>
             <.link
               href="https://github.com/TomBers/dialectic"
               target="_blank"
@@ -602,6 +811,165 @@ defmodule DialecticWeb.HomeLive do
         </div>
       </footer>
     </div>
+    """
+  end
+
+  defp proof_carousel(assigns) do
+    ~H"""
+    <section
+      id="home-proof-carousel"
+      class="border-b border-stone-300 bg-[#f4f1e9]"
+      phx-hook="ProofCarousel"
+      phx-update="ignore"
+      aria-label="RationalGrid in use"
+    >
+      <div class="mx-auto w-full max-w-6xl px-5 py-12 sm:px-8 sm:py-16 lg:px-10">
+        <div class="flex items-end justify-between gap-6 border-b border-stone-300 pb-5">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
+              Evidence from the community
+            </p>
+            <h2 class="mt-2 font-serif text-3xl font-semibold tracking-tight sm:text-4xl">
+              RationalGrid in use.
+            </h2>
+          </div>
+          <div class="flex shrink-0 items-center gap-2">
+            <button
+              id="home-proof-previous"
+              type="button"
+              data-carousel-previous
+              class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-stone-400 bg-white text-slate-800 transition hover:border-teal-700 hover:text-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700"
+              aria-label="Previous proof"
+            >
+              <.icon name="hero-arrow-left" class="h-4 w-4" />
+            </button>
+            <button
+              id="home-proof-next"
+              type="button"
+              data-carousel-next
+              class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-stone-400 bg-white text-slate-800 transition hover:border-teal-700 hover:text-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700"
+              aria-label="Next proof"
+            >
+              <.icon name="hero-arrow-right" class="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+
+        <div class="mt-8" data-carousel-slides>
+          <article
+            id="home-research-case-study"
+            data-carousel-slide
+            role="group"
+            aria-roledescription="slide"
+            aria-label="1 of 2"
+            class="grid gap-7 lg:grid-cols-[15rem_minmax(0,1fr)]"
+          >
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
+                Research case study
+              </p>
+              <h3 class="mt-3 font-serif text-3xl font-semibold tracking-tight">
+                How
+                <a
+                  id="home-case-study-heading-organization-link"
+                  href="https://philosophynow.org/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-teal-800 underline decoration-teal-500 underline-offset-4 transition hover:text-teal-950 hover:decoration-teal-700"
+                >Philosophy Now</a>
+                mapped one article into 35 connected ideas.
+              </h3>
+            </div>
+            <div class="border-l-2 border-teal-600 pl-5 sm:pl-7">
+              <p class="text-base leading-7 text-slate-700">
+                <a
+                  id="home-case-study-organization-link"
+                  href="https://philosophynow.org/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="font-semibold text-slate-900 underline decoration-stone-400 underline-offset-4 hover:decoration-teal-700 hover:text-teal-800"
+                >Philosophy Now</a>
+                began with physicist and former semiconductor researcher Ignacio Gonzalez’s article
+                about why some narratives spread and survive. Using RationalGrid, it turned the
+                argument into a 35-point map branching into memetic fitness, human agency,
+                psychological susceptibility, narrative complexity, talking points, and moral
+                motivation. The result keeps competing explanations and follow-up questions
+                connected, giving readers paths to inspect instead of a single linear summary.
+              </p>
+              <div class="mt-5 flex flex-wrap gap-5 text-sm font-semibold">
+                <a
+                  id="home-case-study-grid-link"
+                  href="https://rationalgrid.ai/g/inspired-by-the-philosophy-now-article-a-memetic-664759?node=1"
+                  data-analytics-event="case_study_clicked"
+                  data-analytics-location="home_proof_carousel"
+                  class="inline-flex items-center gap-2 border-b border-slate-500 pb-1 text-slate-900 hover:border-teal-700 hover:text-teal-800"
+                >
+                  Explore the 35-point grid <.icon name="hero-arrow-up-right" class="h-4 w-4" />
+                </a>
+                <a
+                  id="home-case-study-source-link"
+                  href="https://philosophynow.org/issues/173/A_Memetic_Analysis_of_Narratives_and_Conspiracies"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="inline-flex items-center gap-2 border-b border-slate-500 pb-1 text-slate-900 hover:border-teal-700 hover:text-teal-800"
+                >
+                  Read the source article <.icon name="hero-arrow-up-right" class="h-4 w-4" />
+                </a>
+              </div>
+            </div>
+          </article>
+
+          <figure
+            id="home-testimonial"
+            data-carousel-slide
+            role="group"
+            aria-roledescription="slide"
+            aria-label="2 of 2"
+            class="hidden border-l-4 border-teal-500 pl-6 sm:pl-8"
+            hidden
+          >
+            <blockquote class="max-w-4xl font-serif text-xl leading-relaxed text-slate-800 sm:text-2xl">
+              “An amazing free specialised AI tool to explore philosophical ideas around pretty much
+              anything—from academic questions to films to… hamsters! All at one’s fingertips, in a
+              matter of seconds, with in-built tools for a sophisticated, yet accessible dialectic.
+              Bravo!”
+            </blockquote>
+            <figcaption class="mt-6">
+              <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                <span class="text-lg font-bold text-slate-950">Alexandra Konoplyanik</span>
+                <span class="text-slate-400" aria-hidden="true">—</span>
+                <a
+                  id="home-testimonial-organization-link"
+                  href="https://pfalondon.org/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="font-bold text-teal-800 underline decoration-teal-500 underline-offset-4 transition hover:text-teal-950 hover:decoration-teal-700"
+                >Philosophy for All</a>
+              </div>
+              <p class="mt-1 text-sm text-slate-600">RationalGrid adviser</p>
+            </figcaption>
+          </figure>
+        </div>
+
+        <div class="mt-7 flex items-center justify-center gap-3" aria-label="Choose proof slide">
+          <button
+            type="button"
+            data-carousel-indicator="0"
+            class="h-2.5 w-8 rounded-full bg-teal-700 transition"
+            aria-label="Show research case study"
+            aria-current="true"
+          ></button>
+          <button
+            type="button"
+            data-carousel-indicator="1"
+            class="h-2.5 w-8 rounded-full bg-stone-300 transition"
+            aria-label="Show testimonial"
+            aria-current="false"
+          ></button>
+          <span class="sr-only" data-carousel-status aria-live="polite">1 of 2</span>
+        </div>
+      </div>
+    </section>
     """
   end
 
@@ -623,6 +991,63 @@ defmodule DialecticWeb.HomeLive do
       </div>
     </section>
     """
+  end
+
+  defp homepage_json_ld do
+    base_url = DialecticWeb.Endpoint.url()
+    organization_id = base_url <> "/#organization"
+    product_id = base_url <> "/#product"
+
+    Jason.encode!(%{
+      "@context" => "https://schema.org",
+      "@graph" => [
+        %{
+          "@type" => "Organization",
+          "@id" => organization_id,
+          "name" => "RationalGrid",
+          "url" => base_url,
+          "logo" => base_url <> ~p"/images/brandmark.svg",
+          "description" =>
+            "RationalGrid is a not-for-profit, open-source project for mapping questions, arguments, and sources.",
+          "sameAs" => ["https://github.com/TomBers/dialectic"]
+        },
+        %{
+          "@type" => ["Product", "SoftwareApplication"],
+          "@id" => product_id,
+          "name" => "RationalGrid",
+          "url" => base_url,
+          "image" => base_url <> ~p"/images/graph_live.webp",
+          "description" =>
+            "A free AI-assisted argument mapping tool for comparing views, tracing claims to sources, and sharing the reasoning behind a conclusion.",
+          "applicationCategory" => "EducationalApplication",
+          "operatingSystem" => "Web",
+          "isAccessibleForFree" => true,
+          "brand" => %{"@id" => organization_id},
+          "offers" => %{
+            "@type" => "Offer",
+            "url" => base_url,
+            "price" => "0.00",
+            "priceCurrency" => "USD",
+            "availability" => "https://schema.org/InStock"
+          }
+        },
+        %{
+          "@type" => "FAQPage",
+          "@id" => base_url <> "/#ai-and-source-limits",
+          "mainEntity" =>
+            Enum.map(@homepage_faqs, fn faq ->
+              %{
+                "@type" => "Question",
+                "name" => faq.question,
+                "acceptedAnswer" => %{
+                  "@type" => "Answer",
+                  "text" => faq.answer
+                }
+              }
+            end)
+        }
+      ]
+    })
   end
 
   defp home_preview_seed do

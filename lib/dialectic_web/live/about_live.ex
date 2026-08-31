@@ -297,7 +297,7 @@ defmodule DialecticWeb.AboutLive do
               navigate={~p"/intro/ai"}
               class="inline-flex items-center gap-1.5 border-b border-slate-500 pb-0.5 hover:border-teal-700 hover:text-teal-800"
             >
-              AI and source limits <.icon name="hero-arrow-right" class="h-4 w-4" />
+              How AI and sources work <.icon name="hero-arrow-right" class="h-4 w-4" />
             </.link>
           </div>
         </section>
@@ -316,7 +316,8 @@ defmodule DialecticWeb.AboutLive do
               </h2>
             </div>
             <p class="text-sm leading-6 text-slate-600">
-              For anyone who wants to explore an idea, remember what they find, and share the path with others.
+              For people who need to compare interpretations, keep evidence attached, and return to
+              the reasoning behind their work.
             </p>
           </div>
 
@@ -326,73 +327,23 @@ defmodule DialecticWeb.AboutLive do
               class="grid gap-2 py-5 sm:grid-cols-[2.5rem_16rem_1fr] sm:items-baseline lg:grid-cols-[2.5rem_20rem_1fr]"
             >
               <p class="font-mono text-xs font-bold text-sky-700">01</p>
-              <h3 class="font-serif text-xl font-semibold">Students and lifelong learners</h3>
+              <h3 class="font-serif text-xl font-semibold">Students</h3>
               <p class="max-w-2xl text-sm leading-6 text-slate-600">
-                Explore a subject at the right level, save useful passages, and return before an essay, exam, or project.
-              </p>
-            </article>
-            <article
-              id="about-audience-teachers"
-              class="grid gap-2 py-5 sm:grid-cols-[2.5rem_16rem_1fr] sm:items-baseline lg:grid-cols-[2.5rem_20rem_1fr]"
-            >
-              <p class="font-mono text-xs font-bold text-indigo-700">02</p>
-              <h3 class="font-serif text-xl font-semibold">Teachers and tutors</h3>
-              <p class="max-w-2xl text-sm leading-6 text-slate-600">
-                Set the explanation level, share a grid with a class, and see how each person added to it.
+                Turn a broad essay or dissertation question into connected claims, counterarguments,
+                and sources you can revisit instead of losing them across notes and chats.
               </p>
             </article>
             <article
               id="about-audience-researchers-writers"
               class="grid gap-2 py-5 sm:grid-cols-[2.5rem_16rem_1fr] sm:items-baseline lg:grid-cols-[2.5rem_20rem_1fr]"
             >
-              <p class="font-mono text-xs font-bold text-rose-700">03</p>
+              <p class="font-mono text-xs font-bold text-rose-700">02</p>
               <h3 class="font-serif text-xl font-semibold">
                 Researchers, journalists, and writers
               </h3>
               <p class="max-w-2xl text-sm leading-6 text-slate-600">
-                Keep questions, sources, and arguments connected while you research a topic or plan a piece of writing.
-              </p>
-            </article>
-            <article
-              id="about-audience-debate-organisers"
-              class="grid gap-2 py-5 sm:grid-cols-[2.5rem_16rem_1fr] sm:items-baseline lg:grid-cols-[2.5rem_20rem_1fr]"
-            >
-              <p class="font-mono text-xs font-bold text-violet-700">04</p>
-              <h3 class="font-serif text-xl font-semibold">Debate and discussion organisers</h3>
-              <p class="max-w-2xl text-sm leading-6 text-slate-600">
-                Map the strongest case on each side, attach sources, and keep the discussion focused.
-              </p>
-            </article>
-            <article
-              id="about-audience-teams"
-              class="grid gap-2 py-5 sm:grid-cols-[2.5rem_16rem_1fr] sm:items-baseline lg:grid-cols-[2.5rem_20rem_1fr]"
-            >
-              <p class="font-mono text-xs font-bold text-emerald-700">05</p>
-              <h3 class="font-serif text-xl font-semibold">Teams and decision-makers</h3>
-              <p class="max-w-2xl text-sm leading-6 text-slate-600">
-                Compare options, test assumptions, and keep a shared record of why a decision was made.
-              </p>
-            </article>
-            <article
-              id="about-audience-book-clubs"
-              class="grid gap-2 py-5 sm:grid-cols-[2.5rem_16rem_1fr] sm:items-baseline lg:grid-cols-[2.5rem_20rem_1fr]"
-            >
-              <p class="font-mono text-xs font-bold text-amber-700">06</p>
-              <h3 class="font-serif text-xl font-semibold">Book clubs and study groups</h3>
-              <p class="max-w-2xl text-sm leading-6 text-slate-600">
-                Ask questions from an exact passage, share highlights, and explore difficult ideas together.
-              </p>
-            </article>
-            <article
-              id="about-audience-critical-thinkers"
-              class="grid gap-2 py-5 sm:grid-cols-[2.5rem_16rem_1fr] sm:items-baseline lg:grid-cols-[2.5rem_20rem_1fr]"
-            >
-              <p class="font-mono text-xs font-bold text-teal-700">07</p>
-              <h3 class="font-serif text-xl font-semibold">
-                Philosophers and critical thinkers
-              </h3>
-              <p class="max-w-2xl text-sm leading-6 text-slate-600">
-                Define key words, question assumptions, compare views, and see what follows from an idea.
+                Keep competing interpretations, claims, and sources connected while investigating a
+                topic or planning a piece of writing. Trace conclusions back to the evidence behind them.
               </p>
             </article>
           </div>

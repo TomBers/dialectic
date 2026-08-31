@@ -180,6 +180,8 @@ defmodule DialecticWeb.WorkspaceBarComp do
           id={"#{@id}-share"}
           type="button"
           phx-click={@share_click}
+          data-analytics-event="grid_share_opened"
+          data-analytics-location="workspace_bar"
           class={action_button_classes(@compact)}
           title={share_button_label(@mode)}
           aria-label={share_button_label(@mode)}

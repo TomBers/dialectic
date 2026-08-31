@@ -22,6 +22,18 @@ defmodule DialecticWeb.SeoControllerTest do
     end
   end
 
+  describe "GET /llms.txt" do
+    test "serves an LLM-friendly product index", %{conn: conn} do
+      conn = get(conn, "/llms.txt")
+      body = response(conn, 200)
+
+      assert get_resp_header(conn, "content-type") |> List.first() =~ "text/plain"
+      assert body =~ "# RationalGrid"
+      assert body =~ "https://rationalgrid.ai/intro/how"
+      assert body =~ "https://rationalgrid.ai/community"
+    end
+  end
+
   describe "graph page metadata" do
     test "reader route is indexable and canonical for public published graphs", %{conn: conn} do
       graph = insert_graph(%{title: "Reader SEO Graph"})

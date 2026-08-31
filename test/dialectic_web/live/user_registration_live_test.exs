@@ -8,10 +8,15 @@ defmodule DialecticWeb.UserRegistrationLiveTest do
 
   describe "Registration page" do
     test "renders registration page", %{conn: conn} do
-      {:ok, _lv, html} = live(conn, ~p"/users/register")
+      {:ok, lv, html} = live(conn, ~p"/users/register")
 
-      assert html =~ "Register"
+      assert html =~ "Create an account"
       assert html =~ "Log in"
+      assert html =~ "Sign up free"
+      assert html =~ "Free account. No payment details."
+      assert html =~ "control who can view or edit them"
+      assert has_element?(lv, "#registration-page", "Turn a question into reasoning")
+      assert has_element?(lv, "#registration-home-link")
     end
 
     test "redirects if already logged in", %{conn: conn} do

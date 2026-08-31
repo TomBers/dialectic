@@ -24,6 +24,7 @@ defmodule DialecticWeb.NewIdeaFormComp do
       |> assign_new(:autofocus, fn -> false end)
       |> assign_new(:minimal, fn -> false end)
       |> assign_new(:authenticated, fn -> false end)
+      |> assign_new(:public_grid_warning, fn -> nil end)
       |> assign_new(:selected_mode, fn -> "high_school" end)
       |> assign_new(:show_level_prompt, fn -> false end)
       |> assign_new(:content, fn %{form: form} ->
@@ -116,6 +117,8 @@ defmodule DialecticWeb.NewIdeaFormComp do
                 <button
                   type="submit"
                   id="new-idea-submit"
+                  data-analytics-event="grid_prompt_continued"
+                  data-analytics-location="question_form"
                   phx-disable-with="Next..."
                   class="inline-flex min-h-[2.35rem] w-full items-center justify-center rounded-md border border-transparent bg-slate-900 px-0 py-1.5 text-sm font-semibold leading-none text-white shadow-sm transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
@@ -130,6 +133,8 @@ defmodule DialecticWeb.NewIdeaFormComp do
               <button
                 type="submit"
                 id="new-idea-submit-mobile"
+                data-analytics-event="grid_prompt_continued"
+                data-analytics-location="question_form_mobile"
                 phx-disable-with="Next..."
                 class="inline-flex w-full items-center justify-center gap-2 rounded-md border border-transparent bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-transform active:scale-[0.98] hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
@@ -191,6 +196,9 @@ defmodule DialecticWeb.NewIdeaFormComp do
                     phx-value-mode={mode}
                     phx-target={@myself}
                     data-requires-login={to_string(!@authenticated && restricted_mode?(mode))}
+                    data-analytics-event="answer_depth_selected"
+                    data-analytics-location="question_form"
+                    data-analytics-answer-depth={mode}
                     title={
                       if(!@authenticated && restricted_mode?(mode),
                         do: "Sign in to unlock #{label}",
@@ -224,10 +232,20 @@ defmodule DialecticWeb.NewIdeaFormComp do
               </div>
             </div>
 
+            <p
+              :if={@public_grid_warning}
+              id="home-public-grid-note"
+              class="mt-3 border-l-2 border-amber-500 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-950"
+            >
+              {@public_grid_warning}
+            </p>
+
             <div class="mt-3 flex justify-end">
               <button
                 type="submit"
                 id="new-idea-create-submit"
+                data-analytics-event="grid_creation_requested"
+                data-analytics-location="question_form"
                 phx-disable-with="Starting..."
                 class="inline-flex w-full items-center justify-center gap-2 rounded-md border border-transparent bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
               >

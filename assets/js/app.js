@@ -44,10 +44,17 @@ import BannerCropper from "./banner_cropper_hook.js";
 import YouTubeFacadeHook from "./youtube_facade_hook.js";
 import DismissibleHintHook from "./dismissible_hint_hook.js";
 import GenerationStatusHook from "./generation_status_hook.js";
+import ProofCarouselHook from "./proof_carousel_hook.js";
 import { syncGraphAppearanceStorage } from "./appearance_preferences.js";
-import { initDelayedAnalytics } from "./analytics.js";
+import {
+  initAnalyticsEventTracking,
+  initDelayedAnalytics,
+  initProductAnalytics,
+} from "./analytics.js";
 
 initDelayedAnalytics();
+initAnalyticsEventTracking();
+initProductAnalytics();
 
 let hooks = {};
 
@@ -76,6 +83,7 @@ hooks.BannerCropper = BannerCropper;
 hooks.YouTubeFacade = YouTubeFacadeHook;
 hooks.DismissibleHint = DismissibleHintHook;
 hooks.GenerationStatus = GenerationStatusHook;
+hooks.ProofCarousel = ProofCarouselHook;
 hooks.GlobalModalLayer = {
   mounted() {
     const header = document.getElementById("userHeader");
