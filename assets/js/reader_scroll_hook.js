@@ -1,13 +1,29 @@
 const ReaderScrollHook = {
   mounted() {
+    this.storageKey = this.el.dataset.readerScrollKey;
     this.savedScrollTop = this.el.scrollTop;
     this.savedScrollLeft = this.el.scrollLeft;
     this.activeNodeId = null;
     this.scrollFrame = null;
-    this.restoringScroll = false;
+    this.setRestoringScroll(false);
     this.onHighlightScrollComplete = () => {
       this.savedScrollTop = this.el.scrollTop;
       this.syncViewedSection();
+    };
+    this.onGraphNavigation = (event) => {
+      const graphLink = event.target.closest(
+        'a[data-view-transition-direction="graph"]',
+      );
+      if (!graphLink) return;
+
+      const selectedNodeId = new URL(window.location.href).searchParams.get("node");
+      if (selectedNodeId) {
+        const graphUrl = new URL(graphLink.href, window.location.origin);
+        graphUrl.searchParams.set("node", selectedNodeId);
+        graphLink.href = graphUrl.toString();
+      }
+
+      this.storeReaderPosition();
     };
     this.onScroll = () => {
       if (
@@ -28,11 +44,31 @@ const ReaderScrollHook = {
       "highlight-scroll-complete",
       this.onHighlightScrollComplete,
     );
+    if (this.storageKey)
+      document.addEventListener("click", this.onGraphNavigation, true);
     this.handleEvent?.("scroll_to_reader_node", ({ id }) => {
       requestAnimationFrame(() => {
         requestAnimationFrame(() => this.scrollToNode(id));
       });
     });
+    const restoredPosition = this.restoreReaderPosition();
+    const requestedNodeId = this.el.dataset.selectedReaderNodeId;
+
+    if (
+      !restoredPosition &&
+      requestedNodeId &&
+      this.viewedNodeId() !== requestedNodeId
+    ) {
+      this.setRestoringScroll(true);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (!this.el.isConnected) return;
+          this.scrollToNode(requestedNodeId);
+        });
+      });
+    } else if (!restoredPosition && requestedNodeId) {
+      this.activeNodeId = requestedNodeId;
+    }
   },
 
   destroyed() {
@@ -41,7 +77,85 @@ const ReaderScrollHook = {
       "highlight-scroll-complete",
       this.onHighlightScrollComplete,
     );
+    if (this.storageKey)
+      document.removeEventListener("click", this.onGraphNavigation, true);
     if (this.scrollFrame !== null) cancelAnimationFrame(this.scrollFrame);
+  },
+
+  storeReaderPosition() {
+    if (!this.storageKey) return;
+
+    const anchor = this.firstVisibleSection();
+    const position = {
+      top: this.el.scrollTop,
+      left: this.el.scrollLeft,
+      anchor,
+      nodeId: this.viewedNodeId(),
+    };
+
+    sessionStorage.setItem(this.storageKey, JSON.stringify(position));
+    sessionStorage.setItem(`${this.storageKey}:restore`, "true");
+  },
+
+  restoreReaderPosition() {
+    if (
+      !this.storageKey ||
+      sessionStorage.getItem(`${this.storageKey}:restore`) !== "true"
+    )
+      return false;
+
+    sessionStorage.removeItem(`${this.storageKey}:restore`);
+
+    let position;
+    try {
+      position = JSON.parse(sessionStorage.getItem(this.storageKey) || "null");
+    } catch (_error) {
+      return false;
+    }
+
+    if (!position) return false;
+
+    const requestedNodeId = this.el.dataset.selectedReaderNodeId;
+
+    if (
+      position.nodeId &&
+      requestedNodeId &&
+      position.nodeId !== requestedNodeId
+    ) {
+      this.setRestoringScroll(true);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (!this.el.isConnected) return;
+          this.scrollToNode(requestedNodeId);
+        });
+      });
+      return true;
+    }
+
+    this.setRestoringScroll(true);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (!this.el.isConnected) return;
+
+        this.el.scrollTop = position.top || 0;
+        this.el.scrollLeft = position.left || 0;
+
+        if (position.anchor?.id) {
+          const section = document.getElementById(position.anchor.id);
+          if (section && this.el.contains(section)) {
+            const containerTop = this.el.getBoundingClientRect().top;
+            const currentOffset = section.getBoundingClientRect().top - containerTop;
+            this.el.scrollTop += currentOffset - position.anchor.offset;
+          }
+        }
+
+        this.savedScrollTop = this.el.scrollTop;
+        this.savedScrollLeft = this.el.scrollLeft;
+        this.setRestoringScroll(false);
+      });
+    });
+
+    return true;
   },
 
   highlightScrollActive() {
@@ -53,6 +167,7 @@ const ReaderScrollHook = {
     this.savedScrollTop = this.el.scrollTop;
     this.savedScrollLeft = this.el.scrollLeft;
     this.savedAnchor = this.firstVisibleSection();
+    this.setRestoringScroll(true);
   },
 
   updated() {
@@ -60,7 +175,7 @@ const ReaderScrollHook = {
     const left = this.savedScrollLeft;
     const anchor = this.savedAnchor;
 
-    this.restoringScroll = true;
+    this.setRestoringScroll(true);
     this.el.scrollTop = top;
     this.el.scrollLeft = left;
 
@@ -75,7 +190,7 @@ const ReaderScrollHook = {
           this.el.scrollTop += currentOffset - anchor.offset;
           this.el.scrollLeft = left;
           requestAnimationFrame(() => {
-            this.restoringScroll = false;
+            this.setRestoringScroll(false);
           });
           return;
         }
@@ -84,7 +199,7 @@ const ReaderScrollHook = {
       this.el.scrollTop = top;
       this.el.scrollLeft = left;
       requestAnimationFrame(() => {
-        this.restoringScroll = false;
+        this.setRestoringScroll(false);
       });
     });
   },
@@ -98,13 +213,18 @@ const ReaderScrollHook = {
     const targetTop = Math.max(0, this.el.scrollTop + sectionTop - containerTop - 24);
 
     this.activeNodeId = String(nodeId);
-    this.restoringScroll = true;
+    this.setRestoringScroll(true);
     this.el.scrollTop = targetTop;
     this.savedScrollTop = targetTop;
 
     requestAnimationFrame(() => {
-      this.restoringScroll = false;
+      this.setRestoringScroll(false);
     });
+  },
+
+  setRestoringScroll(restoring) {
+    this.restoringScroll = restoring;
+    this.el.dataset.readerScrollRestoring = restoring ? "true" : "false";
   },
 
   syncViewedSection() {

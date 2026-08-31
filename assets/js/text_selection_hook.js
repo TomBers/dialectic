@@ -213,6 +213,17 @@ const textSelectionHook = {
     );
 
     if (span) {
+      const scrollContainer = this.findScrollContainer(span);
+
+      if (scrollContainer?.dataset.readerScrollRestoring === "true") {
+        if (attempts >= 20) return;
+
+        this.highlightScrollRetryTimer = setTimeout(() => {
+          this.retryPendingHighlightScroll(attempts + 1);
+        }, 100);
+        return;
+      }
+
       if (pendingRequest.status === "requested") {
         window.__pendingHighlightScrollRequest = {
           ...pendingRequest,

@@ -393,10 +393,14 @@ const graphHook = {
     const initialFocusPathIds =
       initialPresentationMode === "presenting" ? [] : this._readReaderPathIds();
     this._initialReaderPathSyncPending = initialFocusPathIds.length > 0;
-    this._pendingStoredViewport = readStoredGraphViewport(
+    const storedViewport = readStoredGraphViewport(
       graphId,
       initialFocusPathIds.join(","),
     );
+    this._pendingStoredViewport =
+      !storedViewport?.anchor?.nodeId || storedViewport.anchor.nodeId === node
+        ? storedViewport
+        : null;
     this._setReaderPathTransitionPending(
       initialFocusPathIds.length > 0 || Boolean(this._pendingStoredViewport),
     );

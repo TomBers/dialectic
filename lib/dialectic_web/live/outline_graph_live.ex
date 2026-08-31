@@ -105,7 +105,7 @@ defmodule DialecticWeb.OutlineGraphLive do
       socket
       |> assign(:path_focus_ids, path_focus_ids)
       |> assign_selected_node(selected_node)
-      |> maybe_scroll_to_reader_node(previous_node_id, selected_node)
+      |> maybe_scroll_to_reader_node(previous_node_id, selected_node, highlight_id)
       |> push_highlights()
       |> maybe_scroll_to_highlight(highlight_id)
       |> assign_share_metadata(share_highlight)
@@ -715,10 +715,14 @@ defmodule DialecticWeb.OutlineGraphLive do
     focused_path? or terminal_node?
   end
 
-  defp maybe_scroll_to_reader_node(socket, nil, _selected_node), do: socket
-  defp maybe_scroll_to_reader_node(socket, _previous_node_id, nil), do: socket
+  defp maybe_scroll_to_reader_node(socket, _previous_node_id, _selected_node, highlight_id)
+       when is_binary(highlight_id) and highlight_id != "",
+       do: socket
 
-  defp maybe_scroll_to_reader_node(socket, previous_node_id, selected_node) do
+  defp maybe_scroll_to_reader_node(socket, nil, _selected_node, _highlight_id), do: socket
+  defp maybe_scroll_to_reader_node(socket, _previous_node_id, nil, _highlight_id), do: socket
+
+  defp maybe_scroll_to_reader_node(socket, previous_node_id, selected_node, _highlight_id) do
     if previous_node_id != selected_node.id do
       push_event(socket, "scroll_to_reader_node", %{id: selected_node.id})
     else

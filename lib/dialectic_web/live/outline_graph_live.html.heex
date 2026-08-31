@@ -244,6 +244,8 @@
       id="outline-detail"
       class="order-1 min-h-0 min-w-0 overflow-visible lg:order-none lg:overflow-y-auto"
       phx-hook="ReaderScroll"
+      data-reader-scroll-key={"reader-position:#{@graph_struct.slug}"}
+      data-selected-reader-node-id={@selected_node_id}
     >
       <%= if @node do %>
         <div class="mx-auto max-w-4xl space-y-8 px-5 pb-8 pt-3 sm:px-8 lg:px-10">
