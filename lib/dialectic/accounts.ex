@@ -108,6 +108,13 @@ defmodule Dialectic.Accounts do
   the access token if the user already exists.
   """
   def find_or_create_oauth_user(attrs) do
+    case find_or_create_oauth_user_with_outcome(attrs) do
+      {:ok, user, _outcome} -> {:ok, user}
+      {:error, changeset} -> {:error, changeset}
+    end
+  end
+
+  def find_or_create_oauth_user_with_outcome(attrs) do
     provider = attrs[:provider] || attrs["provider"]
     provider_id = attrs[:provider_id] || attrs["provider_id"]
     email = attrs[:email] || attrs["email"]
@@ -119,13 +126,16 @@ defmodule Dialectic.Accounts do
         case get_user_by_email(email) do
           nil ->
             # Brand new user — create via OAuth
-            %User{}
-            |> User.oauth_changeset(attrs)
-            |> maybe_put_default_username()
-            |> Repo.insert(
-              on_conflict: {:replace, [:access_token, :updated_at]},
-              conflict_target: [:provider, :provider_id]
-            )
+            case %User{}
+                 |> User.oauth_changeset(attrs)
+                 |> maybe_put_default_username()
+                 |> Repo.insert(
+                   on_conflict: {:replace, [:access_token, :updated_at]},
+                   conflict_target: [:provider, :provider_id]
+                 ) do
+              {:ok, user} -> {:ok, user, :created}
+              error -> error
+            end
 
           existing_user ->
             # Existing email/password user — link OAuth provider to their account
@@ -136,6 +146,7 @@ defmodule Dialectic.Accounts do
               access_token: access_token
             })
             |> Repo.update()
+            |> with_oauth_outcome(:existing)
         end
 
       user ->
@@ -143,8 +154,12 @@ defmodule Dialectic.Accounts do
         user
         |> Ecto.Changeset.change(access_token: access_token)
         |> Repo.update()
+        |> with_oauth_outcome(:existing)
     end
   end
+
+  defp with_oauth_outcome({:ok, user}, outcome), do: {:ok, user, outcome}
+  defp with_oauth_outcome(error, _outcome), do: error
 
   ## Settings
 

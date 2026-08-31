@@ -19,10 +19,14 @@ defmodule DialecticWeb.AuthController do
       access_token: auth.credentials.token
     }
 
-    case Accounts.find_or_create_oauth_user(user_params) do
-      {:ok, user} ->
+    case Accounts.find_or_create_oauth_user_with_outcome(user_params) do
+      {:ok, user, outcome} ->
         conn
         |> put_flash(:info, "Successfully authenticated with Google.")
+        |> put_flash(
+          :analytics_auth_event,
+          if(outcome == :created, do: "sign_up_completed", else: "login_completed")
+        )
         |> UserAuth.log_in_user(user, %{"remember_me" => "true"})
 
       {:error, %Ecto.Changeset{} = changeset} ->

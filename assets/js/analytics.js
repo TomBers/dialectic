@@ -83,9 +83,9 @@ export const initAnalyticsEventTracking = () => {
 
     const pendingAuth = {
       registration_form_submitted: { event: "sign_up_completed", method: "password" },
-      registration_google_clicked: { event: "sign_up_completed", method: "google" },
+      registration_google_clicked: { event: null, method: "google" },
       login_form_submitted: { event: "login_completed", method: "password" },
-      login_google_clicked: { event: "login_completed", method: "google" },
+      login_google_clicked: { event: null, method: "google" },
     }[target.dataset.analyticsEvent];
 
     if (pendingAuth) sessionStorage.setItem("pending_auth_event", JSON.stringify(pendingAuth));
@@ -105,15 +105,21 @@ export const initProductAnalytics = () => {
 
   const reconcileAuth = () => {
     const storedAuth = sessionStorage.getItem("pending_auth_event");
-    if (!storedAuth || !document.querySelector('[aria-label="My Profile"]')) return;
+    const callbackEvent = document.body.dataset.authAnalyticsEvent;
+
+    if ((!storedAuth && !callbackEvent) || !document.querySelector('[aria-label="My Profile"]')) {
+      return;
+    }
 
     let pendingAuth;
 
     try {
-      pendingAuth = JSON.parse(storedAuth);
+      pendingAuth = storedAuth ? JSON.parse(storedAuth) : {};
     } catch {
       pendingAuth = { event: storedAuth, method: "unknown" };
     }
+
+    pendingAuth.event = callbackEvent || pendingAuth.event;
 
     if (!["sign_up_completed", "login_completed"].includes(pendingAuth.event)) {
       sessionStorage.removeItem("pending_auth_event");
@@ -121,6 +127,7 @@ export const initProductAnalytics = () => {
     }
 
     sessionStorage.removeItem("pending_auth_event");
+    delete document.body.dataset.authAnalyticsEvent;
     trackAnalyticsEvent(pendingAuth.event, { method: pendingAuth.method || "unknown" });
   };
 

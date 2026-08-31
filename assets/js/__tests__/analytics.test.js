@@ -143,9 +143,28 @@ describe("conversion event tracking", () => {
     document.querySelector("a").click();
 
     expect(JSON.parse(sessionStorage.getItem("pending_auth_event"))).toEqual({
-      event: "login_completed",
+      event: null,
       method: "google",
     });
+  });
+
+  it("uses the callback outcome rather than the originating Google CTA", () => {
+    document.body.innerHTML = '<a aria-label="My Profile"></a>';
+    document.body.dataset.authAnalyticsEvent = "login_completed";
+    sessionStorage.setItem(
+      "pending_auth_event",
+      JSON.stringify({ event: null, method: "google" }),
+    );
+
+    cleanups.push(initProductAnalytics(), initDelayedAnalytics());
+    window.dispatchEvent(new Event("pointerdown"));
+
+    expect(window.dataLayer.at(-1)).toEqual([
+      "event",
+      "login_completed",
+      { method: "google" },
+    ]);
+    expect(document.body.dataset.authAnalyticsEvent).toBeUndefined();
   });
 
   it("queues confirmed LiveView events until the visitor engages", () => {
