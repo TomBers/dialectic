@@ -288,6 +288,12 @@ defmodule DialecticWeb.OutlineGraphLive do
   end
 
   @impl true
+  def handle_event("toggle_node_highlights", %{"node-id" => node_id}, socket) do
+    open_node_id = if socket.assigns.node_highlights_open == node_id, do: nil, else: node_id
+    {:noreply, assign(socket, node_highlights_open: open_node_id)}
+  end
+
+  @impl true
   def handle_event("show_login_required", _params, socket) do
     {:noreply, assign(socket, show_login_modal: true)}
   end
@@ -462,6 +468,7 @@ defmodule DialecticWeb.OutlineGraphLive do
       node: nil,
       share_node: nil,
       selected_path: [],
+      node_highlights_open: nil,
       highlight_node_ids: MapSet.new(),
       reading_chain: [],
       visible_reading_chain: [],
@@ -1228,10 +1235,9 @@ defmodule DialecticWeb.OutlineGraphLive do
     end
   end
 
-  defp challenge_action_label(%{class: "answer"}), do: "Challenge answer"
-  defp challenge_action_label(%{class: "question"}), do: "Challenge question"
-  defp challenge_action_label(%{class: "origin"}), do: "Challenge prompt"
-  defp challenge_action_label(%{class: "user"}), do: "Challenge comment"
+  defp challenge_action_label(%{class: "answer"}), do: "Challenge this answer"
+  defp challenge_action_label(%{class: "question"}), do: "Challenge this question"
+  defp challenge_action_label(%{class: "user"}), do: "Challenge this comment"
 
   defp challenge_action_label(%{class: class}) do
     label =
@@ -1242,10 +1248,24 @@ defmodule DialecticWeb.OutlineGraphLive do
       |> String.trim()
       |> String.downcase()
 
-    "Challenge #{label}"
+    "Challenge this #{label}"
   end
 
-  defp challenge_action_label(_node), do: "Challenge node"
+  defp highlight_excerpt(%{selected_text_snapshot: text}) when is_binary(text) do
+    case String.trim(text) do
+      "" -> "Highlighted passage"
+      trimmed -> String.slice(trimmed, 0, 120)
+    end
+  end
+
+  defp highlight_excerpt(_highlight), do: "Highlighted passage"
+
+  defp highlight_link_title(outline_nodes, node_id) do
+    case Enum.find(outline_nodes, &(&1.id == node_id)) do
+      nil -> "Connected idea"
+      node -> node.full_title || node.title || "Connected idea"
+    end
+  end
 
   defp reader_nav_params(nav_params, []), do: nav_params
 

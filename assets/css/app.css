@@ -1481,6 +1481,11 @@ button[type="submit"]:active {
     word-spacing: var(--rg-read-word-spacing, 0.02em);
 }
 
+.reader-prose.reader-prose-wide {
+    width: 100%;
+    max-width: none;
+}
+
 .reader-prose
     [phx-hook="Markdown"][data-body-only="true"]
     :where(p) {

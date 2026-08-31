@@ -20,8 +20,8 @@
         </span>
       </div>
 
-      <div class="px-4 py-1 sm:px-5 lg:px-6">
-        <div class="grid gap-1.5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+      <div class="px-4 py-2 sm:px-5 sm:py-2.5 lg:px-6">
+        <div class="grid gap-2.5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-4">
           <div class="min-w-0">
             <div class="flex min-w-0 items-center gap-1.5 sm:flex-wrap sm:gap-2 lg:min-h-[38px]">
               <span class="hidden items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600 sm:inline-flex lg:hidden">
@@ -34,7 +34,7 @@
             </div>
           </div>
 
-          <div class="flex min-w-0 flex-nowrap items-center gap-1.5 lg:justify-self-end">
+          <div class="flex min-w-0 flex-nowrap items-center gap-2 lg:justify-self-end">
             <DialecticWeb.WorkspaceBarComp.workspace_bar
               id="reader-workspace-bar"
               mode={:reader}
@@ -67,40 +67,41 @@
                 type="button"
                 phx-click={if(@following_graph?, do: "unfollow_graph", else: "follow_graph")}
                 aria-label={
-                  if(@following_graph?, do: "Unfollow this grid", else: "Follow this grid")
+                  if(@following_graph?,
+                    do: "Stop receiving grid updates in Activity",
+                    else: "Get notified about grid changes in Activity"
+                  )
                 }
                 aria-pressed={to_string(@following_graph?)}
-                title={if(@following_graph?, do: "Unfollow this grid", else: "Follow this grid")}
-                class={[
-                  "inline-flex h-8 w-8 shrink-0 items-center justify-center gap-1 rounded-lg text-[11px] font-semibold transition sm:h-auto sm:w-auto sm:rounded-full sm:px-2.5 sm:py-1",
+                title={
                   if(@following_graph?,
-                    do: "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
-                    else: "bg-slate-950 text-white hover:bg-slate-800"
+                    do: "Updates from this grid appear in Activity. Click to turn them off.",
+                    else: "Get notified when this grid changes and see updates in Activity."
+                  )
+                }
+                class={[
+                  "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-slate-600 transition duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 sm:h-7 sm:w-7",
+                  if(@following_graph?,
+                    do: "border-sky-200 bg-sky-100 text-sky-700 hover:bg-sky-200",
+                    else:
+                      "border-transparent bg-slate-50 hover:bg-slate-100 hover:text-slate-950 sm:bg-transparent"
                   )
                 ]}
               >
                 <.icon
-                  name={if(@following_graph?, do: "hero-check", else: "hero-plus")}
-                  class="h-3.5 w-3.5"
+                  name={if(@following_graph?, do: "hero-bell-solid", else: "hero-bell-alert")}
+                  class="h-4 w-4"
                 />
-                <span class="hidden sm:inline">
-                  <%= if @following_graph? do %>
-                    Following
-                  <% else %>
-                    Follow
-                  <% end %>
-                </span>
               </button>
             <% else %>
               <.link
                 navigate={~p"/users/log_in"}
                 id="reader-follow-grid-login-link"
-                aria-label="Sign in to follow this grid"
-                title="Sign in to follow this grid"
-                class="inline-flex h-8 w-8 shrink-0 items-center justify-center gap-1 rounded-lg bg-slate-950 text-[11px] font-semibold text-white transition hover:bg-slate-800 sm:h-auto sm:w-auto sm:rounded-full sm:px-2.5 sm:py-1"
+                aria-label="Sign in to get notified about grid changes in Activity"
+                title="Sign in to get notified when this grid changes and see updates in Activity."
+                class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-transparent bg-slate-50 text-slate-600 transition duration-150 hover:bg-slate-100 hover:text-slate-950 sm:h-7 sm:w-7 sm:bg-transparent"
               >
-                <.icon name="hero-plus" class="h-3.5 w-3.5" />
-                <span class="hidden sm:inline">Follow</span>
+                <.icon name="hero-bell-alert" class="h-4 w-4" />
               </.link>
             <% end %>
 
@@ -383,72 +384,140 @@
             <%= for {reading_node, index} <- Enum.with_index(@visible_reading_chain) do %>
               <% reading_response_level = Map.get(reading_node, :response_level) %>
               <% selected_reading_node? = reading_node.id == @selected_node_id %>
+              <% node_highlights = Enum.filter(@highlights, &(&1.node_id == reading_node.id)) %>
+              <% node_highlight_count = length(node_highlights) %>
               <article
                 id={"reading-node-#{reading_node.id}"}
                 data-reading-selected={to_string(selected_reading_node?)}
                 class={[
-                  "bg-white px-5 sm:px-12",
-                  if(String.trim(reading_node.body_content || "") == "",
-                    do: "py-6 sm:py-9",
-                    else: "py-8 sm:py-12"
+                  if(index == 0,
+                    do: "bg-slate-950 px-5 py-6 text-white sm:px-12 sm:py-8",
+                    else: "bg-white px-5 sm:px-12"
                   ),
+                  index > 0 &&
+                    if(String.trim(reading_node.body_content || "") == "",
+                      do: "py-6 sm:py-9",
+                      else: "py-8 sm:py-12"
+                    ),
                   index > 0 && "border-t border-slate-200",
-                  selected_reading_node? && "bg-teal-50/50"
+                  selected_reading_node? && index > 0 && "bg-teal-50/50"
                 ]}
               >
-                <div class="max-w-[68ch]">
-                  <div class="flex flex-wrap items-center gap-2 text-[13px] font-medium text-slate-500 sm:text-sm">
-                    <span>{if index == 0, do: "Start", else: "Then"}</span>
-                    <span class="h-1 w-1 rounded-full bg-slate-300"></span>
-                    <span class={[
-                      "inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold",
-                      DialecticWeb.ColUtils.badge_class(reading_node.class)
-                    ]}>
-                      {DialecticWeb.ColUtils.node_type_label(reading_node.class)}
-                    </span>
-                    <span
-                      :if={response_level_label(reading_response_level)}
-                      id={"reader-response-level-#{reading_node.id}"}
-                      data-response-level={reading_response_level}
-                      class={[
-                        "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ring-inset",
-                        response_level_badge_class(reading_response_level)
-                      ]}
-                      title={
-                        "Generated using the #{response_level_label(reading_response_level)} answer level"
-                      }
-                    >
-                      <.icon name="hero-adjustments-horizontal" class="h-3 w-3" />
-                      {response_level_label(reading_response_level)} level
-                    </span>
-                  </div>
-                  <% bookmarked? = MapSet.member?(@bookmarked_node_ids, reading_node.id) %>
-                  <div class="mt-3 flex items-start gap-3">
-                    <h2 class={[
-                      "reader-heading min-w-0 flex-1 text-balance font-semibold leading-[1.15] tracking-tight text-slate-950",
-                      if(index == 0,
-                        do: "text-[1.65rem] sm:text-[1.95rem]",
-                        else: "text-[1.28rem] sm:text-[1.6rem]"
-                      )
-                    ]}>
+                <% bookmarked? = MapSet.member?(@bookmarked_node_ids, reading_node.id) %>
+                <%= if index == 0 do %>
+                  <div class="max-w-[68ch]">
+                    <div class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-teal-200">
+                      <img src={~p"/images/favicon-32.png"} alt="" class="h-5 w-5" />
+                      Starting question
+                    </div>
+                    <h2 class="reader-heading mt-3 text-balance text-[1.7rem] font-semibold leading-[1.12] tracking-tight text-white sm:text-[2.1rem]">
                       {reading_node.full_title || reading_node.title}
                     </h2>
+                    <%= if String.trim(reading_node.body_content || "") != "" do %>
+                      <div
+                        id={"reading-highlight-#{reading_node.id}"}
+                        class="mt-4 max-w-[68ch] border-t border-white/15 pt-4 sm:mt-5 sm:pt-5"
+                        phx-hook="TextSelectionHook"
+                        data-node-id={reading_node.id}
+                        data-mudg-id={@graph_id}
+                        data-highlights-only="false"
+                      >
+                        <article class="reader-prose prose prose-invert max-w-none prose-headings:tracking-tight prose-a:break-words">
+                          <div
+                            phx-hook="Markdown"
+                            id={"outline-markdown-body-#{reading_node.id}"}
+                            data-md={reading_node.content || ""}
+                            data-grounding={DialecticWeb.MarkdownGrounding.encode(reading_node)}
+                            data-body-only="true"
+                            data-enhance-follow-up-questions="false"
+                          >
+                            <div data-role="server-markdown-fallback" class="whitespace-pre-wrap">
+                              {reading_node.body_content}
+                            </div>
+                          </div>
+                        </article>
+                      </div>
+                    <% end %>
+                  </div>
+                <% else %>
+                  <div>
+                    <div class="flex flex-wrap items-center gap-2 text-[13px] font-medium text-slate-500 sm:text-sm">
+                      <span>Then</span>
+                      <span class="h-1 w-1 rounded-full bg-slate-300"></span>
+                      <span class={[
+                        "inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold",
+                        DialecticWeb.ColUtils.badge_class(reading_node.class)
+                      ]}>
+                        {DialecticWeb.ColUtils.node_type_label(reading_node.class)}
+                      </span>
+                      <span
+                        :if={response_level_label(reading_response_level)}
+                        id={"reader-response-level-#{reading_node.id}"}
+                        data-response-level={reading_response_level}
+                        class={[
+                          "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ring-inset",
+                          response_level_badge_class(reading_response_level)
+                        ]}
+                        title={
+                            "Generated using the #{response_level_label(reading_response_level)} answer level"
+                          }
+                      >
+                        <.icon name="hero-adjustments-horizontal" class="h-3 w-3" />
+                        {response_level_label(reading_response_level)} level
+                      </span>
+                    </div>
+                    <h2 class="reader-heading mt-3 max-w-[78ch] text-balance text-[1.28rem] font-semibold leading-[1.15] tracking-tight text-slate-950 sm:text-[1.6rem]">
+                      {reading_node.full_title || reading_node.title}
+                    </h2>
+                  </div>
+
+                  <%= if String.trim(reading_node.content || "") == "" do %>
+                    <div class="mt-8 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-10 text-center text-sm text-slate-500">
+                      This node does not have content yet.
+                    </div>
+                  <% else %>
+                    <%= if String.trim(reading_node.body_content || "") != "" do %>
+                      <div
+                        id={"reading-highlight-#{reading_node.id}"}
+                        class="mt-6 w-full sm:mt-8"
+                        phx-hook="TextSelectionHook"
+                        data-node-id={reading_node.id}
+                        data-mudg-id={@graph_id}
+                        data-highlights-only="false"
+                      >
+                        <article class="reader-prose reader-prose-wide prose prose-slate max-w-none prose-headings:tracking-tight prose-a:break-words">
+                          <div
+                            phx-hook="Markdown"
+                            id={"outline-markdown-body-#{reading_node.id}"}
+                            data-md={reading_node.content || ""}
+                            data-grounding={DialecticWeb.MarkdownGrounding.encode(reading_node)}
+                            data-body-only="true"
+                            data-enhance-follow-up-questions="false"
+                          >
+                            <div data-role="server-markdown-fallback" class="whitespace-pre-wrap">
+                              {reading_node.body_content}
+                            </div>
+                          </div>
+                        </article>
+                      </div>
+                    <% end %>
+                  <% end %>
+
+                  <div class="mt-6 grid grid-cols-[auto_auto_minmax(0,1fr)_auto] items-center gap-2 border-t border-slate-200 pt-3">
                     <button
                       id={"reader-bookmark-node-#{reading_node.id}"}
                       type="button"
                       phx-click={if(bookmarked?, do: "unnote", else: "note")}
                       phx-value-node={reading_node.id}
-                      aria-label={
-                        if(bookmarked?, do: "Remove bookmark", else: "Bookmark this node")
-                      }
+                      aria-label={if(bookmarked?, do: "Remove bookmark", else: "Save for later")}
                       aria-pressed={to_string(bookmarked?)}
-                      title={if(bookmarked?, do: "Remove bookmark", else: "Bookmark this node")}
+                      title={if(bookmarked?, do: "Remove bookmark", else: "Save for later")}
                       class={[
-                        "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-600",
+                        "inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-700",
                         if(bookmarked?,
-                          do: "border-amber-300 bg-amber-100 text-amber-800 hover:bg-amber-200",
+                          do: "border-cyan-300 bg-cyan-100 text-cyan-900 hover:bg-cyan-200",
                           else:
-                            "border-slate-200 bg-white text-slate-500 hover:border-amber-300 hover:bg-amber-50 hover:text-amber-800"
+                            "border-slate-200 bg-white text-slate-600 hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-900"
                         )
                       ]}
                     >
@@ -456,62 +525,115 @@
                         name={if(bookmarked?, do: "hero-bookmark-solid", else: "hero-bookmark")}
                         class="h-4 w-4"
                       />
+                      <span>{if(bookmarked?, do: "Saved", else: "Save for later")}</span>
                     </button>
-                  </div>
-                </div>
 
-                <%= if String.trim(reading_node.content || "") == "" do %>
-                  <div class="mt-8 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-10 text-center text-sm text-slate-500">
-                    This node does not have content yet.
-                  </div>
-                <% else %>
-                  <%= if String.trim(reading_node.body_content || "") != "" do %>
-                    <div
-                      id={"reading-highlight-#{reading_node.id}"}
-                      class="mt-6 max-w-[68ch] sm:mt-8"
-                      phx-hook="TextSelectionHook"
-                      data-node-id={reading_node.id}
-                      data-mudg-id={@graph_id}
-                      data-highlights-only="false"
+                    <button
+                      :if={node_highlight_count > 0}
+                      id={"reader-node-#{reading_node.id}-highlights"}
+                      type="button"
+                      phx-click="toggle_node_highlights"
+                      phx-value-node-id={reading_node.id}
+                      aria-expanded={to_string(@node_highlights_open == reading_node.id)}
+                      aria-controls={"reader-node-#{reading_node.id}-highlight-list"}
+                      class="group inline-flex items-center"
                     >
-                      <article class="reader-prose prose prose-slate max-w-none prose-headings:tracking-tight prose-a:break-words">
-                        <div
-                          phx-hook="Markdown"
-                          id={"outline-markdown-body-#{reading_node.id}"}
-                          data-md={reading_node.content || ""}
-                          data-grounding={DialecticWeb.MarkdownGrounding.encode(reading_node)}
-                          data-body-only="true"
-                          data-enhance-follow-up-questions="false"
-                        >
-                          <div data-role="server-markdown-fallback" class="whitespace-pre-wrap">
-                            {reading_node.body_content}
+                      <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-800 transition group-hover:text-amber-950 group-focus-visible:outline group-focus-visible:outline-2 group-focus-visible:outline-offset-2 group-focus-visible:outline-amber-600">
+                        <.icon name="hero-pencil" class="h-4 w-4" />
+                        Show {node_highlight_count} {if(node_highlight_count == 1,
+                          do: "highlight",
+                          else: "highlights"
+                        )}
+                        <.icon
+                          name="hero-chevron-down"
+                          class={[
+                            "h-3.5 w-3.5 transition-transform",
+                            @node_highlights_open == reading_node.id && "rotate-180"
+                          ]}
+                        />
+                      </span>
+                    </button>
+                    <ol
+                      :if={@node_highlights_open == reading_node.id}
+                      id={"reader-node-#{reading_node.id}-highlight-list"}
+                      class="col-span-full mt-1 divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white px-3 text-sm"
+                    >
+                      <%= for {highlight, highlight_index} <- Enum.with_index(node_highlights, 1) do %>
+                        <li class="grid grid-cols-[1.5rem_minmax(0,1fr)] items-start gap-2 py-3">
+                          <span class="pt-0.5 text-right text-xs font-semibold leading-5 text-amber-700">
+                            {highlight_index}.
+                          </span>
+                          <div class="min-w-0">
+                            <button
+                              id={"reader-highlight-link-#{highlight.id}"}
+                              type="button"
+                              phx-click={
+                                JS.push("highlight_clicked",
+                                  value: %{id: highlight.id, node_id: reading_node.id}
+                                )
+                              }
+                              class="w-full rounded-md text-left italic leading-5 text-slate-800 transition hover:text-amber-950"
+                              title="Jump to this highlighted passage"
+                            >
+                              {highlight_excerpt(highlight)}
+                            </button>
+                            <%= if highlight.links && highlight.links != [] do %>
+                              <div class="mt-2 flex flex-wrap items-center gap-1.5">
+                                <span class="text-[10px] font-semibold uppercase tracking-[0.12em] text-indigo-700">
+                                  Connected ideas
+                                </span>
+                                <%= for link <- highlight.links do %>
+                                  <button
+                                    id={"reader-highlight-link-#{highlight.id}-node-#{link.node_id}"}
+                                    type="button"
+                                    phx-click="navigate_to_node"
+                                    phx-value-node_id={link.node_id}
+                                    class="inline-flex max-w-full items-start gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-1.5 text-left text-[11px] font-medium leading-4 text-indigo-800 transition hover:border-indigo-300 hover:bg-indigo-100"
+                                    title="Open connected idea"
+                                  >
+                                    <.icon name="hero-link" class="mt-0.5 h-3 w-3 shrink-0" />
+                                    <span class="min-w-0 whitespace-normal break-words">
+                                      {highlight_link_title(@outline_nodes, link.node_id)}
+                                    </span>
+                                  </button>
+                                <% end %>
+                              </div>
+                            <% end %>
                           </div>
-                        </div>
-                      </article>
-                    </div>
-                  <% end %>
-                <% end %>
+                        </li>
+                      <% end %>
+                    </ol>
 
-                <% challenge_label = challenge_action_label(reading_node) %>
-                <div class="mt-6 flex justify-end border-t border-slate-100 pt-4">
-                  <.link
-                    id={"outline-reading-node-#{reading_node.id}-ask"}
-                    navigate={
-                      graph_editor_path(@graph_struct, reading_node.id, [
-                        {"focus", "ask"} | @nav_params
-                      ])
-                    }
-                    class="group hidden h-9 items-center gap-2 rounded-full border border-slate-200 bg-white/90 py-1 pl-1.5 pr-3 text-xs font-semibold text-slate-700 shadow-[0_10px_24px_-18px_rgba(15,23,42,0.45)] ring-1 ring-white/80 transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-950 hover:text-white hover:shadow-[0_14px_28px_-18px_rgba(15,23,42,0.55)] md:inline-flex"
-                    data-view-transition="mode-switch"
-                    data-view-transition-direction="graph"
-                    title={"#{challenge_label} from this point"}
-                  >
-                    <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-amber-50 text-amber-700 ring-1 ring-amber-200/70 transition group-hover:bg-white/10 group-hover:text-amber-200 group-hover:ring-white/15">
-                      <.icon name="hero-scale" class="h-3.5 w-3.5" />
-                    </span>
-                    <span>{challenge_label}</span>
-                  </.link>
-                </div>
+                    <p
+                      :if={node_highlight_count == 0}
+                      class="text-xs text-slate-500"
+                    >
+                      Select text to highlight passages.
+                    </p>
+
+                    <%= if reading_node.class == "answer" do %>
+                      <% challenge_label = challenge_action_label(reading_node) %>
+                      <.link
+                        id={"outline-reading-node-#{reading_node.id}-ask"}
+                        navigate={
+                          graph_editor_path(@graph_struct, reading_node.id, [
+                            {"focus", "ask"} | @nav_params
+                          ])
+                        }
+                        class="group col-start-4 row-start-1 hidden h-8 shrink-0 items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-700 transition hover:border-teal-400 hover:bg-teal-50 hover:text-teal-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600 md:inline-flex"
+                        data-view-transition="mode-switch"
+                        data-view-transition-direction="graph"
+                        title={"#{challenge_label} from this point"}
+                      >
+                        <.icon name="hero-scale" class="h-4 w-4 text-slate-500" />
+                        <span>{challenge_label}</span>
+                        <span class="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-teal-600 text-white transition group-hover:translate-x-0.5 group-hover:bg-teal-700">
+                          <.icon name="hero-arrow-right-solid" class="h-3.5 w-3.5" />
+                        </span>
+                      </.link>
+                    <% end %>
+                  </div>
+                <% end %>
               </article>
             <% end %>
           </section>
@@ -660,8 +782,8 @@
       <div class="flex h-full flex-col">
         <div class="flex items-center justify-between gap-4 border-b border-slate-200 bg-white px-5 py-4">
           <div class="flex min-w-0 items-center gap-3">
-            <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-700 ring-1 ring-inset ring-teal-200/70">
-              <.icon name="hero-bookmark" class="h-5 w-5" />
+            <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200/70">
+              <.icon name="hero-pencil" class="h-5 w-5" />
             </span>
             <div class="min-w-0">
               <h2 class="text-base font-semibold tracking-tight text-slate-950">Highlights</h2>

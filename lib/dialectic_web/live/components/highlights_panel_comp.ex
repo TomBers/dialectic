@@ -219,13 +219,13 @@ defmodule DialecticWeb.HighlightsPanelComp do
                 <button
                   id={"highlight-jump-#{highlight.id}"}
                   type="button"
-                  class="relative m-2.5 rounded-2xl bg-slate-50 px-4 py-4 text-left ring-1 ring-inset ring-slate-200 transition hover:bg-teal-50/60 hover:ring-teal-200"
+                  class="relative m-2.5 rounded-2xl bg-white px-4 py-4 text-left ring-1 ring-inset ring-slate-200 transition hover:bg-slate-50 hover:ring-amber-300"
                   phx-click="highlight_clicked"
                   phx-value-id={highlight.id}
                   phx-value-node-id={highlight.node_id}
                   title="Go to highlight"
                 >
-                  <blockquote class="border-l-2 border-teal-500 pl-3.5 font-serif text-[15px] italic leading-7 text-slate-900 break-words sm:text-base">
+                  <blockquote class="border-l-2 border-amber-400 pl-3.5 font-serif text-[15px] italic leading-7 text-slate-900 break-words sm:text-base">
                     “{highlight.selected_text_snapshot}”
                   </blockquote>
                   <div class="mt-3 flex items-start gap-2 pl-3.5">
@@ -257,8 +257,8 @@ defmodule DialecticWeb.HighlightsPanelComp do
 
                 <div class="flex flex-col gap-3 px-3 pb-3 pt-2.5">
                   <%= if has_links?(highlight) do %>
-                    <div class="rounded-xl border border-slate-100 bg-white p-1">
-                      <p class="px-2 pb-1 pt-1.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                    <div class="rounded-xl border border-indigo-100 bg-indigo-50/50 p-1">
+                      <p class="px-2 pb-1 pt-1.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-indigo-700">
                         Connected ideas
                       </p>
                       <div class="flex flex-wrap gap-2">
@@ -269,13 +269,13 @@ defmodule DialecticWeb.HighlightsPanelComp do
                             phx-click="navigate_to_node"
                             phx-value-node_id={link.node_id}
                             title={"Navigate to " <> link_type_label(link.link_type)}
-                            class="inline-flex max-w-full items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1.5 text-left transition hover:bg-slate-200"
+                            class="inline-flex max-w-full items-start gap-1.5 rounded-lg border border-indigo-200 bg-white px-2.5 py-1.5 text-left transition hover:border-indigo-300 hover:bg-indigo-100"
                           >
                             <.icon
                               name={link_type_icon(link.link_type)}
-                              class={"h-3.5 w-3.5 shrink-0 " <> link_type_color(link.link_type)}
+                              class={"mt-0.5 h-3.5 w-3.5 shrink-0 " <> link_type_color(link.link_type)}
                             />
-                            <span class="truncate text-[10px] font-medium text-slate-600">
+                            <span class="min-w-0 whitespace-normal break-words text-[10px] font-medium leading-4 text-slate-600">
                               {node_title(@node_titles, link.node_id)}
                             </span>
                           </button>

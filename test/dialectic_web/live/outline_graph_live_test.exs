@@ -427,7 +427,8 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert has_element?(view, "#reading-node-1")
     assert has_element?(view, "#reading-node-2")
     assert has_element?(view, "#reading-node-1 h2.reader-heading")
-    assert has_element?(view, "#reading-node-1 span.bg-gray-900.text-gray-100", "Origin")
+    assert has_element?(view, "#reading-node-1", "Starting question")
+    refute has_element?(view, "#outline-reading-node-1-ask")
     assert has_element?(view, "#reading-node-2 span.bg-sky-50.text-sky-700", "Question")
     assert has_element?(view, "#outline-next-choices")
     assert has_element?(view, "#next-choice-3[data-path-action-card]")
@@ -821,21 +822,21 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
       |> log_in_user(user)
       |> live(~p"/g/#{graph.slug}?node=2")
 
-    assert has_element?(view, "#reader-follow-grid-button", "Follow")
+    assert has_element?(view, "#reader-follow-grid-button[aria-pressed='false']")
 
     view
     |> element("#reader-follow-grid-button")
     |> render_click()
 
     assert Follows.following_graph?(user, graph)
-    assert has_element?(view, "#reader-follow-grid-button", "Following")
+    assert has_element?(view, "#reader-follow-grid-button[aria-pressed='true']")
 
     view
     |> element("#reader-follow-grid-button")
     |> render_click()
 
     refute Follows.following_graph?(user, graph)
-    assert has_element?(view, "#reader-follow-grid-button", "Follow")
+    assert has_element?(view, "#reader-follow-grid-button[aria-pressed='false']")
   end
 
   test "reader can bookmark and remove a bookmark from a node", %{conn: conn} do
