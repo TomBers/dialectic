@@ -298,8 +298,18 @@ defmodule DialecticWeb.HomeLiveTest do
     assert has_element?(view, "#popular-grids", "See what other people explored.")
 
     assert has_element?(view, "#home-testimonial", "An amazing free specialised AI tool")
-    assert has_element?(view, "#home-testimonial figcaption", "Alexandra Konoplyanik")
-    assert has_element?(view, "#home-testimonial figcaption", "RationalGrid adviser")
+
+    assert has_element?(
+             view,
+             "#home-testimonial [data-testimonial-attribution]",
+             "Alexandra Konoplyanik"
+           )
+
+    assert has_element?(
+             view,
+             "#home-testimonial [data-testimonial-attribution]",
+             "RationalGrid adviser"
+           )
 
     assert has_element?(
              view,
