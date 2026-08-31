@@ -358,8 +358,9 @@ defmodule DialecticWeb.HomeLive do
               id="home-hero-subheading"
               class="mt-8 text-lg leading-8 text-slate-200"
             >
-              Know what you think—and show how you got there. Compare views, trace claims to sources,
-              and keep the path open for you or others to question.
+              Use AI to answer questions, then go beyond a one-off chat: explore competing views and
+              build a durable map of your learning that you can expand, revisit, and share—with
+              tools to help when you get stuck.
             </p>
             <div class="mt-12 flex flex-wrap items-center gap-4">
               <%= if @current_user do %>

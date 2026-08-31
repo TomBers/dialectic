@@ -195,7 +195,7 @@ defmodule DialecticWeb.HomeLiveTest do
     assert has_element?(
              view,
              "#home-hero-subheading",
-             "Know what you think—and show how you got there."
+             "Use AI to answer questions, then go beyond a one-off chat"
            )
 
     assert has_element?(view, "#home-video-hero", "Explore a question")
