@@ -168,23 +168,23 @@ const textSelectionHook = {
     if (!id) return;
 
     const highlightId = id.toString();
-    const now = Date.now();
-    const pendingRequest = window.__pendingHighlightScrollRequest;
+    const cachedHighlight = (window.__highlightsCache || []).find(
+      (highlight) => highlight.id?.toString() === highlightId,
+    );
 
     if (
-      !pendingRequest ||
-      pendingRequest.mudgId !== this.mudgId ||
-      pendingRequest.id !== highlightId ||
-      (pendingRequest.status === "handled" &&
-        now - (pendingRequest.completedAt || 0) > 250)
-    ) {
-      window.__pendingHighlightScrollRequest = {
-        id: highlightId,
-        mudgId: this.mudgId,
-        status: "requested",
-        completedAt: null,
-      };
-    }
+      cachedHighlight?.node_id &&
+      this.nodeId &&
+      cachedHighlight.node_id !== this.nodeId
+    )
+      return;
+
+    window.__pendingHighlightScrollRequest = {
+      id: highlightId,
+      mudgId: this.mudgId,
+      status: "requested",
+      completedAt: null,
+    };
 
     this.retryPendingHighlightScroll(0);
   },
@@ -261,6 +261,9 @@ const textSelectionHook = {
             status: "handled",
             completedAt: Date.now(),
           };
+          this.findScrollContainer(span)?.dispatchEvent(
+            new CustomEvent("highlight-scroll-complete"),
+          );
           this.closeHighlightsDrawerOnMobile();
           return;
         }
@@ -308,15 +311,26 @@ const textSelectionHook = {
     const spanRect = span.getBoundingClientRect();
 
     if (!scrollContainer) {
-      return spanRect.top >= 0 && spanRect.bottom <= window.innerHeight;
+      const fullyVisible = spanRect.top >= 0 && spanRect.bottom <= window.innerHeight;
+      const centered =
+        Math.abs(spanRect.top + spanRect.height / 2 - window.innerHeight / 2) <= 24;
+      return centered || fullyVisible;
     }
 
     const containerRect = scrollContainer.getBoundingClientRect();
+    const fullyVisible =
+      spanRect.top >= containerRect.top && spanRect.bottom <= containerRect.bottom;
+    const centered =
+      Math.abs(
+        spanRect.top +
+          spanRect.height / 2 -
+          (containerRect.top + containerRect.height / 2),
+      ) <= 24;
+    const maxScrollTop = scrollContainer.scrollHeight - scrollContainer.clientHeight;
+    const atScrollBoundary =
+      scrollContainer.scrollTop <= 1 || scrollContainer.scrollTop >= maxScrollTop - 1;
 
-    return (
-      spanRect.top >= containerRect.top &&
-      spanRect.bottom <= containerRect.bottom
-    );
+    return centered || (fullyVisible && atScrollBoundary);
   },
 
   closeHighlightsDrawerOnMobile() {

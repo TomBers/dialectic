@@ -83,6 +83,39 @@ describe("ReaderScrollHook", () => {
     expect(hook.activeNodeId).toBe("2");
   });
 
+  it("does not sync sections during highlight navigation and syncs when it completes", () => {
+    document.body.innerHTML = `
+      <main id="reader">
+        <article id="reading-node-2"></article>
+      </main>
+    `;
+    const element = document.getElementById("reader");
+    const section = document.getElementById("reading-node-2");
+    const frames = [];
+    const pushEvent = vi.fn();
+
+    element.getBoundingClientRect = () => ({ top: 0, bottom: 600, height: 600 });
+    section.getBoundingClientRect = () => ({ top: 80, bottom: 380 });
+    vi.stubGlobal("requestAnimationFrame", (callback) => {
+      frames.push(callback);
+      return frames.length;
+    });
+
+    const hook = { ...ReaderScrollHook, el: element, pushEvent };
+    hook.mounted();
+    window.__pendingHighlightScrollRequest = { status: "scrolling" };
+
+    element.dispatchEvent(new Event("scroll"));
+    expect(frames).toHaveLength(0);
+    expect(pushEvent).not.toHaveBeenCalled();
+
+    window.__pendingHighlightScrollRequest = { status: "handled" };
+    element.dispatchEvent(new CustomEvent("highlight-scroll-complete"));
+
+    expect(pushEvent).toHaveBeenCalledWith("reader_node_viewed", { id: "2" });
+    delete window.__pendingHighlightScrollRequest;
+  });
+
   it("preserves a visible document section as the scroll anchor", () => {
     document.body.innerHTML = `
       <main id="reader">

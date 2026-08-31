@@ -570,7 +570,11 @@
                               type="button"
                               phx-click={
                                 JS.push("highlight_clicked",
-                                  value: %{id: highlight.id, node_id: reading_node.id}
+                                  value: %{
+                                    id: highlight.id,
+                                    node_id: reading_node.id,
+                                    source: "node_list"
+                                  }
                                 )
                               }
                               class="w-full rounded-md text-left italic leading-5 text-slate-800 transition hover:text-amber-950"

@@ -939,6 +939,9 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     graph = create_graph(highlight_graph_data())
     user = user_fixture()
 
+    full_quote =
+      "A complete highlighted passage should remain visible in the node-level list even when it is longer than the previous one-hundred-and-twenty-character preview limit."
+
     {:ok, _highlight} =
       Highlights.create_highlight(%{
         mudg_id: graph.title,
@@ -946,7 +949,7 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
         text_source_type: "node",
         selection_start: 0,
         selection_end: 5,
-        selected_text_snapshot: "Maybe",
+        selected_text_snapshot: full_quote,
         created_by_user_id: user.id
       })
 
@@ -962,7 +965,7 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     |> render_click()
 
     assert has_element?(view, "#{toggle}[aria-expanded='true']")
-    assert has_element?(view, list, "Maybe")
+    assert has_element?(view, list, full_quote)
 
     view
     |> element(toggle)
@@ -1195,9 +1198,22 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
 
     {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=5")
     highlight_id = "#{highlight.id}"
+    toggle = "#reader-node-5-highlights"
+    list = "#reader-node-5-highlight-list"
+
+    view |> element(toggle) |> render_click()
+
+    render_click(view, "highlight_clicked", %{
+      "id" => highlight_id,
+      "node-id" => "5",
+      "source" => "node_list"
+    })
+
+    assert_push_event(view, "scroll_to_highlight", %{id: ^highlight_id})
+    assert has_element?(view, list)
 
     render_click(view, "highlight_clicked", %{"id" => highlight_id, "node-id" => "5"})
 
-    assert_push_event(view, "scroll_to_highlight", %{id: ^highlight_id})
+    refute has_element?(view, list)
   end
 end

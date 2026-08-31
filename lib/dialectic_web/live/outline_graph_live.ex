@@ -287,6 +287,13 @@ defmodule DialecticWeb.OutlineGraphLive do
         push_patch(socket, to: highlight_path(socket, node_id, highlight_id))
       end
 
+    socket =
+      if params["source"] == "node_list" do
+        socket
+      else
+        assign(socket, node_highlights_open: nil)
+      end
+
     {:noreply, socket}
   end
 
@@ -1276,7 +1283,7 @@ defmodule DialecticWeb.OutlineGraphLive do
   defp highlight_excerpt(%{selected_text_snapshot: text}) when is_binary(text) do
     case String.trim(text) do
       "" -> "Highlighted passage"
-      trimmed -> String.slice(trimmed, 0, 120)
+      trimmed -> trimmed
     end
   end
 

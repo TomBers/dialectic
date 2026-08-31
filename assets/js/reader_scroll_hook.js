@@ -5,15 +5,29 @@ const ReaderScrollHook = {
     this.activeNodeId = null;
     this.scrollFrame = null;
     this.restoringScroll = false;
+    this.onHighlightScrollComplete = () => {
+      this.savedScrollTop = this.el.scrollTop;
+      this.syncViewedSection();
+    };
     this.onScroll = () => {
-      if (this.restoringScroll || this.scrollFrame !== null) return;
+      if (
+        this.restoringScroll ||
+        this.highlightScrollActive() ||
+        this.scrollFrame !== null
+      )
+        return;
 
       this.scrollFrame = requestAnimationFrame(() => {
         this.scrollFrame = null;
+        if (this.highlightScrollActive()) return;
         this.syncViewedSection();
       });
     };
     this.el.addEventListener("scroll", this.onScroll, { passive: true });
+    this.el.addEventListener(
+      "highlight-scroll-complete",
+      this.onHighlightScrollComplete,
+    );
     this.handleEvent?.("scroll_to_reader_node", ({ id }) => {
       requestAnimationFrame(() => {
         requestAnimationFrame(() => this.scrollToNode(id));
@@ -23,7 +37,16 @@ const ReaderScrollHook = {
 
   destroyed() {
     this.el.removeEventListener("scroll", this.onScroll);
+    this.el.removeEventListener(
+      "highlight-scroll-complete",
+      this.onHighlightScrollComplete,
+    );
     if (this.scrollFrame !== null) cancelAnimationFrame(this.scrollFrame);
+  },
+
+  highlightScrollActive() {
+    const status = window.__pendingHighlightScrollRequest?.status;
+    return status === "requested" || status === "scrolling";
   },
 
   beforeUpdate() {
