@@ -213,7 +213,13 @@ const textSelectionHook = {
     );
 
     if (span) {
-      this.pulseHighlight(span);
+      if (pendingRequest.status === "requested") {
+        window.__pendingHighlightScrollRequest = {
+          ...pendingRequest,
+          status: "scrolling",
+        };
+        this.pulseHighlight(span);
+      }
       this.finalizePendingHighlightScroll(span, pendingRequest.id, attempts);
       return;
     }
@@ -270,9 +276,10 @@ const textSelectionHook = {
 
   scrollHighlightIntoView(span) {
     const scrollContainer = this.findScrollContainer(span);
+    const behavior = this.highlightScrollBehavior(span);
 
     if (!scrollContainer) {
-      span.scrollIntoView({ behavior: "auto", block: "center" });
+      span.scrollIntoView({ behavior, block: "center" });
       return;
     }
 
@@ -285,8 +292,13 @@ const textSelectionHook = {
 
     scrollContainer.scrollTo({
       top: Math.max(0, targetScrollTop),
-      behavior: "auto",
+      behavior,
     });
+  },
+
+  highlightScrollBehavior(span) {
+    const layout = span.closest("[data-reduce-motion]");
+    return layout?.dataset.reduceMotion === "true" ? "auto" : "smooth";
   },
 
   isHighlightInView(span) {

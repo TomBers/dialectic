@@ -427,7 +427,8 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert has_element?(view, "#reading-node-1")
     assert has_element?(view, "#reading-node-2")
     assert has_element?(view, "#reading-node-1 h2.reader-heading")
-    assert has_element?(view, "#reading-node-1 span.bg-gray-900.text-gray-100", "Origin")
+    assert has_element?(view, "#reading-node-1", "Starting question")
+    refute has_element?(view, "#outline-reading-node-1-ask")
     assert has_element?(view, "#reading-node-2 span.bg-sky-50.text-sky-700", "Question")
     assert has_element?(view, "#outline-next-choices")
     assert has_element?(view, "#next-choice-3[data-path-action-card]")
@@ -821,21 +822,21 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
       |> log_in_user(user)
       |> live(~p"/g/#{graph.slug}?node=2")
 
-    assert has_element?(view, "#reader-follow-grid-button", "Follow")
+    assert has_element?(view, "#reader-follow-grid-button[aria-pressed='false']")
 
     view
     |> element("#reader-follow-grid-button")
     |> render_click()
 
     assert Follows.following_graph?(user, graph)
-    assert has_element?(view, "#reader-follow-grid-button", "Following")
+    assert has_element?(view, "#reader-follow-grid-button[aria-pressed='true']")
 
     view
     |> element("#reader-follow-grid-button")
     |> render_click()
 
     refute Follows.following_graph?(user, graph)
-    assert has_element?(view, "#reader-follow-grid-button", "Follow")
+    assert has_element?(view, "#reader-follow-grid-button[aria-pressed='false']")
   end
 
   test "reader can bookmark and remove a bookmark from a node", %{conn: conn} do
@@ -932,6 +933,86 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert has_element?(view, "#reader-workspace-bar-highlights", "1")
     assert has_element?(view, "#highlights-drawer", "1 saved passage and connected ideas")
     assert has_element?(view, "#reader-highlights-close")
+  end
+
+  test "reader toggles highlights for a non-root node", %{conn: conn} do
+    graph = create_graph(highlight_graph_data())
+    user = user_fixture()
+
+    {:ok, _highlight} =
+      Highlights.create_highlight(%{
+        mudg_id: graph.title,
+        node_id: "5",
+        text_source_type: "node",
+        selection_start: 0,
+        selection_end: 5,
+        selected_text_snapshot: "Maybe",
+        created_by_user_id: user.id
+      })
+
+    {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=4")
+    toggle = "#reader-node-5-highlights"
+    list = "#reader-node-5-highlight-list"
+
+    assert has_element?(view, "#{toggle}[aria-expanded='false']")
+    refute has_element?(view, list)
+
+    view
+    |> element(toggle)
+    |> render_click()
+
+    assert has_element?(view, "#{toggle}[aria-expanded='true']")
+    assert has_element?(view, list, "Maybe")
+
+    view
+    |> element(toggle)
+    |> render_click()
+
+    assert has_element?(view, "#{toggle}[aria-expanded='false']")
+    refute has_element?(view, list)
+  end
+
+  test "reader filters highlights to the selected path", %{conn: conn} do
+    graph = create_graph(highlight_graph_data())
+    user = user_fixture()
+
+    {:ok, visible_highlight} =
+      Highlights.create_highlight(%{
+        mudg_id: graph.title,
+        node_id: "5",
+        text_source_type: "node",
+        selection_start: 0,
+        selection_end: 5,
+        selected_text_snapshot: "Maybe",
+        created_by_user_id: user.id
+      })
+
+    {:ok, hidden_highlight} =
+      Highlights.create_highlight(%{
+        mudg_id: graph.title,
+        node_id: "3",
+        text_source_type: "node",
+        selection_start: 0,
+        selection_end: 5,
+        selected_text_snapshot: "It describes",
+        created_by_user_id: user.id
+      })
+
+    {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=4&path=5")
+
+    assert has_element?(view, "#reader-workspace-bar-highlights", "1")
+    assert has_element?(view, "#highlights-drawer", "1 saved passage and connected ideas")
+    assert has_element?(view, "#highlight-card-#{visible_highlight.id}")
+    refute has_element?(view, "#highlight-card-#{hidden_highlight.id}")
+
+    view
+    |> element("#outline-show-all-paths")
+    |> render_click()
+
+    assert_patch(view, ~p"/g/#{graph.slug}?node=4")
+    assert has_element?(view, "#reader-workspace-bar-highlights", "2")
+    assert has_element?(view, "#highlight-card-#{visible_highlight.id}")
+    assert has_element?(view, "#highlight-card-#{hidden_highlight.id}")
   end
 
   test "reader loads highlight data for rendered nodes", %{conn: conn} do

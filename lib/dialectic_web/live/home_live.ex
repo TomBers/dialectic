@@ -856,7 +856,7 @@ defmodule DialecticWeb.HomeLive do
         </div>
 
         <div class="mt-8" data-carousel-slides>
-          <article
+          <div
             id="home-research-case-study"
             data-carousel-slide
             role="group"
@@ -917,9 +917,9 @@ defmodule DialecticWeb.HomeLive do
                 </a>
               </div>
             </div>
-          </article>
+          </div>
 
-          <figure
+          <div
             id="home-testimonial"
             data-carousel-slide
             role="group"
@@ -934,7 +934,7 @@ defmodule DialecticWeb.HomeLive do
               matter of seconds, with in-built tools for a sophisticated, yet accessible dialectic.
               Bravo!”
             </blockquote>
-            <figcaption class="mt-6">
+            <div class="mt-6" data-testimonial-attribution>
               <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
                 <span class="text-lg font-bold text-slate-950">Alexandra Konoplyanik</span>
                 <span class="text-slate-400" aria-hidden="true">—</span>
@@ -947,8 +947,8 @@ defmodule DialecticWeb.HomeLive do
                 >Philosophy for All</a>
               </div>
               <p class="mt-1 text-sm text-slate-600">RationalGrid adviser</p>
-            </figcaption>
-          </figure>
+            </div>
+          </div>
         </div>
 
         <div class="mt-7 flex items-center justify-center gap-3" aria-label="Choose proof slide">

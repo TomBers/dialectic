@@ -49,10 +49,10 @@ defmodule DialecticWeb.WorkspaceBarComp do
     <div id={@id} class={bar_classes(@compact)}>
       <div class="sr-only">Workspace actions</div>
 
-      <div class={segment_classes(@compact)}>
-        <div class="sr-only">Switch between read and explore views</div>
+      <div class={segment_classes(@compact)} role="group" aria-label="Choose grid view">
+        <div class="sr-only">Switch between read and grid views</div>
         <div class="sr-only">Current view</div>
-        <div class="sr-only">{if @mode == :reader, do: "Read", else: "Explore"}</div>
+        <div class="sr-only">{if @mode == :reader, do: "Read", else: "Grid"}</div>
 
         <div class="inline-flex items-center gap-1">
           <.link
@@ -75,10 +75,10 @@ defmodule DialecticWeb.WorkspaceBarComp do
             data-view-transition-direction="graph"
             aria-current={if(@mode == :graph, do: "page", else: nil)}
             class={mode_link_classes(@mode == :graph, @compact)}
-            title="Open explore view"
+            title="Open grid view"
           >
-            <.icon name="hero-squares-2x2" class="h-4 w-4" />
-            <span class={mode_label_classes(@compact)}>Explore</span>
+            <img src={~p"/images/favicon-32.png"} alt="" class="h-4 w-4" />
+            <span class={mode_label_classes(@compact)}>Grid</span>
           </.link>
         </div>
       </div>
@@ -89,7 +89,7 @@ defmodule DialecticWeb.WorkspaceBarComp do
         type="button"
         phx-click={@prompt_mode_click}
         data-panel-toggle="right-panel"
-        class="hidden h-7 shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2 text-[11px] font-semibold text-slate-700 transition hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-800 sm:inline-flex"
+        class="ml-1 hidden h-8 shrink-0 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 transition hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-800 sm:inline-flex"
         title="Change explanation level"
         aria-label={"Explanation level: #{prompt_mode_label(@prompt_mode)}. Change explanation level"}
       >
@@ -109,8 +109,11 @@ defmodule DialecticWeb.WorkspaceBarComp do
           class={ask_question_link_classes(@compact)}
           title="Ask a question from this point"
         >
-          <.icon name="hero-question-mark-circle" class="h-4 w-4" />
+          <.icon name="hero-question-mark-circle" class="h-4 w-4 text-slate-500" />
           <span>Ask a question</span>
+          <span class="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-teal-600 text-white transition group-hover:translate-x-0.5 group-hover:bg-teal-700">
+            <.icon name="hero-arrow-right-solid" class="h-3.5 w-3.5" />
+          </span>
         </.link>
 
         <button
@@ -164,7 +167,7 @@ defmodule DialecticWeb.WorkspaceBarComp do
             end
           }
         >
-          <.icon name="hero-bookmark" class="h-4 w-4" />
+          <.icon name="hero-pencil" class="h-4 w-4" />
           <span class={highlights_label_classes(@compact)}>Highlights</span>
           <span
             :if={@highlights_count > 0}
@@ -204,7 +207,7 @@ defmodule DialecticWeb.WorkspaceBarComp do
 
   defp bar_classes(true) do
     [
-      "flex w-full max-w-full items-center gap-0.5 sm:inline-flex sm:w-auto sm:shrink-0 sm:flex-wrap sm:justify-start"
+      "flex w-full max-w-full items-center gap-2 sm:inline-flex sm:w-auto sm:shrink-0 sm:flex-wrap sm:justify-start"
     ]
   end
 
@@ -215,56 +218,56 @@ defmodule DialecticWeb.WorkspaceBarComp do
   end
 
   defp segment_classes(true) do
-    "hidden items-center gap-0.5 rounded-lg bg-slate-100 p-0.5 sm:inline-flex"
+    "hidden items-center rounded-full border border-slate-300 bg-slate-200/80 p-1 shadow-inner sm:inline-flex"
   end
 
   defp segment_classes(false) do
-    "hidden items-center gap-1 rounded-xl bg-slate-100 p-1 sm:inline-flex"
+    "hidden items-center rounded-full border border-slate-300 bg-slate-200/80 p-1 shadow-inner sm:inline-flex"
   end
 
   defp mode_link_classes(true, true) do
     [
-      "inline-flex h-7 items-center gap-1.5 rounded-md px-2 text-xs font-semibold transition",
-      "bg-slate-950 text-white"
+      "inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-semibold transition",
+      "bg-white text-slate-950 shadow-sm ring-1 ring-slate-300"
     ]
   end
 
   defp mode_link_classes(true, false) do
     [
-      "inline-flex h-8 items-center gap-2 rounded-lg px-3 text-sm font-semibold transition",
-      "bg-slate-950 text-white"
+      "inline-flex h-8 items-center gap-2 rounded-full px-3.5 text-sm font-semibold transition",
+      "bg-white text-slate-950 shadow-sm ring-1 ring-slate-300"
     ]
   end
 
   defp mode_link_classes(false, true) do
     [
-      "inline-flex h-7 items-center gap-1.5 rounded-md px-2 text-xs font-semibold transition",
-      "text-slate-600 hover:bg-white hover:text-slate-950"
+      "inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-semibold transition",
+      "text-slate-600 hover:bg-white/70 hover:text-slate-950"
     ]
   end
 
   defp mode_link_classes(false, false) do
     [
-      "inline-flex h-8 items-center gap-2 rounded-lg px-3 text-sm font-semibold transition",
-      "text-slate-600 hover:bg-white hover:text-slate-950"
+      "inline-flex h-8 items-center gap-2 rounded-full px-3.5 text-sm font-semibold transition",
+      "text-slate-600 hover:bg-white/70 hover:text-slate-950"
     ]
   end
 
   defp ask_question_link_classes(true) do
     [
-      "hidden h-8 shrink-0 items-center justify-center gap-1.5 rounded-full bg-slate-950 px-3 text-xs font-semibold text-white shadow-sm transition md:inline-flex",
-      "hover:bg-slate-800"
+      "group hidden h-8 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 transition md:inline-flex",
+      "hover:border-teal-400 hover:bg-teal-50 hover:text-teal-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600"
     ]
   end
 
   defp ask_question_link_classes(false) do
     [
-      "hidden h-9 shrink-0 items-center justify-center gap-1.5 rounded-full bg-slate-950 px-3.5 text-sm font-semibold text-white shadow-sm transition md:inline-flex",
-      "hover:bg-slate-800"
+      "group hidden h-9 shrink-0 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3.5 text-sm font-semibold text-slate-700 transition md:inline-flex",
+      "hover:border-teal-400 hover:bg-teal-50 hover:text-teal-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600"
     ]
   end
 
-  defp mode_label_classes(true), do: "hidden xl:inline"
+  defp mode_label_classes(true), do: "hidden lg:inline"
   defp mode_label_classes(false), do: "inline"
 
   defp divider_classes(true) do
