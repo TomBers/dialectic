@@ -15,7 +15,7 @@ import { test, expect } from "@playwright/test";
  * Notes:
  *  - Uses only public pages and UI elements.
  *  - No assertions are made on content; waits are included so you can visually confirm progress.
- *  - Assumes the Phoenix server is running locally and OPENAI_API_KEY is set on the server side.
+ *  - Assumes the Phoenix server is running locally and GOOGLE_API_KEY is set on the server side.
  */
 
 const PAUSE = Number(process.env.E2E_PAUSE_MS || 3000);

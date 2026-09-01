@@ -44,6 +44,18 @@ defmodule Dialectic.Responses.LLMWorkerTelemetryTest do
     assert LLMWorker.backoff(%Oban.Job{attempt: 1, max_attempts: 3}) >= 15
   end
 
+  test "normalizes request errors raised while enumerating a stream" do
+    request_error = provider_error(503, true)
+    stream_error = %ReqLLM.Error.API.Stream{reason: "Stream failed", cause: request_error}
+
+    assert LLMWorker.normalize_stream_error(stream_error) == {:error, request_error}
+
+    assert LLMWorker.normalize_stream_error(%ReqLLM.Error.API.Stream{
+             reason: "Connection closed",
+             cause: %Finch.Error{reason: :connection_closed}
+           }) == :unhandled
+  end
+
   test "uses short bounded backoff for retryable provider overloads" do
     error = provider_error(503, true)
 

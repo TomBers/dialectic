@@ -1,11 +1,9 @@
 defmodule Dialectic.Workers.LLMWorker do
   @moduledoc """
-  Provider-agnostic LLM worker built on ReqLLM.
+  Gemini streaming worker built on ReqLLM.
 
-  This worker centralizes the streaming logic and delegates all provider-specific
-  concerns (API key, model, provider_options, timeouts) to modules that implement
-  the `Dialectic.LLM.Provider` behaviour. This allows you to plug in providers
-  like OpenAI or Google (Gemini) without changing the streaming pipeline.
+  This worker centralizes streaming while the `Dialectic.LLM.Provider` behaviour
+  supplies the Gemini API key, model, provider options, and timeouts.
 
 
   Expected job args:
@@ -14,9 +12,7 @@ defmodule Dialectic.Workers.LLMWorker do
     - "graph" (graph id)
     - "live_view_topic" (PubSub topic for the LiveView)
 
-  Notes:
-    - This module is designed to replace the previous OpenAI-specific worker.
-    - Uses a generic queue name (`:llm_request`) shared by all providers.
+  Uses the `:llm_request` queue.
   """
 
   # Use a generic LLM queue shared by all providers.
@@ -160,7 +156,7 @@ defmodule Dialectic.Workers.LLMWorker do
       end
 
       result =
-        do_llm_request(
+        run_llm_request(
           job_id,
           job_started_at,
           attempt,
@@ -199,6 +195,42 @@ defmodule Dialectic.Workers.LLMWorker do
       {result, outcome_for_result(result)}
     end
   end
+
+  defp run_llm_request(
+         job_id,
+         job_started_at,
+         attempt,
+         args,
+         graph,
+         to_node,
+         live_view_topic,
+         provider_mod
+       ) do
+    do_llm_request(
+      job_id,
+      job_started_at,
+      attempt,
+      args,
+      graph,
+      to_node,
+      live_view_topic,
+      provider_mod
+    )
+  rescue
+    error in ReqLLM.Error.API.Stream ->
+      case normalize_stream_error(error) do
+        {:error, request_error} -> {:error, request_error}
+        :unhandled -> reraise error, __STACKTRACE__
+      end
+  end
+
+  @doc false
+  def normalize_stream_error(%ReqLLM.Error.API.Stream{
+        cause: %ReqLLM.Error.API.Request{} = request_error
+      }),
+      do: {:error, request_error}
+
+  def normalize_stream_error(_error), do: :unhandled
 
   # Extracted LLM request logic to separate function for clarity
   defp do_llm_request(

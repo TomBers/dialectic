@@ -20,10 +20,9 @@ user
 |> Dialectic.Repo.update()
 '''
 
-Set model on Prod
+Set Gemini API key on Prod
 
-fly secrets set LLM_PROVIDER=gemini
-fly secrets set LLM_PROVIDER=openai
+fly secrets set GOOGLE_API_KEY=...
 
 mix test test/dialectic/responses/print_prompts_test.exs > prompt_test.md
 

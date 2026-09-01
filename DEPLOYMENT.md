@@ -27,7 +27,7 @@ This guide covers deploying the Dialectic application to production with all sec
 
 - Fly.io account (or your preferred hosting platform)
 - Database hosting (e.g., Fly.io Postgres, AWS RDS)
-- LLM provider account (OpenAI or Google)
+- Google AI account with access to the Gemini API
 - Email service (optional: Resend)
 
 ## Environment Setup
@@ -57,12 +57,8 @@ DATABASE_URL=ecto://user:pass@host:5432/database
 DATABASE_SSL=true
 POOL_SIZE=10
 
-# LLM Provider (choose one)
-LLM_PROVIDER=openai
-OPENAI_API_KEY=sk-...
-# OR
-# LLM_PROVIDER=google
-# GOOGLE_API_KEY=...
+# Gemini API
+GOOGLE_API_KEY=...
 
 # Optional: Email
 RESEND_API_KEY=re_...
@@ -174,7 +170,7 @@ force_https = true          # Enforces HTTPS
 # Set all required secrets
 fly secrets set SECRET_KEY_BASE=$(mix phx.gen.secret)
 fly secrets set PHX_HOST=your-app.fly.dev
-fly secrets set OPENAI_API_KEY=sk-...
+fly secrets set GOOGLE_API_KEY=...
 
 # Optional secrets
 fly secrets set RESEND_API_KEY=re_...
@@ -439,7 +435,7 @@ fly secrets list | grep API_KEY
 
 # Test API connectivity
 fly ssh console
-/app/bin/dialectic rpc "System.get_env(\"OPENAI_API_KEY\")"
+/app/bin/dialectic rpc "System.get_env(\"GOOGLE_API_KEY\")"
 
 # Check Oban job failures
 fly ssh console

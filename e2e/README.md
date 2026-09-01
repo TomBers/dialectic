@@ -17,8 +17,8 @@ Safety and scope
 Prerequisites
 - Node.js >= 18
 - Phoenix app running locally (dev environment)
-- A configured OpenAI API key on the Phoenix server process:
-  - OPENAI_API_KEY must be set and accessible to the server. The app uses OpenAI in non‑test environments for LLM streaming.
+- A configured Gemini API key on the Phoenix server process:
+  - GOOGLE_API_KEY must be set and accessible to the server.
 - Oban queues must be running (the server should start them by default in dev).
 
 Install
@@ -28,7 +28,7 @@ Install
    - npm run e2e:install   # installs Playwright browsers and deps
 
 2) Start the Phoenix server (separately), from the project root:
-   - MIX_ENV=dev OPENAI_API_KEY=sk-... mix phx.server
+   - MIX_ENV=dev GOOGLE_API_KEY=... mix phx.server
 
    Notes:
    - The runner assumes http://localhost:4000 by default.
@@ -82,7 +82,7 @@ What the script does (at a glance)
 - Navigate to /
 - Click the “Inspire me” button (fetches a random question and fills #global-chat-input)
 - Submit the ask form (creates a new graph: /:graph_name?node=1&ask=...)
-- Wait while LLM streams a response (real OpenAI path)
+- Wait while Gemini streams a response
 - Click toolbar actions:
   - Related ideas
   - Pros/Cons (branch)
@@ -94,8 +94,8 @@ What the script does (at a glance)
 
 Troubleshooting
 - If nothing streams:
-  - Ensure the Phoenix server has OPENAI_API_KEY set.
-  - Watch server logs for “OpenAI API key not configured” or request errors.
+  - Ensure the Phoenix server has GOOGLE_API_KEY set.
+  - Watch server logs for “Google API key not configured” or request errors.
 - If the runner times out:
   - Increase E2E_LONG_PAUSE_MS to give the model more time.
   - Ensure Oban is running and the queues are processing jobs.
@@ -106,7 +106,7 @@ Notes on “one command” server + test
 - This E2E runner intentionally does not manage the Phoenix server. You start it yourself and run the tests in a separate shell. This keeps it simple and avoids accidental coupling to your local setup.
 
 Caveats
-- Running this exercise uses your real OpenAI API key and may incur costs. Keep the scenario brief or throttle usage as needed.
+- Running this exercise uses your real Gemini API key and may incur costs. Keep the scenario brief or throttle usage as needed.
 - The test does not assert on the content; it’s meant to visually confirm that UI and streaming behave as expected.
 
 Happy testing!
