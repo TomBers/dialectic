@@ -1763,6 +1763,21 @@ defmodule DialecticWeb.GraphLive do
     {:noreply, socket}
   end
 
+  def handle_info({:llm_request_retrying, _message, :node_id, node_id}, socket) do
+    updated_vertex = GraphManager.find_node_by_id(socket.assigns.graph_id, node_id)
+
+    if updated_vertex && socket.assigns.node && node_id == Map.get(socket.assigns.node, :id) do
+      label = NodeTitleHelper.extract_node_title(updated_vertex)
+
+      {:noreply,
+       socket
+       |> assign(node: updated_vertex)
+       |> push_event("update_node_label", %{id: node_id, label: label})}
+    else
+      {:noreply, socket}
+    end
+  end
+
   def handle_info({:stream_error, error, :node_id, node_id}, socket) do
     Logger.debug(fn ->
       "[GraphLive] stream_error node_id=#{inspect(node_id)} current=#{inspect(socket.assigns.node && Map.get(socket.assigns.node, :id))} error=#{inspect(error)}"

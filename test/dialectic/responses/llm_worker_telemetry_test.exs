@@ -44,6 +44,38 @@ defmodule Dialectic.Responses.LLMWorkerTelemetryTest do
     assert LLMWorker.backoff(%Oban.Job{attempt: 1, max_attempts: 3}) >= 15
   end
 
+  test "uses short bounded backoff for retryable provider overloads" do
+    error = provider_error(503, true)
+
+    assert LLMWorker.backoff(%Oban.Job{
+             attempt: 1,
+             max_attempts: 3,
+             unsaved_error: %{kind: :error, reason: error, stacktrace: []}
+           }) == 3
+
+    assert LLMWorker.backoff(%Oban.Job{
+             attempt: 2,
+             max_attempts: 3,
+             unsaved_error: %{kind: :error, reason: error, stacktrace: []}
+           }) == 10
+  end
+
+  test "classifies only retryable overload responses as provider overloads" do
+    assert LLMWorker.provider_overload_error?(provider_error(503, true))
+    assert LLMWorker.provider_overload_error?(provider_error(429, true))
+    refute LLMWorker.provider_overload_error?(provider_error(503, false))
+    refute LLMWorker.provider_overload_error?(provider_error(400, true))
+  end
+
+  defp provider_error(status, retryable?) do
+    %ReqLLM.Error.API.Request{
+      reason: "Provider unavailable",
+      status: status,
+      provider_code: status,
+      retryable: retryable?
+    }
+  end
+
   test "calculates queue wait from DateTime microseconds in native units" do
     inserted_at = ~U[2026-08-06 12:00:00.123456Z]
     wait_microseconds = 1_234_567

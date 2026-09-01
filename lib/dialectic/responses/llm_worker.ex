@@ -52,7 +52,20 @@ defmodule Dialectic.Workers.LLMWorker do
       }),
       do: 1
 
+  def backoff(%Oban.Job{
+        attempt: attempt,
+        unsaved_error: %{
+          reason: %ReqLLM.Error.API.Request{status: status, retryable: true}
+        }
+      })
+      when status in [429, 502, 503, 504],
+      do: provider_retry_delay(attempt)
+
   def backoff(job), do: Oban.Worker.backoff(job)
+
+  @doc false
+  def provider_retry_delay(1), do: 3
+  def provider_retry_delay(_attempt), do: 10
 
   @impl Oban.Worker
   def perform(%Oban.Job{
@@ -139,11 +152,13 @@ defmodule Dialectic.Workers.LLMWorker do
 
       {:ok, :skipped}
     else
-      GraphManager.update_vertex_fields(graph, to_node, %{
-        content: "",
-        guided_plan: nil,
-        grounding_metadata: nil
-      })
+      if attempt == 1 do
+        GraphManager.update_vertex_fields(graph, to_node, %{
+          content: "",
+          guided_plan: nil,
+          grounding_metadata: nil
+        })
+      end
 
       result =
         do_llm_request(
@@ -156,13 +171,25 @@ defmodule Dialectic.Workers.LLMWorker do
           provider_mod
         )
 
-      if attempt >= max_attempts and match?({:error, _reason}, result) do
-        persist_stream_error(
-          graph,
-          to_node,
-          live_view_topic,
-          terminal_error_message(provider_mod, result)
-        )
+      cond do
+        attempt >= max_attempts and match?({:error, _reason}, result) ->
+          persist_stream_error(
+            graph,
+            to_node,
+            live_view_topic,
+            terminal_error_message(provider_mod, result)
+          )
+
+        retryable_provider_overload?(result) ->
+          persist_retry_status(
+            graph,
+            to_node,
+            live_view_topic,
+            provider_retry_message(provider_mod, attempt, max_attempts)
+          )
+
+        true ->
+          :ok
       end
 
       if terminal_failure?(result, attempt, max_attempts) do
@@ -754,7 +781,48 @@ defmodule Dialectic.Workers.LLMWorker do
   end
 
   defp terminal_error_message(provider_mod, {:error, reason}) do
-    "#{provider_label(provider_mod)} request error: #{inspect(reason)}"
+    if provider_overload_error?(reason) do
+      "The AI service is still temporarily overloaded. Please try again in a moment."
+    else
+      "#{provider_label(provider_mod)} request error: #{inspect(reason)}"
+    end
+  end
+
+  defp provider_retry_message(_provider_mod, attempt, max_attempts) do
+    delay = provider_retry_delay(attempt)
+
+    "The AI service is temporarily overloaded. Retrying in #{delay} seconds (attempt #{attempt + 1} of #{max_attempts})…"
+  end
+
+  defp retryable_provider_overload?({:error, reason}), do: provider_overload_error?(reason)
+  defp retryable_provider_overload?(_result), do: false
+
+  @doc false
+  def provider_overload_error?(%ReqLLM.Error.API.Request{
+        status: status,
+        retryable: true
+      })
+      when status in [429, 502, 503, 504],
+      do: true
+
+  def provider_overload_error?(%ReqLLM.Error.API.Request{
+        provider_code: provider_code,
+        retryable: true
+      })
+      when provider_code in [429, 502, 503, 504],
+      do: true
+
+  def provider_overload_error?(_reason), do: false
+
+  defp persist_retry_status(graph, to_node, live_view_topic, message) do
+    GraphManager.set_node_content(graph, to_node, message)
+    GraphManager.save_graph(graph)
+
+    Phoenix.PubSub.broadcast(
+      Dialectic.PubSub,
+      live_view_topic,
+      {:llm_request_retrying, message, :node_id, to_node}
+    )
   end
 
   defp persist_stream_error(graph, to_node, live_view_topic, message) do
