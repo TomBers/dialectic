@@ -1770,7 +1770,11 @@ defmodule DialecticWeb.GraphLive do
 
       updated_vertex ->
         label = NodeTitleHelper.extract_node_title(updated_vertex)
-        socket = push_event(socket, "update_node_label", %{id: node_id, label: label})
+
+        socket =
+          socket
+          |> assign(titled_nodes: MapSet.delete(socket.assigns.titled_nodes, node_id))
+          |> push_event("update_node_label", %{id: node_id, label: label})
 
         socket =
           if socket.assigns.node && node_id == Map.get(socket.assigns.node, :id) do
