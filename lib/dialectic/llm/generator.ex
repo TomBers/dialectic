@@ -1,7 +1,6 @@
 defmodule Dialectic.LLM.Generator do
   @moduledoc """
   Unified interface for non-streaming LLM generation.
-  Handles provider selection, context building, and response extraction.
   """
   require Logger
   alias Dialectic.LLM.Provider
@@ -11,14 +10,11 @@ defmodule Dialectic.LLM.Generator do
 
   ## Options
   - `system_prompt` (string): Optional system instructions.
-  - `model` (string): Override the provider's default model (e.g. "gemini-2.5-flash-lite").
-  - `provider` (atom): Override the default provider (e.g. :google, :openai).
+  - `model` (string): Override the configured Gemini model.
   """
   def generate(prompt, opts \\ []) do
     system_prompt = Keyword.get(opts, :system_prompt)
-    provider_id = Keyword.get(opts, :provider, default_provider_id())
-
-    provider_mod = get_provider_module(provider_id)
+    provider_mod = Dialectic.LLM.Providers.Google
 
     # Allow model override, else default from provider
     model_spec =
@@ -42,19 +38,6 @@ defmodule Dialectic.LLM.Generator do
 
     req_http_options = Application.get_env(:dialectic, :llm_req_options, [])
 
-    req_http_options =
-      case Provider.api_key(provider_mod) do
-        {:ok, key} ->
-          case provider_mod.id() do
-            :google -> req_http_options
-            _ -> Keyword.put(req_http_options, :auth, {:bearer, key})
-          end
-
-        _ ->
-          # If not returned by Provider, assume it's in App config or Env
-          req_http_options
-      end
-
     case ReqLLM.generate_text(
            model_spec,
            ctx,
@@ -70,17 +53,6 @@ defmodule Dialectic.LLM.Generator do
         {:error, reason}
     end
   end
-
-  defp default_provider_id do
-    case System.get_env("LLM_PROVIDER") |> to_string() |> String.trim() |> String.downcase() do
-      "openai" -> :openai
-      _ -> :google
-    end
-  end
-
-  defp get_provider_module(:google), do: Dialectic.LLM.Providers.Google
-  defp get_provider_module(:openai), do: Dialectic.LLM.Providers.OpenAI
-  defp get_provider_module(_), do: Dialectic.LLM.Providers.Google
 
   defp extract_text(%ReqLLM.Response{} = resp), do: ReqLLM.Response.text(resp)
   defp extract_text(text) when is_binary(text), do: text

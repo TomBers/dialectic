@@ -58,11 +58,20 @@ defmodule Dialectic.Responses.LLMWorkerTelemetryTest do
              max_attempts: 3,
              unsaved_error: %{kind: :error, reason: error, stacktrace: []}
            }) == 10
+
+    provider_code_error = %{error | status: nil, provider_code: 503}
+
+    assert LLMWorker.backoff(%Oban.Job{
+             attempt: 1,
+             max_attempts: 3,
+             unsaved_error: %{kind: :error, reason: provider_code_error, stacktrace: []}
+           }) == 3
   end
 
   test "classifies only retryable overload responses as provider overloads" do
     assert LLMWorker.provider_overload_error?(provider_error(503, true))
     assert LLMWorker.provider_overload_error?(provider_error(429, true))
+    assert LLMWorker.provider_overload_error?(%{provider_error(nil, true) | provider_code: 503})
     refute LLMWorker.provider_overload_error?(provider_error(503, false))
     refute LLMWorker.provider_overload_error?(provider_error(400, true))
   end
@@ -96,6 +105,16 @@ defmodule Dialectic.Responses.LLMWorkerTelemetryTest do
     refute LLMWorker.skip_existing_response?(1, "short")
   end
 
+  test "uses the lighter Google model on the final retry" do
+    google = Dialectic.LLM.Providers.Google
+
+    assert LLMWorker.request_model_spec(google, 1) == {:google, model: google.model()}
+    assert LLMWorker.request_model_spec(google, 2) == {:google, model: google.model()}
+
+    assert LLMWorker.request_model_spec(google, 3) ==
+             {:google, model: "gemini-3.1-flash-lite"}
+  end
+
   test "uses the queued output budget and falls back to the graph answer level" do
     graph = "worker-budget-#{System.unique_integer([:positive])}"
     :ok = ModeServer.set_mode(graph, :expert)
@@ -125,19 +144,19 @@ defmodule Dialectic.Responses.LLMWorkerTelemetryTest do
   end
 
   test "emits low-cardinality timing event metadata without request identifiers" do
-    LLMWorker.emit_queue_wait(11, :openai, :error)
+    LLMWorker.emit_queue_wait(11, :google, :error)
     LLMWorker.emit_time_to_first_token(22, :google)
-    LLMWorker.emit_job_duration(33, :openai, :discard)
+    LLMWorker.emit_job_duration(33, :google, :discard)
     WebTelemetry.emit_llm_queue_depth(4, 2)
 
     assert_receive {:telemetry_event, [:dialectic, :llm, :queue_wait], %{duration: 11},
-                    %{provider: :openai, outcome: :error}}
+                    %{provider: :google, outcome: :error}}
 
     assert_receive {:telemetry_event, [:dialectic, :llm, :time_to_first_token], %{duration: 22},
                     %{provider: :google, outcome: :success}}
 
     assert_receive {:telemetry_event, [:dialectic, :llm, :job], %{duration: 33},
-                    %{provider: :openai, outcome: :discard}}
+                    %{provider: :google, outcome: :discard}}
 
     assert_receive {:telemetry_event, [:dialectic, :llm, :queue], %{queued: 4, executing: 2}, %{}}
   end

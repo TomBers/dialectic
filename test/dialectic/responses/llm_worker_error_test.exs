@@ -9,14 +9,9 @@ defmodule Dialectic.Responses.LLMWorkerErrorTest do
 
   test "defaults to Gemini and persists a terminal stream error without a LiveView subscriber" do
     previous_api_key = System.get_env("GOOGLE_API_KEY")
-    previous_provider = System.get_env("LLM_PROVIDER")
     System.delete_env("GOOGLE_API_KEY")
-    System.delete_env("LLM_PROVIDER")
 
-    on_exit(fn ->
-      restore_env("GOOGLE_API_KEY", previous_api_key)
-      restore_env("LLM_PROVIDER", previous_provider)
-    end)
+    on_exit(fn -> restore_env("GOOGLE_API_KEY", previous_api_key) end)
 
     graph =
       GraphFixtures.insert_graph(%{
@@ -65,14 +60,9 @@ defmodule Dialectic.Responses.LLMWorkerErrorTest do
 
   test "terminal guided failures release reservations and delete the failed branch" do
     previous_api_key = System.get_env("GOOGLE_API_KEY")
-    previous_provider = System.get_env("LLM_PROVIDER")
     System.delete_env("GOOGLE_API_KEY")
-    System.delete_env("LLM_PROVIDER")
 
-    on_exit(fn ->
-      restore_env("GOOGLE_API_KEY", previous_api_key)
-      restore_env("LLM_PROVIDER", previous_provider)
-    end)
+    on_exit(fn -> restore_env("GOOGLE_API_KEY", previous_api_key) end)
 
     graph =
       GraphFixtures.insert_graph(%{

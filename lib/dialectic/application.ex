@@ -38,14 +38,6 @@ defmodule Dialectic.Application do
              transport_opts: [timeout: 30_000]
            ]
          ],
-         # HTTP/2 connection pool for OpenAI API (fallback provider)
-         "https://api.openai.com" => [
-           protocols: [:http2],
-           count: 2,
-           conn_opts: [
-             transport_opts: [timeout: 30_000]
-           ]
-         ],
          # Default pool for other requests (emails, etc.)
          :default => [size: 10]
        }},
@@ -89,20 +81,7 @@ defmodule Dialectic.Application do
     if System.get_env("PHX_SERVER") do
       Logger.info("Running in production mode - validating API keys")
 
-      # Check which LLM provider is configured
-      provider = System.get_env("LLM_PROVIDER") || "gemini"
-      Logger.info("LLM Provider: #{provider}")
-
-      case String.downcase(provider) do
-        p when p in ["google", "gemini"] ->
-          validate_key("GOOGLE_API_KEY", "Google/Gemini")
-
-        "openai" ->
-          validate_key("OPENAI_API_KEY", "OpenAI")
-
-        _ ->
-          validate_key("GOOGLE_API_KEY", "Google/Gemini (default)")
-      end
+      validate_key("GOOGLE_API_KEY", "Google/Gemini")
     else
       Logger.info("Running in development mode - skipping API key validation")
     end
@@ -172,19 +151,7 @@ defmodule Dialectic.Application do
     # Give Finch a moment to fully initialize
     Process.sleep(500)
 
-    # Determine which provider to warm up based on config
-    provider = System.get_env("LLM_PROVIDER") || "gemini"
-
-    case String.downcase(provider) do
-      p when p in ["google", "gemini"] ->
-        warm_up_gemini_connection()
-
-      "openai" ->
-        warm_up_openai_connection()
-
-      _ ->
-        warm_up_gemini_connection()
-    end
+    warm_up_gemini_connection()
   end
 
   defp warm_up_gemini_connection do
@@ -219,41 +186,6 @@ defmodule Dialectic.Application do
       end
     else
       Logger.debug("Skipping Gemini warmup - no API key configured")
-    end
-  end
-
-  defp warm_up_openai_connection do
-    require Logger
-
-    api_key = System.get_env("OPENAI_API_KEY")
-
-    if api_key && api_key != "" do
-      try do
-        # Make a minimal request to establish HTTP/2 connection
-        # Using the models list endpoint which is lightweight
-        url = "https://api.openai.com/v1/models"
-
-        headers = [
-          {"Authorization", "Bearer #{api_key}"},
-          {"Content-Type", "application/json"}
-        ]
-
-        case Finch.build(:get, url, headers) |> Finch.request(Dialectic.Finch) do
-          {:ok, %{status: status}} when status in 200..299 ->
-            Logger.info("✓ OpenAI HTTP/2 connection warmed up successfully")
-
-          {:ok, %{status: status}} ->
-            Logger.warning("OpenAI warmup returned status #{status}")
-
-          {:error, error} ->
-            Logger.warning("OpenAI connection warmup failed: #{inspect(error)}")
-        end
-      rescue
-        error ->
-          Logger.warning("OpenAI warmup error: #{inspect(error)}")
-      end
-    else
-      Logger.debug("Skipping OpenAI warmup - no API key configured")
     end
   end
 end

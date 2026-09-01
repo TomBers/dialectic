@@ -42,10 +42,7 @@ defmodule Dialectic.Categorisation.AutoTagger do
       #{content}
       """
 
-      opts = [
-        system_prompt: system_prompt,
-        provider: :google
-      ]
+      opts = [system_prompt: system_prompt]
 
       generator =
         Application.get_env(

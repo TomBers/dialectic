@@ -1764,17 +1764,22 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_info({:llm_request_retrying, _message, :node_id, node_id}, socket) do
-    updated_vertex = GraphManager.find_node_by_id(socket.assigns.graph_id, node_id)
+    case GraphManager.find_node_by_id(socket.assigns.graph_id, node_id) do
+      nil ->
+        {:noreply, socket}
 
-    if updated_vertex && socket.assigns.node && node_id == Map.get(socket.assigns.node, :id) do
-      label = NodeTitleHelper.extract_node_title(updated_vertex)
+      updated_vertex ->
+        label = NodeTitleHelper.extract_node_title(updated_vertex)
+        socket = push_event(socket, "update_node_label", %{id: node_id, label: label})
 
-      {:noreply,
-       socket
-       |> assign(node: updated_vertex)
-       |> push_event("update_node_label", %{id: node_id, label: label})}
-    else
-      {:noreply, socket}
+        socket =
+          if socket.assigns.node && node_id == Map.get(socket.assigns.node, :id) do
+            assign(socket, node: updated_vertex)
+          else
+            socket
+          end
+
+        {:noreply, socket}
     end
   end
 

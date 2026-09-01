@@ -7,17 +7,12 @@ defmodule Dialectic.Workers.LLMWorker do
   the `Dialectic.LLM.Provider` behaviour. This allows you to plug in providers
   like OpenAI or Google (Gemini) without changing the streaming pipeline.
 
-  Provider selection:
-    - Prefer the job arg `"provider"` if present (e.g. "google", "openai").
-    - Otherwise, use `System.get_env("LLM_PROVIDER")`.
-    - Defaults to Google Gemini.
 
   Expected job args:
     - "question" (string)
     - "to_node" (node id)
     - "graph" (graph id)
     - "live_view_topic" (PubSub topic for the LiveView)
-    - Optional: "provider" (string: "openai" | "google" | "gemini")
 
   Notes:
     - This module is designed to replace the previous OpenAI-specific worker.
@@ -55,10 +50,14 @@ defmodule Dialectic.Workers.LLMWorker do
   def backoff(%Oban.Job{
         attempt: attempt,
         unsaved_error: %{
-          reason: %ReqLLM.Error.API.Request{status: status, retryable: true}
+          reason: %ReqLLM.Error.API.Request{
+            status: status,
+            provider_code: provider_code,
+            retryable: true
+          }
         }
       })
-      when status in [429, 502, 503, 504],
+      when status in [429, 502, 503, 504] or provider_code in [429, 502, 503, 504],
       do: provider_retry_delay(attempt)
 
   def backoff(job), do: Oban.Worker.backoff(job)
@@ -85,7 +84,7 @@ defmodule Dialectic.Workers.LLMWorker do
     job_started_at = System.monotonic_time()
     queue_started_at = queue_reference_time(attempt, inserted_at, scheduled_at)
     queue_duration = queue_wait_duration(queue_started_at, System.system_time(:microsecond))
-    provider_mod = select_provider(args)
+    provider_mod = Dialectic.LLM.Providers.Google
     provider = provider_mod.id()
 
     if is_integer(queue_duration) do
@@ -164,6 +163,7 @@ defmodule Dialectic.Workers.LLMWorker do
         do_llm_request(
           job_id,
           job_started_at,
+          attempt,
           args,
           graph,
           to_node,
@@ -204,6 +204,7 @@ defmodule Dialectic.Workers.LLMWorker do
   defp do_llm_request(
          job_id,
          job_started_at,
+         attempt,
          args,
          graph,
          to_node,
@@ -231,7 +232,7 @@ defmodule Dialectic.Workers.LLMWorker do
 
       {:discard, :missing_api_key}
     else
-      model_spec = Dialectic.LLM.Provider.model_spec(provider_mod)
+      model_spec = request_model_spec(provider_mod, attempt)
 
       # Build a provider-agnostic chat context: system + user
       system_prompt =
@@ -418,6 +419,7 @@ defmodule Dialectic.Workers.LLMWorker do
               handle_guided_learning_plan_response(
                 job_id,
                 job_started_at,
+                attempt,
                 args,
                 final_full_text,
                 grounding_metadata,
@@ -470,6 +472,7 @@ defmodule Dialectic.Workers.LLMWorker do
   defp handle_guided_learning_plan_response(
          job_id,
          job_started_at,
+         attempt,
          args,
          response,
          grounding_metadata,
@@ -541,6 +544,7 @@ defmodule Dialectic.Workers.LLMWorker do
         do_llm_request(
           job_id,
           job_started_at,
+          attempt,
           repair_args,
           graph,
           to_node,
@@ -592,6 +596,14 @@ defmodule Dialectic.Workers.LLMWorker do
       provider_mod.provider_options()
     end
   end
+
+  @doc false
+  def request_model_spec(_provider_mod, attempt) when attempt >= 3 do
+    {:google, model: "gemini-3.1-flash-lite"}
+  end
+
+  def request_model_spec(provider_mod, _attempt),
+    do: Dialectic.LLM.Provider.model_spec(provider_mod)
 
   @doc false
   def request_max_tokens(args, graph) do
@@ -853,32 +865,5 @@ defmodule Dialectic.Workers.LLMWorker do
     )
   end
 
-  # Prefer arg "provider" (string), else env LLM_PROVIDER, else default to Gemini
-  defp select_provider(%{"provider" => p}) when is_binary(p), do: provider_module_from_string(p)
-
-  defp select_provider(_args) do
-    case System.get_env("LLM_PROVIDER") do
-      nil -> Dialectic.LLM.Providers.Google
-      "" -> Dialectic.LLM.Providers.Google
-      p when is_binary(p) -> provider_module_from_string(p)
-    end
-  end
-
-  defp provider_module_from_string(p) when is_binary(p) do
-    case String.downcase(String.trim(p)) do
-      "google" -> Dialectic.LLM.Providers.Google
-      "gemini" -> Dialectic.LLM.Providers.Google
-      "openai" -> Dialectic.LLM.Providers.OpenAI
-      # Fallback
-      _ -> Dialectic.LLM.Providers.Google
-    end
-  end
-
-  defp provider_label(mod) do
-    case mod.id() do
-      :google -> "Google"
-      :openai -> "OpenAI"
-      other -> to_string(other)
-    end
-  end
+  defp provider_label(_mod), do: "Google"
 end
