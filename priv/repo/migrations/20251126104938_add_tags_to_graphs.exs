@@ -1,6 +1,7 @@
 defmodule Dialectic.Repo.Migrations.AddTagsToGraphs do
   use Ecto.Migration
   @disable_ddl_transaction true
+  @disable_migration_lock true
 
   def up do
     execute "ALTER TABLE graphs ADD COLUMN IF NOT EXISTS tags text[] DEFAULT '{}'"
