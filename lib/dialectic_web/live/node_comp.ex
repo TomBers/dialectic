@@ -342,68 +342,100 @@ defmodule DialecticWeb.NodeComp do
             >
               <div id={"node-content-#{@node.id}"}>
                 <div id={"node-content-inner-#{@node.id}"}>
+                  <% origin_meta? =
+                    GraphHelpers.origin_branching_disabled?(@node) && is_map(@graph_struct) %>
+                  <header
+                    id={"node-title-header-#{@node.id}"}
+                    class={[
+                      "relative",
+                      if(origin_meta?,
+                        do: "mb-5 rounded-xl bg-slate-950 px-4 py-4 shadow-sm",
+                        else:
+                          "mb-6 rounded-xl border border-slate-200 bg-slate-50/90 px-4 py-3.5 shadow-sm"
+                      )
+                    ]}
+                  >
+                    <div class="min-w-0">
+                      <p
+                        id={"node-title-type-#{@node.id}"}
+                        class={[
+                          "mb-1.5 pr-10 text-[11px] font-semibold uppercase tracking-[0.16em]",
+                          if(origin_meta?, do: "text-teal-200", else: "text-teal-700")
+                        ]}
+                      >
+                        {if(origin_meta?,
+                          do: "Starting question",
+                          else: DialecticWeb.ColUtils.node_type_label(@node.class)
+                        )}
+                      </p>
+                      <h2 class={[
+                        "reader-heading text-balance font-semibold leading-[1.15] tracking-tight",
+                        if(origin_meta?, do: "text-white", else: "text-slate-950"),
+                        node_title_size_class(@node)
+                      ]}>
+                        <span
+                          phx-hook="Markdown"
+                          id={"markdown-title-#{@node.id}"}
+                          data-md={@node.content || ""}
+                          data-title-only="true"
+                        ></span>
+                      </h2>
+                    </div>
+                    <span class={[
+                      "absolute right-3 top-2.5 flex items-center gap-2"
+                    ]}>
+                      <% noted? =
+                        Enum.any?(Map.get(@node || %{}, :noted_by, []), fn u -> u == @user end) %>
+                      <button
+                        id={"graph-bookmark-node-#{@node.id}"}
+                        type="button"
+                        class={[
+                          "inline-flex h-8 w-8 flex-none items-center justify-center rounded-full border transition-all",
+                          if(noted?,
+                            do: "border-amber-300 bg-amber-100 text-amber-800 hover:bg-amber-200",
+                            else:
+                              if(origin_meta?,
+                                do:
+                                  "border-white/20 bg-white/10 text-slate-300 hover:border-amber-300 hover:bg-amber-50 hover:text-amber-800",
+                                else:
+                                  "border-slate-200 bg-white text-slate-500 hover:border-amber-300 hover:bg-amber-50 hover:text-amber-800"
+                              )
+                          )
+                        ]}
+                        phx-click={if noted?, do: "unnote", else: "note"}
+                        phx-value-node={@node.id}
+                        aria-label={if(noted?, do: "Remove bookmark", else: "Bookmark this node")}
+                        aria-pressed={to_string(noted?)}
+                        title={if(noted?, do: "Remove bookmark", else: "Bookmark this node")}
+                      >
+                        <.icon
+                          name={if(noted?, do: "hero-bookmark-solid", else: "hero-bookmark")}
+                          class="h-4 w-4"
+                        />
+                      </button>
+                    </span>
+                  </header>
                   <article
                     class="reader-prose prose prose-slate max-w-none w-full prose-headings:font-serif prose-headings:tracking-tight prose-a:break-words"
                     data-role="node-content"
                   >
                     <%!-- Client-side Markdown rendering via Markdown hook --%>
-                    <% origin_meta? =
-                      GraphHelpers.origin_branching_disabled?(@node) && is_map(@graph_struct) %>
-                    <h2 class={[
-                      "mt-0 flex items-start justify-between gap-4 font-serif leading-[1.15] tracking-tight text-gray-900",
-                      node_title_size_class(@node),
-                      if(origin_meta?,
-                        do: "mb-2 pb-0",
-                        else: "mb-3 border-b border-gray-200/90 pb-3"
-                      )
-                    ]}>
-                      <span
-                        class="flex-1"
-                        phx-hook="Markdown"
-                        id={"markdown-title-#{@node.id}"}
-                        data-md={@node.content || ""}
-                        data-title-only="true"
-                      ></span>
-                      <span class="flex items-center gap-2">
-                        <% noted? =
-                          Enum.any?(Map.get(@node || %{}, :noted_by, []), fn u -> u == @user end) %>
-                        <button
-                          id={"graph-bookmark-node-#{@node.id}"}
-                          type="button"
-                          class={[
-                            "inline-flex h-8 w-8 flex-none items-center justify-center rounded-full border transition-all",
-                            if(noted?,
-                              do: "border-amber-300 bg-amber-100 text-amber-800 hover:bg-amber-200",
-                              else:
-                                "border-slate-200 bg-white text-slate-500 hover:border-amber-300 hover:bg-amber-50 hover:text-amber-800"
-                            )
-                          ]}
-                          phx-click={if noted?, do: "unnote", else: "note"}
-                          phx-value-node={@node.id}
-                          aria-label={if(noted?, do: "Remove bookmark", else: "Bookmark this node")}
-                          aria-pressed={to_string(noted?)}
-                          title={if(noted?, do: "Remove bookmark", else: "Bookmark this node")}
-                        >
-                          <.icon
-                            name={if(noted?, do: "hero-bookmark-solid", else: "hero-bookmark")}
-                            class="h-4 w-4"
-                          />
-                        </button>
-                      </span>
-                    </h2>
                     <div
                       :if={origin_meta?}
                       id={"origin-intro-subheading-#{@node.id}"}
-                      class="not-prose mb-5 space-y-2.5 border-b border-gray-200/90 pb-4"
+                      class="not-prose mb-5 rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-3.5"
                     >
-                      <p class="text-sm leading-6 text-slate-700">
+                      <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-teal-700">
+                        About this grid
+                      </p>
+                      <p class="mt-1.5 text-[15px] leading-6 text-slate-700">
                         {graph_preview(@graph_struct)}
                       </p>
 
-                      <div class="flex flex-wrap gap-1.5">
+                      <div class="mt-3 flex flex-wrap gap-2">
                         <%= for tag <- graph_tags(@graph_struct) do %>
                           <span class={[
-                            "inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset",
+                            "inline-flex items-center rounded-md px-2.5 py-1 text-xs font-semibold ring-1 ring-inset",
                             GridCardComp.tag_pill_classes(tag)
                           ]}>
                             #{tag}
@@ -413,7 +445,10 @@ defmodule DialecticWeb.NodeComp do
                     </div>
 
                     <div
-                      class="w-full px-1 pb-2 sm:px-2"
+                      class={[
+                        "w-full pb-2",
+                        if(origin_meta?, do: "px-1 sm:px-2", else: "px-4")
+                      ]}
                       data-children={length(@node.children)}
                       id={"list-detector-" <> @node.id}
                     >
@@ -503,9 +538,9 @@ defmodule DialecticWeb.NodeComp do
                         <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                           Start here
                         </p>
-                        <h4 class="mt-1 text-base font-semibold leading-6 tracking-tight text-slate-950">
+                        <h3 class="reader-heading mt-1 text-lg font-semibold leading-6 tracking-tight text-slate-950">
                           How to use the grid
-                        </h4>
+                        </h3>
                       </div>
 
                       <div class="px-4 py-2.5 sm:px-5">

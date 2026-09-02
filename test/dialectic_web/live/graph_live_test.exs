@@ -405,6 +405,15 @@ defmodule DialecticWeb.GraphLiveTest do
              )
     end
 
+    test "origin presents the starting question and full usage guide", %{conn: conn} do
+      {:ok, view, _html} = setup_live_with_data(conn, source_text_graph_data())
+
+      assert has_element?(view, "#node-title-header-1 #node-title-type-1", "Starting question")
+      assert has_element?(view, "#origin-onboarding-1", "Open the first response")
+      assert has_element?(view, "#origin-onboarding-1", "Ask from any idea")
+      refute has_element?(view, "#origin-onboarding-1-first-response")
+    end
+
     test "keeps whole-node and selected-passage inquiries in the shared action surface", %{
       conn: conn
     } do
@@ -412,6 +421,9 @@ defmodule DialecticWeb.GraphLiveTest do
 
       render_click(view, "node_clicked", %{"id" => "2"})
 
+      assert has_element?(view, "#node-title-header-2 #node-title-type-2")
+      assert has_element?(view, "#node-content-2 > div > header #markdown-title-2")
+      refute has_element?(view, "#node-content-2 article #markdown-title-2")
       assert has_element?(view, "#node-content-2 article.reader-prose")
       refute has_element?(view, "#node-content-2 .selection-content")
       assert has_element?(view, "#node-inquiry-actions-2-content #global-chat-form")
