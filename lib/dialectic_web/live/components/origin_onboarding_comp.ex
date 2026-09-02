@@ -10,12 +10,12 @@ defmodule DialecticWeb.OriginOnboardingComp do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="space-y-4">
+    <div id={@id} class="space-y-5">
       <div class="space-y-1.5">
-        <p class="text-sm font-semibold leading-5 text-slate-950">
+        <h4 class="reader-heading text-[15px] font-semibold leading-6 text-slate-950">
           This grid starts with your question.
-        </p>
-        <p class="text-sm leading-5 text-slate-600">
+        </h4>
+        <p class="text-[15px] leading-6 text-slate-600">
           Each box is a question, an AI answer, or a comment. Open one, then follow the
           branch that interests you. Share the grid to think together live.
         </p>
@@ -54,7 +54,7 @@ defmodule DialecticWeb.OriginOnboardingComp do
       <div class="flex flex-wrap items-center gap-3 border-t border-slate-100 pt-3">
         <.link
           href={~p"/intro/how"}
-          class="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-sm font-semibold text-emerald-700 ring-1 ring-emerald-100 transition hover:bg-emerald-100 hover:text-emerald-800"
+          class="inline-flex items-center gap-1.5 text-sm font-semibold text-teal-700 underline decoration-teal-300 underline-offset-4 transition hover:text-teal-900 hover:decoration-teal-500"
         >
           <.icon name="hero-book-open" class="h-4 w-4" />
           <span>Open the full guide</span>
@@ -98,8 +98,10 @@ defmodule DialecticWeb.OriginOnboardingComp do
         <% end %>
 
         <div class="min-w-0">
-          <p class="text-sm font-semibold leading-5 text-slate-900">{@title}</p>
-          <p class="text-sm leading-5 text-slate-600">{@text}</p>
+          <h4 class="reader-heading text-[15px] font-semibold leading-6 text-slate-900">
+            {@title}
+          </h4>
+          <p class="text-sm leading-6 text-slate-600">{@text}</p>
         </div>
       </div>
     </div>
