@@ -4,7 +4,7 @@ defmodule Dialectic.LLM.Providers.Google do
 
   Default Gemini provider configuration:
   - Required: `GOOGLE_API_KEY`
-  - Model: `gemini-3.7-flash`
+  - Model: `gemini-3.5-flash-lite`
   - Minimal thinking for lower latency
   - Google Search grounding for current, verifiable sources and links
   """

@@ -110,4 +110,40 @@ describe("Markdown hook LiveView updates", () => {
       "Research",
     );
   });
+
+  it("hides opaque provider references without altering the raw response", () => {
+    const element = markdownElement();
+    const rawMarkdown =
+      '# Node title\n\nThe model quotes *a selected passage.* [a00aab59525de362] This is the explanation.';
+    element.setAttribute("data-md", rawMarkdown);
+    const hook = { el: element, pushEvent: vi.fn() };
+
+    Markdown.mounted.call(hook);
+
+    expect(element.querySelector("p").textContent).toBe(
+      "The model quotes a selected passage. This is the explanation.",
+    );
+    expect(element.getAttribute("data-md")).toBe(rawMarkdown);
+  });
+
+  it("preserves hexadecimal references in links and code", () => {
+    const element = markdownElement();
+    element.setAttribute(
+      "data-md",
+      "# Node title\n\n[`a00aab59525de362`](https://example.com/reference) and `[a00aab59525de362]` are examples.\n\n```text\n[a00aab59525de362]\n```",
+    );
+    const hook = { el: element, pushEvent: vi.fn() };
+
+    Markdown.mounted.call(hook);
+
+    expect(element.querySelector("a").textContent).toContain(
+      "a00aab59525de362",
+    );
+    expect(element.querySelector("code").textContent).toBe(
+      "a00aab59525de362",
+    );
+    expect(element.querySelector("pre code").textContent).toContain(
+      "[a00aab59525de362]",
+    );
+  });
 });

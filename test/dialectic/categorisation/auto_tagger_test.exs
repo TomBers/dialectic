@@ -44,7 +44,7 @@ defmodule Dialectic.Categorisation.AutoTaggerTest do
 
     assert_receive {:llm_generate, prompt, opts}, 1_000
     assert prompt =~ "Model selection"
-    assert opts[:provider] == :google
+    refute Keyword.has_key?(opts, :provider)
     refute Keyword.has_key?(opts, :model)
     assert_receive {:DOWN, ^task_ref, :process, ^task_pid, :normal}, 1_000
   end

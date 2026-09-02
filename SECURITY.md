@@ -148,18 +148,14 @@ All database writes go through Ecto changesets with validation:
 
 API keys are validated at application startup to fail fast:
 
-- Checks for required LLM provider keys (OpenAI or Google)
+- Checks for the required Gemini API key
 - Only enforced in production environment
 - Provides clear error messages for missing keys
 
 ### Required Environment Variables
 
-**Production requires one of:**
-- `OPENAI_API_KEY` - If using OpenAI (default)
-- `GOOGLE_API_KEY` - If using Google/Gemini
-
-**Specify provider with:**
-- `LLM_PROVIDER` - Set to "openai" or "google"
+**Production requires:**
+- `GOOGLE_API_KEY` - Google Gemini API key
 
 ### Storage Best Practices
 
@@ -285,10 +281,7 @@ DATABASE_URL=ecto://user:pass@host/database
 DATABASE_SSL=true  # Default, can be false for dev
 POOL_SIZE=10       # Adjust based on load
 
-# LLM Provider (choose one)
-LLM_PROVIDER=openai  # or "google"
-OPENAI_API_KEY=sk-...
-# OR
+# Gemini API
 GOOGLE_API_KEY=...
 
 # Optional: Email

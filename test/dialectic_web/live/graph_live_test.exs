@@ -3,6 +3,7 @@ defmodule DialecticWeb.GraphLiveTest do
   alias Dialectic.Accounts
   alias Dialectic.Follows
   alias Dialectic.GridActivity
+  alias Dialectic.Graph.Vertex
   alias Dialectic.Responses.GuidedLearningPlan
 
   import Phoenix.LiveViewTest
@@ -65,6 +66,101 @@ defmodule DialecticWeb.GraphLiveTest do
     else
       live(conn, ~p"/g/#{graph.slug}/graph?node=1")
     end
+  end
+
+  describe "LLM retry status" do
+    test "refreshes the selected node and allows its streamed title to be restored", %{conn: conn} do
+      {:ok, view, _html} = setup_live_for_graph(conn, "Selected Retry Status")
+      state = :sys.get_state(view.pid).socket
+      node_id = state.assigns.node.id
+      streaming_nodes = MapSet.put(state.assigns.streaming_nodes, node_id)
+
+      set_stream_tracking(view, streaming_nodes, MapSet.put(state.assigns.titled_nodes, node_id))
+
+      GraphManager.set_node_content(
+        state.assigns.graph_id,
+        node_id,
+        "The AI service is retrying…"
+      )
+
+      send(view.pid, {:llm_request_retrying, "retrying", :node_id, node_id})
+      retry_state = :sys.get_state(view.pid).socket
+
+      assert retry_state.assigns.node.content == "The AI service is retrying…"
+      assert retry_state.assigns.streaming_nodes == streaming_nodes
+      refute MapSet.member?(retry_state.assigns.titled_nodes, node_id)
+
+      assert_push_event(view, "update_node_label", %{
+        id: ^node_id,
+        label: "The AI service is retrying…"
+      })
+
+      GraphManager.set_node_content(
+        state.assigns.graph_id,
+        node_id,
+        "## Restored title\n\nAnswer"
+      )
+
+      updated_vertex = GraphManager.find_node_by_id(state.assigns.graph_id, node_id)
+      send(view.pid, {:stream_chunk_broadcast, updated_vertex, :node_id, node_id, nil})
+      restored_state = :sys.get_state(view.pid).socket
+
+      assert MapSet.member?(restored_state.assigns.titled_nodes, node_id)
+      assert restored_state.assigns.streaming_nodes == streaming_nodes
+      assert_push_event(view, "update_node_label", %{id: ^node_id, label: "Restored title"})
+    end
+
+    test "updates an unselected retry label without changing the selected node or streaming state",
+         %{
+           conn: conn
+         } do
+      {:ok, view, _html} = setup_live_for_graph(conn, "Background Retry Status")
+      state = :sys.get_state(view.pid).socket
+      selected_node = state.assigns.node
+
+      background_node =
+        GraphManager.add_node(state.assigns.graph_id, %Vertex{
+          class: "answer",
+          content: "The AI service is retrying…"
+        })
+
+      background_node_id = background_node.id
+      streaming_nodes = MapSet.put(state.assigns.streaming_nodes, background_node_id)
+
+      set_stream_tracking(
+        view,
+        streaming_nodes,
+        MapSet.put(state.assigns.titled_nodes, background_node_id)
+      )
+
+      send(
+        view.pid,
+        {:llm_request_retrying, "retrying", :node_id, background_node_id}
+      )
+
+      retry_state = :sys.get_state(view.pid).socket
+
+      assert retry_state.assigns.node.id == selected_node.id
+      assert retry_state.assigns.node.content == selected_node.content
+      assert retry_state.assigns.streaming_nodes == streaming_nodes
+      refute MapSet.member?(retry_state.assigns.titled_nodes, background_node_id)
+
+      assert_push_event(view, "update_node_label", %{
+        id: ^background_node_id,
+        label: "The AI service is retrying…"
+      })
+    end
+  end
+
+  defp set_stream_tracking(view, streaming_nodes, titled_nodes) do
+    :sys.replace_state(view.pid, fn state ->
+      socket =
+        state.socket
+        |> Phoenix.Component.assign(:streaming_nodes, streaming_nodes)
+        |> Phoenix.Component.assign(:titled_nodes, titled_nodes)
+
+      %{state | socket: socket}
+    end)
   end
 
   defp source_text_graph_data do

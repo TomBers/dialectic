@@ -8,7 +8,7 @@ defmodule Dialectic.LLM.Provider do
   - Keep configurability optional and incremental.
 
   Providers should implement:
-    - `id/0` — provider identifier (e.g., `:openai`, `:google`)
+    - `id/0` — provider identifier (`:google`)
     - `model/0` — model name (string)
     - `api_key/0` — API key value or `nil` if not configured
     - `provider_options/0` — keyword list for ReqLLM provider options (often `[]`)
@@ -52,7 +52,7 @@ defmodule Dialectic.LLM.Provider do
       finch = Dialectic.LLM.Provider.finch_name(mod)
   """
 
-  @typedoc "Provider identifier used by ReqLLM (e.g., :openai, :google, :anthropic, :deepseek)"
+  @typedoc "Provider identifier used by ReqLLM"
   @type provider_id :: atom()
 
   @typedoc "A module that implements this behaviour"
@@ -61,7 +61,7 @@ defmodule Dialectic.LLM.Provider do
   @typedoc "The 2-tuple model spec {:provider_id, keyword()}"
   @type model_spec :: {provider_id(), keyword()}
 
-  @doc "Provider identifier (e.g., :openai, :google)"
+  @doc "Provider identifier"
   @callback id() :: provider_id()
 
   @doc "Model name (string) for this provider"

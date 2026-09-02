@@ -32,7 +32,6 @@ defmodule Dialectic.Inspiration.Generator do
     # Use a faster model for inspiration generation
     opts = [
       system_prompt: system_prompt,
-      provider: :google,
       model: "gemini-3.5-flash-lite"
     ]
 

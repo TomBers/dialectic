@@ -1,27 +1,18 @@
 defmodule Dialectic.Workers.LLMWorker do
   @moduledoc """
-  Provider-agnostic LLM worker built on ReqLLM.
+  Gemini streaming worker built on ReqLLM.
 
-  This worker centralizes the streaming logic and delegates all provider-specific
-  concerns (API key, model, provider_options, timeouts) to modules that implement
-  the `Dialectic.LLM.Provider` behaviour. This allows you to plug in providers
-  like OpenAI or Google (Gemini) without changing the streaming pipeline.
+  This worker centralizes streaming while the `Dialectic.LLM.Provider` behaviour
+  supplies the Gemini API key, model, provider options, and timeouts.
 
-  Provider selection:
-    - Prefer the job arg `"provider"` if present (e.g. "google", "openai").
-    - Otherwise, use `System.get_env("LLM_PROVIDER")`.
-    - Defaults to Google Gemini.
 
   Expected job args:
     - "question" (string)
     - "to_node" (node id)
     - "graph" (graph id)
     - "live_view_topic" (PubSub topic for the LiveView)
-    - Optional: "provider" (string: "openai" | "google" | "gemini")
 
-  Notes:
-    - This module is designed to replace the previous OpenAI-specific worker.
-    - Uses a generic queue name (`:llm_request`) shared by all providers.
+  Uses the `:llm_request` queue.
   """
 
   # Use a generic LLM queue shared by all providers.
@@ -39,6 +30,10 @@ defmodule Dialectic.Workers.LLMWorker do
   @queue_wait_event [:dialectic, :llm, :queue_wait]
   @time_to_first_token_event [:dialectic, :llm, :time_to_first_token]
   @job_event [:dialectic, :llm, :job]
+  @initial_retry_base_seconds 3
+  @initial_retry_jitter_seconds 2
+  @subsequent_retry_base_seconds 8
+  @subsequent_retry_jitter_seconds 4
 
   # -- Oban Perform Callback ----------------------------------------------------
 
@@ -52,7 +47,40 @@ defmodule Dialectic.Workers.LLMWorker do
       }),
       do: 1
 
+  def backoff(%Oban.Job{
+        id: job_id,
+        attempt: attempt,
+        unsaved_error: %{
+          reason: %ReqLLM.Error.API.Request{
+            status: status,
+            provider_code: provider_code,
+            retryable: true
+          }
+        }
+      })
+      when status in [429, 502, 503, 504] or provider_code in [429, 502, 503, 504],
+      do: provider_retry_delay(job_id, attempt)
+
   def backoff(job), do: Oban.Worker.backoff(job)
+
+  @doc false
+  def provider_retry_delay(job_id, 1) do
+    jittered_retry_delay(
+      job_id,
+      1,
+      @initial_retry_base_seconds,
+      @initial_retry_jitter_seconds
+    )
+  end
+
+  def provider_retry_delay(job_id, attempt) do
+    jittered_retry_delay(
+      job_id,
+      attempt,
+      @subsequent_retry_base_seconds,
+      @subsequent_retry_jitter_seconds
+    )
+  end
 
   @impl Oban.Worker
   def perform(%Oban.Job{
@@ -72,7 +100,7 @@ defmodule Dialectic.Workers.LLMWorker do
     job_started_at = System.monotonic_time()
     queue_started_at = queue_reference_time(attempt, inserted_at, scheduled_at)
     queue_duration = queue_wait_duration(queue_started_at, System.system_time(:microsecond))
-    provider_mod = select_provider(args)
+    provider_mod = Dialectic.LLM.Providers.Google
     provider = provider_mod.id()
 
     if is_integer(queue_duration) do
@@ -139,16 +167,19 @@ defmodule Dialectic.Workers.LLMWorker do
 
       {:ok, :skipped}
     else
-      GraphManager.update_vertex_fields(graph, to_node, %{
-        content: "",
-        guided_plan: nil,
-        grounding_metadata: nil
-      })
+      if attempt == 1 do
+        GraphManager.update_vertex_fields(graph, to_node, %{
+          content: "",
+          guided_plan: nil,
+          grounding_metadata: nil
+        })
+      end
 
       result =
-        do_llm_request(
+        run_llm_request(
           job_id,
           job_started_at,
+          attempt,
           args,
           graph,
           to_node,
@@ -156,13 +187,25 @@ defmodule Dialectic.Workers.LLMWorker do
           provider_mod
         )
 
-      if attempt >= max_attempts and match?({:error, _reason}, result) do
-        persist_stream_error(
-          graph,
-          to_node,
-          live_view_topic,
-          terminal_error_message(provider_mod, result)
-        )
+      cond do
+        attempt >= max_attempts and match?({:error, _reason}, result) ->
+          persist_stream_error(
+            graph,
+            to_node,
+            live_view_topic,
+            terminal_error_message(provider_mod, result)
+          )
+
+        match?({:error, _reason}, result) ->
+          persist_retry_status(
+            graph,
+            to_node,
+            live_view_topic,
+            retry_message(result, job_id, attempt, max_attempts)
+          )
+
+        true ->
+          :ok
       end
 
       if terminal_failure?(result, attempt, max_attempts) do
@@ -173,10 +216,47 @@ defmodule Dialectic.Workers.LLMWorker do
     end
   end
 
+  defp run_llm_request(
+         job_id,
+         job_started_at,
+         attempt,
+         args,
+         graph,
+         to_node,
+         live_view_topic,
+         provider_mod
+       ) do
+    do_llm_request(
+      job_id,
+      job_started_at,
+      attempt,
+      args,
+      graph,
+      to_node,
+      live_view_topic,
+      provider_mod
+    )
+  rescue
+    error in ReqLLM.Error.API.Stream ->
+      case normalize_stream_error(error) do
+        {:error, request_error} -> {:error, request_error}
+        :unhandled -> {:error, error}
+      end
+  end
+
+  @doc false
+  def normalize_stream_error(%ReqLLM.Error.API.Stream{
+        cause: %ReqLLM.Error.API.Request{} = request_error
+      }),
+      do: {:error, request_error}
+
+  def normalize_stream_error(_error), do: :unhandled
+
   # Extracted LLM request logic to separate function for clarity
   defp do_llm_request(
          job_id,
          job_started_at,
+         attempt,
          args,
          graph,
          to_node,
@@ -204,7 +284,7 @@ defmodule Dialectic.Workers.LLMWorker do
 
       {:discard, :missing_api_key}
     else
-      model_spec = Dialectic.LLM.Provider.model_spec(provider_mod)
+      model_spec = request_model_spec(provider_mod, attempt)
 
       # Build a provider-agnostic chat context: system + user
       system_prompt =
@@ -251,8 +331,9 @@ defmodule Dialectic.Workers.LLMWorker do
       )
 
       request_started_at = System.monotonic_time()
+      stream_client = Application.get_env(:dialectic, :llm_stream_client, ReqLLM)
 
-      case ReqLLM.stream_text(model_spec, ctx, request_options) do
+      case stream_client.stream_text(model_spec, ctx, request_options) do
         {:ok, stream_resp} ->
           # Stream tokens to UI (and persisted vertex content) as they arrive.
           # We accumulate the *full* response text in the worker to ensure
@@ -391,6 +472,7 @@ defmodule Dialectic.Workers.LLMWorker do
               handle_guided_learning_plan_response(
                 job_id,
                 job_started_at,
+                attempt,
                 args,
                 final_full_text,
                 grounding_metadata,
@@ -443,6 +525,7 @@ defmodule Dialectic.Workers.LLMWorker do
   defp handle_guided_learning_plan_response(
          job_id,
          job_started_at,
+         attempt,
          args,
          response,
          grounding_metadata,
@@ -514,6 +597,7 @@ defmodule Dialectic.Workers.LLMWorker do
         do_llm_request(
           job_id,
           job_started_at,
+          attempt,
           repair_args,
           graph,
           to_node,
@@ -565,6 +649,14 @@ defmodule Dialectic.Workers.LLMWorker do
       provider_mod.provider_options()
     end
   end
+
+  @doc false
+  def request_model_spec(_provider_mod, attempt) when attempt >= 3 do
+    {:google, model: "gemini-3.1-flash-lite"}
+  end
+
+  def request_model_spec(provider_mod, _attempt),
+    do: Dialectic.LLM.Provider.model_spec(provider_mod)
 
   @doc false
   def request_max_tokens(args, graph) do
@@ -749,12 +841,62 @@ defmodule Dialectic.Workers.LLMWorker do
     "#{provider_label(provider_mod)} stopped before completing the response (#{reason}). Please try again."
   end
 
+  defp terminal_error_message(_provider_mod, {:error, %ReqLLM.Error.API.Stream{}}) do
+    "The response stream was interrupted. Please try again."
+  end
+
   defp terminal_error_message(_provider_mod, {:error, %Mint.TransportError{reason: reason}}) do
     "Network error while generating the response: #{inspect(reason)}"
   end
 
   defp terminal_error_message(provider_mod, {:error, reason}) do
-    "#{provider_label(provider_mod)} request error: #{inspect(reason)}"
+    if provider_overload_error?(reason) do
+      "The AI service is still temporarily overloaded. Please try again in a moment."
+    else
+      "#{provider_label(provider_mod)} request error: #{inspect(reason)}"
+    end
+  end
+
+  defp retry_message({:error, reason}, job_id, attempt, max_attempts) do
+    if provider_overload_error?(reason) do
+      delay = provider_retry_delay(job_id, attempt)
+
+      "The AI service is temporarily overloaded. Retrying in #{delay} seconds (attempt #{attempt + 1} of #{max_attempts})…"
+    else
+      "We hit a temporary problem. Retrying automatically (attempt #{attempt + 1} of #{max_attempts})…"
+    end
+  end
+
+  defp jittered_retry_delay(job_id, attempt, base_seconds, jitter_seconds) do
+    base_seconds + :erlang.phash2({job_id, attempt}, jitter_seconds + 1)
+  end
+
+  @doc false
+  def provider_overload_error?(%ReqLLM.Error.API.Request{
+        status: status,
+        retryable: true
+      })
+      when status in [429, 502, 503, 504],
+      do: true
+
+  def provider_overload_error?(%ReqLLM.Error.API.Request{
+        provider_code: provider_code,
+        retryable: true
+      })
+      when provider_code in [429, 502, 503, 504],
+      do: true
+
+  def provider_overload_error?(_reason), do: false
+
+  defp persist_retry_status(graph, to_node, live_view_topic, message) do
+    GraphManager.set_node_content(graph, to_node, message)
+    GraphManager.save_graph(graph)
+
+    Phoenix.PubSub.broadcast(
+      Dialectic.PubSub,
+      live_view_topic,
+      {:llm_request_retrying, message, :node_id, to_node}
+    )
   end
 
   defp persist_stream_error(graph, to_node, live_view_topic, message) do
@@ -785,32 +927,5 @@ defmodule Dialectic.Workers.LLMWorker do
     )
   end
 
-  # Prefer arg "provider" (string), else env LLM_PROVIDER, else default to Gemini
-  defp select_provider(%{"provider" => p}) when is_binary(p), do: provider_module_from_string(p)
-
-  defp select_provider(_args) do
-    case System.get_env("LLM_PROVIDER") do
-      nil -> Dialectic.LLM.Providers.Google
-      "" -> Dialectic.LLM.Providers.Google
-      p when is_binary(p) -> provider_module_from_string(p)
-    end
-  end
-
-  defp provider_module_from_string(p) when is_binary(p) do
-    case String.downcase(String.trim(p)) do
-      "google" -> Dialectic.LLM.Providers.Google
-      "gemini" -> Dialectic.LLM.Providers.Google
-      "openai" -> Dialectic.LLM.Providers.OpenAI
-      # Fallback
-      _ -> Dialectic.LLM.Providers.Google
-    end
-  end
-
-  defp provider_label(mod) do
-    case mod.id() do
-      :google -> "Google"
-      :openai -> "OpenAI"
-      other -> to_string(other)
-    end
-  end
+  defp provider_label(_mod), do: "Google"
 end

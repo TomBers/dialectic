@@ -21,10 +21,7 @@
 - [ ] `PHX_HOST` configured with your domain
 - [ ] `DATABASE_URL` configured
 - [ ] `DATABASE_SSL=true` (or `false` if using local DB)
-- [ ] LLM provider API key set:
-  - [ ] `OPENAI_API_KEY` (if using OpenAI)
-  - [ ] `GOOGLE_API_KEY` (if using Google/Gemini)
-  - [ ] `LLM_PROVIDER` set correctly
+- [ ] `GOOGLE_API_KEY` set for the Gemini API
 - [ ] `PORT` configured (default: 8080)
 - [ ] `PHX_SERVER=true` for production
 
@@ -266,8 +263,7 @@ Rate each category from 1-5 (5 = excellent):
 - **Database Admin**: ________________
 - **Security Team**: ________________
 - **Fly.io Support**: https://community.fly.io
-- **OpenAI Support**: https://help.openai.com (if using OpenAI)
-- **Google Cloud Support**: https://cloud.google.com/support (if using Google)
+- **Google Cloud Support**: https://cloud.google.com/support
 
 ---
 
