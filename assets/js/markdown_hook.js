@@ -225,6 +225,34 @@ function normalizedSupportReferenceText(markdown) {
   return (container.textContent || "").replace(/\s+/g, " ").trim();
 }
 
+const OPAQUE_REFERENCE_TOKEN =
+  /(^|[\s([{>])\[[0-9a-f]{16}\](?=$|[\s.,;:!?<)\]}])/gi;
+const OPAQUE_REFERENCE_EXCLUSIONS =
+  "a, code, pre, kbd, samp, .katex, .katex-display";
+
+export function removeOpaqueReferenceTokens(root) {
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const textNodes = [];
+  let node = walker.nextNode();
+
+  while (node) {
+    textNodes.push(node);
+    node = walker.nextNode();
+  }
+
+  textNodes.forEach((textNode) => {
+    if (textNode.parentElement?.closest(OPAQUE_REFERENCE_EXCLUSIONS)) return;
+
+    textNode.nodeValue = (textNode.nodeValue || "").replace(
+      OPAQUE_REFERENCE_TOKEN,
+      (_match, prefix) => {
+        if (prefix === " " || prefix === "\t") return "";
+        return prefix;
+      },
+    );
+  });
+}
+
 function readGroundingMetadata(root) {
   const raw = root.getAttribute("data-grounding");
   if (!raw) return null;
@@ -898,6 +926,7 @@ function renderMdInto(el, askQuestion) {
   el.innerHTML = safe;
 
   // Enhance anchors for safety/UX
+  removeOpaqueReferenceTokens(el);
   enhanceLinks(el);
   enhanceBlockquoteAttributions(el);
   renderGroundingReferences(el, readGroundingMetadata(el));

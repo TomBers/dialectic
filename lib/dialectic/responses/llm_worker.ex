@@ -30,6 +30,10 @@ defmodule Dialectic.Workers.LLMWorker do
   @queue_wait_event [:dialectic, :llm, :queue_wait]
   @time_to_first_token_event [:dialectic, :llm, :time_to_first_token]
   @job_event [:dialectic, :llm, :job]
+  @initial_retry_base_seconds 3
+  @initial_retry_jitter_seconds 2
+  @subsequent_retry_base_seconds 8
+  @subsequent_retry_jitter_seconds 4
 
   # -- Oban Perform Callback ----------------------------------------------------
 
@@ -44,6 +48,7 @@ defmodule Dialectic.Workers.LLMWorker do
       do: 1
 
   def backoff(%Oban.Job{
+        id: job_id,
         attempt: attempt,
         unsaved_error: %{
           reason: %ReqLLM.Error.API.Request{
@@ -54,13 +59,28 @@ defmodule Dialectic.Workers.LLMWorker do
         }
       })
       when status in [429, 502, 503, 504] or provider_code in [429, 502, 503, 504],
-      do: provider_retry_delay(attempt)
+      do: provider_retry_delay(job_id, attempt)
 
   def backoff(job), do: Oban.Worker.backoff(job)
 
   @doc false
-  def provider_retry_delay(1), do: 3
-  def provider_retry_delay(_attempt), do: 10
+  def provider_retry_delay(job_id, 1) do
+    jittered_retry_delay(
+      job_id,
+      1,
+      @initial_retry_base_seconds,
+      @initial_retry_jitter_seconds
+    )
+  end
+
+  def provider_retry_delay(job_id, attempt) do
+    jittered_retry_delay(
+      job_id,
+      attempt,
+      @subsequent_retry_base_seconds,
+      @subsequent_retry_jitter_seconds
+    )
+  end
 
   @impl Oban.Worker
   def perform(%Oban.Job{
@@ -176,12 +196,12 @@ defmodule Dialectic.Workers.LLMWorker do
             terminal_error_message(provider_mod, result)
           )
 
-        retryable_provider_overload?(result) ->
+        match?({:error, _reason}, result) ->
           persist_retry_status(
             graph,
             to_node,
             live_view_topic,
-            provider_retry_message(provider_mod, attempt, max_attempts)
+            retry_message(result, job_id, attempt, max_attempts)
           )
 
         true ->
@@ -220,7 +240,7 @@ defmodule Dialectic.Workers.LLMWorker do
     error in ReqLLM.Error.API.Stream ->
       case normalize_stream_error(error) do
         {:error, request_error} -> {:error, request_error}
-        :unhandled -> reraise error, __STACKTRACE__
+        :unhandled -> {:error, error}
       end
   end
 
@@ -311,8 +331,9 @@ defmodule Dialectic.Workers.LLMWorker do
       )
 
       request_started_at = System.monotonic_time()
+      stream_client = Application.get_env(:dialectic, :llm_stream_client, ReqLLM)
 
-      case ReqLLM.stream_text(model_spec, ctx, request_options) do
+      case stream_client.stream_text(model_spec, ctx, request_options) do
         {:ok, stream_resp} ->
           # Stream tokens to UI (and persisted vertex content) as they arrive.
           # We accumulate the *full* response text in the worker to ensure
@@ -820,6 +841,10 @@ defmodule Dialectic.Workers.LLMWorker do
     "#{provider_label(provider_mod)} stopped before completing the response (#{reason}). Please try again."
   end
 
+  defp terminal_error_message(_provider_mod, {:error, %ReqLLM.Error.API.Stream{}}) do
+    "The response stream was interrupted. Please try again."
+  end
+
   defp terminal_error_message(_provider_mod, {:error, %Mint.TransportError{reason: reason}}) do
     "Network error while generating the response: #{inspect(reason)}"
   end
@@ -832,14 +857,19 @@ defmodule Dialectic.Workers.LLMWorker do
     end
   end
 
-  defp provider_retry_message(_provider_mod, attempt, max_attempts) do
-    delay = provider_retry_delay(attempt)
+  defp retry_message({:error, reason}, job_id, attempt, max_attempts) do
+    if provider_overload_error?(reason) do
+      delay = provider_retry_delay(job_id, attempt)
 
-    "The AI service is temporarily overloaded. Retrying in #{delay} seconds (attempt #{attempt + 1} of #{max_attempts})…"
+      "The AI service is temporarily overloaded. Retrying in #{delay} seconds (attempt #{attempt + 1} of #{max_attempts})…"
+    else
+      "We hit a temporary problem. Retrying automatically (attempt #{attempt + 1} of #{max_attempts})…"
+    end
   end
 
-  defp retryable_provider_overload?({:error, reason}), do: provider_overload_error?(reason)
-  defp retryable_provider_overload?(_result), do: false
+  defp jittered_retry_delay(job_id, attempt, base_seconds, jitter_seconds) do
+    base_seconds + :erlang.phash2({job_id, attempt}, jitter_seconds + 1)
+  end
 
   @doc false
   def provider_overload_error?(%ReqLLM.Error.API.Request{

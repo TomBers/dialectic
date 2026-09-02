@@ -58,26 +58,44 @@ defmodule Dialectic.Responses.LLMWorkerTelemetryTest do
 
   test "uses short bounded backoff for retryable provider overloads" do
     error = provider_error(503, true)
+    first_job_id = 101
+    later_job_id = 202
 
     assert LLMWorker.backoff(%Oban.Job{
+             id: first_job_id,
              attempt: 1,
              max_attempts: 3,
              unsaved_error: %{kind: :error, reason: error, stacktrace: []}
-           }) == 3
+           }) == LLMWorker.provider_retry_delay(first_job_id, 1)
 
     assert LLMWorker.backoff(%Oban.Job{
+             id: later_job_id,
              attempt: 2,
              max_attempts: 3,
              unsaved_error: %{kind: :error, reason: error, stacktrace: []}
-           }) == 10
+           }) == LLMWorker.provider_retry_delay(later_job_id, 2)
 
     provider_code_error = %{error | status: nil, provider_code: 503}
 
     assert LLMWorker.backoff(%Oban.Job{
+             id: first_job_id,
              attempt: 1,
              max_attempts: 3,
              unsaved_error: %{kind: :error, reason: provider_code_error, stacktrace: []}
-           }) == 3
+           }) == LLMWorker.provider_retry_delay(first_job_id, 1)
+  end
+
+  test "adds bounded deterministic jitter to provider retry delays" do
+    first_delays = Enum.map(1..20, &LLMWorker.provider_retry_delay(&1, 1))
+    later_delays = Enum.map(1..20, &LLMWorker.provider_retry_delay(&1, 2))
+
+    assert Enum.all?(first_delays, &(&1 in 3..5))
+    assert Enum.all?(later_delays, &(&1 in 8..12))
+    assert Enum.uniq(first_delays) |> length() > 1
+    assert Enum.uniq(later_delays) |> length() > 1
+
+    assert LLMWorker.provider_retry_delay(42, 1) == LLMWorker.provider_retry_delay(42, 1)
+    assert LLMWorker.provider_retry_delay(42, 2) == LLMWorker.provider_retry_delay(42, 2)
   end
 
   test "classifies only retryable overload responses as provider overloads" do
