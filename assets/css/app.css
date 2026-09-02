@@ -1267,8 +1267,9 @@ button[type="submit"]:active {
 }
 
 .markdown-inline-citation > a {
-    color: #0f766e !important;
+    color: #64748b !important;
     text-decoration: none !important;
+    transition: color 150ms ease;
 }
 
 .markdown-inline-citation > a::before {
@@ -1368,7 +1369,7 @@ button[type="submit"]:active {
     --rg-read-font-size: 1.0625rem;
     --rg-read-line-height: 1.68;
     --rg-read-max-width: 62ch;
-    --rg-read-para-margin: 0.9em;
+    --rg-read-para-margin: 0.96em;
     --rg-read-lead-size: 1.06em;
     --rg-read-lead-line-height: 1.62;
     --rg-read-letter-spacing: -0.0025em;
@@ -1511,11 +1512,17 @@ button[type="submit"]:active {
     margin-bottom: 0.65em;
     color: #0f172a;
     font-family: var(--rg-read-heading-font-family);
-    font-size: 1.35em;
+    font-size: 1.28em;
     font-weight: 650;
     line-height: 1.25;
     border-left: 0;
     padding-left: 0;
+}
+
+.reader-prose
+    [phx-hook="Markdown"][data-body-only="true"]
+    > :where(h2, h3):first-child {
+    margin-top: 0;
 }
 
 .reader-prose

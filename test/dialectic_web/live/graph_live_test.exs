@@ -412,6 +412,9 @@ defmodule DialecticWeb.GraphLiveTest do
 
       render_click(view, "node_clicked", %{"id" => "2"})
 
+      assert has_element?(view, "#node-title-header-2 #node-title-type-2")
+      assert has_element?(view, "#node-content-2 > div > header #markdown-title-2")
+      refute has_element?(view, "#node-content-2 article #markdown-title-2")
       assert has_element?(view, "#node-content-2 article.reader-prose")
       refute has_element?(view, "#node-content-2 .selection-content")
       assert has_element?(view, "#node-inquiry-actions-2-content #global-chat-form")
