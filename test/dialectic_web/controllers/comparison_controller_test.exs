@@ -46,7 +46,7 @@ defmodule DialecticWeb.ComparisonControllerTest do
     assert document
            |> LazyHTML.query("meta[name=description]")
            |> LazyHTML.attribute("content") == [
-             "Compare RationalGrid with ChatGPT, Elicit, Kialo, NotebookLM and mind maps, or explore a workflow with Notion and Obsidian."
+             "Compare RationalGrid with ChatGPT, Elicit, Kialo, Gemini Notebook (formerly NotebookLM) and mind maps, or explore a Notion and Obsidian workflow."
            ]
   end
 

@@ -9,11 +9,11 @@
       </h1>
       <p class="mt-5 max-w-3xl text-lg leading-8 text-slate-600">
         <a
-          href="https://notebooklm.google.com/"
+          href="https://notebook.google.com/"
           target="_blank"
           rel="noopener noreferrer"
           class="font-semibold text-teal-800 underline decoration-teal-600 underline-offset-4"
-        >Google NotebookLM</a>
+        >Gemini Notebook (formerly NotebookLM)</a>
         helps people work with a selected collection of source material. RationalGrid starts from a question and keeps answers, challenges, evidence, sources, notes, and competing paths connected in an explorable map.
       </p>
       <div class="mt-8 flex flex-wrap gap-3">
@@ -48,7 +48,7 @@
         Choose according to what should define the workspace.
       </h2>
       <p class="mt-4 max-w-3xl leading-7 text-slate-600">
-        Choose NotebookLM when a particular collection of documents should ground the conversation and generated material. Choose RationalGrid when the inquiry itself should be the organising structure, with room to branch into challenges, evidence, sources, and further questions. The two can also support different stages of the same project.
+        Choose Gemini Notebook (formerly NotebookLM) when a particular collection of documents should ground the conversation and generated material. Choose RationalGrid when the inquiry itself should be the organising structure, with room to branch into challenges, evidence, sources, and further questions. The two can also support different stages of the same project.
       </p>
     </section>
 
@@ -64,7 +64,9 @@
           <thead>
             <tr class="border-b border-stone-300 bg-stone-100">
               <th class="px-5 py-4 text-sm font-semibold">Need</th>
-              <th class="px-5 py-4 text-sm font-semibold">Google NotebookLM</th>
+              <th class="px-5 py-4 text-sm font-semibold">
+                Gemini Notebook (formerly NotebookLM)
+              </th>
               <th class="bg-teal-950 px-5 py-4 text-sm font-semibold text-white">RationalGrid</th>
             </tr>
           </thead>
@@ -95,9 +97,9 @@
     >
       <article class="border-t-4 border-blue-600 bg-white p-6">
         <.icon name="hero-book-open" class="h-6 w-6 text-blue-700" />
-        <h2 class="mt-4 font-serif text-3xl font-semibold">What NotebookLM does well</h2>
+        <h2 class="mt-4 font-serif text-3xl font-semibold">What Gemini Notebook does well</h2>
         <p class="mt-3 leading-7 text-slate-600">
-          NotebookLM makes a selected body of material the centre of the workspace. It is a natural fit for asking questions across those sources, generating summaries and study materials, and using audio-oriented outputs when listening is helpful.
+          Gemini Notebook makes a selected body of material the centre of the workspace. It is a natural fit for asking questions across those sources, generating summaries and study materials, and using audio-oriented outputs when listening is helpful.
         </p>
       </article>
       <article class="border-t-4 border-teal-700 bg-slate-950 p-6 text-white">
@@ -119,7 +121,7 @@
       </h2>
       <div class="mt-7 grid gap-7 lg:grid-cols-3">
         <div>
-          <h3 class="text-lg font-semibold">Choose NotebookLM if…</h3>
+          <h3 class="text-lg font-semibold">Choose Gemini Notebook if…</h3>
           <ul class="mt-3 space-y-3 text-slate-600">
             <li>• You want to ask questions across a defined collection of sources.</li>
             <li>• You want document summaries, study materials, or audio-oriented outputs.</li>
@@ -139,7 +141,7 @@
         <div class="border-l-2 border-teal-700 pl-5">
           <h3 class="text-lg font-semibold">Use both if…</h3>
           <p class="mt-3 leading-7 text-slate-600">
-            You want NotebookLM to help interrogate a defined source collection, then RationalGrid to map selected claims, disagreements, evidence, and questions that emerge from that reading.
+            You want Gemini Notebook to help interrogate a defined source collection, then RationalGrid to map selected claims, disagreements, evidence, and questions that emerge from that reading.
           </p>
         </div>
       </div>
@@ -162,7 +164,7 @@
             Grounding and verification are not the same thing.
           </h2>
           <p class="mt-4 leading-7 text-slate-600">
-            NotebookLM can keep answers connected to the notebook's supplied sources. RationalGrid can keep source and evidence branches attached to the idea they address. In either tool, a citation does not prove that the source is reliable or that it supports the interpretation being made.
+            Gemini Notebook can keep answers connected to the notebook's supplied sources. RationalGrid can keep source and evidence branches attached to the idea they address. In either tool, a citation does not prove that the source is reliable or that it supports the interpretation being made.
           </p>
         </div>
         <aside class="border border-stone-300 border-l-4 border-l-amber-600 bg-white p-5">
@@ -182,7 +184,7 @@
         RationalGrid does not run across an uploaded paper collection.
       </h2>
       <p class="mt-3 max-w-4xl leading-7 text-slate-600">
-        RationalGrid does not currently reproduce NotebookLM's source-notebook workflow or automatically extract claims and premises from uploaded papers. Its strength is building and revisiting a branching inquiry. If document-grounded chat across supplied files is the central need, NotebookLM is the more appropriate starting point.
+        RationalGrid does not currently reproduce Gemini Notebook's source-notebook workflow or automatically extract claims and premises from uploaded papers. Its strength is building and revisiting a branching inquiry. If document-grounded chat across supplied files is the central need, Gemini Notebook is the more appropriate starting point.
       </p>
     </section>
 
@@ -190,10 +192,10 @@
       <h2 id="notebooklm-faq-heading" class="font-serif text-4xl font-semibold">FAQ</h2>
       <div class="mt-6 divide-y divide-stone-300 border-y border-stone-300">
         <%= for {question, answer} <- [
-          {"Is RationalGrid a replacement for NotebookLM?", "Not for NotebookLM's document-centred workflow. RationalGrid is an alternative when the main need is to map a developing inquiry and its competing paths."},
+          {"Is RationalGrid a replacement for Gemini Notebook (formerly NotebookLM)?", "Not for Gemini Notebook's document-centred workflow. RationalGrid is an alternative when the main need is to map a developing inquiry and its competing paths."},
           {"Can RationalGrid analyse uploaded papers?", "Not as a source notebook or batch document-analysis workflow. RationalGrid does not currently extract claims and evidence automatically from a collection of uploaded papers."},
           {"Does RationalGrid verify that a claim is true?", "No. It can keep evidence and sources connected to a claim, but people still need to inspect source quality, context, and whether the evidence supports the conclusion."},
-          {"Can I use NotebookLM and RationalGrid together?", "Yes. Interrogate a defined set of sources in NotebookLM, then map selected claims, questions, challenges, and evidence in RationalGrid."},
+          {"Can I use Gemini Notebook and RationalGrid together?", "Yes. Interrogate a defined set of sources in Gemini Notebook, then map selected claims, questions, challenges, and evidence in RationalGrid."},
           {"Is RationalGrid free?", "Yes. RationalGrid currently has no paid pricing tiers. Published concurrency and request-rate limits still apply."}
         ] do %>
           <details class="py-5">

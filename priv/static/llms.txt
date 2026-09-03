@@ -15,7 +15,7 @@ RationalGrid helps people compare views, trace claims to sources, and keep the p
 
 - [Comparison guides](https://rationalgrid.ai/compare): Compare RationalGrid with research, argument-mapping, and note-taking approaches.
 - [RationalGrid and Elicit](https://rationalgrid.ai/compare/elicit): Elicit supports scientific-literature discovery and extraction; RationalGrid maps the questions, challenges, evidence, and sources that emerge.
-- [RationalGrid and NotebookLM](https://rationalgrid.ai/compare/notebooklm): NotebookLM centres a selected source collection; RationalGrid centres a branching inquiry.
+- [RationalGrid and Gemini Notebook (formerly NotebookLM)](https://rationalgrid.ai/compare/notebooklm): Gemini Notebook centres a selected source collection; RationalGrid centres a branching inquiry.
 - [RationalGrid and Kialo](https://rationalgrid.ai/compare/kialo): Compare structured pro-and-con discussion with broader AI-assisted inquiry mapping.
 - [Argument maps and mind maps](https://rationalgrid.ai/compare/mind-maps): Compare typed research branches with free-form visual brainstorming.
 - [RationalGrid with Notion and Obsidian](https://rationalgrid.ai/compare/notion-obsidian): Explore and structure a question in RationalGrid, then export Markdown and continue in a note-taking system.

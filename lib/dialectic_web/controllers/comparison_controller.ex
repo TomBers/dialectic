@@ -28,9 +28,9 @@ defmodule DialecticWeb.ComparisonController do
     },
     "notebooklm" => %{
       template: :notebooklm,
-      page_title: "NotebookLM Alternative for Argument Mapping | RationalGrid",
+      page_title: "NotebookLM Alternative: Gemini Notebook | RationalGrid",
       page_description:
-        "Compare NotebookLM's source-grounded document workspace with RationalGrid's connected maps of questions, challenges, evidence and competing views."
+        "Compare Gemini Notebook (formerly NotebookLM) and its source-grounded workspace with RationalGrid's maps of questions, challenges and evidence."
     },
     "notion-obsidian" => %{
       template: :notion_obsidian,
@@ -45,7 +45,7 @@ defmodule DialecticWeb.ComparisonController do
       page_title: "Compare Research and Argument-Mapping Tools | RationalGrid",
       page_title_suffix: "",
       page_description:
-        "Compare RationalGrid with ChatGPT, Elicit, Kialo, NotebookLM and mind maps, or explore a workflow with Notion and Obsidian."
+        "Compare RationalGrid with ChatGPT, Elicit, Kialo, Gemini Notebook (formerly NotebookLM) and mind maps, or explore a Notion and Obsidian workflow."
     )
   end
 
