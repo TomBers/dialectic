@@ -14,7 +14,9 @@ export const loadGoogleAnalytics = () => {
   }
 
   window.dataLayer = window.dataLayer || [];
-  window.gtag = (...args) => window.dataLayer.push(args);
+  window.gtag = function () {
+    window.dataLayer.push(arguments);
+  };
   window.gtag("js", new Date());
   window.gtag("config", ANALYTICS_ID);
 
