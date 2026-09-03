@@ -8,6 +8,7 @@ import {
 
 const analyticsScripts = () =>
   document.querySelectorAll("script[data-google-analytics]");
+const lastAnalyticsCommand = () => Array.from(window.dataLayer.at(-1));
 
 let cleanups;
 
@@ -46,6 +47,11 @@ describe("delayed Google Analytics", () => {
       "googletagmanager.com/gtag/js?id=G-NZDE9PL5FG",
     );
     expect(window.dataLayer).toHaveLength(2);
+    expect(Array.isArray(window.dataLayer[0])).toBe(false);
+    expect(Array.from(window.dataLayer[1])).toEqual([
+      "config",
+      "G-NZDE9PL5FG",
+    ]);
   });
 
   it("loads after a short fallback delay without human interaction", () => {
@@ -103,7 +109,7 @@ describe("conversion event tracking", () => {
 
     document.querySelector("a").click();
 
-    expect(window.dataLayer.at(-1)).toEqual([
+    expect(lastAnalyticsCommand()).toEqual([
       "event",
       "sign_up_cta_clicked",
       { event_location: "home_hero" },
@@ -171,7 +177,7 @@ describe("conversion event tracking", () => {
     cleanups.push(initProductAnalytics(), initDelayedAnalytics());
     window.dispatchEvent(new Event("pointerdown"));
 
-    expect(window.dataLayer.at(-1)).toEqual([
+    expect(lastAnalyticsCommand()).toEqual([
       "event",
       "login_completed",
       { method: "google" },
@@ -191,7 +197,7 @@ describe("conversion event tracking", () => {
     expect(analyticsScripts()).toHaveLength(0);
     window.dispatchEvent(new Event("pointerdown"));
 
-    expect(window.dataLayer.at(-1)).toEqual([
+    expect(lastAnalyticsCommand()).toEqual([
       "event",
       "grid_created",
       { answer_depth: "university" },
@@ -208,7 +214,7 @@ describe("conversion event tracking", () => {
     cleanups.push(initProductAnalytics(), initDelayedAnalytics());
     window.dispatchEvent(new Event("pointerdown"));
 
-    expect(window.dataLayer.at(-1)).toEqual([
+    expect(lastAnalyticsCommand()).toEqual([
       "event",
       "sign_up_completed",
       { method: "google" },
@@ -223,7 +229,7 @@ describe("conversion event tracking", () => {
     cleanups.push(initProductAnalytics(), initDelayedAnalytics());
     window.dispatchEvent(new Event("pointerdown"));
 
-    expect(window.dataLayer.at(-1)).toEqual([
+    expect(lastAnalyticsCommand()).toEqual([
       "event",
       "login_completed",
       { method: "unknown" },
