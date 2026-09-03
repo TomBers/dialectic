@@ -48,12 +48,24 @@ describe("delayed Google Analytics", () => {
     expect(window.dataLayer).toHaveLength(2);
   });
 
-  it("does not load after time passes without human interaction", () => {
+  it("loads after a short fallback delay without human interaction", () => {
     cleanups.push(initDelayedAnalytics());
     window.dispatchEvent(new Event("load"));
 
-    vi.advanceTimersByTime(60_000);
+    vi.advanceTimersByTime(4999);
     expect(analyticsScripts()).toHaveLength(0);
+
+    vi.advanceTimersByTime(1);
+    expect(analyticsScripts()).toHaveLength(1);
+    expect(sessionStorage.getItem("analytics_engaged")).toBe("true");
+  });
+
+  it("loads when a visitor scrolls", () => {
+    cleanups.push(initDelayedAnalytics());
+
+    window.dispatchEvent(new Event("scroll"));
+
+    expect(analyticsScripts()).toHaveLength(1);
   });
 
   it("deduplicates direct and independently scheduled load attempts", () => {

@@ -50,8 +50,10 @@ import {
   initAnalyticsEventTracking,
   initDelayedAnalytics,
   initProductAnalytics,
+  loadGoogleAnalytics,
 } from "./analytics.js";
 
+loadGoogleAnalytics();
 initDelayedAnalytics();
 initAnalyticsEventTracking();
 initProductAnalytics();
