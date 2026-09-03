@@ -793,6 +793,13 @@ defmodule DialecticWeb.HomeLive do
             <.link navigate={~p"/community"} class="hover:text-white">Community</.link>
             <.link navigate={~p"/gallery"} class="hover:text-white">Gallery</.link>
             <.link
+              id="home-footer-comparisons-link"
+              navigate={~p"/compare"}
+              class="hover:text-white"
+            >
+              Comparisons
+            </.link>
+            <.link
               id="home-footer-contact-link"
               href="mailto:hello@rationalgrid.ai"
               class="hover:text-white"

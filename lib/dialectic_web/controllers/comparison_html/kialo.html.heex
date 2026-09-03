@@ -1,0 +1,190 @@
+<div class="min-h-screen bg-[#f4f1e9] text-slate-950">
+  <header id="kialo-comparison-hero" class="border-b border-stone-300 bg-white">
+    <div class="mx-auto max-w-6xl px-5 py-14 sm:px-8 sm:py-20">
+      <p class="border-l-2 border-teal-700 pl-3 text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
+        Free Kialo alternative
+      </p>
+      <h1 class="mt-5 max-w-4xl font-serif text-5xl font-semibold leading-[1.02] tracking-tight sm:text-7xl">
+        A free Kialo alternative for exploring arguments.
+      </h1>
+      <p class="mt-5 max-w-3xl text-lg leading-8 text-slate-600">
+        If you are looking for a Kialo alternative, first decide whether you need a debate platform or a broader inquiry map.
+        <a
+          href="https://www.kialo.com/"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="font-semibold text-teal-800 underline decoration-teal-600 underline-offset-4"
+        >Kialo</a>
+        centres structured pro and con discussion and is especially visible in education. RationalGrid is a free, not-for-profit, AI-assisted space for branching from questions into answers, challenges, evidence, sources, and notes.
+      </p>
+      <div class="mt-8 flex flex-wrap gap-3">
+        <a
+          id="kialo-start-cta"
+          href="/?focus=grid#start-here"
+          data-analytics-event="comparison_start_grid_clicked"
+          data-analytics-comparison="kialo"
+          data-analytics-placement="hero"
+          class="inline-flex items-center gap-2 rounded-md bg-slate-950 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800"
+        >Start a grid <.icon name="hero-arrow-right" class="h-4 w-4" /></a><a
+          id="kialo-guide-link"
+          href="/intro/how"
+          class="inline-flex items-center gap-2 border-b border-slate-500 px-1 py-2 text-sm font-semibold hover:border-teal-700 hover:text-teal-800"
+        >See how grids work <.icon name="hero-arrow-up-right" class="h-4 w-4" /></a>
+      </div>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-6xl px-5 py-12 sm:px-8 sm:py-16">
+    <section id="kialo-verdict" aria-labelledby="kialo-verdict-heading">
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">Short verdict</p><h2
+        id="kialo-verdict-heading"
+        class="mt-2 font-serif text-4xl font-semibold tracking-tight"
+      >
+        Choose around the shape of the activity.
+      </h2><p class="mt-4 max-w-3xl leading-7 text-slate-600">
+        Kialo is a natural fit when participants are organising reasons for and against a thesis. RationalGrid fits exploratory work where the next move may be a new question, an AI-assisted answer, a challenge, a source, a note, or a separate branch—not only a pro or con.
+      </p>
+    </section>
+
+    <section id="kialo-at-a-glance" class="mt-14" aria-labelledby="kialo-table-heading">
+      <h2 id="kialo-table-heading" class="font-serif text-4xl font-semibold tracking-tight">
+        At a glance
+      </h2><div class="mt-6 overflow-x-auto border border-stone-300 bg-white">
+        <table id="kialo-comparison-table" class="w-full min-w-[44rem] border-collapse text-left">
+          <thead>
+            <tr class="border-b border-stone-300 bg-stone-100">
+              <th class="px-5 py-4 text-sm font-semibold">Dimension</th><th class="px-5 py-4 text-sm font-semibold">
+                Kialo
+              </th><th class="bg-teal-950 px-5 py-4 text-sm font-semibold text-white">
+                RationalGrid
+              </th>
+            </tr>
+          </thead><tbody class="divide-y divide-stone-300 text-sm leading-6">
+            <%= for {dimension, kialo, grid} <- [
+        {"Core shape", "Claims arranged around supporting and opposing reasons.", "Typed branches including questions, answers, challenges, evidence, sources, and notes."},
+        {"Starting point", "A thesis or discussion proposition.", "A question, topic, or idea to explore."},
+        {"AI role", "Check Kialo's current product information for its available features.", "AI can suggest answers and branches; people choose, assess, and edit the path."},
+        {"Good fit", "Deliberation, debate preparation, and structured classroom discussion.", "Open-ended inquiry, topic exploration, and a durable map of connected thinking."},
+        {"Cost and purpose", "Consult Kialo for current plans and terms.", "Free to use and run on a not-for-profit basis."}
+      ] do %>
+              <tr>
+                <th scope="row" class="bg-[#f8f6f0] px-5 py-4 font-semibold">{dimension}</th><td class="px-5 py-4 text-slate-600">
+                  {kialo}
+                </td><td class="px-5 py-4 text-slate-700">{grid}</td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section
+      id="kialo-strengths"
+      class="mt-14 grid gap-5 md:grid-cols-2"
+      aria-label="What each option does well"
+    >
+      <article class="border-t-4 border-sky-600 bg-white p-6">
+        <.icon name="hero-scale" class="h-6 w-6 text-sky-700" /><h2 class="mt-4 font-serif text-3xl font-semibold">
+          What Kialo does well
+        </h2><p class="mt-3 leading-7 text-slate-600">
+          Its pro/con structure makes the relationship between a claim and the reasons supporting or opposing it legible. That focus can help a class or group examine a contested proposition without losing the debate’s outline.
+        </p>
+      </article>
+      <article class="border-t-4 border-teal-700 bg-slate-950 p-6 text-white">
+        <.icon name="hero-sparkles" class="h-6 w-6 text-teal-300" /><h2 class="mt-4 font-serif text-3xl font-semibold">
+          What RationalGrid does well
+        </h2><p class="mt-3 leading-7 text-slate-300">
+          It supports more kinds of move within one map. Ask AI for a starting answer, challenge a precise point, request evidence, add your own note, preserve a source, or open a different question while the origin remains visible.
+        </p>
+      </article>
+    </section>
+
+    <section
+      id="kialo-choose"
+      class="mt-14 border-y border-stone-300 py-10"
+      aria-labelledby="kialo-choose-heading"
+    >
+      <h2 id="kialo-choose-heading" class="font-serif text-4xl font-semibold tracking-tight">
+        Choose each if…
+      </h2><div class="mt-7 grid gap-6 md:grid-cols-2">
+        <div>
+          <h3 class="text-lg font-semibold">Choose Kialo if…</h3><ul class="mt-3 space-y-3 text-slate-600">
+            <li>• The activity is explicitly a pro/con discussion.</li><li>
+              • Participants need a shared view of reasons around a thesis.
+            </li><li>
+              • You want a debate-focused format, particularly for teaching or deliberation.
+            </li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold">Choose RationalGrid if…</h3><ul class="mt-3 space-y-3 text-slate-600">
+            <li>• You are discovering the questions as you go.</li><li>
+              • AI assistance can help open paths, while human judgement stays central.
+            </li><li>• Different branch types, notes, sources, and later revisiting matter.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section
+      id="kialo-caveat"
+      class="mt-12 border border-stone-300 border-l-4 border-l-amber-600 bg-white p-6"
+    >
+      <h2 class="font-serif text-3xl font-semibold">
+        Do not mistake a tidy tree for a settled issue.
+      </h2><p class="mt-3 leading-7 text-slate-600">
+        Either interface can make an argument look clearer than its evidence warrants. Categories overlap, people disagree about framing, and a missing reason may matter more than the visible ones. Treat the structure as a prompt for judgement, not a scorecard.
+      </p>
+    </section>
+
+    <section id="kialo-faq" class="mt-14" aria-labelledby="kialo-faq-heading">
+      <h2 id="kialo-faq-heading" class="font-serif text-4xl font-semibold">FAQ</h2><div class="mt-6 divide-y divide-stone-300 border-y border-stone-300">
+        <%= for {question, answer} <- [
+        {"Can I import a Kialo discussion directly into RationalGrid?", "No. RationalGrid does not currently provide a direct Kialo import. You would need to recreate or selectively transfer the material, subject to any applicable permissions."},
+        {"Is RationalGrid a formal logic tool?", "No. Its typed branches clarify the role an item plays, but they do not turn an inquiry into a formal proof or certify that an argument is valid."},
+        {"Is RationalGrid free?", "Yes. RationalGrid is free to use and is run on a not-for-profit basis."},
+        {"Which is better for a classroom debate?", "Kialo's focused pro/con format may be the clearer choice for a defined debate. RationalGrid may suit a class that needs to generate questions, explore context, and retain sources as well as compare objections."}
+      ] do %>
+          <details class="py-5">
+            <summary class="cursor-pointer font-semibold">{question}</summary><p class="mt-3 max-w-3xl leading-7 text-slate-600">
+              {answer}
+            </p>
+          </details>
+        <% end %>
+      </div>
+    </section>
+
+    <nav
+      id="kialo-related-comparisons"
+      class="mt-14 border-t border-stone-300 pt-8"
+      aria-label="Related comparisons"
+    >
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">Keep comparing</p>
+      <div class="mt-4 flex flex-wrap gap-x-6 gap-y-3 text-sm font-semibold">
+        <a
+          href="/compare/chatgpt"
+          class="text-teal-800 underline decoration-stone-400 underline-offset-4 hover:decoration-teal-700"
+        >ChatGPT alternatives for structured research</a>
+        <a
+          href="/compare/mind-maps"
+          class="text-teal-800 underline decoration-stone-400 underline-offset-4 hover:decoration-teal-700"
+        >Argument maps vs mind maps</a>
+      </div>
+    </nav>
+
+    <section id="kialo-final-cta" class="mt-14 bg-teal-950 p-7 text-white sm:p-10">
+      <h2 class="font-serif text-4xl font-semibold">
+        Start with curiosity, then give disagreement a place.
+      </h2><p class="mt-3 max-w-2xl text-teal-100">
+        Build a free grid and follow the questions, challenges, and evidence that emerge.
+      </p><a
+        id="kialo-final-cta-link"
+        href="/?focus=grid#start-here"
+        data-analytics-event="comparison_start_grid_clicked"
+        data-analytics-comparison="kialo"
+        data-analytics-placement="final_cta"
+        class="mt-6 inline-flex items-center gap-2 rounded-md bg-teal-300 px-5 py-3 text-sm font-semibold text-slate-950 hover:bg-teal-200"
+      >Start a free grid <.icon name="hero-arrow-right" class="h-4 w-4" /></a>
+    </section>
+  </main>
+</div>

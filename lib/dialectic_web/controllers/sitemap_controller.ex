@@ -9,6 +9,7 @@ defmodule DialecticWeb.SitemapController do
 
   alias Dialectic.Repo
   alias Dialectic.Accounts.Graph
+  alias DialecticWeb.ComparisonController
 
   import Ecto.Query
 
@@ -44,10 +45,14 @@ defmodule DialecticWeb.SitemapController do
         url_entry(base_url <> "/about", nil, "monthly", "0.6"),
         url_entry(base_url <> "/intro/how", nil, "monthly", "0.5"),
         url_entry(base_url <> "/intro/ai", nil, "monthly", "0.5"),
+        url_entry(base_url <> "/compare", nil, "monthly", "0.6"),
         url_entry(base_url <> "/community", nil, "daily", "0.7"),
         url_entry(base_url <> "/inspiration", nil, "daily", "0.6"),
         url_entry(base_url <> "/gallery", nil, "weekly", "0.7")
       ] ++
+        Enum.map(ComparisonController.slugs(), fn slug ->
+          url_entry(base_url <> "/compare/#{slug}", nil, "monthly", "0.5")
+        end) ++
         Enum.map(graphs, fn graph ->
           lastmod =
             if graph.updated_at do

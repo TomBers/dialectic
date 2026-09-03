@@ -1,0 +1,187 @@
+<div class="min-h-screen bg-[#f4f1e9] text-slate-950">
+  <header id="chatgpt-comparison-hero" class="border-b border-stone-300 bg-white">
+    <div class="mx-auto max-w-6xl px-5 py-14 sm:px-8 sm:py-20">
+      <p class="border-l-2 border-teal-700 pl-3 text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
+        ChatGPT alternative for research
+      </p>
+      <h1 class="mt-5 max-w-4xl font-serif text-5xl font-semibold leading-[1.02] tracking-tight sm:text-7xl">
+        A ChatGPT alternative for research that needs structure.
+      </h1>
+      <p class="mt-5 max-w-3xl text-lg leading-8 text-slate-600">
+        If you are looking beyond ChatGPT for a research project, the key difference is not simply which AI answers. ChatGPT is often simpler for a quick answer, draft, or short conversation. RationalGrid is designed to keep questions, answers, challenges, evidence, sources, notes, and branches in context over time.
+      </p>
+      <div class="mt-8 flex flex-wrap gap-3">
+        <a
+          id="chatgpt-start-cta"
+          href="/?focus=grid#start-here"
+          data-analytics-event="comparison_start_grid_clicked"
+          data-analytics-comparison="chatgpt"
+          data-analytics-placement="hero"
+          class="inline-flex items-center gap-2 rounded-md bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+        >Start a grid <.icon name="hero-arrow-right" class="h-4 w-4" /></a>
+        <a
+          id="chatgpt-ai-link"
+          href="/intro/ai"
+          class="inline-flex items-center gap-2 border-b border-slate-500 px-1 py-2 text-sm font-semibold transition hover:border-teal-700 hover:text-teal-800"
+        >How RationalGrid uses AI <.icon name="hero-arrow-up-right" class="h-4 w-4" /></a>
+      </div>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-6xl px-5 py-12 sm:px-8 sm:py-16">
+    <section id="chatgpt-verdict" aria-labelledby="chatgpt-verdict-heading">
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">Short verdict</p>
+      <h2
+        id="chatgpt-verdict-heading"
+        class="mt-2 font-serif text-4xl font-semibold tracking-tight"
+      >
+        Neither format wins every task.
+      </h2>
+      <p class="mt-4 max-w-3xl leading-7 text-slate-600">
+        Choose chat when speed and a flowing exchange matter most. Choose a grid when you expect to revisit a claim, follow several paths, attach evidence, or show someone else how the inquiry developed.
+      </p>
+    </section>
+
+    <section id="chatgpt-at-a-glance" class="mt-14" aria-labelledby="chatgpt-table-heading">
+      <h2 id="chatgpt-table-heading" class="font-serif text-4xl font-semibold tracking-tight">
+        At a glance
+      </h2>
+      <div class="mt-6 overflow-x-auto border border-stone-300 bg-white">
+        <table
+          id="chatgpt-comparison-table"
+          class="w-full min-w-[44rem] border-collapse text-left"
+        >
+          <thead>
+            <tr class="border-b border-stone-300 bg-stone-100">
+              <th class="px-5 py-4 text-sm font-semibold">Need</th><th class="px-5 py-4 text-sm font-semibold">
+                ChatGPT
+              </th><th class="bg-teal-950 px-5 py-4 text-sm font-semibold text-white">
+                RationalGrid
+              </th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-stone-300 text-sm leading-6">
+            <%= for {need, chat, grid} <- [
+              {"Quick answer or draft", "Usually the more direct format.", "Possible, but more structure than the task may need."},
+              {"Extended inquiry", "Continue one conversation or manage several chats.", "Keep connected branches in one navigable map."},
+              {"Challenge a specific claim", "Quote it or ask a follow-up in the thread.", "Branch a challenge from the exact idea it addresses."},
+              {"Evidence and sources", "Ask for sources and verify them.", "Keep evidence and source branches beside the relevant claim; verification still matters."},
+              {"Return and share", "Reopen and reread the conversation.", "Return to nodes, notes, highlights, and the visible path between them."}
+            ] do %>
+              <tr>
+                <th scope="row" class="bg-[#f8f6f0] px-5 py-4 font-semibold">{need}</th><td class="px-5 py-4 text-slate-600">
+                  {chat}
+                </td><td class="px-5 py-4 text-slate-700">{grid}</td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section
+      id="chatgpt-strengths"
+      class="mt-14 grid gap-5 md:grid-cols-2"
+      aria-label="What each option does well"
+    >
+      <article class="border-t-4 border-sky-600 bg-white p-6">
+        <.icon name="hero-chat-bubble-left-right" class="h-6 w-6 text-sky-700" /><h2 class="mt-4 font-serif text-3xl font-semibold">
+          What ChatGPT does well
+        </h2><p class="mt-3 leading-7 text-slate-600">
+          It makes open-ended conversation, rewriting, summarising, drafting, and rapid follow-up feel natural. For a bounded task, that low-friction sequence may be exactly right.
+        </p>
+      </article>
+      <article class="border-t-4 border-teal-700 bg-slate-950 p-6 text-white">
+        <.icon name="hero-share" class="h-6 w-6 text-teal-300" /><h2 class="mt-4 font-serif text-3xl font-semibold">
+          What RationalGrid does well
+        </h2><p class="mt-3 leading-7 text-slate-300">
+          It gives different kinds of thinking durable places: a question can lead to answers, a claim to a challenge, and an assertion to evidence or sources, while notes and alternative branches remain connected.
+        </p>
+      </article>
+    </section>
+
+    <section
+      id="chatgpt-choose"
+      class="mt-14 border-y border-stone-300 py-10"
+      aria-labelledby="chatgpt-choose-heading"
+    >
+      <h2 id="chatgpt-choose-heading" class="font-serif text-4xl font-semibold tracking-tight">
+        Which should you choose?
+      </h2>
+      <div class="mt-7 grid gap-6 md:grid-cols-2">
+        <div>
+          <h3 class="text-lg font-semibold">Choose ChatGPT if…</h3><ul class="mt-3 space-y-3 text-slate-600">
+            <li>• You want a fast response or working draft.</li><li>
+              • A linear back-and-forth is easy to follow.
+            </li><li>
+              • You do not expect the conversation to become a lasting research object.
+            </li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold">Choose RationalGrid if…</h3><ul class="mt-3 space-y-3 text-slate-600">
+            <li>• Several questions or disagreements may grow from one starting point.</li><li>
+              • Evidence, sources, notes, and challenges need to stay beside what they concern.
+            </li><li>• You want to revisit or share the structure of the inquiry.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section
+      id="chatgpt-caveat"
+      class="mt-12 border border-stone-300 border-l-4 border-l-amber-600 bg-white p-6"
+    >
+      <h2 class="font-serif text-3xl font-semibold">A shared limitation</h2><p class="mt-3 leading-7 text-slate-600">
+        Structure does not make an AI answer true. Both workflows require judgement: inspect sources, distinguish evidence from interpretation, and revise the question when its assumptions are weak.
+      </p>
+    </section>
+
+    <section id="chatgpt-faq" class="mt-14" aria-labelledby="chatgpt-faq-heading">
+      <h2 id="chatgpt-faq-heading" class="font-serif text-4xl font-semibold">FAQ</h2><div class="mt-6 divide-y divide-stone-300 border-y border-stone-300">
+        <%= for {question, answer} <- [
+        {"Can ChatGPT handle complex research?", "It can support complex work, including analysis, files, and research-oriented tasks. The distinction here is the working format: RationalGrid keeps the branching relationships visible and durable."},
+        {"Does RationalGrid replace chat?", "No. A grid is useful when the inquiry benefits from explicit structure; chat is often better for a quick, fluid exchange."},
+        {"Which is better for sources?", "Either can surface sources, and neither removes the need to inspect them. RationalGrid is designed to keep source and evidence branches attached to the claim they support."}
+      ] do %>
+          <details class="py-5">
+            <summary class="cursor-pointer font-semibold">{question}</summary><p class="mt-3 max-w-3xl leading-7 text-slate-600">
+              {answer}
+            </p>
+          </details>
+        <% end %>
+      </div>
+    </section>
+
+    <nav
+      id="chatgpt-related-comparisons"
+      class="mt-14 border-t border-stone-300 pt-8"
+      aria-label="Related comparisons"
+    >
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">Keep comparing</p>
+      <div class="mt-4 flex flex-wrap gap-x-6 gap-y-3 text-sm font-semibold">
+        <a
+          href="/compare/kialo"
+          class="text-teal-800 underline decoration-stone-400 underline-offset-4 hover:decoration-teal-700"
+        >Explore a free Kialo alternative</a>
+        <a
+          href="/compare/mind-maps"
+          class="text-teal-800 underline decoration-stone-400 underline-offset-4 hover:decoration-teal-700"
+        >Argument maps vs mind maps</a>
+      </div>
+    </nav>
+
+    <section id="chatgpt-final-cta" class="mt-14 bg-teal-950 p-7 text-white sm:p-10">
+      <h2 class="font-serif text-4xl font-semibold">Give the next question somewhere to go.</h2><p class="mt-3 max-w-2xl text-teal-100">
+        Start with one question, then keep each answer, challenge, and source in context.
+      </p><a
+        id="chatgpt-final-cta-link"
+        href="/?focus=grid#start-here"
+        data-analytics-event="comparison_start_grid_clicked"
+        data-analytics-comparison="chatgpt"
+        data-analytics-placement="final_cta"
+        class="mt-6 inline-flex items-center gap-2 rounded-md bg-teal-300 px-5 py-3 text-sm font-semibold text-slate-950 hover:bg-teal-200"
+      >Start a free grid <.icon name="hero-arrow-right" class="h-4 w-4" /></a>
+    </section>
+  </main>
+</div>

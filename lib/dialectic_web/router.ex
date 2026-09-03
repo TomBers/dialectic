@@ -72,6 +72,8 @@ defmodule DialecticWeb.Router do
     # get "/intro/what", PageController, :what
     get "/intro/how", PageController, :guide
     get "/intro/ai", PageController, :ai_exploration
+    get "/compare", ComparisonController, :index
+    get "/compare/:slug", ComparisonController, :show
 
     live "/inspiration", InspirationLive
     live "/about", AboutLive
