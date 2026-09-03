@@ -1,0 +1,248 @@
+<div class="min-h-screen bg-[#f4f1e9] text-slate-950">
+  <header id="notebooklm-comparison-hero" class="border-b border-stone-300 bg-white">
+    <div class="mx-auto max-w-6xl px-5 py-14 sm:px-8 sm:py-20">
+      <p class="border-l-2 border-teal-700 pl-3 text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
+        NotebookLM alternative for argument mapping
+      </p>
+      <h1 class="mt-5 max-w-4xl font-serif text-5xl font-semibold leading-[1.02] tracking-tight sm:text-7xl">
+        Explore your documents—or map the debate?
+      </h1>
+      <p class="mt-5 max-w-3xl text-lg leading-8 text-slate-600">
+        <a
+          href="https://notebook.google.com/"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="font-semibold text-teal-800 underline decoration-teal-600 underline-offset-4"
+        >Gemini Notebook (formerly NotebookLM)</a>
+        helps people work with a selected collection of source material. RationalGrid starts from a question and keeps answers, challenges, evidence, sources, notes, and competing paths connected in an explorable map.
+      </p>
+      <div class="mt-8 flex flex-wrap gap-3">
+        <a
+          id="notebooklm-start-cta"
+          href="/?focus=grid#start-here"
+          data-analytics-event="comparison_start_grid_clicked"
+          data-analytics-comparison="notebooklm"
+          data-analytics-placement="hero"
+          class="inline-flex items-center gap-2 rounded-md bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+        >
+          Start a grid <.icon name="hero-arrow-right" class="h-4 w-4" />
+        </a>
+        <a
+          id="notebooklm-ai-link"
+          href="/intro/ai"
+          class="inline-flex items-center gap-2 border-b border-slate-500 px-1 py-2 text-sm font-semibold transition hover:border-teal-700 hover:text-teal-800"
+        >
+          How RationalGrid uses AI <.icon name="hero-arrow-up-right" class="h-4 w-4" />
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-6xl px-5 py-12 sm:px-8 sm:py-16">
+    <section id="notebooklm-verdict" aria-labelledby="notebooklm-verdict-heading">
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">Short verdict</p>
+      <h2
+        id="notebooklm-verdict-heading"
+        class="mt-2 font-serif text-4xl font-semibold tracking-tight"
+      >
+        Choose according to what should define the workspace.
+      </h2>
+      <p class="mt-4 max-w-3xl leading-7 text-slate-600">
+        Choose Gemini Notebook (formerly NotebookLM) when a particular collection of documents should ground the conversation and generated material. Choose RationalGrid when the inquiry itself should be the organising structure, with room to branch into challenges, evidence, sources, and further questions. The two can also support different stages of the same project.
+      </p>
+    </section>
+
+    <section id="notebooklm-at-a-glance" class="mt-14" aria-labelledby="notebooklm-table-heading">
+      <h2 id="notebooklm-table-heading" class="font-serif text-4xl font-semibold tracking-tight">
+        At a glance
+      </h2>
+      <div class="mt-6 overflow-x-auto border border-stone-300 bg-white">
+        <table
+          id="notebooklm-comparison-table"
+          class="w-full min-w-[48rem] border-collapse text-left"
+        >
+          <thead>
+            <tr class="border-b border-stone-300 bg-stone-100">
+              <th class="px-5 py-4 text-sm font-semibold">Need</th>
+              <th class="px-5 py-4 text-sm font-semibold">
+                Gemini Notebook (formerly NotebookLM)
+              </th>
+              <th class="bg-teal-950 px-5 py-4 text-sm font-semibold text-white">RationalGrid</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-stone-300 text-sm leading-6">
+            <%= for {need, notebook, grid} <- [
+              {"Primary workspace", "A notebook grounded in source material you provide or select.", "A connected map that begins with a question or topic."},
+              {"Core interaction", "Ask questions and generate material from the notebook's sources.", "Branch from exact ideas into answers, challenges, evidence, sources, notes, and new questions."},
+              {"Source boundary", "Keeps the selected notebook sources central to the experience.", "Can ground generated material in relevant sources, while allowing the inquiry to open beyond a fixed document collection."},
+              {"Core output", "Source-grounded responses and generated study or media formats.", "A shareable, interactive map whose relationships remain visible."},
+              {"Uploaded-document analysis", "Designed to work across a collection of supplied source material.", "Does not currently provide a comparable uploaded-document notebook workflow."},
+              {"Pricing", "Check Google for current availability, limits, and account requirements.", "Free with no paid tiers currently; published usage limits apply."}
+            ] do %>
+              <tr>
+                <th scope="row" class="bg-[#f8f6f0] px-5 py-4 align-top font-semibold">{need}</th>
+                <td class="px-5 py-4 align-top text-slate-600">{notebook}</td>
+                <td class="px-5 py-4 align-top text-slate-700">{grid}</td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section
+      id="notebooklm-strengths"
+      class="mt-14 grid gap-5 md:grid-cols-2"
+      aria-label="What each option does well"
+    >
+      <article class="border-t-4 border-blue-600 bg-white p-6">
+        <.icon name="hero-book-open" class="h-6 w-6 text-blue-700" />
+        <h2 class="mt-4 font-serif text-3xl font-semibold">What Gemini Notebook does well</h2>
+        <p class="mt-3 leading-7 text-slate-600">
+          Gemini Notebook makes a selected body of material the centre of the workspace. It is a natural fit for asking questions across those sources, generating summaries and study materials, and using audio-oriented outputs when listening is helpful.
+        </p>
+      </article>
+      <article class="border-t-4 border-teal-700 bg-slate-950 p-6 text-white">
+        <.icon name="hero-share" class="h-6 w-6 text-teal-300" />
+        <h2 class="mt-4 font-serif text-3xl font-semibold">What RationalGrid does well</h2>
+        <p class="mt-3 leading-7 text-slate-300">
+          RationalGrid makes the evolving inquiry visible. Challenge a precise answer, attach evidence to the claim it concerns, open a competing explanation, or ask another question without flattening those moves into one conversation or note.
+        </p>
+      </article>
+    </section>
+
+    <section
+      id="notebooklm-choose"
+      class="mt-14 border-y border-stone-300 py-10"
+      aria-labelledby="notebooklm-choose-heading"
+    >
+      <h2 id="notebooklm-choose-heading" class="font-serif text-4xl font-semibold tracking-tight">
+        Which should you choose?
+      </h2>
+      <div class="mt-7 grid gap-7 lg:grid-cols-3">
+        <div>
+          <h3 class="text-lg font-semibold">Choose Gemini Notebook if…</h3>
+          <ul class="mt-3 space-y-3 text-slate-600">
+            <li>• You want to ask questions across a defined collection of sources.</li>
+            <li>• You want document summaries, study materials, or audio-oriented outputs.</li>
+            <li>• Keeping generated responses close to supplied material is the priority.</li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold">Choose RationalGrid if…</h3>
+          <ul class="mt-3 space-y-3 text-slate-600">
+            <li>
+              • The research question, rather than a document collection, should organise the work.
+            </li>
+            <li>• Competing answers and objections need distinct, visible branches.</li>
+            <li>• You want to return to or share how the inquiry developed.</li>
+          </ul>
+        </div>
+        <div class="border-l-2 border-teal-700 pl-5">
+          <h3 class="text-lg font-semibold">Use both if…</h3>
+          <p class="mt-3 leading-7 text-slate-600">
+            You want Gemini Notebook to help interrogate a defined source collection, then RationalGrid to map selected claims, disagreements, evidence, and questions that emerge from that reading.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section
+      id="notebooklm-verification"
+      class="mt-14"
+      aria-labelledby="notebooklm-verification-heading"
+    >
+      <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
+            Claims and evidence
+          </p>
+          <h2
+            id="notebooklm-verification-heading"
+            class="mt-2 font-serif text-4xl font-semibold tracking-tight"
+          >
+            Grounding and verification are not the same thing.
+          </h2>
+          <p class="mt-4 leading-7 text-slate-600">
+            Gemini Notebook can keep answers connected to the notebook's supplied sources. RationalGrid can keep source and evidence branches attached to the idea they address. In either tool, a citation does not prove that the source is reliable or that it supports the interpretation being made.
+          </p>
+        </div>
+        <aside class="border border-stone-300 border-l-4 border-l-amber-600 bg-white p-5">
+          <h3 class="font-semibold">Human checks still matter</h3>
+          <p class="mt-2 text-sm leading-6 text-slate-600">
+            Open the source, inspect the relevant passage, consider its quality and context, and look for evidence that could change the conclusion.
+          </p>
+        </aside>
+      </div>
+    </section>
+
+    <section
+      id="notebooklm-caveat"
+      class="mt-12 border border-stone-300 border-l-4 border-l-amber-600 bg-white p-6"
+    >
+      <h2 class="font-serif text-3xl font-semibold">
+        RationalGrid does not run across an uploaded paper collection.
+      </h2>
+      <p class="mt-3 max-w-4xl leading-7 text-slate-600">
+        RationalGrid does not currently reproduce Gemini Notebook's source-notebook workflow or automatically extract claims and premises from uploaded papers. Its strength is building and revisiting a branching inquiry. If document-grounded chat across supplied files is the central need, Gemini Notebook is the more appropriate starting point.
+      </p>
+    </section>
+
+    <section id="notebooklm-faq" class="mt-14" aria-labelledby="notebooklm-faq-heading">
+      <h2 id="notebooklm-faq-heading" class="font-serif text-4xl font-semibold">FAQ</h2>
+      <div class="mt-6 divide-y divide-stone-300 border-y border-stone-300">
+        <%= for {question, answer} <- [
+          {"Is RationalGrid a replacement for Gemini Notebook (formerly NotebookLM)?", "Not for Gemini Notebook's document-centred workflow. RationalGrid is an alternative when the main need is to map a developing inquiry and its competing paths."},
+          {"Can RationalGrid analyse uploaded papers?", "Not as a source notebook or batch document-analysis workflow. RationalGrid does not currently extract claims and evidence automatically from a collection of uploaded papers."},
+          {"Does RationalGrid verify that a claim is true?", "No. It can keep evidence and sources connected to a claim, but people still need to inspect source quality, context, and whether the evidence supports the conclusion."},
+          {"Can I use Gemini Notebook and RationalGrid together?", "Yes. Interrogate a defined set of sources in Gemini Notebook, then map selected claims, questions, challenges, and evidence in RationalGrid."},
+          {"Is RationalGrid free?", "Yes. RationalGrid currently has no paid pricing tiers. Published concurrency and request-rate limits still apply."}
+        ] do %>
+          <details class="py-5">
+            <summary class="cursor-pointer font-semibold">{question}</summary>
+            <p class="mt-3 max-w-3xl leading-7 text-slate-600">{answer}</p>
+          </details>
+        <% end %>
+      </div>
+    </section>
+
+    <nav
+      id="notebooklm-related-comparisons"
+      class="mt-14 border-t border-stone-300 pt-8"
+      aria-label="Related comparisons"
+    >
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">Keep comparing</p>
+      <div class="mt-4 flex flex-wrap gap-x-6 gap-y-3 text-sm font-semibold">
+        <a
+          href="/compare/elicit"
+          class="text-teal-800 underline decoration-stone-400 underline-offset-4 hover:decoration-teal-700"
+        >Elicit for literature or RationalGrid for inquiry mapping</a>
+        <a
+          href="/compare/chatgpt"
+          class="text-teal-800 underline decoration-stone-400 underline-offset-4 hover:decoration-teal-700"
+        >ChatGPT alternatives for structured research</a>
+        <a
+          href="/compare/notion-obsidian"
+          class="text-teal-800 underline decoration-stone-400 underline-offset-4 hover:decoration-teal-700"
+        >Continue research in Notion or Obsidian</a>
+      </div>
+    </nav>
+
+    <section id="notebooklm-final-cta" class="mt-14 bg-teal-950 p-7 text-white sm:p-10">
+      <h2 class="font-serif text-4xl font-semibold">Give each disagreement somewhere to go.</h2>
+      <p class="mt-3 max-w-2xl leading-7 text-teal-100">
+        Start with a question, then keep answers, challenges, evidence, and sources connected as the inquiry grows.
+      </p>
+      <a
+        id="notebooklm-final-cta-link"
+        href="/?focus=grid#start-here"
+        data-analytics-event="comparison_start_grid_clicked"
+        data-analytics-comparison="notebooklm"
+        data-analytics-placement="final_cta"
+        class="mt-6 inline-flex items-center gap-2 rounded-md bg-teal-300 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-teal-200"
+      >
+        Start a free grid <.icon name="hero-arrow-right" class="h-4 w-4" />
+      </a>
+    </section>
+  </main>
+</div>

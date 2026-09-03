@@ -1,0 +1,184 @@
+<div class="min-h-screen bg-[#f4f1e9] text-slate-950">
+  <header id="mind-maps-comparison-hero" class="border-b border-stone-300 bg-white">
+    <div class="mx-auto max-w-6xl px-5 py-14 sm:px-8 sm:py-20">
+      <p class="border-l-2 border-teal-700 pl-3 text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
+        Argument map vs mind map
+      </p>
+      <h1 class="mt-5 max-w-4xl font-serif text-5xl font-semibold leading-[1.02] tracking-tight sm:text-7xl">
+        Argument map or mind map: which fits your question?
+      </h1>
+      <p class="mt-5 text-lg leading-8 text-slate-600">
+        The difference between an argument map and a mind map is the work each connection does. Conventional mind maps are excellent for flexible visual arrangement and fast brainstorming. RationalGrid uses typed branches—questions, answers, challenges, evidence, and sources—when relationships need to remain explicit.
+      </p>
+      <div class="mt-8 flex flex-wrap gap-3">
+        <a
+          id="mind-maps-start-cta"
+          href="/?focus=grid#start-here"
+          data-analytics-event="comparison_start_grid_clicked"
+          data-analytics-comparison="mind_maps"
+          data-analytics-placement="hero"
+          class="inline-flex items-center gap-2 rounded-md bg-slate-950 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800"
+        >Start a grid <.icon name="hero-arrow-right" class="h-4 w-4" /></a><a
+          id="mind-maps-guide-link"
+          href="/intro/how"
+          class="inline-flex items-center gap-2 border-b border-slate-500 px-1 py-2 text-sm font-semibold hover:border-teal-700 hover:text-teal-800"
+        >Read the guide <.icon name="hero-arrow-up-right" class="h-4 w-4" /></a>
+      </div>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-6xl px-5 py-12 sm:px-8 sm:py-16">
+    <section id="mind-maps-verdict" aria-labelledby="mind-maps-verdict-heading">
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">Short verdict</p><h2
+        id="mind-maps-verdict-heading"
+        class="mt-2 font-serif text-4xl font-semibold tracking-tight"
+      >
+        Freedom helps invention; types help examination.
+      </h2><p class="mt-4 leading-7 text-slate-600">
+        Use a conventional mind map to spill out associations, spatially group ideas, and rearrange them without deciding what every connection means. Use RationalGrid when you want to ask what follows, what objects, and what evidence supports a particular point.
+      </p>
+    </section>
+
+    <section id="mind-maps-at-a-glance" class="mt-14" aria-labelledby="mind-maps-table-heading">
+      <h2 id="mind-maps-table-heading" class="font-serif text-4xl font-semibold tracking-tight">
+        At a glance
+      </h2><div class="mt-6 overflow-x-auto border border-stone-300 bg-white">
+        <table
+          id="mind-maps-comparison-table"
+          class="w-full min-w-[44rem] border-collapse text-left"
+        >
+          <thead>
+            <tr class="border-b border-stone-300 bg-stone-100">
+              <th class="px-5 py-4 text-sm font-semibold">Need</th><th class="px-5 py-4 text-sm font-semibold">
+                Conventional mind map
+              </th><th class="bg-teal-950 px-5 py-4 text-sm font-semibold text-white">
+                RationalGrid
+              </th>
+            </tr>
+          </thead><tbody class="divide-y divide-stone-300 text-sm leading-6">
+            <%= for {need, map, grid} <- [
+        {"Brainstorm quickly", "Free-form placement encourages loose association.", "A question can quickly grow branches, with more structure attached."},
+        {"Visual arrangement", "Often gives direct control over position, colour, shape, and grouping.", "Prioritises navigable relationships over a free-form canvas."},
+        {"Meaning of a connection", "Usually supplied by the author or an optional label.", "Branch types state whether an item is a question, answer, challenge, evidence, or source."},
+        {"AI-assisted exploration", "Depends on the mind-mapping product used.", "Built around AI-assisted answers and follow-on paths, alongside human additions."},
+        {"Critical examination", "Possible, but conventions are yours to define.", "Challenges and evidence have explicit roles beside the idea they address."}
+      ] do %>
+              <tr>
+                <th scope="row" class="bg-[#f8f6f0] px-5 py-4 font-semibold">{need}</th><td class="px-5 py-4 text-slate-600">
+                  {map}
+                </td><td class="px-5 py-4 text-slate-700">{grid}</td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section
+      id="mind-maps-strengths"
+      class="mt-14 grid gap-5 md:grid-cols-2"
+      aria-label="What each option does well"
+    >
+      <article class="border-t-4 border-violet-600 bg-white p-6">
+        <.icon name="hero-paint-brush" class="h-6 w-6 text-violet-700" /><h2 class="mt-4 font-serif text-3xl font-semibold">
+          What mind maps do well
+        </h2><p class="mt-3 leading-7 text-slate-600">
+          They let thought stay provisional. Images, keywords, clusters, colour, and spatial proximity can carry meaning before you are ready to write a full claim. For creative planning and early brainstorming, that flexibility is a real advantage.
+        </p>
+      </article>
+      <article class="border-t-4 border-teal-700 bg-slate-950 p-6 text-white">
+        <.icon name="hero-share" class="h-6 w-6 text-teal-300" /><h2 class="mt-4 font-serif text-3xl font-semibold">
+          What RationalGrid does well
+        </h2><p class="mt-3 leading-7 text-slate-300">
+          It makes the intellectual relationship do more work. A reader can see which answer belongs to which question, which challenge targets which idea, and where evidence or a source enters the path.
+        </p>
+      </article>
+    </section>
+
+    <section
+      id="mind-maps-choose"
+      class="mt-14 border-y border-stone-300 py-10"
+      aria-labelledby="mind-maps-choose-heading"
+    >
+      <h2 id="mind-maps-choose-heading" class="font-serif text-4xl font-semibold tracking-tight">
+        Choose each if…
+      </h2><div class="mt-7 grid gap-6 md:grid-cols-2">
+        <div>
+          <h3 class="text-lg font-semibold">Choose a mind map if…</h3><ul class="mt-3 space-y-3 text-slate-600">
+            <li>• You want maximum freedom over visual arrangement.</li><li>
+              • You are brainstorming associations before evaluating them.
+            </li><li>• Colour, imagery, and spatial grouping are central to the work.</li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold">Choose RationalGrid if…</h3><ul class="mt-3 space-y-3 text-slate-600">
+            <li>• Readers need to understand why two ideas are connected.</li><li>
+              • Questions, objections, evidence, and sources should remain distinguishable.
+            </li><li>
+              • You want AI assistance to open branches while preserving their context.
+            </li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section
+      id="mind-maps-caveat"
+      class="mt-12 border border-stone-300 border-l-4 border-l-amber-600 bg-white p-6"
+    >
+      <h2 class="font-serif text-3xl font-semibold">Structure has a cost.</h2><p class="mt-3 leading-7 text-slate-600">
+        Choosing a branch type can slow the first rush of ideas, and RationalGrid is not a free-position drawing canvas. Conversely, a beautiful mind map may leave a new reader guessing whether a line means support, sequence, similarity, or simple association.
+      </p>
+    </section>
+
+    <section id="mind-maps-faq" class="mt-14" aria-labelledby="mind-maps-faq-heading">
+      <h2 id="mind-maps-faq-heading" class="font-serif text-4xl font-semibold">FAQ</h2><div class="mt-6 divide-y divide-stone-300 border-y border-stone-300">
+        <%= for {question, answer} <- [
+        {"Is RationalGrid a mind-mapping tool?", "It shares the idea of connected branches, but its emphasis is different: relationships are typed around inquiry and critical examination rather than freely drawn on a canvas."},
+        {"Can a mind map contain evidence and objections?", "Yes. You can invent labels, colours, or conventions for them. RationalGrid provides those roles as part of the working structure."},
+        {"Which is better for brainstorming?", "A conventional mind map is often preferable when speed, imagery, and unrestricted arrangement matter. RationalGrid is stronger once you want to distinguish questions, answers, challenges, evidence, and sources."},
+        {"Can I use both?", "Yes. A mind map can capture an initial field of associations; a grid can then examine selected questions and claims in more explicit detail."}
+      ] do %>
+          <details class="py-5">
+            <summary class="cursor-pointer font-semibold">{question}</summary><p class="mt-3 leading-7 text-slate-600">
+              {answer}
+            </p>
+          </details>
+        <% end %>
+      </div>
+    </section>
+
+    <nav
+      id="mind-maps-related-comparisons"
+      class="mt-14 border-t border-stone-300 pt-8"
+      aria-label="Related comparisons"
+    >
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">Keep comparing</p>
+      <div class="mt-4 flex flex-wrap gap-x-6 gap-y-3 text-sm font-semibold">
+        <a
+          href="/compare/chatgpt"
+          class="text-teal-800 underline decoration-stone-400 underline-offset-4 hover:decoration-teal-700"
+        >ChatGPT alternatives for structured research</a>
+        <a
+          href="/compare/kialo"
+          class="text-teal-800 underline decoration-stone-400 underline-offset-4 hover:decoration-teal-700"
+        >Explore a free Kialo alternative</a>
+      </div>
+    </nav>
+
+    <section id="mind-maps-final-cta" class="mt-14 bg-teal-950 p-7 text-white sm:p-10">
+      <h2 class="font-serif text-4xl font-semibold">
+        Turn one cluster of ideas into an inquiry.
+      </h2><p class="mt-3 text-teal-100">
+        Ask a question, follow its branches, and keep challenges and evidence attached to what they address.
+      </p><a
+        id="mind-maps-final-cta-link"
+        href="/?focus=grid#start-here"
+        data-analytics-event="comparison_start_grid_clicked"
+        data-analytics-comparison="mind_maps"
+        data-analytics-placement="final_cta"
+        class="mt-6 inline-flex items-center gap-2 rounded-md bg-teal-300 px-5 py-3 text-sm font-semibold text-slate-950 hover:bg-teal-200"
+      >Start a free grid <.icon name="hero-arrow-right" class="h-4 w-4" /></a>
+    </section>
+  </main>
+</div>

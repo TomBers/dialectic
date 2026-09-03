@@ -1,6 +1,6 @@
 # RationalGrid
 
-> RationalGrid is a free, open-source, not-for-profit tool for exploring questions in persistent, shareable argument maps.
+> RationalGrid is a free, not-for-profit tool for exploring questions in persistent, shareable argument maps.
 
 RationalGrid helps people compare views, trace claims to sources, and keep the path of their reasoning open to question. AI can suggest answers, questions, and directions; users decide what to save, check, connect, and share. A grid can contain questions, answers, challenges, evidence, sources, highlights, and notes.
 
@@ -11,6 +11,15 @@ RationalGrid helps people compare views, trace claims to sources, and keep the p
 - [Guide](https://rationalgrid.ai/intro/how): How to create, explore, edit, and share a grid.
 - [How AI and sources work](https://rationalgrid.ai/intro/ai): How RationalGrid differs from a chatbot, how it uses sources, and the limits of AI-generated material.
 
+## Compare tools and workflows
+
+- [Comparison guides](https://rationalgrid.ai/compare): Compare RationalGrid with research, argument-mapping, and note-taking approaches.
+- [RationalGrid and Elicit](https://rationalgrid.ai/compare/elicit): Elicit supports scientific-literature discovery and extraction; RationalGrid maps the questions, challenges, evidence, and sources that emerge.
+- [RationalGrid and Gemini Notebook (formerly NotebookLM)](https://rationalgrid.ai/compare/notebooklm): Gemini Notebook centres a selected source collection; RationalGrid centres a branching inquiry.
+- [RationalGrid and Kialo](https://rationalgrid.ai/compare/kialo): Compare structured pro-and-con discussion with broader AI-assisted inquiry mapping.
+- [Argument maps and mind maps](https://rationalgrid.ai/compare/mind-maps): Compare typed research branches with free-form visual brainstorming.
+- [RationalGrid with Notion and Obsidian](https://rationalgrid.ai/compare/notion-obsidian): Explore and structure a question in RationalGrid, then export Markdown and continue in a note-taking system.
+
 ## Explore
 
 - [Community grids](https://rationalgrid.ai/community): Public argument maps created by the RationalGrid community.
@@ -19,5 +28,5 @@ RationalGrid helps people compare views, trace claims to sources, and keep the p
 
 ## Project
 
-- [Source code](https://github.com/TomBers/dialectic): RationalGrid's open-source Phoenix application.
+- [Source code](https://github.com/TomBers/dialectic): Source code for RationalGrid's Phoenix application.
 - [Sitemap](https://rationalgrid.ai/sitemap.xml): Index of public pages and published grids.

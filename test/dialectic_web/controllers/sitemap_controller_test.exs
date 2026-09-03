@@ -41,6 +41,19 @@ defmodule DialecticWeb.SitemapControllerTest do
       assert body =~ "#{base_url}/inspiration"
     end
 
+    test "includes every comparison page", %{conn: conn} do
+      conn = get(conn, "/sitemap.xml")
+
+      body = conn.resp_body
+      base_url = DialecticWeb.Endpoint.url()
+
+      assert body =~ "<loc>#{base_url}/compare</loc>"
+
+      for slug <- DialecticWeb.ComparisonController.slugs() do
+        assert body =~ "#{DialecticWeb.Endpoint.url()}/compare/#{slug}"
+      end
+    end
+
     test "includes public published graphs with slugs", %{conn: conn} do
       graph =
         insert_graph(%{title: "Public Graph Test", is_public: true, is_published: true})

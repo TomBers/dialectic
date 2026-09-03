@@ -14,7 +14,31 @@ defmodule DialecticWeb.HomeLiveTest do
     assert html =~ "/assets/app.js"
   end
 
-  test "publishes organization and free product structured data", %{conn: conn} do
+  test "links to the comparison index from the footer", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/")
+
+    assert has_element?(view, "#home-footer-comparisons-link[href='/compare']")
+  end
+
+  test "links to the comparison index from the relevant FAQ answer", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/")
+
+    assert has_element?(
+             view,
+             "#home-faq-chat-assistants > p #home-faq-comparisons-link[href='/compare']"
+           )
+  end
+
+  test "links to the Notion and Obsidian workflow from the FAQ", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/")
+
+    assert has_element?(
+             view,
+             "#home-faq-notion-obsidian #home-faq-notion-obsidian-link[href='/compare/notion-obsidian']"
+           )
+  end
+
+  test "publishes organization and free software application structured data", %{conn: conn} do
     {:ok, _view, html} = live(conn, ~p"/")
 
     json_ld =
@@ -28,25 +52,35 @@ defmodule DialecticWeb.HomeLiveTest do
 
     organization = Enum.find(json_ld["@graph"], &(Map.get(&1, "@type") == "Organization"))
 
-    product =
+    software_application =
       Enum.find(json_ld["@graph"], fn entity ->
-        "Product" in List.wrap(Map.get(entity, "@type"))
+        Map.get(entity, "@type") == "SoftwareApplication"
       end)
 
     faq_page = Enum.find(json_ld["@graph"], &(Map.get(&1, "@type") == "FAQPage"))
 
     assert organization["name"] == "RationalGrid"
     assert organization["url"] == DialecticWeb.Endpoint.url()
-    assert product["name"] == "RationalGrid"
-    assert product["isAccessibleForFree"] == true
-    assert product["offers"]["price"] == "0.00"
-    assert product["offers"]["priceCurrency"] == "USD"
-    assert length(faq_page["mainEntity"]) == 4
+    assert software_application["name"] == "RationalGrid"
+    assert software_application["isAccessibleForFree"] == true
+    assert software_application["offers"]["price"] == "0.00"
+    assert software_application["offers"]["priceCurrency"] == "USD"
+
+    refute Enum.any?(json_ld["@graph"], fn entity ->
+             "Product" in List.wrap(Map.get(entity, "@type"))
+           end)
+
+    assert length(faq_page["mainEntity"]) == 5
 
     assert Enum.any?(faq_page["mainEntity"], fn question ->
              question["name"] == "What are the AI usage limits?" and
                question["acceptedAnswer"]["text"] =~ "three AI requests in progress" and
                question["acceptedAnswer"]["text"] =~ "ten AI requests per minute"
+           end)
+
+    assert Enum.any?(faq_page["mainEntity"], fn question ->
+             question["name"] == "Can I use RationalGrid with Notion or Obsidian?" and
+               question["acceptedAnswer"]["text"] =~ "export the grid as Markdown"
            end)
   end
 
