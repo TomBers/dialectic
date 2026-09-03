@@ -3,6 +3,7 @@ defmodule DialecticWeb.ComparisonControllerTest do
 
   @pages [
     {"chatgpt", "chatgpt-comparison-hero", "chatgpt-comparison-table", "chatgpt-start-cta"},
+    {"elicit", "elicit-comparison-hero", "elicit-comparison-table", "elicit-start-cta"},
     {"kialo", "kialo-comparison-hero", "kialo-comparison-table", "kialo-start-cta"},
     {"mind-maps", "mind-maps-comparison-hero", "mind-maps-comparison-table",
      "mind-maps-start-cta"}
@@ -30,7 +31,7 @@ defmodule DialecticWeb.ComparisonControllerTest do
     assert document
            |> LazyHTML.query("meta[name=description]")
            |> LazyHTML.attribute("content") == [
-             "Compare RationalGrid with ChatGPT, Kialo and conventional mind maps for research, debate, evidence and exploring complex questions."
+             "Compare RationalGrid with ChatGPT, Elicit, Kialo and conventional mind maps for research, debate, evidence and exploring complex questions."
            ]
   end
 
@@ -73,7 +74,12 @@ defmodule DialecticWeb.ComparisonControllerTest do
   end
 
   test "exposes only the allowlisted slugs", %{conn: _conn} do
-    assert DialecticWeb.ComparisonController.slugs() == ["chatgpt", "kialo", "mind-maps"]
+    assert DialecticWeb.ComparisonController.slugs() == [
+             "chatgpt",
+             "elicit",
+             "kialo",
+             "mind-maps"
+           ]
   end
 
   test "returns 404 for an unsupported comparison", %{conn: conn} do

@@ -8,6 +8,12 @@ defmodule DialecticWeb.ComparisonController do
       page_description:
         "Looking for a ChatGPT alternative for research? Compare quick AI conversations with connected maps of questions, challenges, evidence and sources."
     },
+    "elicit" => %{
+      template: :elicit,
+      page_title: "Elicit Alternative for Argument Mapping | RationalGrid",
+      page_description:
+        "Compare Elicit's scientific literature search and extraction workflows with RationalGrid's connected maps of questions, challenges, evidence and sources."
+    },
     "kialo" => %{
       template: :kialo,
       page_title: "Free Kialo Alternative | RationalGrid",
@@ -27,7 +33,7 @@ defmodule DialecticWeb.ComparisonController do
       page_title: "Compare Research and Argument-Mapping Tools | RationalGrid",
       page_title_suffix: "",
       page_description:
-        "Compare RationalGrid with ChatGPT, Kialo and conventional mind maps for research, debate, evidence and exploring complex questions."
+        "Compare RationalGrid with ChatGPT, Elicit, Kialo and conventional mind maps for research, debate, evidence and exploring complex questions."
     )
   end
 
