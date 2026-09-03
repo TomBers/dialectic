@@ -29,7 +29,8 @@ defmodule DialecticWeb.HomeLive do
       id: "chat-assistants",
       question: "Why not just use ChatGPT or Claude?",
       answer:
-        "You can—and sometimes should. ChatGPT or Claude is often simpler for a quick answer, draft, or short conversation. RationalGrid is useful when the path matters: it keeps questions, sources, notes, and branches connected so you can return, check evidence, compare views, share, and build with others."
+        "You can—and sometimes should. ChatGPT or Claude is often simpler for a quick answer, draft, or short conversation. RationalGrid is useful when the path matters: it keeps questions, sources, notes, and branches connected so you can return, check evidence, compare views, share, and build with others.",
+      comparisons_link?: true
     }
   ]
 
@@ -724,7 +725,18 @@ defmodule DialecticWeb.HomeLive do
                   class="h-5 w-5 shrink-0 text-teal-700 transition group-open:rotate-45"
                 />
               </summary>
-              <p class="mt-3 max-w-3xl text-sm leading-6 text-slate-600">{faq.answer}</p>
+              <p class="mt-3 w-full text-sm leading-6 text-slate-600">
+                {faq.answer}
+                <%= if Map.get(faq, :comparisons_link?, false) do %>
+                  <.link
+                    id="home-faq-comparisons-link"
+                    navigate={~p"/compare"}
+                    class="font-semibold text-teal-800 underline decoration-teal-600/50 underline-offset-4 hover:text-teal-950"
+                  >
+                    See how RationalGrid compares with other tools and approaches.
+                  </.link>
+                <% end %>
+              </p>
             </details>
           </div>
           <.link

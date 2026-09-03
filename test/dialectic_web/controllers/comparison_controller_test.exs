@@ -23,6 +23,15 @@ defmodule DialecticWeb.ComparisonControllerTest do
     assert document
            |> LazyHTML.query("#comparison-index-start-link")
            |> LazyHTML.attribute("data-analytics-comparison") == ["index"]
+
+    assert document |> LazyHTML.query("title") |> LazyHTML.text() |> String.trim() ==
+             "Compare Research and Argument-Mapping Tools | RationalGrid"
+
+    assert document
+           |> LazyHTML.query("meta[name=description]")
+           |> LazyHTML.attribute("content") == [
+             "Compare RationalGrid with ChatGPT, Kialo and conventional mind maps for research, debate, evidence and exploring complex questions."
+           ]
   end
 
   for {slug, page_id, table_id, cta_id} <- @pages do
@@ -56,7 +65,10 @@ defmodule DialecticWeb.ComparisonControllerTest do
              |> LazyHTML.query("meta[name=description]")
              |> LazyHTML.attribute("content") != []
 
-      assert document |> LazyHTML.query("title") |> LazyHTML.text() |> String.trim() != ""
+      title = document |> LazyHTML.query("title") |> LazyHTML.text() |> String.trim()
+
+      assert String.ends_with?(title, "| RationalGrid")
+      refute title =~ "See what you think"
     end
   end
 

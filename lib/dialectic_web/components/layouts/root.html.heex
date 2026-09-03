@@ -55,7 +55,10 @@
       </script>
     <% end %>
 
-    <.live_title default="RationalGrid" suffix=" — See what you think">
+    <.live_title
+      default="RationalGrid"
+      suffix={assigns[:page_title_suffix] || " — See what you think"}
+    >
       {assigns[:page_title]}
     </.live_title>
     <link rel="icon" type="image/png" sizes="16x16" href={~p"/images/favicon-16.png"} />

@@ -4,29 +4,30 @@ defmodule DialecticWeb.ComparisonController do
   @pages %{
     "chatgpt" => %{
       template: :chatgpt,
-      page_title: "A ChatGPT Alternative for Structured Research",
+      page_title: "ChatGPT Alternative for Research | RationalGrid",
       page_description:
-        "Looking for a ChatGPT alternative for research? Compare quick AI chat with RationalGrid's connected questions, challenges, evidence, and sources."
+        "Looking for a ChatGPT alternative for research? Compare quick AI conversations with connected maps of questions, challenges, evidence and sources."
     },
     "kialo" => %{
       template: :kialo,
-      page_title: "A Free Kialo Alternative for Exploring Arguments",
+      page_title: "Free Kialo Alternative | RationalGrid",
       page_description:
-        "Looking for a free Kialo alternative? Compare RationalGrid and Kialo for AI-assisted inquiry, structured discussion, evidence, and classroom debate."
+        "Looking for a free Kialo alternative? Compare Kialo's structured debates with RationalGrid's AI-assisted maps of questions, evidence and sources."
     },
     "mind-maps" => %{
       template: :mind_maps,
-      page_title: "Argument Map vs Mind Map for Complex Questions",
+      page_title: "Argument Map vs Mind Map | RationalGrid",
       page_description:
-        "Argument map or mind map? Compare RationalGrid with conventional mind maps for brainstorming, research, evidence, and connected reasoning."
+        "Argument map or mind map? Compare free-form visual brainstorming with structured questions, challenges, evidence and source connections."
     }
   }
 
   def index(conn, _params) do
     render(conn, :index,
-      page_title: "Compare RationalGrid with Other Research and Mapping Tools",
+      page_title: "Compare Research and Argument-Mapping Tools | RationalGrid",
+      page_title_suffix: "",
       page_description:
-        "Compare RationalGrid with ChatGPT, Kialo, and conventional mind maps to find the right format for research, debate, and complex questions."
+        "Compare RationalGrid with ChatGPT, Kialo and conventional mind maps for research, debate, evidence and exploring complex questions."
     )
   end
 
@@ -35,6 +36,7 @@ defmodule DialecticWeb.ComparisonController do
       {:ok, page} ->
         render(conn, page.template,
           page_title: page.page_title,
+          page_title_suffix: "",
           page_description: page.page_description
         )
 

@@ -20,6 +20,15 @@ defmodule DialecticWeb.HomeLiveTest do
     assert has_element?(view, "#home-footer-comparisons-link[href='/compare']")
   end
 
+  test "links to the comparison index from the relevant FAQ answer", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/")
+
+    assert has_element?(
+             view,
+             "#home-faq-chat-assistants > p #home-faq-comparisons-link[href='/compare']"
+           )
+  end
+
   test "publishes organization and free product structured data", %{conn: conn} do
     {:ok, _view, html} = live(conn, ~p"/")
 
