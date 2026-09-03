@@ -1,5 +1,6 @@
 const ANALYTICS_ID = "G-NZDE9PL5FG";
-const INTERACTION_EVENTS = ["pointerdown", "keydown", "touchstart"];
+const INTERACTION_EVENTS = ["pointerdown", "keydown", "touchstart", "scroll"];
+const FALLBACK_DELAY_MS = 5000;
 const ENGAGEMENT_KEY = "analytics_engaged";
 
 const pendingEvents = () => {
@@ -37,7 +38,15 @@ export const trackAnalyticsEvent = (eventName, params = {}) => {
 };
 
 export const initDelayedAnalytics = () => {
+  let fallbackTimer;
+
+  const scheduleFallback = () => {
+    fallbackTimer = window.setTimeout(activate, FALLBACK_DELAY_MS);
+  };
+
   const cleanup = () => {
+    window.clearTimeout(fallbackTimer);
+    window.removeEventListener("load", scheduleFallback);
     INTERACTION_EVENTS.forEach((eventName) =>
       window.removeEventListener(eventName, activate),
     );
@@ -57,7 +66,13 @@ export const initDelayedAnalytics = () => {
     window.addEventListener(eventName, activate, { once: true, passive: true }),
   );
 
-  if (sessionStorage.getItem(ENGAGEMENT_KEY) === "true") activate();
+  if (sessionStorage.getItem(ENGAGEMENT_KEY) === "true") {
+    activate();
+  } else if (document.readyState === "complete") {
+    scheduleFallback();
+  } else {
+    window.addEventListener("load", scheduleFallback, { once: true });
+  }
 
   return cleanup;
 };
