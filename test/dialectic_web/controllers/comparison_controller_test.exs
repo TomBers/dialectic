@@ -6,7 +6,11 @@ defmodule DialecticWeb.ComparisonControllerTest do
     {"elicit", "elicit-comparison-hero", "elicit-comparison-table", "elicit-start-cta"},
     {"kialo", "kialo-comparison-hero", "kialo-comparison-table", "kialo-start-cta"},
     {"mind-maps", "mind-maps-comparison-hero", "mind-maps-comparison-table",
-     "mind-maps-start-cta"}
+     "mind-maps-start-cta"},
+    {"notebooklm", "notebooklm-comparison-hero", "notebooklm-comparison-table",
+     "notebooklm-start-cta"},
+    {"notion-obsidian", "notion-obsidian-comparison-hero", "notion-obsidian-comparison-table",
+     "notion-obsidian-start-cta"}
   ]
 
   test "renders an index linking to every comparison", %{conn: conn} do
@@ -22,6 +26,17 @@ defmodule DialecticWeb.ComparisonControllerTest do
     end
 
     assert document
+           |> LazyHTML.query("#comparison-index-pages a[id^='comparison-index-']")
+           |> LazyHTML.attribute("id") == [
+             "comparison-index-chatgpt",
+             "comparison-index-notebooklm",
+             "comparison-index-elicit",
+             "comparison-index-kialo",
+             "comparison-index-mind-maps",
+             "comparison-index-notion-obsidian"
+           ]
+
+    assert document
            |> LazyHTML.query("#comparison-index-start-link")
            |> LazyHTML.attribute("data-analytics-comparison") == ["index"]
 
@@ -31,7 +46,7 @@ defmodule DialecticWeb.ComparisonControllerTest do
     assert document
            |> LazyHTML.query("meta[name=description]")
            |> LazyHTML.attribute("content") == [
-             "Compare RationalGrid with ChatGPT, Elicit, Kialo and conventional mind maps for research, debate, evidence and exploring complex questions."
+             "Compare RationalGrid with ChatGPT, Elicit, Kialo, NotebookLM and mind maps, or explore a workflow with Notion and Obsidian."
            ]
   end
 
@@ -78,7 +93,9 @@ defmodule DialecticWeb.ComparisonControllerTest do
              "chatgpt",
              "elicit",
              "kialo",
-             "mind-maps"
+             "mind-maps",
+             "notebooklm",
+             "notion-obsidian"
            ]
   end
 

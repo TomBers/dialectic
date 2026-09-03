@@ -1,0 +1,232 @@
+<div class="min-h-screen bg-[#f4f1e9] text-slate-950">
+  <header id="notion-obsidian-comparison-hero" class="border-b border-stone-300 bg-white">
+    <div class="mx-auto max-w-6xl px-5 py-14 sm:px-8 sm:py-20">
+      <p class="border-l-2 border-teal-700 pl-3 text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
+        RationalGrid with Notion and Obsidian
+      </p>
+      <h1 class="mt-5 max-w-4xl font-serif text-5xl font-semibold leading-[1.02] tracking-tight sm:text-7xl">
+        Explore first. Organise what matters.
+      </h1>
+      <p class="mt-5 text-lg leading-8 text-slate-600">
+        Use RationalGrid to open a research question, compare views, and connect evidence to the ideas it concerns. When the shape of the inquiry becomes clearer, export it as Markdown and continue developing your notes in Notion or Obsidian.
+      </p>
+      <div class="mt-8 flex flex-wrap gap-3">
+        <a
+          id="notion-obsidian-start-cta"
+          href="/?focus=grid#start-here"
+          data-analytics-event="comparison_start_grid_clicked"
+          data-analytics-comparison="notion_obsidian"
+          data-analytics-placement="hero"
+          class="inline-flex items-center gap-2 rounded-md bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+        >
+          Start a research grid <.icon name="hero-arrow-right" class="h-4 w-4" />
+        </a>
+        <a
+          id="notion-obsidian-guide-link"
+          href="/intro/how"
+          class="inline-flex items-center gap-2 border-b border-slate-500 px-1 py-2 text-sm font-semibold transition hover:border-teal-700 hover:text-teal-800"
+        >
+          See how grids work <.icon name="hero-arrow-up-right" class="h-4 w-4" />
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-6xl px-5 py-12 sm:px-8 sm:py-16">
+    <section id="notion-obsidian-verdict" aria-labelledby="notion-obsidian-verdict-heading">
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
+        A complementary workflow
+      </p>
+      <h2
+        id="notion-obsidian-verdict-heading"
+        class="mt-2 font-serif text-4xl font-semibold tracking-tight"
+      >
+        RationalGrid is the exploratory step, not a replacement for your notes.
+      </h2>
+      <p class="mt-4 leading-7 text-slate-600">
+        Notion and Obsidian are strong places to maintain knowledge and develop finished work. RationalGrid can sit before them: use it while you are still discovering the important questions, disagreements, and sources, then move the useful result into the system where your long-term work already lives.
+      </p>
+    </section>
+
+    <section
+      id="notion-obsidian-at-a-glance"
+      class="mt-14"
+      aria-labelledby="notion-obsidian-table-heading"
+    >
+      <h2
+        id="notion-obsidian-table-heading"
+        class="font-serif text-4xl font-semibold tracking-tight"
+      >
+        One workflow, three roles
+      </h2>
+      <div class="mt-6 overflow-x-auto border border-stone-300 bg-white">
+        <table
+          id="notion-obsidian-comparison-table"
+          class="w-full min-w-[52rem] border-collapse text-left"
+        >
+          <thead>
+            <tr class="border-b border-stone-300 bg-stone-100">
+              <th class="px-5 py-4 text-sm font-semibold">Research stage</th>
+              <th class="bg-teal-950 px-5 py-4 text-sm font-semibold text-white">RationalGrid</th>
+              <th class="px-5 py-4 text-sm font-semibold">Notion</th>
+              <th class="px-5 py-4 text-sm font-semibold">Obsidian</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-stone-300 text-sm leading-6">
+            <%= for {stage, grid, notion, obsidian} <- [
+              {"Open the topic", "Ask a question and branch into answers, challenges, evidence, and sources.", "Capture a project brief or initial research page.", "Create a seed note and connect it to existing ideas."},
+              {"Explore uncertainty", "Follow competing explanations without losing the point that prompted each branch.", "Develop organised pages, tables, and collaborative project material.", "Develop linked personal notes and connections across a vault."},
+              {"Curate the result", "Check sources, remove weak paths, add notes, and decide what is worth keeping.", "Turn selected material into durable project documentation.", "Split durable ideas into focused notes and backlinks."},
+              {"Handoff", "Export a readable Markdown version of the grid.", "Import or copy Markdown into the relevant workspace.", "Place the Markdown file in a vault and adapt it to local conventions."},
+              {"Long-term role", "Retain the interactive branching context and return when the inquiry needs to grow.", "Coordinate, present, and maintain shared or structured work.", "Maintain a linked, file-based personal knowledge base."}
+            ] do %>
+              <tr>
+                <th scope="row" class="bg-[#f8f6f0] px-5 py-4 align-top font-semibold">
+                  {stage}
+                </th>
+                <td class="bg-teal-50 px-5 py-4 align-top text-slate-700">{grid}</td>
+                <td class="px-5 py-4 align-top text-slate-600">{notion}</td>
+                <td class="px-5 py-4 align-top text-slate-600">{obsidian}</td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section
+      id="notion-obsidian-workflow"
+      class="mt-14"
+      aria-labelledby="notion-obsidian-workflow-heading"
+    >
+      <div class="grid gap-5 border-b border-slate-400 pb-5 sm:grid-cols-[minmax(0,1fr)_22rem] sm:items-end">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
+            From question to knowledge base
+          </p>
+          <h2
+            id="notion-obsidian-workflow-heading"
+            class="mt-2 font-serif text-4xl font-semibold tracking-tight sm:text-5xl"
+          >
+            A practical research handoff.
+          </h2>
+        </div>
+        <p class="text-sm leading-6 text-slate-600">
+          The goal is not to export every branch. It is to discover and select what deserves a permanent place in your notes.
+        </p>
+      </div>
+
+      <ol class="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+        <%= for {number, id, title, copy, colour} <- [
+          {"1", "explore", "Explore", "Start with the question, then branch into answers, challenges, evidence, sources, and follow-up questions.", "border-sky-600 text-sky-800"},
+          {"2", "evaluate", "Evaluate", "Inspect important sources, distinguish evidence from interpretation, and challenge weak assumptions.", "border-violet-600 text-violet-800"},
+          {"3", "curate", "Curate", "Remove dead ends, add notes explaining significance, and keep the paths worth developing.", "border-amber-600 text-amber-800"},
+          {"4", "export", "Export", "Download the grid as Markdown, then continue the selected material in Notion or Obsidian.", "border-emerald-600 text-emerald-800"}
+        ] do %>
+          <li id={"notion-obsidian-step-#{id}"} class={["border-t-4 bg-white p-5", colour]}>
+            <span class="font-mono text-xs font-bold">STEP {number}</span>
+            <h3 class="mt-3 font-serif text-2xl font-semibold text-slate-950">{title}</h3>
+            <p class="mt-2 text-sm leading-6 text-slate-600">{copy}</p>
+          </li>
+        <% end %>
+      </ol>
+    </section>
+
+    <section
+      id="notion-obsidian-destinations"
+      class="mt-14 grid gap-5 md:grid-cols-2"
+      aria-label="Continue in Notion or Obsidian"
+    >
+      <article id="notion-workflow" class="border-t-4 border-slate-700 bg-white p-6">
+        <.icon name="hero-rectangle-stack" class="h-6 w-6 text-slate-700" />
+        <h2 class="mt-4 font-serif text-3xl font-semibold">Continue in Notion</h2>
+        <p class="mt-3 leading-7 text-slate-600">
+          Bring the selected Markdown into the workspace where you coordinate projects and develop shared documents. Reshape it into project pages, literature notes, databases, tasks, or a polished research brief, depending on how your workspace is organised.
+        </p>
+      </article>
+      <article
+        id="obsidian-workflow"
+        class="border-t-4 border-violet-700 bg-slate-950 p-6 text-white"
+      >
+        <.icon name="hero-link" class="h-6 w-6 text-violet-300" />
+        <h2 class="mt-4 font-serif text-3xl font-semibold">Continue in Obsidian</h2>
+        <p class="mt-3 leading-7 text-slate-300">
+          Place the exported Markdown in your vault, then break durable concepts into focused notes and connect them to existing material. Keep a link back to the original grid when the full branching context remains useful.
+        </p>
+      </article>
+    </section>
+
+    <section
+      id="notion-obsidian-export-limits"
+      class="mt-12 border border-stone-300 border-l-4 border-l-amber-600 bg-white p-6"
+    >
+      <h2 class="font-serif text-3xl font-semibold">
+        Markdown is a handoff, not a lossless sync.
+      </h2>
+      <p class="mt-3 leading-7 text-slate-600">
+        RationalGrid exports a readable Markdown representation, but it does not directly synchronise with Notion or Obsidian. The interactive visual layout and some grid-specific context cannot be reproduced completely in a linear document. Keep the original grid when you may need to inspect or extend that context later.
+      </p>
+    </section>
+
+    <section id="notion-obsidian-faq" class="mt-14" aria-labelledby="notion-obsidian-faq-heading">
+      <h2 id="notion-obsidian-faq-heading" class="font-serif text-4xl font-semibold">FAQ</h2>
+      <div class="mt-6 divide-y divide-stone-300 border-y border-stone-300">
+        <%= for {question, answer} <- [
+          {"Does RationalGrid integrate directly with Notion or Obsidian?", "Not currently. The workflow uses a Markdown export rather than direct synchronisation or an API integration."},
+          {"Does exporting remove the original RationalGrid grid?", "No. The export gives you a separate Markdown representation. The original grid remains available subject to its access settings."},
+          {"Should I export every branch?", "Usually not. Review the grid first, check important evidence, remove irrelevant paths, and add context that will help when the material reaches your notes."},
+          {"Which note-taking tool should I use?", "Use the one that fits your established workflow. Notion may suit collaborative projects and structured workspaces; Obsidian may suit linked, file-based personal notes. RationalGrid can feed either approach."},
+          {"Can I return to RationalGrid after exporting?", "Yes. Keep the grid as the explorable source and return when a note raises another question or the inquiry needs a new branch."}
+        ] do %>
+          <details class="py-5">
+            <summary class="cursor-pointer font-semibold">{question}</summary>
+            <p class="mt-3 leading-7 text-slate-600">{answer}</p>
+          </details>
+        <% end %>
+      </div>
+    </section>
+
+    <nav
+      id="notion-obsidian-related-comparisons"
+      class="mt-14 border-t border-stone-300 pt-8"
+      aria-label="Related comparisons"
+    >
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
+        Related research workflows
+      </p>
+      <div class="mt-4 flex flex-wrap gap-x-6 gap-y-3 text-sm font-semibold">
+        <a
+          href="/compare/elicit"
+          class="text-teal-800 underline decoration-stone-400 underline-offset-4 hover:decoration-teal-700"
+        >Elicit for literature or RationalGrid for inquiry mapping</a>
+        <a
+          href="/compare/chatgpt"
+          class="text-teal-800 underline decoration-stone-400 underline-offset-4 hover:decoration-teal-700"
+        >ChatGPT alternatives for structured research</a>
+        <a
+          href="/compare/mind-maps"
+          class="text-teal-800 underline decoration-stone-400 underline-offset-4 hover:decoration-teal-700"
+        >Argument maps vs mind maps</a>
+      </div>
+    </nav>
+
+    <section id="notion-obsidian-final-cta" class="mt-14 bg-teal-950 p-7 text-white sm:p-10">
+      <h2 class="font-serif text-4xl font-semibold">
+        Start before you know how the notes should be organised.
+      </h2>
+      <p class="mt-3 leading-7 text-teal-100">
+        Explore the question first. Export the useful structure when you are ready to make it part of your long-term system.
+      </p>
+      <a
+        id="notion-obsidian-final-cta-link"
+        href="/?focus=grid#start-here"
+        data-analytics-event="comparison_start_grid_clicked"
+        data-analytics-comparison="notion_obsidian"
+        data-analytics-placement="final_cta"
+        class="mt-6 inline-flex items-center gap-2 rounded-md bg-teal-300 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-teal-200"
+      >
+        Start a research grid <.icon name="hero-arrow-right" class="h-4 w-4" />
+      </a>
+    </section>
+  </main>
+</div>

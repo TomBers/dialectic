@@ -25,6 +25,18 @@ defmodule DialecticWeb.ComparisonController do
       page_title: "Argument Map vs Mind Map | RationalGrid",
       page_description:
         "Argument map or mind map? Compare free-form visual brainstorming with structured questions, challenges, evidence and source connections."
+    },
+    "notebooklm" => %{
+      template: :notebooklm,
+      page_title: "NotebookLM Alternative for Argument Mapping | RationalGrid",
+      page_description:
+        "Compare NotebookLM's source-grounded document workspace with RationalGrid's connected maps of questions, challenges, evidence and competing views."
+    },
+    "notion-obsidian" => %{
+      template: :notion_obsidian,
+      page_title: "Notion and Obsidian Research Workflow | RationalGrid",
+      page_description:
+        "Explore a research question in RationalGrid, then export it as Markdown and continue organising, linking, and writing in Notion or Obsidian."
     }
   }
 
@@ -33,7 +45,7 @@ defmodule DialecticWeb.ComparisonController do
       page_title: "Compare Research and Argument-Mapping Tools | RationalGrid",
       page_title_suffix: "",
       page_description:
-        "Compare RationalGrid with ChatGPT, Elicit, Kialo and conventional mind maps for research, debate, evidence and exploring complex questions."
+        "Compare RationalGrid with ChatGPT, Elicit, Kialo, NotebookLM and mind maps, or explore a workflow with Notion and Obsidian."
     )
   end
 
