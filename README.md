@@ -99,6 +99,7 @@ RationalGrid is built with:
 - **Run tests**: `mix test`
 - **Format code**: `mix format`
 - **Pre-commit checks**: `mix precommit` (runs formatter and tests)
+- **Compare AI models**: [Answer benchmark guide](docs/ANSWER_BENCHMARK.md)
 - **Interactive console**: `iex -S mix phx.server`
 
 ## Project Structure

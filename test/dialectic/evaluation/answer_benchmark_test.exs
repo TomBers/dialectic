@@ -38,6 +38,55 @@ defmodule Dialectic.Evaluation.AnswerBenchmarkTest do
     assert result.review == nil
   end
 
+  test "only complete follow-up headings end the assessed body" do
+    test_case = %{"mode" => "simple", "kind" => "answer"}
+    body = "An answer with five words.\n\n"
+
+    for heading <- [
+          "Follow-up questions",
+          "Follow up questions",
+          "Followup questions",
+          "Further questions",
+          "Suggested Further questions",
+          "Questions to explore",
+          "Deepen your exploration",
+          "Explore further",
+          "FOLLOW-UP\tQUESTIONS \t\r"
+        ] do
+      text = body <> "## " <> heading <> "\n\n1. What would change your mind?"
+      result = AnswerBenchmark.assess(test_case, text, nil)
+      assert result.body_words == 5, heading
+      assert result.total_words > result.body_words
+    end
+
+    assert AnswerBenchmark.assess(test_case, body <> "## Follow-up questions", nil).body_words ==
+             5
+  end
+
+  test "ordinary body headings do not truncate the answer or change its length grade" do
+    test_case = %{"mode" => "simple", "kind" => "answer"}
+
+    for heading <- [
+          "Further implications",
+          "Questions about methodology",
+          "Suggested further reading",
+          "Follow-up questions about methodology",
+          "Follow-up",
+          "Questions"
+        ] do
+      body = "Introduction.\n\n## #{heading}\n\n" <> String.duplicate("evidence ", 180)
+
+      result =
+        AnswerBenchmark.assess(test_case, body <> "\n## Follow-up questions\nWhat next?", nil)
+
+      assert result.body_words == length(String.split(body)), heading
+      assert result.within_word_range, heading
+    end
+
+    text = "An answer.\n##\nFollow-up questions belong to the body here."
+    assert AnswerBenchmark.assess(test_case, text, nil).body_words == length(String.split(text))
+  end
+
   test "buffered plans include the discarded attempt in the visible wait" do
     first = %{
       status: "completed",

@@ -488,6 +488,7 @@ defmodule DialecticWeb.NodeComp do
                       </div>
 
                       <DialecticWeb.SourceStatus.source_status
+                        :if={!@streaming}
                         node={@node}
                         id={"node-source-status-#{@node.id}"}
                       />

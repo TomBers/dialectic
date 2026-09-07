@@ -150,6 +150,51 @@ defmodule DialecticWeb.GraphLiveTest do
     end
   end
 
+  describe "source status during generation" do
+    for {status, grounding} <- [
+          {"no_links", nil},
+          {"links_returned",
+           %{google: %{groundingChunks: [%{web: %{uri: "https://example.org/study"}}]}}}
+        ] do
+      test "waits for completion before showing #{status}", %{conn: conn} do
+        {:ok, view, _html} = setup_live_for_graph(conn, "Source Status #{unquote(status)}")
+        graph_id = :sys.get_state(view.pid).socket.assigns.graph_id
+        node = GraphManager.add_node(graph_id, %Vertex{class: "answer", content: ""})
+
+        render_click(view, "node_clicked", %{"id" => node.id})
+        set_stream_tracking(view, MapSet.new([node.id]), MapSet.new())
+
+        partial =
+          GraphManager.update_vertex_fields(graph_id, node.id, %{
+            content: "## An answer\n\nPartial text arriving before the sources."
+          })
+
+        send(view.pid, {:stream_chunk_broadcast, partial, :node_id, node.id, nil})
+
+        assert has_element?(view, "#node-menu-#{node.id}[data-streaming='true']")
+        assert has_element?(view, "#markdown-body-#{node.id}[data-md*='Partial text']")
+        refute has_element?(view, "#node-source-status-#{node.id}")
+
+        final =
+          GraphManager.update_vertex_fields(graph_id, node.id, %{
+            content: "## An answer\n\nThe complete answer.",
+            grounding_metadata: unquote(Macro.escape(grounding))
+          })
+
+        send(view.pid, {:stream_chunk_broadcast, final, :node_id, node.id, nil})
+        refute has_element?(view, "#node-source-status-#{node.id}")
+
+        send(view.pid, {:llm_request_complete, node.id})
+        assert has_element?(view, "#node-menu-#{node.id}[data-streaming='false']")
+
+        assert has_element?(
+                 view,
+                 "#node-source-status-#{node.id}[data-source-status='#{unquote(status)}']"
+               )
+      end
+    end
+  end
+
   defp set_stream_tracking(view, streaming_nodes, titled_nodes) do
     :sys.replace_state(view.pid, fn state ->
       socket =

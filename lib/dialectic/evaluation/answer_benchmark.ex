@@ -76,7 +76,10 @@ defmodule Dialectic.Evaluation.AnswerBenchmark do
 
     body =
       text
-      |> String.split(~r/^##\s+(?:Follow.?up|(?:Suggested\s+)?Further|Questions)/im, parts: 2)
+      |> String.split(
+        ~r/^##[\t ]+(?:(?:Follow[- ]?up|(?:Suggested[\t ]+)?Further)[\t ]+questions|Questions[\t ]+to[\t ]+explore|Deepen[\t ]+your[\t ]+exploration|Explore[\t ]+further)[\t ]*\r?$/im,
+        parts: 2
+      )
       |> hd()
 
     words = length(String.split(body))
