@@ -33,7 +33,7 @@ defmodule Dialectic.Responses.Prompts do
     frame_foundation(
       context_text,
       "Foundation",
-      "This is already-covered conversation. Add new insights without treating it as established fact."
+      "Use this conversation for continuity, not as established fact or proof of the learner's understanding."
     )
   end
 
@@ -137,13 +137,14 @@ defmodule Dialectic.Responses.Prompts do
 
   defp anti_repetition_footer do
     """
-    **Important:** Do not repeat or merely rephrase what's in the Foundation section. Focus on adding genuinely new information, perspectives, or insights.
+    **Important:** Avoid unnecessary repetition. Briefly recap, explain differently, or correct the Foundation when that helps answer the current question. Prioritize understanding over novelty.
     """
   end
 
   defp critical_focus_instruction do
     """
     Select only the most consequential dimensions or tests from the menu below. Do not mechanically cover every item; favor depth and decision-relevance over checklist completion.
+    State what the chosen reasoning move reveals about this particular claim and why. Do not invent an assumption, objection, critic, or gap to fill the menu; a well-supported claim may survive scrutiny.
     """
   end
 
@@ -169,18 +170,18 @@ defmodule Dialectic.Responses.Prompts do
     join_blocks([
       frame_context(context),
       """
-      You are continuing an exploration where the Foundation has already been covered.
+      You are helping the learner make progress on the current question, using the Foundation for continuity.
 
-      **Your task:** Explain **#{sanitize_title(topic)}** by ADDING new perspectives, details, or insights that EXTEND BEYOND what's already in the Foundation.
+      **Your task:** Explain **#{sanitize_title(topic)}** directly and accurately. Resolve the learner's question before introducing adjacent ideas.
 
-      Focus on aspects not yet discussed, such as:
-      - Surprising or counterintuitive angles that challenge common assumptions
-      - Deeper mechanisms or processes
-      - Vivid real-world examples, case studies, or analogies that make the concept click
-      - Unexpected connections to other fields or ideas
-      - Different perspectives or frameworks, especially ones that create productive tension
+      Choose what will most improve understanding:
+      - The essential concept, mechanism, or reasoning steps and why they matter
+      - A missing prerequisite, ambiguous term, or misconception that prevents understanding
+      - A concrete example or application, including where an analogy stops being accurate
+      - The strongest relevant evidence or argument, and what it does and does not establish
+      - A consequential uncertainty, alternative interpretation, or connection when it helps answer this question
 
-      Match the response depth and length specified by the selected complexity level. Prioritize the strongest new insights rather than covering every possible angle.
+      Match the response depth and length specified by the selected complexity level. Prioritize a complete explanation rather than covering every possible angle.
       """,
       citation_encouragement(),
       anti_repetition_footer()
@@ -200,6 +201,13 @@ defmodule Dialectic.Responses.Prompts do
       The learner wants guidance for **#{sanitize_title(topic)}** before receiving more generated content.
 
       **Your task:** Create one learning plan containing both ranked inquiry actions and several distinct paths through the topic.
+
+      Learning priorities:
+      - Match the selected depth, but keep this a compact plan rather than an essay. Do not infer mastery from generated conversation or invent a personal learning history.
+      - Rank actions by the most useful next learning step: resolve a missing prerequisite or ambiguity before advanced objections when necessary. Explain what each action will help the learner understand or evaluate.
+      - Give the five paths distinct learning purposes: explain a core concept, apply it to a concrete case, evaluate evidence or an argument, examine a consequential limitation, and connect it to a wider question.
+      - Adapt those purposes to the topic rather than manufacturing a controversy or assuming a disputed premise is true. At least one path should invite the learner to reason through an example, rather than just request more information.
+      - Use specific, neutrally framed questions that make sense outside this conversation. Suggest inquiry; do not claim research has been completed.
 
       For the action section, choose only from these exact labels:
       #{action_labels}
@@ -231,14 +239,14 @@ defmodule Dialectic.Responses.Prompts do
       """
       You are beginning an exploration. The Foundation provides background.
 
-      **Your task:** Answer **#{sanitize_title(topic)}** in a way that sparks genuine curiosity.
+      **Your task:** Answer **#{sanitize_title(topic)}** with a trustworthy foundation for understanding and further inquiry.
 
       Include:
-      1. A concise opening — lead with a well-supported fact, a counterintuitive insight, or a focused question that reframes the topic.
+      1. A concise opening — answer the question directly, or give the best-supported orientation if it is open-ended. Correct a false premise and explain why the question matters; do not substitute a curiosity hook for an answer.
       2. An orienting foundation that defines the central concepts and explains the main mechanism, argument, or context a reader needs before branching further.
       3. One concrete example or case that makes the topic tangible without mistaking illustration for proof.
-      4. When the topic centers on an identifiable book, speech, law, paper, or other primary text and the selected quotation policy permits it, a brief direct excerpt when you can reproduce its exact wording with high confidence and it genuinely preserves the author's voice or sharpens the explanation. Quote enough to preserve its meaning, but no more than the answer needs. Render it as a Markdown blockquote, attribute the author and work, and add a locator only when confidently known.
-      5. One meaningful tension, limitation, or competing perspective that prevents the foundation from feeling falsely settled and creates curiosity.
+      4. When a primary text is central and the selected quotation policy permits it, a brief direct excerpt only if its exact wording is available in supplied or retrieved material and helps explain the argument. Quote enough to preserve its meaning, but no more than the answer needs. Render it as a Markdown blockquote, attribute the author and work, and add a locator only when supported by the source material. Otherwise paraphrase without inventing wording.
+      5. The state of knowledge: distinguish what is well supported, what depends on definitions or values, and what remains unresolved. Include a meaningful limitation or competing perspective where warranted, without manufacturing doubt about established findings.
       6. A final section with the exact heading `## Follow-up questions`.
 
       Aim for an opening answer of roughly #{opening_word_range}. Treat this as an editorial target: prioritize a compelling and complete foundation over hitting an exact count. Always leave room for the final `## Follow-up questions` section.
@@ -246,10 +254,12 @@ defmodule Dialectic.Responses.Prompts do
       In the `## Follow-up questions` section:
       - Include exactly 3 numbered questions
       - Make each item a single, self-contained question ending with a question mark
+      - Give the three questions different purposes: explain an important mechanism or distinction, apply the idea to a specific case, and evaluate evidence or a consequential limitation
+      - Keep them specific to this topic, neutrally framed, and useful for developing the reader's reasoning rather than merely requesting more content
       - Do not add commentary, labels, or related topics in that section
       - Do not stop before writing this section
 
-      Build on the Foundation without repeating it.
+      Build on the Foundation, briefly restating prerequisites or correcting it when needed for an independently understandable answer.
       """,
       citation_encouragement()
     ])
@@ -264,17 +274,17 @@ defmodule Dialectic.Responses.Prompts do
       frame_minimal_context(context),
       frame_selection(selection_text),
       """
-      **Your task:** Explain the selected text in depth, treating it as a new exploration starting point.
+      **Your task:** Explain the selected text at the selected complexity level, treating it as a new exploration starting point.
 
       Focus on:
       - What the selected concept or claim means and why it matters
       - At least one concrete example or analogy, clearly identified as illustration rather than evidence
-      - The strongest relevant perspectives, giving a serious objection or competing interpretation enough space to be understood rather than appending a token caveat
+      - The strongest relevant perspectives where there is substantive disagreement, giving a serious objection or competing interpretation enough space to be understood rather than appending a token caveat; do not manufacture an opposing view
       - Important questions, scope conditions, or connections that invite further exploration
 
-      When the selection names a thinker or work, distinguish what the primary text claims from later interpretation or explanatory shorthand. Follow the selected complexity level's quotation policy, and explain what each quotation contributes to the analysis. Connect the explanation back to why the selection matters in the Foundation without repeating the Foundation.
+      When the selection names a thinker or work, distinguish what the primary text claims from later interpretation or explanatory shorthand. Follow the selected complexity level's quotation policy, and explain what each quotation contributes to the analysis. Connect the explanation back to why the selection matters in the Foundation, with a brief recap if needed.
 
-      Use the Foundation only for context. Focus on depth and breadth regarding the selected text.
+      Use the Foundation only for context. Prioritize clarity and appropriate depth regarding the selected text.
       """,
       citation_encouragement()
     ])
@@ -350,6 +360,8 @@ defmodule Dialectic.Responses.Prompts do
       """
       **Your task:** Construct the strongest valid argument **IN FAVOR OF** the claim or idea in the selected text.
 
+      First check whether the claim can be defended honestly. If not, state that no sound defense is available, explain the decisive problem briefly, and stop rather than inventing support.
+
       - State its strongest defensible interpretation and appropriate scope.
       - Make the premises and inferential path explicit.
       - Present the strongest relevant evidence, separating documented evidence from examples or analogies.
@@ -373,9 +385,11 @@ defmodule Dialectic.Responses.Prompts do
       """
       **Your task:** Construct the strongest valid argument **IN FAVOR OF** this claim: **#{sanitize_title(claim)}**
 
+      First check whether the claim can be defended honestly. If not, state that no sound defense is available, explain the decisive problem briefly, and stop rather than inventing support.
+
       - State the strongest defensible interpretation of the claim and its appropriate scope.
       - Make the premises and inferential path explicit.
-      - Add the strongest relevant evidence not already in the Foundation, separating documented evidence from examples or analogies.
+      - Present the strongest relevant evidence, reusing prior material when necessary and separating documented evidence from examples or analogies.
       - Identify dependencies, boundary conditions, and what would have to be true for the argument to hold.
       - Address the most consequential counterevidence or limitation rather than hiding it.
       - Calibrate the conclusion to uncertainty and state what evidence would weaken or strengthen it.
@@ -397,6 +411,8 @@ defmodule Dialectic.Responses.Prompts do
       frame_selection(selection_text),
       """
       **Your task:** Construct the strongest valid argument **AGAINST** the claim or idea in the selected text.
+
+      First check whether a sound objection exists under the claim's ordinary intended meaning. If not, say that no valid objection is available, give the short proof or decisive reason, and stop. Do not switch definitions, number systems, or domains just to produce an objection.
 
       - Critique the strongest defensible interpretation, not a weaker substitute.
       - Make the objection's premises and inferential path explicit.
@@ -421,9 +437,11 @@ defmodule Dialectic.Responses.Prompts do
       """
       **Your task:** Construct the strongest valid argument **AGAINST** this claim: **#{sanitize_title(claim)}**
 
+      First check whether a sound objection exists under the claim's ordinary intended meaning. If not, say that no valid objection is available, give the short proof or decisive reason, and stop. Do not switch definitions, number systems, or domains just to produce an objection.
+
       - Critique the strongest defensible interpretation, not a weaker substitute.
       - Make the objection's premises and inferential path explicit.
-      - Add the strongest counterevidence or counterexamples not already in the Foundation, labeling documented cases separately from hypothetical tests and analogies.
+      - Present the strongest counterevidence or counterexamples, reusing prior material when necessary and labeling documented cases separately from hypothetical tests and analogies.
       - Identify hidden dependencies, scope failures, and boundary conditions.
       - Acknowledge evidence or domains where the claim remains strong.
       - Calibrate the objection to uncertainty and explain whether it refutes, narrows, or merely qualifies the claim.
@@ -449,7 +467,7 @@ defmodule Dialectic.Responses.Prompts do
 
       1. **Historical or intellectual foundation:** an earlier event, debate, thinker, or primary text that shaped the idea.
       2. **Empirical or scientific connection:** relevant observations, research, mechanisms, or testable questions.
-      3. **Opposing framework:** a serious rival explanation, tradition, or critic that changes how the idea is evaluated.
+      3. **Opposing framework:** a serious rival explanation, tradition, or critic that changes how the idea is evaluated. If no credible rival is relevant, use a scope or methodological limitation instead and label the lens **Scope or method**; do not elevate a fringe claim to fill this slot.
       4. **Cross-disciplinary or practical direction:** a connection to another field, institution, decision, or application.
 
       Make every direction a specific idea, thinker, debate, mechanism, case, or application—not merely the name of its lens. Prefer connections that are illuminating or surprising while remaining clearly relevant to the current idea.
@@ -481,7 +499,7 @@ defmodule Dialectic.Responses.Prompts do
 
       1. **Historical or intellectual foundation:** an earlier event, debate, thinker, or primary text that shaped the idea.
       2. **Empirical or scientific connection:** relevant observations, research, mechanisms, or testable questions.
-      3. **Opposing framework:** a serious rival explanation, tradition, or critic that changes how the idea is evaluated.
+      3. **Opposing framework:** a serious rival explanation, tradition, or critic that changes how the idea is evaluated. If no credible rival is relevant, use a scope or methodological limitation instead and label the lens **Scope or method**; do not elevate a fringe claim to fill this slot.
       4. **Cross-disciplinary or practical direction:** a connection to another field, institution, decision, or application.
 
       Make every direction a specific idea, thinker, debate, mechanism, case, or application—not merely the name of its lens. Prefer connections that are illuminating or surprising while remaining clearly relevant to the selected text.
@@ -573,7 +591,7 @@ defmodule Dialectic.Responses.Prompts do
       Ask "What has to be true for this claim to hold?" Excavate assumptions across multiple dimensions:
 
       - **Factual assumptions:** What empirical claims does this argument take for granted? What would have to be true about the world?
-      - **Value assumptions:** What must we value, prioritize, or consider important? What ethical or aesthetic commitments are smuggled in?
+      - **Value assumptions:** What must we value, prioritize, or consider important? What ethical or aesthetic commitments are assumed?
       - **Conceptual assumptions:** What definitions, categories, or frameworks are assumed? What conceptual scheme makes this claim intelligible?
       - **Logical assumptions:** What inferential leaps occur? What causal claims are embedded? What's the assumed relationship between premises and conclusion?
       - **Contextual assumptions:** What historical, cultural, or situational factors are taken as given? Who is the assumed audience?
@@ -583,7 +601,7 @@ defmodule Dialectic.Responses.Prompts do
       2. Assess how controversial or contestable it is
       3. Note what happens to the argument if this assumption is challenged
 
-      The goal is to make the invisible scaffolding visible — to show what the claim is secretly standing on.
+      The goal is to make the claim's dependencies explicit. Distinguish necessary premises from assumptions you are proposing; an unstated premise is not automatically false or unreasonable.
       """,
       citation_encouragement(),
       anti_repetition_footer()
@@ -604,7 +622,7 @@ defmodule Dialectic.Responses.Prompts do
 
       Excavate assumptions across multiple dimensions:
       - **Factual assumptions:** What empirical claims does this take for granted? What would have to be true about the world?
-      - **Value assumptions:** What must we value, prioritize, or consider important? What ethical commitments are smuggled in?
+      - **Value assumptions:** What must we value, prioritize, or consider important? What ethical commitments are assumed?
       - **Conceptual assumptions:** What definitions, categories, or frameworks are assumed? What conceptual scheme makes this intelligible?
       - **Logical assumptions:** What inferential leaps occur? What causal claims are embedded?
       - **Contextual assumptions:** What historical, cultural, or situational factors are taken as given?
@@ -614,7 +632,7 @@ defmodule Dialectic.Responses.Prompts do
       2. Assess how controversial or contestable it is
       3. Note what happens to the argument if this assumption is challenged
 
-      The goal is to make the invisible scaffolding visible — to show what this claim is secretly standing on.
+      The goal is to make the claim's dependencies explicit. Distinguish necessary premises from assumptions you are proposing; an unstated premise is not automatically false or unreasonable.
       """,
       citation_encouragement()
     ])
@@ -826,6 +844,8 @@ defmodule Dialectic.Responses.Prompts do
 
       **Your task:** Use **Source Check** to examine the authority and evidence behind: **#{sanitize_title(claim)}**
 
+      Establish which source is actually being assessed. If a cited study or source is unidentified and cannot be retrieved, say it cannot yet be assessed and ask for its title, link, or text. Do not guess its findings, comparison group, funding, motivations, or coverage. Keep any explanation of what to check clearly conditional.
+
       Ask "Says who?" and investigate the foundations of credibility:
 
       - **Origin:** Where does this claim come from? Who first articulated it? In what context did it emerge? What motivated its creation?
@@ -854,6 +874,8 @@ defmodule Dialectic.Responses.Prompts do
       critical_focus_instruction(),
       """
       **Your task:** Use **Source Check** on the selected text — ask "Says who?" and examine the authority and evidence behind it.
+
+      Establish which source is actually being assessed. If a cited study or source is unidentified and cannot be retrieved, say it cannot yet be assessed and ask for its title, link, or text. Do not guess its findings, comparison group, funding, motivations, or coverage. Keep any explanation of what to check clearly conditional.
 
       Investigate the foundations of credibility:
       - **Origin:** Where does this claim come from? Who first articulated it? In what context did it emerge?
@@ -951,7 +973,7 @@ defmodule Dialectic.Responses.Prompts do
       - **Deeper foundations:** What philosophical, empirical, or logical principles undergird this position when fully developed?
       - **Formidable advocates:** Who are the most impressive thinkers who hold versions of this view? What do their sophisticated versions look like?
 
-      The goal is to make this position as strong as it can possibly be — to understand what you'd be taking on if you disagreed. Only after steel-manning can criticism be truly meaningful.
+      The goal is to understand the strongest defensible version, not to rehabilitate a false claim. Mark any changes you make to the original position and distinguish a charitable reconstruction from what its actual advocates argued.
       """,
       citation_encouragement_for_arguments(),
       anti_repetition_footer()
@@ -978,7 +1000,7 @@ defmodule Dialectic.Responses.Prompts do
       - **Deeper foundations:** What philosophical or logical principles undergird this position when fully developed?
       - **Formidable advocates:** Who are the most impressive thinkers who hold versions of this view?
 
-      The goal is to make this position as strong as it can possibly be. Only after steel-manning can criticism be truly meaningful.
+      The goal is to understand the strongest defensible version, not to rehabilitate a false claim. Mark any changes you make to the original position and distinguish a charitable reconstruction from what its actual advocates argued.
       """,
       citation_encouragement_for_arguments()
     ])

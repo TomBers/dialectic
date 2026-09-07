@@ -35,7 +35,7 @@ defmodule DialecticWeb.ShareModalComp do
         end
 
       shares =
-        if graph_struct do
+        if Sharing.can_manage?(socket.assigns[:current_user], graph_struct) do
           Sharing.list_shares(graph_struct)
         else
           []
@@ -87,9 +87,14 @@ defmodule DialecticWeb.ShareModalComp do
 
   @impl true
   def handle_event("remove_share", %{"email" => email}, socket) do
-    Sharing.remove_invite(socket.assigns.graph_struct, email)
-    shares = Sharing.list_shares(socket.assigns.graph_struct)
-    {:noreply, assign(socket, shares: shares)}
+    case Sharing.remove_invite(socket.assigns.graph_struct, email, socket.assigns[:current_user]) do
+      :ok ->
+        shares = Sharing.list_shares(socket.assigns.graph_struct)
+        {:noreply, assign(socket, shares: shares)}
+
+      {:error, :forbidden} ->
+        {:noreply, put_flash(socket, :error, "Only the grid owner can remove collaborators.")}
+    end
   end
 
   @impl true

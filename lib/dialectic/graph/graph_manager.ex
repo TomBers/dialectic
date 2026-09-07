@@ -400,14 +400,18 @@ defmodule GraphManager do
     end
   end
 
-  def handle_call({:toggle_graph_locked}, _from, {graph_struct, graph}) do
-    updated_graph_struct = Dialectic.DbActions.Graphs.toggle_graph_locked(graph_struct)
-    {:reply, updated_graph_struct, {updated_graph_struct, graph}}
+  def handle_call({:toggle_graph_locked, user}, _from, {graph_struct, graph}) do
+    case Dialectic.DbActions.Graphs.toggle_graph_locked(graph_struct, user) do
+      {:ok, updated} -> {:reply, {:ok, updated}, {updated, graph}}
+      error -> {:reply, error, {graph_struct, graph}}
+    end
   end
 
-  def handle_call({:toggle_graph_public}, _from, {graph_struct, graph}) do
-    updated_graph_struct = Dialectic.DbActions.Graphs.toggle_graph_public(graph_struct)
-    {:reply, updated_graph_struct, {updated_graph_struct, graph}}
+  def handle_call({:toggle_graph_public, user}, _from, {graph_struct, graph}) do
+    case Dialectic.DbActions.Graphs.toggle_graph_public(graph_struct, user) do
+      {:ok, updated} -> {:reply, {:ok, updated}, {updated, graph}}
+      error -> {:reply, error, {graph_struct, graph}}
+    end
   end
 
   def handle_call({:change_noted_by, {node_id, user, change_fn}}, _from, {graph_struct, graph}) do
@@ -763,12 +767,12 @@ defmodule GraphManager do
     GenServer.call(via_tuple(path), {:finalize_node, node_id})
   end
 
-  def toggle_graph_locked(path) do
-    GenServer.call(via_tuple(path), {:toggle_graph_locked})
+  def toggle_graph_locked(path, user) do
+    GenServer.call(via_tuple(path), {:toggle_graph_locked, user})
   end
 
-  def toggle_graph_public(path) do
-    GenServer.call(via_tuple(path), {:toggle_graph_public})
+  def toggle_graph_public(path, user) do
+    GenServer.call(via_tuple(path), {:toggle_graph_public, user})
   end
 
   def change_noted_by(path, node_id, user, change_fn) do

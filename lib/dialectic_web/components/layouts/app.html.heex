@@ -1,6 +1,10 @@
 <main class="">
   <div class="mx-auto">
     <.flash_group flash={@flash} />
-    {@inner_content}
+    <%= if assigns[:inner_block] do %>
+      {render_slot(@inner_block)}
+    <% else %>
+      {@inner_content}
+    <% end %>
   </div>
 </main>

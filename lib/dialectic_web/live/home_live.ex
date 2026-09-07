@@ -23,7 +23,7 @@ defmodule DialecticWeb.HomeLive do
       id: "sources",
       question: "How does RationalGrid use sources?",
       answer:
-        "Simple answers do not perform source research unless you ask for it. Expanded and In-depth answers are prompted to ground material claims in relevant primary, scholarly, or official sources, but AI can be wrong and important claims should be checked."
+        "Simple answers use general knowledge without live source research. Choose Expanded or In-depth for answers with source lookup; these levels are prompted to use relevant primary, scholarly, or official sources. AI can be wrong, so check important claims against the original sources."
     },
     %{
       id: "chat-assistants",
@@ -48,6 +48,7 @@ defmodule DialecticWeb.HomeLive do
     socket =
       assign(socket,
         loading_graph: nil,
+        existing_grid_choice: nil,
         show_level_login_modal: false,
         llm_actor_id: session["llm_actor_id"] || "home:#{socket.id}"
       )
@@ -77,7 +78,7 @@ defmodule DialecticWeb.HomeLive do
        json_ld: homepage_json_ld(),
        page_description:
          "For questions that matter, compare views, trace claims to sources, and keep your reasoning in a grid you can revisit and share."
-     )}
+     ), layout: false}
   end
 
   @impl true
@@ -98,6 +99,23 @@ defmodule DialecticWeb.HomeLive do
   @impl true
   def handle_event("close_login_modal", _params, socket) do
     {:noreply, assign(socket, :show_level_login_modal, false)}
+  end
+
+  def handle_event("create_separate_grid", _params, socket) do
+    case socket.assigns.existing_grid_choice do
+      %{question: question, mode: mode} ->
+        {:noreply,
+         socket
+         |> assign(existing_grid_choice: nil, prompt_mode: mode)
+         |> begin_grid_creation(question)}
+
+      nil ->
+        {:noreply, socket}
+    end
+  end
+
+  def handle_event("cancel_existing_grid", _params, socket) do
+    {:noreply, assign(socket, existing_grid_choice: nil)}
   end
 
   @impl true
@@ -237,22 +255,30 @@ defmodule DialecticWeb.HomeLive do
 
       true ->
         case Graphs.get_graph_by_title(title) do
-          nil ->
-            parent_pid = self()
-            prompt_mode = socket.assigns[:prompt_mode]
-            current_user = socket.assigns[:current_user]
-            actor_id = socket.assigns.llm_actor_id
+          %{is_public: true, is_published: true, is_deleted: deleted?} = graph
+          when deleted? != true ->
+            assign(socket,
+              existing_grid_choice: %{graph: graph, question: answer, mode: mode_param}
+            )
 
-            socket
-            |> assign(:loading_graph, %{title: title, status: "Initializing...", steps: []})
-            |> start_async(:create_graph_flow, fn ->
-              create_graph_task(title, answer, prompt_mode, current_user, actor_id, parent_pid)
-            end)
-
-          existing_graph ->
-            redirect(socket, to: graph_path(existing_graph))
+          _ ->
+            begin_grid_creation(socket, answer)
         end
     end
+  end
+
+  defp begin_grid_creation(socket, answer) do
+    title = Graphs.sanitize_title(answer)
+    parent_pid = self()
+    prompt_mode = socket.assigns.prompt_mode
+    current_user = socket.assigns.current_user
+    actor_id = socket.assigns.llm_actor_id
+
+    socket
+    |> assign(:loading_graph, %{title: title, status: "Initializing...", steps: []})
+    |> start_async(:create_graph_flow, fn ->
+      create_graph_task(title, answer, prompt_mode, current_user, actor_id, parent_pid)
+    end)
   end
 
   defp normalize_home_mode(mode) do
@@ -268,6 +294,14 @@ defmodule DialecticWeb.HomeLive do
   @impl true
   def render(assigns) do
     ~H"""
+    <Layouts.app flash={@flash}>
+      <.home_content {assigns} />
+    </Layouts.app>
+    """
+  end
+
+  defp home_content(assigns) do
+    ~H"""
     <div class="min-h-screen bg-[#f4f1e9] font-sans text-slate-950 antialiased">
       <.login_required_modal
         id="answer-level-login-modal"
@@ -275,6 +309,42 @@ defmodule DialecticWeb.HomeLive do
         title="Unlock deeper answer levels"
         description="Sign in to create grids with Expanded or In-depth answers, grounded sources, and deeper analysis."
       />
+
+      <.modal
+        :if={@existing_grid_choice}
+        id="existing-grid-choice"
+        show
+        on_cancel={JS.push("cancel_existing_grid")}
+      >
+        <div class="mx-auto w-full max-w-lg">
+          <h2 id="existing-grid-choice-title" class="font-serif text-2xl font-semibold">
+            This question has a public grid.
+          </h2>
+          <p id="existing-grid-choice-description" class="mt-3 text-sm leading-6 text-slate-600">
+            Explore the existing discussion, or start a separate grid with your chosen answer depth.
+          </p>
+          <p class="mt-3 font-semibold">{@existing_grid_choice.graph.title}</p>
+          <div class="mt-6 flex flex-wrap gap-3">
+            <.link
+              id="open-existing-grid"
+              navigate={graph_path(@existing_grid_choice.graph)}
+              class="rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white"
+            >Open existing grid</.link>
+            <button
+              id="create-separate-grid"
+              type="button"
+              phx-click="create_separate_grid"
+              class="rounded-md border border-slate-400 px-4 py-2 text-sm font-semibold"
+            >Start a separate grid</button>
+            <button
+              id="cancel-existing-grid"
+              type="button"
+              phx-click="cancel_existing_grid"
+              class="px-4 py-2 text-sm text-slate-600"
+            >Cancel</button>
+          </div>
+        </div>
+      </.modal>
 
       <%= if @loading_graph do %>
         <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/95 px-4">

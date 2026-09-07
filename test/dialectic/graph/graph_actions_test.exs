@@ -24,7 +24,7 @@ defmodule Dialectic.Graph.GraphActionsTest do
       assert function_exported?(Dialectic.Graph.GraphActions, :move, 2)
       assert function_exported?(Dialectic.Graph.GraphActions, :delete_node, 2)
       assert function_exported?(Dialectic.Graph.GraphActions, :change_noted_by, 3)
-      assert function_exported?(Dialectic.Graph.GraphActions, :toggle_graph_locked, 1)
+      assert function_exported?(Dialectic.Graph.GraphActions, :toggle_graph_locked, 2)
       assert function_exported?(Dialectic.Graph.GraphActions, :comment, 3)
       assert function_exported?(Dialectic.Graph.GraphActions, :answer, 1)
       assert function_exported?(Dialectic.Graph.GraphActions, :answer_selection, 3)

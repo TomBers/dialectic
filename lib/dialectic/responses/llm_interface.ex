@@ -140,7 +140,6 @@ defmodule Dialectic.Responses.LlmInterface do
     instruction = Prompts.guided_learning_plan(context, node.content || "")
 
     queue_response("guided_learning_plan", instruction, child, graph_id, live_view_topic,
-      mode: :high_school,
       response_contract: "guided_learning_plan"
     )
   end

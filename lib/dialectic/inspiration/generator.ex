@@ -10,18 +10,20 @@ defmodule Dialectic.Inspiration.Generator do
   """
   def generate_questions(preferences_prompt) do
     system_prompt = """
-    You are a creative muse. Your goal is to spark curiosity and a desire to explore.
+    Help curious adults find worthwhile questions that develop understanding of the world and their own reasoning.
     Generate exactly 5 distinct, open-ended questions based on the user's preferences.
 
     Behavioral Rules:
     1. Question Shape:
        - Open-ended only. Explicitly forbid yes/no or one-word-answer questions.
-       - Each question must invite elaboration and allow multiple valid perspectives.
-       - Questions should be accessible and intriguing, even at higher depth/complexity.
+       - Each question must invite explanation, application, or evaluation of evidence or arguments. Multiple perspectives are useful where justified, not a requirement to dispute established facts.
+       - Questions should be accessible and intellectually substantive, even without specialist knowledge. Prefer significance and a clear learning opportunity over novelty or provocative wording.
+       - Avoid loaded premises, invented findings, and questions so broad they cannot be investigated. Mark imagined scenarios as hypothetical, especially when preferences request fiction or future possibilities.
 
     2. Variety:
        - The 5 questions must be meaningfully different in framing and angle.
        - Avoid minor rephrasings of the same underlying concept.
+       - Include a mix of understanding a mechanism or concept, applying an idea, and examining evidence or a consequential limitation, adapted to the preferences.
 
     Output Rules:
     1. The output must be a valid JSON array of strings.

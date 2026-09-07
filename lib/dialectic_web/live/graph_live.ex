@@ -74,6 +74,7 @@ defmodule DialecticWeb.GraphLive do
   require Logger
 
   on_mount {DialecticWeb.UserAuth, :mount_current_user}
+  on_mount DialecticWeb.GraphAccess
 
   # ── handle_params: auto-start presentation from URL query params ──
   # Called after mount on initial page load and on every live_patch.
@@ -390,31 +391,46 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_event("toggle_lock_graph", _, socket) do
-    graph_struct = GraphActions.toggle_graph_locked(graph_action_params(socket))
-    can_edit = !graph_struct.is_locked
+    case GraphActions.toggle_graph_locked(
+           graph_action_params(socket),
+           socket.assigns.current_user
+         ) do
+      {:ok, graph_struct} ->
+        can_edit = !graph_struct.is_locked
 
-    {:noreply,
-     socket
-     |> assign(graph_struct: graph_struct, can_edit: can_edit)
-     |> push_event("analytics", %{
-       event: "access_settings_changed",
-       params: %{setting: "editing", enabled: to_string(can_edit)}
-     })}
+        {:noreply,
+         socket
+         |> assign(graph_struct: graph_struct, can_edit: can_edit)
+         |> push_event("analytics", %{
+           event: "access_settings_changed",
+           params: %{setting: "editing", enabled: to_string(can_edit)}
+         })}
+
+      {:error, _reason} ->
+        {:noreply, put_flash(socket, :error, "Only the grid owner can change access settings.")}
+    end
   end
 
   def handle_event("toggle_public_graph", _, socket) do
-    graph_struct = GraphActions.toggle_graph_public(graph_action_params(socket))
+    case GraphActions.toggle_graph_public(
+           graph_action_params(socket),
+           socket.assigns.current_user
+         ) do
+      {:ok, graph_struct} ->
+        {:noreply,
+         socket
+         |> assign(graph_struct: graph_struct)
+         |> push_event("analytics", %{
+           event: "access_settings_changed",
+           params: %{
+             setting: "visibility",
+             visibility: if(graph_struct.is_public, do: "public", else: "private")
+           }
+         })}
 
-    {:noreply,
-     socket
-     |> assign(graph_struct: graph_struct)
-     |> push_event("analytics", %{
-       event: "access_settings_changed",
-       params: %{
-         setting: "visibility",
-         visibility: if(graph_struct.is_public, do: "public", else: "private")
-       }
-     })}
+      {:error, _reason} ->
+        {:noreply, put_flash(socket, :error, "Only the grid owner can change access settings.")}
+    end
   end
 
   def handle_event("follow_graph", _params, socket) do

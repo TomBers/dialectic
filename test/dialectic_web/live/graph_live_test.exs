@@ -37,13 +37,11 @@ defmodule DialecticWeb.GraphLiveTest do
   end
 
   defp setup_live_for_graph(conn, graph_name) do
-    conn =
-      conn
-      |> log_in_user(
-        user_fixture(%{email: "tester-#{System.unique_integer([:positive])}@example.com"})
-      )
+    user = user_fixture(%{email: "tester-#{System.unique_integer([:positive])}@example.com"})
+    conn = log_in_user(conn, user)
 
     {:ok, graph} = Dialectic.GraphFixtures.insert_graph_fixture(graph_name)
+    graph = graph |> Ecto.Changeset.change(user_id: user.id) |> Dialectic.Repo.update!()
 
     live(conn, ~p"/g/#{graph.slug}/graph?node=1")
   end

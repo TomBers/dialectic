@@ -79,15 +79,15 @@ defmodule Dialectic.Graph.GraphActions do
   @doc """
   Toggles the locked state of a graph.
   """
-  def toggle_graph_locked({graph_id, _node, _user, _live_view_topic}) do
-    GraphManager.toggle_graph_locked(graph_id)
+  def toggle_graph_locked({graph_id, _node, _user, _live_view_topic}, current_user) do
+    GraphManager.toggle_graph_locked(graph_id, current_user)
   end
 
   @doc """
   Toggles the public visibility state of a graph.
   """
-  def toggle_graph_public({graph_id, _node, _user, _live_view_topic}) do
-    GraphManager.toggle_graph_public(graph_id)
+  def toggle_graph_public({graph_id, _node, _user, _live_view_topic}, current_user) do
+    GraphManager.toggle_graph_public(graph_id, current_user)
   end
 
   @doc """

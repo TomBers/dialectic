@@ -63,9 +63,9 @@ defmodule Dialectic.Responses.LlmInterfaceTest do
       assert persisted_job.args["max_tokens"] == PromptsStructured.max_output_tokens(:expert)
     end
 
-    test "always uses the Simple level for guided learning plans" do
+    test "uses the snapshotted level and output contract for guided learning plans" do
       {graph_id, _containing_node, question_node} = setup_context_graph()
-      :ok = ModeServer.set_mode(graph_id, :expert)
+      :ok = ModeServer.set_mode(graph_id, :high_school)
       on_exit(fn -> ModeServer.delete_mode(graph_id) end)
 
       child = %{child_vertex("guided-plan") | response_level: "expert", class: "learning_plan"}
@@ -74,13 +74,14 @@ defmodule Dialectic.Responses.LlmInterfaceTest do
                LlmInterface.gen_guided_learning_plan(question_node, child, graph_id, "topic")
 
       persisted_job = Repo.get!(Oban.Job, job.id)
-      assert persisted_job.args["system_prompt"] =~ "Complexity level: Essential"
-      assert persisted_job.args["response_level"] == "high_school"
+      assert persisted_job.args["system_prompt"] =~ "Complexity level: Scholarly"
+      assert persisted_job.args["response_level"] == "expert"
+      assert persisted_job.args["response_contract"] == "guided_learning_plan"
 
       assert persisted_job.args["max_tokens"] ==
-               PromptsStructured.max_output_tokens(:high_school)
+               PromptsStructured.max_output_tokens(:expert)
 
-      assert ModeServer.get_mode(graph_id) == :expert
+      assert ModeServer.get_mode(graph_id) == :high_school
     end
   end
 

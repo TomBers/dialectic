@@ -82,6 +82,7 @@ defmodule DialecticWeb do
 
   defp html_helpers do
     quote do
+      alias DialecticWeb.Layouts
       # Translation
       use Gettext, backend: DialecticWeb.Gettext
 

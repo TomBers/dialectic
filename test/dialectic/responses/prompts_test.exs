@@ -21,6 +21,9 @@ defmodule Dialectic.Responses.PromptsTest do
       assert prompt =~ "exact heading `### Paths to explore`"
       assert prompt =~ "exactly three top-level bullets"
       assert prompt =~ "exactly five top-level bullets"
+      assert prompt =~ "Do not infer mastery from generated conversation"
+      assert prompt =~ "resolve a missing prerequisite or ambiguity"
+      assert prompt =~ "invite the learner to reason through an example"
 
       assert Enum.all?(GuidedLearningPlan.labels(), &String.contains?(prompt, "- #{&1}"))
     end
@@ -153,13 +156,14 @@ defmodule Dialectic.Responses.PromptsTest do
       assert result =~ "<<<BEGIN SELECTED_TEXT_"
     end
 
-    test "encourages divergence from original discussion" do
+    test "prioritizes understanding the selection at the chosen depth" do
       context = "Context about quantum mechanics"
       selection_text = "observer effect"
 
       result = Prompts.selection(context, selection_text)
 
-      assert result =~ "Focus on depth and breadth regarding the selected text"
+      assert result =~ "Prioritize clarity and appropriate depth regarding the selected text"
+      assert result =~ "Explain the selected text at the selected complexity level"
       assert result =~ "At least one concrete example or analogy"
       assert result =~ "rather than appending a token caveat"
       assert result =~ "distinguish what the primary text claims from later interpretation"
@@ -223,19 +227,20 @@ defmodule Dialectic.Responses.PromptsTest do
       assert result =~
                "Match the response depth and length specified by the selected complexity level"
 
-      assert result =~ "Prioritize the strongest new insights"
+      assert result =~ "Prioritize a complete explanation"
       refute result =~ "140-220 words"
     end
 
-    test "emphasizes adding new insights" do
+    test "allows recaps and corrections when they help understanding" do
       context = "Background"
       topic = "Ethics"
 
       result = Prompts.explain(context, topic)
 
-      assert result =~ "ADDING new perspectives"
-      assert result =~ "EXTEND BEYOND"
-      assert result =~ "Do not repeat or merely rephrase"
+      assert result =~ "Resolve the learner's question before introducing adjacent ideas"
+      assert result =~ "Briefly recap, explain differently, or correct the Foundation"
+      assert result =~ "Prioritize understanding over novelty"
+      refute result =~ "EXTEND BEYOND"
     end
   end
 
@@ -264,11 +269,13 @@ defmodule Dialectic.Responses.PromptsTest do
       assert result =~ "opening answer of roughly 400-650 words"
       assert result =~ "defines the central concepts and explains the main mechanism"
       assert result =~ "a brief direct excerpt"
-      assert result =~ "exact wording with high confidence"
+      assert result =~ "exact wording is available in supplied or retrieved material"
       assert result =~ "Quote enough to preserve its meaning"
       assert result =~ "Render it as a Markdown blockquote"
-      assert result =~ "add a locator only when confidently known"
-      assert result =~ "One meaningful tension, limitation, or competing perspective"
+      assert result =~ "add a locator only when supported by the source material"
+      assert result =~ "without manufacturing doubt about established findings"
+      assert result =~ "answer the question directly"
+      assert result =~ "apply the idea to a specific case"
       refute result =~ "## Sources"
       refute result =~ "140-220 words"
       assert result =~ "Build on the Foundation"
@@ -303,6 +310,7 @@ defmodule Dialectic.Responses.PromptsTest do
 
       assert result =~ claim
       assert result =~ "IN FAVOR OF"
+      assert result =~ "no sound defense is available"
       assert result =~ "strongest valid argument"
       assert result =~ "separating documented evidence from examples or analogies"
       assert result =~ "counterevidence or limitation"
@@ -319,6 +327,7 @@ defmodule Dialectic.Responses.PromptsTest do
 
       assert result =~ claim
       assert result =~ "AGAINST"
+      assert result =~ "no valid objection is available"
       assert result =~ "strongest valid argument"
       assert result =~ "counterevidence or counterexamples"
       assert result =~ "hidden dependencies, scope failures, and boundary conditions"
@@ -340,6 +349,7 @@ defmodule Dialectic.Responses.PromptsTest do
       assert result =~ "Historical or intellectual foundation"
       assert result =~ "Empirical or scientific connection"
       assert result =~ "Opposing framework"
+      assert result =~ "If no credible rival is relevant"
       assert result =~ "Cross-disciplinary or practical direction"
       assert result =~ "exactly four genuinely distinct directions"
       assert result =~ "## [Specific, memorable name of the direction]"
@@ -433,6 +443,7 @@ defmodule Dialectic.Responses.PromptsTest do
           ] do
         assert prompt =~ "Select only the most consequential dimensions or tests"
         assert prompt =~ "Do not mechanically cover every item"
+        assert prompt =~ "a well-supported claim may survive scrutiny"
       end
     end
 
@@ -444,6 +455,16 @@ defmodule Dialectic.Responses.PromptsTest do
       assert counterexample =~ "never present a thought experiment"
       assert what_if =~ "Label every counterfactual as hypothetical"
       assert what_if =~ "do not imply that a scenario or outcome is documented evidence"
+    end
+
+    test "source checks do not invent an unidentified study" do
+      for prompt <- [
+            Prompts.says_who("", "The latest study proves it"),
+            Prompts.says_who_selection("", "The latest study proves it")
+          ] do
+        assert prompt =~ "ask for its title, link, or text"
+        assert prompt =~ "Do not guess its findings, comparison group, funding"
+      end
     end
 
     test "repeats the diagram restriction in every task family" do
