@@ -47,15 +47,28 @@ defmodule DialecticWeb.SitemapController do
         url_entry(base_url <> "/intro/ai", nil, "monthly", "0.5"),
         url_entry(base_url <> "/compare", nil, "monthly", "0.6"),
         url_entry(base_url <> "/community", nil, "daily", "0.7"),
-        url_entry(
-          base_url <> "/questions/does-ai-make-us-better-thinkers",
-          "2026-09-07",
-          "monthly",
-          "0.8"
-        ),
         url_entry(base_url <> "/inspiration", nil, "daily", "0.6"),
         url_entry(base_url <> "/gallery", nil, "weekly", "0.7")
       ] ++
+        if(Dialectic.QuestionPages.pilot_available?(),
+          do: [
+            url_entry(
+              base_url <> "/questions/does-ai-make-us-better-thinkers",
+              "2026-09-07",
+              "monthly",
+              "0.8"
+            )
+          ],
+          else: []
+        ) ++
+        Enum.map(Dialectic.QuestionPages.list_public(5000), fn page ->
+          url_entry(
+            base_url <> "/questions/#{page.slug}",
+            DateTime.to_date(page.published_at) |> Date.to_iso8601(),
+            "monthly",
+            "0.8"
+          )
+        end) ++
         Enum.map(ComparisonController.slugs(), fn slug ->
           url_entry(base_url <> "/compare/#{slug}", nil, "monthly", "0.5")
         end) ++

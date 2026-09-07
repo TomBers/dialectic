@@ -79,6 +79,7 @@ defmodule DialecticWeb.Router do
     live "/about", AboutLive
     live "/community", CommunityLive
     live "/questions/does-ai-make-us-better-thinkers", QuestionLive
+    live "/questions/:slug", QuestionLive
     live "/search", SearchLive
     live "/gallery", InfographicGalleryLive
 
@@ -160,6 +161,7 @@ defmodule DialecticWeb.Router do
       live "/users/settings/confirm_email/:token", UserSettingsLive, :confirm_email
       live "/activity", ActivityLive
       live "/admin/curated", AdminCuratedLive
+      live "/admin/questions", AdminQuestionLive
       live "/admin/graphs/import", AdminGraphImportLive
     end
   end
