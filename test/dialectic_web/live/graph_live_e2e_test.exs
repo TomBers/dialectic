@@ -17,6 +17,15 @@ defmodule DialecticWeb.GraphLiveE2ETest do
 
     {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}/graph?node=1")
 
+    response =
+      GraphManager.add_node(@graph_id, %Dialectic.Graph.Vertex{
+        class: "answer",
+        content: "An initial response to discuss"
+      })
+
+    GraphManager.add_edges(@graph_id, response, [GraphManager.find_node_by_id(@graph_id, "1")])
+    render_click(view, "node_clicked", %{"id" => response.id})
+
     %{view: view, user: user}
   end
 
@@ -95,6 +104,7 @@ defmodule DialecticWeb.GraphLiveE2ETest do
       assert vertices_count(nil) <= before_del_vcount
 
       # 4) Create another answer node that we'll branch from
+      render_click(view, "node_clicked", %{"id" => initial_node.id})
       render_click(view, "answer", %{"vertex" => %{"content" => "Branch from here"}})
       assigns = get_socket_assigns(view)
       branch_parent = assigns.node

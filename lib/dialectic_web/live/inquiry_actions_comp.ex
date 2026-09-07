@@ -126,24 +126,30 @@ defmodule DialecticWeb.InquiryActionsComp do
               tools_open={@advanced_tools_open}
               tools_target={@myself}
               tools_button_id={advanced_toggle_id(assigns)}
+              tools_menu_id={"node-tools-popover-#{@node.id}"}
               query_origin="node_action_bar"
               placeholder="Ask anything about this response..."
               disabled={!@can_edit}
-            />
-
-            <div
-              :if={@advanced_tools_open}
-              id={"node-tools-popover-#{@node.id}"}
-              class="absolute inset-x-0 top-full z-30 mt-2 rounded-2xl border border-slate-200 bg-white p-3 shadow-xl ring-1 ring-slate-950/5"
             >
-              <.advanced_tools
-                context={:node}
-                sections={@critical_tool_sections}
-                graph_id={@graph_id}
-                node={@node}
-                can_edit={@can_edit}
-              />
-            </div>
+              <div
+                :if={@advanced_tools_open}
+                id={"node-tools-popover-#{@node.id}"}
+                role="region"
+                aria-label="Thinking tools"
+                phx-window-keydown="close_advanced_tools"
+                phx-key="Escape"
+                phx-target={@myself}
+                class="absolute inset-x-0 bottom-full z-30 mb-2 max-h-[min(24rem,60dvh)] overflow-y-auto overscroll-contain rounded-2xl border border-slate-200 bg-white p-3 shadow-xl ring-1 ring-slate-950/5"
+              >
+                <.advanced_tools
+                  context={:node}
+                  sections={@critical_tool_sections}
+                  graph_id={@graph_id}
+                  node={@node}
+                  can_edit={@can_edit}
+                />
+              </div>
+            </.live_component>
           </div>
 
           <div id={"node-suggestions-#{@node.id}"} class="grid grid-cols-3 gap-2 px-1">

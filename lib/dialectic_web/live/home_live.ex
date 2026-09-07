@@ -571,8 +571,8 @@ defmodule DialecticWeb.HomeLive do
               Follow a line of thought.
             </h2>
             <p class="mx-auto mt-4 max-w-md text-base leading-7 text-slate-600">
-              RationalGrid is currently read-only on mobile. Browse public grids here, then use a
-              larger screen when you want to create or edit one.
+              Read public grids, add your own thoughts, and ask follow-up questions from your phone.
+              Use a larger screen to create grids and work with the full map.
             </p>
             <.link
               id="home-mobile-community-link"

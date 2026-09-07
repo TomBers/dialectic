@@ -45,7 +45,7 @@ defmodule DialecticWeb.OutlineGraphLive do
 
         if has_access do
           try do
-            {:ok, mount_graph(socket, graph_db, token_param)}
+            {:ok, mount_graph(socket, graph_db, token_param), layout: false}
           rescue
             e ->
               Logger.error(
@@ -121,6 +121,11 @@ defmodule DialecticWeb.OutlineGraphLive do
     else
       {:noreply, refresh_outline(socket)}
     end
+  end
+
+  @impl true
+  def handle_info({:llm_request_complete, _node_id}, socket) do
+    {:noreply, refresh_outline(socket)}
   end
 
   @impl true
@@ -506,6 +511,10 @@ defmodule DialecticWeb.OutlineGraphLive do
       noindex: !indexable_graph?(graph_db)
     )
   end
+
+  defp contribution_target?(%{id: "1"}), do: false
+  defp contribution_target?(%{class: "origin"}), do: false
+  defp contribution_target?(node), do: visible_node?(node)
 
   defp update_reader_bookmark(socket, node_id, action) do
     case GraphHelpers.handle_note(socket, node_id, action) do

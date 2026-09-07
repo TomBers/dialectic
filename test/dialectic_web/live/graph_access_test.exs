@@ -38,6 +38,16 @@ defmodule DialecticWeb.GraphAccessTest do
   } do
     {:ok, visitor, _html} = live(conn, ~p"/g/#{graph.slug}/graph")
     {:ok, owner_view, _html} = live(log_in_user(conn, owner), ~p"/g/#{graph.slug}/graph")
+
+    response =
+      GraphManager.add_node(graph.title, %Dialectic.Graph.Vertex{
+        class: "answer",
+        content: "A response open for discussion"
+      })
+
+    GraphManager.add_edges(graph.title, response, [GraphManager.find_node_by_id(graph.title, "1")])
+
+    render_click(visitor, "node_clicked", %{"id" => response.id})
     count = length(GraphManager.vertices(graph.title))
 
     render_click(owner_view, "toggle_lock_graph")

@@ -133,7 +133,10 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_params(params, _uri, socket) do
-    {:noreply, assign_reader_path(socket, params["path"])}
+    {:noreply,
+     socket
+     |> assign(:mobile_inquiry?, params["focus"] == "ask")
+     |> assign_reader_path(params["path"])}
   end
 
   @impl true
@@ -172,7 +175,7 @@ defmodule DialecticWeb.GraphLive do
           |> assign(token: params["token"])
           |> handle_initial_highlight(initial_highlight_id)
 
-        {:ok, socket}
+        {:ok, assign(socket, mobile_inquiry?: params["focus"] == "ask"), layout: false}
 
       {:error, error_message} ->
         socket =
@@ -1173,6 +1176,9 @@ defmodule DialecticWeb.GraphLive do
 
       {:error, :locked} ->
         {:noreply, socket |> put_flash(:error, "This graph is locked")}
+
+      {:error, :invalid_comment_target} ->
+        {:noreply, put_flash(socket, :error, "Choose a response to add your comment.")}
     end
   end
 
@@ -1193,6 +1199,9 @@ defmodule DialecticWeb.GraphLive do
 
       {:error, :locked} ->
         {:noreply, socket |> put_flash(:error, "This graph is locked")}
+
+      {:error, :invalid_comment_target} ->
+        {:noreply, put_flash(socket, :error, "Choose a response to add your comment.")}
     end
   end
 
@@ -1781,9 +1790,13 @@ defmodule DialecticWeb.GraphLive do
           mark_background_generation_complete(socket, node_id)
       end
 
-    # Don't broadcast or call update_graph - the streaming already updated the node content
-    # and we don't want to cause a flash/rerender for the user watching the stream
-    # Other users will see the node when it was created, not when it completes
+    PubSub.broadcast_from(
+      Dialectic.PubSub,
+      self(),
+      socket.assigns.graph_topic,
+      {:other_user_change, self()}
+    )
+
     {:noreply, socket}
   end
 
@@ -2022,26 +2035,28 @@ defmodule DialecticWeb.GraphLive do
          %{comment: comment_text},
          socket
        ) do
-    highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
     parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
 
-    full_comment = "#{comment_text}\n\nRegarding: \"#{selected_text}\""
+    if is_nil(parent_node) || GraphHelpers.origin_node?(parent_node) || parent_node.deleted do
+      {:noreply, put_flash(socket, :error, "Choose a response to add your comment.")}
+    else
+      highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
+      full_comment = "#{comment_text}\n\nRegarding: \"#{selected_text}\""
 
-    comment_node =
-      GraphActions.comment(
-        graph_action_params(socket, parent_node),
-        full_comment,
-        "",
-        fields: %{source_text: selected_text}
-      )
+      comment_node =
+        GraphActions.comment(
+          graph_action_params(socket, parent_node),
+          full_comment,
+          "",
+          fields: %{source_text: selected_text}
+        )
 
-    if comment_node do
-      if highlight do
+      if comment_node && highlight do
         Highlights.add_link(highlight.id, comment_node.id, "comment")
       end
-    end
 
-    update_graph(socket, {nil, comment_node}, "user")
+      update_graph(socket, {nil, comment_node}, "user")
+    end
   end
 
   # Advanced Critical Thinking Tools for Text Selection

@@ -45,6 +45,8 @@ defmodule DialecticWeb.AskFormComp do
       |> assign_new(:tools_open, fn -> false end)
       |> assign_new(:tools_target, fn -> nil end)
       |> assign_new(:tools_button_id, fn -> nil end)
+      |> assign_new(:tools_menu_id, fn -> nil end)
+      |> assign_new(:inner_block, fn -> [] end)
       |> assign_new(:query_origin, fn -> nil end)
       |> assign_new(:disabled, fn -> false end)
       |> then(fn s ->
@@ -103,15 +105,17 @@ defmodule DialecticWeb.AskFormComp do
         <div class="flex items-center gap-2 w-full">
           <%!-- Input Field --%>
           <div class="relative min-w-0 flex-1">
-            <textarea
-              name={@form[:content].name}
+            <.input
+              field={@form[:content]}
               id={@input_id}
+              type="textarea"
+              aria-label="Your question or comment"
               rows="1"
               placeholder={@placeholder}
               phx-hook="AutoExpandTextarea"
               disabled={@disabled}
               class={[
-                "box-border w-full text-sm focus:outline-none focus:ring-0 resize-none",
+                "box-border w-full text-base sm:text-sm focus:outline-none focus:ring-0 resize-none",
                 if(@embedded,
                   do: "min-h-[4.5rem] border-0 bg-transparent px-2.5 py-2 pr-2.5",
                   else: "h-10 min-h-[2.5rem] rounded-3xl border py-2.5 pl-4 pr-[11.25rem]"
@@ -126,11 +130,11 @@ defmodule DialecticWeb.AskFormComp do
                     )
                 )
               ]}
-            >{Phoenix.HTML.Form.normalize_value("text", @form[:content].value)}</textarea>
+            />
 
             <%!-- Two submit buttons inside the input --%>
             <div class={[
-              "flex items-center gap-1.5",
+              "relative flex items-center gap-1.5",
               if(@embedded,
                 do: "mt-1 border-t border-slate-100 px-1 pt-2",
                 else: "absolute right-1.5 top-0 bottom-1.5 justify-end"
@@ -143,6 +147,7 @@ defmodule DialecticWeb.AskFormComp do
                   phx-click="toggle_advanced_tools"
                   phx-target={@tools_target}
                   aria-expanded={to_string(@tools_open)}
+                  aria-controls={@tools_menu_id}
                   class={[
                     "inline-flex h-8 shrink-0 items-center gap-1 rounded-full px-2.5 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300",
                     if(@tools_open,
@@ -156,13 +161,16 @@ defmodule DialecticWeb.AskFormComp do
                 </button>
               </div>
 
+              {render_slot(@inner_block)}
+
               <div class="ml-auto flex items-center gap-1">
                 <%!-- Post button — adds submit_action=post to form params --%>
                 <button
+                  id={"#{@id}-comment"}
                   type="submit"
                   name="submit_action"
                   value="post"
-                  disabled={@disabled}
+                  disabled={@disabled || DialecticWeb.GraphHelpers.origin_node?(@node)}
                   class={[
                     "inline-flex h-8 items-center gap-1 rounded-full px-2.5 text-xs font-semibold leading-none transition-all disabled:cursor-not-allowed disabled:opacity-50",
                     if(@disabled,
@@ -182,6 +190,7 @@ defmodule DialecticWeb.AskFormComp do
                 </button>
                 <%!-- Ask button — default submit (no name, so no submit_action param) --%>
                 <button
+                  id={"#{@id}-ask"}
                   type="submit"
                   disabled={@disabled}
                   class={[

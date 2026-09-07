@@ -240,6 +240,7 @@ hooks.GraphLayout = {
     this._reopenSideDrawerAfterCombine = false;
     this._mobileOutlineCloseTimer = null;
     this._askFocusTimer = null;
+    this._askFocusApplied = false;
     this._handleMobileGraphResize = () => {
       this._redirectMobileGraphToReader();
       this._syncOutlineDetailForPanel(this.activePanelId);
@@ -664,7 +665,12 @@ hooks.GraphLayout = {
     const isGraphLayout = this.el.id === "graph-layout";
     const isPresenting = this.el.dataset.presenting === "true";
 
-    if (!isGraphLayout || !mobileReaderPath || isPresenting) return;
+    if (
+      !isGraphLayout ||
+      !mobileReaderPath ||
+      isPresenting ||
+      this.el.dataset.mobileInquiry === "true"
+    ) return;
     if (!window.matchMedia("(max-width: 767px)").matches) return;
 
     const currentPath = `${window.location.pathname}${window.location.search}`;
@@ -673,7 +679,7 @@ hooks.GraphLayout = {
     window.location.replace(mobileReaderPath);
   },
   _focusAskInputFromUrl() {
-    if (this.el.id !== "graph-layout") return;
+    if (this.el.id !== "graph-layout" || this._askFocusApplied) return;
 
     const url = new URL(window.location.href);
     this._pendingAskFocus = url.searchParams.get("focus") === "ask";
@@ -697,7 +703,16 @@ hooks.GraphLayout = {
       }
 
       input.focus({ preventScroll: true });
+      if (
+        this.el.dataset.mobileInquiry === "true" &&
+        window.matchMedia("(max-width: 767px)").matches
+      ) {
+        input.scrollIntoView({ block: "center", behavior: "instant" });
+      }
       this._pendingAskFocus = false;
+      this._askFocusApplied = true;
+
+      if (this.el.dataset.mobileInquiry === "true") return;
 
       const cleanUrl = new URL(window.location.href);
       cleanUrl.searchParams.delete("focus");

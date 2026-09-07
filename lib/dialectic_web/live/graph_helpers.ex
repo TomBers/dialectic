@@ -32,9 +32,11 @@ defmodule DialecticWeb.GraphHelpers do
 
   def origin_branching_disabled?(_node), do: false
 
-  defp origin_node?(%{} = node) do
+  def origin_node?(%{} = node) do
     to_string(Map.get(node, :class, "")) == "origin" || to_string(Map.get(node, :id, "")) == "1"
   end
+
+  def origin_node?(_node), do: false
 
   defp live_children(%{} = node) do
     node
@@ -194,11 +196,18 @@ defmodule DialecticWeb.GraphHelpers do
   - `{:ok, {nil, graph_result}, "comment"}` on success
   """
   def handle_answer(socket, answer_content) do
-    if not socket.assigns.can_edit do
-      {:error, :locked}
-    else
-      graph_result = GraphActions.comment(graph_action_params(socket), answer_content)
-      {:ok, {nil, graph_result}, "comment"}
+    node = GraphActions.find_node(socket.assigns.graph_id, socket.assigns.node.id)
+
+    cond do
+      not socket.assigns.can_edit ->
+        {:error, :locked}
+
+      is_nil(node) or origin_node?(node) or Map.get(node, :deleted, false) ->
+        {:error, :invalid_comment_target}
+
+      true ->
+        graph_result = GraphActions.comment(graph_action_params(socket, node), answer_content)
+        {:ok, {nil, graph_result}, "comment"}
     end
   end
 
