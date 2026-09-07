@@ -764,6 +764,19 @@ defmodule DialecticWeb.HomeLive do
             </.link>
           </div>
 
+          <.link
+            id="home-question-pilot"
+            navigate={~p"/questions/does-ai-make-us-better-thinkers"}
+            class="mt-6 flex min-h-16 items-center justify-between gap-4 border-b border-stone-300 pb-6 text-teal-900 hover:text-teal-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-700"
+          >
+            <span>
+              <span class="block text-xs font-semibold uppercase tracking-widest">A question worth thinking about</span>
+              <span class="mt-1 block font-serif text-2xl">Does AI make us better thinkers?</span>
+              <span class="mt-1 block text-sm text-slate-600">Three studies, their limits, and a moment to think for yourself.</span>
+            </span>
+            <.icon name="hero-arrow-right" class="h-5 w-5 shrink-0" />
+          </.link>
+
           <%= if @curated_grids != [] do %>
             <section id="curated" class="mt-8">
               <.curated_grid_section items={@curated_grids} id_prefix="home-curated" />

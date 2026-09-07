@@ -78,6 +78,7 @@ defmodule DialecticWeb.Router do
     live "/inspiration", InspirationLive
     live "/about", AboutLive
     live "/community", CommunityLive
+    live "/questions/does-ai-make-us-better-thinkers", QuestionLive
     live "/search", SearchLive
     live "/gallery", InfographicGalleryLive
 
