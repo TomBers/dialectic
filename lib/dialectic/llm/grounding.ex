@@ -3,6 +3,27 @@ defmodule Dialectic.LLM.Grounding do
 
   @sources_section ~r/^## (?:Sources|References)[ \t]*\n.*?(?=^##[ \t]|\z)/ims
 
+  def sources(metadata) do
+    google = fetch(metadata, :google)
+    chunks = fetch(google, :groundingChunks)
+
+    if(is_list(chunks), do: chunks, else: [])
+    |> Enum.flat_map(fn chunk ->
+      web = fetch(chunk, :web)
+      url = fetch(web, :uri)
+
+      case if(is_binary(url), do: URI.new(url), else: :error) do
+        {:ok, %URI{scheme: scheme, host: host}}
+        when scheme in ["https", "http"] and is_binary(host) and host != "" ->
+          [%{url: url, title: fetch(web, :title) || url}]
+
+        _ ->
+          []
+      end
+    end)
+    |> Enum.uniq_by(& &1.url)
+  end
+
   @spec merge(map() | nil, map()) :: map() | nil
   def merge(current, metadata) when is_map(metadata) do
     current = current || %{}

@@ -77,6 +77,11 @@ defmodule Dialectic.Responses.LlmInterfaceTest do
       assert persisted_job.args["system_prompt"] =~ "Complexity level: Scholarly"
       assert persisted_job.args["response_level"] == "expert"
       assert persisted_job.args["response_contract"] == "guided_learning_plan"
+      assert persisted_job.args["guided_target"]["node_id"] == "2"
+      assert persisted_job.args["guided_target"]["content"] == "Containing node text"
+
+      assert persisted_job.args["instruction"] =~
+               "<action_target>\nContaining node text\n</action_target>"
 
       assert persisted_job.args["max_tokens"] ==
                PromptsStructured.max_output_tokens(:expert)

@@ -229,6 +229,13 @@ defmodule DialecticWeb.NodeComp do
                 {recommendation.reason}
               </span>
               <span
+                :if={Map.get(recommendation, :target)}
+                id={"guided-plan-action-target-#{index}"}
+                class="mt-2 block text-xs leading-5 text-slate-600"
+              >
+                Applies to: {recommendation.target.title}
+              </span>
+              <span
                 :if={!action_disabled}
                 class="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-700"
               >
@@ -480,6 +487,14 @@ defmodule DialecticWeb.NodeComp do
                         </button>
                       </div>
 
+                      <DialecticWeb.SourceStatus.source_status
+                        node={@node}
+                        id={"node-source-status-#{@node.id}"}
+                      />
+                      <DialecticWeb.SourceStatus.action_targets
+                        node={@node}
+                        id={"node-action-targets-#{@node.id}"}
+                      />
                       <%= if interactive_learning_plan?(@node) do %>
                         <%= if @current_user do %>
                           <.learning_plan

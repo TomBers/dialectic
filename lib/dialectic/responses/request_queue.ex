@@ -166,7 +166,15 @@ defmodule Dialectic.Responses.RequestQueue do
 
     params
     |> maybe_put_response_contract(opts)
+    |> maybe_put_guided_target(opts)
     |> maybe_put_guided_submission(to_node)
+  end
+
+  defp maybe_put_guided_target(params, opts) do
+    case Keyword.fetch(opts, :guided_target) do
+      {:ok, target} -> Map.put(params, :guided_target, target)
+      :error -> params
+    end
   end
 
   defp maybe_put_response_contract(params, opts) do

@@ -31,6 +31,27 @@ defmodule Dialectic.Responses.GuidedLearningPlanTest do
            end)
   end
 
+  test "worker binds each action to the server target and retains it through serialization" do
+    node = %{id: "a", class: "answer", content: "# Evidence\nOriginal claim", parents: []}
+    target = Dialectic.Responses.GuidedLearningTarget.select(node, fn _ -> nil end)
+    args = %{"guided_target" => target |> Jason.encode!() |> Jason.decode!()}
+    assert {:accept, plan} = LLMWorker.guided_learning_plan_response_action(args, @valid_plan)
+
+    assert {:ok, restored} =
+             plan |> Jason.encode!() |> Jason.decode!() |> GuidedLearningPlan.normalize()
+
+    assert Enum.all?(GuidedLearningPlan.actions(restored), &(&1.target == target))
+
+    assert {:reject, _} =
+             LLMWorker.guided_learning_plan_response_action(
+               %{"guided_target" => %{}},
+               @valid_plan
+             )
+
+    bad_plan = put_in(plan.actions, Enum.map(plan.actions, &Map.put(&1, :target, %{})))
+    assert {:error, _} = GuidedLearningPlan.normalize(bad_plan)
+  end
+
   test "validates and parses a complete plan" do
     assert {:ok, %{actions: actions, paths: paths}} =
              GuidedLearningPlan.validate(@valid_plan)

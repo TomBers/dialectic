@@ -137,10 +137,18 @@ defmodule Dialectic.Responses.LlmInterface do
   @spec gen_guided_learning_plan(map(), map(), String.t(), String.t()) :: request_result()
   def gen_guided_learning_plan(node, child, graph_id, live_view_topic) do
     context = GraphManager.build_context(graph_id, node)
-    instruction = Prompts.guided_learning_plan(context, node.content || "")
+
+    target =
+      Dialectic.Responses.GuidedLearningTarget.select(
+        node,
+        &GraphManager.find_node_by_id(graph_id, &1)
+      )
+
+    instruction = Prompts.guided_learning_plan(context, node.content || "", target)
 
     queue_response("guided_learning_plan", instruction, child, graph_id, live_view_topic,
-      response_contract: "guided_learning_plan"
+      response_contract: "guided_learning_plan",
+      guided_target: target
     )
   end
 

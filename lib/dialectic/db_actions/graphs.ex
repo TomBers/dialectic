@@ -100,7 +100,7 @@ defmodule Dialectic.DbActions.Graphs do
     token = generate_share_token()
     slug = generate_unique_slug(title)
 
-    result =
+    changeset =
       %Graph{}
       |> Graph.changeset(%{
         title: title,
@@ -114,7 +114,8 @@ defmodule Dialectic.DbActions.Graphs do
         slug: slug,
         prompt_mode: prompt_mode
       })
-      |> Repo.insert(mode: :savepoint)
+
+    result = Repo.transact(fn -> Repo.insert(changeset, mode: :savepoint) end)
 
     case result do
       {:ok, graph} ->

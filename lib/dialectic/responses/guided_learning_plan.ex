@@ -133,7 +133,8 @@ defmodule Dialectic.Responses.GuidedLearningPlan do
             label: tool.label,
             reason: action.reason,
             icon: tool.icon,
-            tool_description: tool.description
+            tool_description: tool.description,
+            target: Map.get(action, :target)
           }
         end)
         |> Enum.with_index()
@@ -242,6 +243,13 @@ defmodule Dialectic.Responses.GuidedLearningPlan do
   end
 
   def normalize(_plan), do: {:error, ["invalid structured learning plan"]}
+
+  def bind_target(plan, target) do
+    with {:ok, plan} <- normalize(plan),
+         {:ok, target} <- Dialectic.Responses.GuidedLearningTarget.normalize(target) do
+      {:ok, %{plan | actions: Enum.map(plan.actions, &Map.put(&1, :target, target))}}
+    end
+  end
 
   def render(plan) do
     with {:ok, normalized_plan} <- normalize(plan) do
@@ -365,7 +373,16 @@ defmodule Dialectic.Responses.GuidedLearningPlan do
 
         if is_binary(key) and is_binary(normalized_reason) and normalized_reason != "" and
              match?({:ok, _}, fetch(key)) do
-          [%{key: key, reason: normalized_reason}]
+          case value(action, :target) do
+            nil ->
+              [%{key: key, reason: normalized_reason}]
+
+            target ->
+              case Dialectic.Responses.GuidedLearningTarget.normalize(target) do
+                {:ok, target} -> [%{key: key, reason: normalized_reason, target: target}]
+                _ -> []
+              end
+          end
         else
           []
         end

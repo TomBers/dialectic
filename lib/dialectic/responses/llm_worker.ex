@@ -611,7 +611,16 @@ defmodule Dialectic.Workers.LLMWorker do
   def guided_learning_plan_response_action(args, response) do
     case GuidedLearningPlan.validate(response) do
       {:ok, plan} ->
-        {:accept, plan}
+        case Map.get(args, "guided_target") do
+          nil ->
+            {:accept, plan}
+
+          target ->
+            case GuidedLearningPlan.bind_target(plan, target) do
+              {:ok, bound_plan} -> {:accept, bound_plan}
+              {:error, _} -> {:reject, ["invalid action target"]}
+            end
+        end
 
       {:error, errors} ->
         if Map.get(args, "guided_plan_repair_attempt", false) do

@@ -259,6 +259,68 @@ defmodule DialecticWeb.GraphLiveTest do
   end
 
   describe "mount/3" do
+    test "guided actions retain their serialized answer target and reject edits before reserving",
+         %{conn: conn} do
+      {:ok, view, _} = setup_live_for_graph(conn, "Explicit action target")
+
+      %{graph_id: graph_id, node: origin, current_user: user} =
+        :sys.get_state(view.pid).socket.assigns
+
+      answer =
+        GraphManager.add_child(graph_id, [origin], fn _ -> :ok end, "answer", user.email,
+          fields: %{content: "# Study evidence\nSpeed improved 25.1%, quality over 40%."}
+        )
+
+      question =
+        GraphManager.add_child(
+          graph_id,
+          [answer],
+          fn _ -> "Make a plan" end,
+          "question",
+          user.email
+        )
+
+      plan_node =
+        GraphManager.add_child(graph_id, [question], fn _ -> :ok end, "learning_plan", user.email)
+
+      {:ok, plan} =
+        GuidedLearningPlan.validate(
+          "## Learning plan: Evidence\n#{@guided_test_actions}\n#{@guided_test_paths}"
+        )
+
+      target =
+        Dialectic.Responses.GuidedLearningTarget.select(
+          GraphManager.find_node_by_id(graph_id, question.id),
+          &GraphManager.find_node_by_id(graph_id, &1)
+        )
+
+      {:ok, plan} = GuidedLearningPlan.bind_target(plan, target)
+      {:ok, content} = GuidedLearningPlan.render(plan)
+
+      GraphManager.update_vertex_fields(graph_id, plan_node.id, %{
+        content: content,
+        guided_plan: plan |> Jason.encode!() |> Jason.decode!()
+      })
+
+      render_click(view, "node_clicked", %{"id" => plan_node.id})
+      assert has_element?(view, "#guided-plan-action-target-0", "Study evidence")
+      assert has_element?(view, "#node-action-targets-#{plan_node.id}", "Study evidence")
+      view |> element("#guided-plan-action-0") |> render_click()
+      result = :sys.get_state(view.pid).socket.assigns.node
+      assert result.class == "clarify"
+      assert result.source_text == answer.content
+      assert result.source_text != question.content
+
+      GraphManager.update_vertex_fields(graph_id, answer.id, %{content: "Edited study evidence"})
+      render_click(view, "node_clicked", %{"id" => plan_node.id})
+      count = length(GraphManager.vertices(graph_id))
+      view |> element("#guided-plan-action-1") |> render_click()
+      assert has_element?(view, "#flash-error", "has changed or was removed")
+      assert length(GraphManager.vertices(graph_id)) == count
+
+      refute "action:counterexample" in GraphManager.find_node_by_id(graph_id, plan_node.id).guided_submissions
+    end
+
     test "keeps a stable anonymous LLM actor in the signed browser session", %{conn: conn} do
       first_conn = get(conn, ~p"/")
       actor_id = get_session(first_conn, :llm_actor_id)
