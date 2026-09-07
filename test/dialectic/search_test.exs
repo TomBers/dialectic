@@ -78,8 +78,50 @@ defmodule Dialectic.SearchTest do
     assert Search.search_public(term) == []
   end
 
-  test "requires at least three characters" do
-    assert Search.search_public("ai") == []
+  test "supports short topic names without matching them inside unrelated words" do
+    graph = GraphFixtures.insert_graph(%{title: "AI and learning"})
+    GraphFixtures.insert_graph(%{title: "Rail transport"})
+
+    assert [%{graph: %{title: title}}] = Search.search_public("ai")
+    assert title == graph.title
+    assert Search.search_public("a") == []
+  end
+
+  test "finds a topic from a natural question and words in a different order" do
+    graph = GraphFixtures.insert_graph(%{title: "Free will"})
+
+    assert [%{graph: %{title: title}}] = Search.search_public("Does free will exist?")
+    assert title == graph.title
+    assert [%{graph: %{title: ^title}}] = Search.search_public("will free")
+  end
+
+  test "natural questions find node passages and preserve links to the matching node" do
+    graph = GraphFixtures.insert_graph(%{title: "Reasoning", data: graph_data("free will")})
+
+    assert [result] = Search.search_public("Does free will exist?")
+    assert result.graph.title == graph.title
+    assert Enum.map(result.matches, & &1["id"]) == ["2", "3"]
+    assert Enum.any?(result.matches, &(&1.search_preview_label == "Source"))
+  end
+
+  test "search treats SQL wildcards as literal text" do
+    matching = GraphFixtures.insert_graph(%{title: "A 50%_increase"})
+    GraphFixtures.insert_graph(%{title: "A 500 increase"})
+
+    assert [%{graph: %{title: title}}] = Search.search_public("50%_increase")
+    assert title == matching.title
+  end
+
+  test "pagination can reach every result without duplicates" do
+    for index <- 1..15 do
+      GraphFixtures.insert_graph(%{title: "Pagination topic #{index}"})
+    end
+
+    first = Search.search_public("pagination topic", limit: 12)
+    second = Search.search_public("pagination topic", limit: 12, offset: 12)
+    assert length(first) == 12
+    assert length(second) == 3
+    assert length(Enum.uniq_by(first ++ second, & &1.graph.title)) == 15
   end
 
   test "limits node matches per graph before selecting graph candidates" do

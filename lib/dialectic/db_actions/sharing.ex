@@ -3,6 +3,9 @@ defmodule Dialectic.DbActions.Sharing do
   alias Dialectic.Repo
   alias Dialectic.Accounts.{Graph, GraphShare, User}
 
+  def can_manage?(%User{id: id}, %Graph{user_id: id}) when not is_nil(id), do: true
+  def can_manage?(_user, _graph), do: false
+
   @doc """
   Generates a share token for a graph if one doesn't exist.
   Returns `{:ok, graph}`.
@@ -49,11 +52,23 @@ defmodule Dialectic.DbActions.Sharing do
   @doc """
   Removes a user's access to a graph.
   """
-  def remove_invite(%Graph{} = graph, email) do
-    from(gs in GraphShare,
-      where: gs.graph_title == ^graph.title and gs.email == ^email
-    )
-    |> Repo.delete_all()
+  def remove_invite(%Graph{} = graph, email, user) do
+    if can_manage?(user, Repo.get(Graph, graph.title)) do
+      from(gs in GraphShare,
+        where: gs.graph_title == ^graph.title and gs.email == ^email
+      )
+      |> Repo.delete_all()
+
+      Phoenix.PubSub.broadcast(
+        Dialectic.PubSub,
+        "graph_update:#{graph.title}",
+        {:graph_access_updated, graph.title}
+      )
+
+      :ok
+    else
+      {:error, :forbidden}
+    end
   end
 
   @doc """

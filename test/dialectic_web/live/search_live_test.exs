@@ -5,6 +5,36 @@ defmodule DialecticWeb.SearchLiveTest do
 
   alias Dialectic.GraphFixtures
 
+  test "search supports questions, pagination, and resetting the result stream", %{conn: conn} do
+    for index <- 1..14 do
+      GraphFixtures.insert_graph(%{
+        title: "Free will example #{index}",
+        slug: "free-will-#{index}"
+      })
+    end
+
+    {:ok, view, _html} = live(conn, ~p"/search")
+    view |> form("#global-search-form", %{"q" => "Does free will exist?"}) |> render_change()
+
+    assert has_element?(view, "#global-search-items article", "Free will")
+    assert has_element?(view, "#global-search-next")
+    refute has_element?(view, "#global-search-previous")
+
+    view |> element("#global-search-next") |> render_click()
+    assert has_element?(view, "#global-search-previous")
+    refute has_element?(view, "#global-search-next")
+    assert has_element?(view, "#global-search-items > article:nth-child(2)")
+    refute has_element?(view, "#global-search-items > article:nth-child(3)")
+
+    view |> form("#global-search-form", %{"q" => "nonexistent topic"}) |> render_change()
+    assert has_element?(view, "#global-search-empty")
+    refute has_element?(view, "#global-search-pagination")
+
+    view |> form("#global-search-form", %{"q" => "free will"}) |> render_change()
+    assert has_element?(view, "#global-search-next")
+    refute has_element?(view, "#global-search-previous")
+  end
+
   test "renders the global search entry point", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/search")
 

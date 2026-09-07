@@ -43,21 +43,17 @@ defmodule Dialectic.Graph.Creator do
 
     callback.("Creating grid structure...")
 
-    if Graphs.get_graph_by_title(title) do
-      {:ok, title}
-    else
-      do_create(
-        title,
-        question,
-        user,
-        user_identity,
-        mode,
-        actor_id,
-        callback,
-        await_response?,
-        response_timeout
-      )
-    end
+    do_create(
+      title,
+      question,
+      user,
+      user_identity,
+      mode,
+      actor_id,
+      callback,
+      await_response?,
+      response_timeout
+    )
   end
 
   defp do_create(
@@ -71,8 +67,9 @@ defmodule Dialectic.Graph.Creator do
          await_response?,
          response_timeout
        ) do
-    case Graphs.create_new_graph(title, user, Atom.to_string(mode)) do
-      {:ok, _} ->
+    case Graphs.create_unique_graph(title, user, Atom.to_string(mode)) do
+      {:ok, graph} ->
+        title = graph.title
         ModeServer.set_mode(title, mode)
 
         callback.("Initializing grid...")

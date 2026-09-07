@@ -108,33 +108,49 @@ defmodule Dialectic.DbActions.GraphsTest do
     end
   end
 
-  describe "toggle_graph_locked/1" do
+  describe "toggle_graph_locked/2" do
     test "flips is_locked flag" do
       title = unique_title("toggle-lock")
-      graph = insert_graph!(title)
+      user = user_fixture()
+      graph = insert_graph!(title, user)
       assert graph.is_locked == false
 
-      updated = Graphs.toggle_graph_locked(graph)
+      {:ok, updated} = Graphs.toggle_graph_locked(graph, user)
       assert updated.is_locked
 
       # Flip back for completeness
-      updated_again = Graphs.toggle_graph_locked(updated)
+      {:ok, updated_again} = Graphs.toggle_graph_locked(updated, user)
       refute updated_again.is_locked
     end
   end
 
-  describe "toggle_graph_public/1" do
+  describe "toggle_graph_public/2" do
     test "flips is_public flag" do
       title = unique_title("toggle-public")
-      graph = insert_graph!(title)
+      user = user_fixture()
+      graph = insert_graph!(title, user)
       assert graph.is_public == true
 
-      updated = Graphs.toggle_graph_public(graph)
+      {:ok, updated} = Graphs.toggle_graph_public(graph, user)
       refute updated.is_public
 
-      updated_again = Graphs.toggle_graph_public(updated)
+      {:ok, updated_again} = Graphs.toggle_graph_public(updated, user)
       assert updated_again.is_public
     end
+  end
+
+  test "access settings reject non-owners and anonymous users at the database boundary" do
+    owner = user_fixture()
+    graph = insert_graph!(unique_title("access"), owner)
+
+    for user <- [nil, user_fixture()] do
+      assert {:error, :forbidden} = Graphs.toggle_graph_locked(graph, user)
+      assert {:error, :forbidden} = Graphs.toggle_graph_public(graph, user)
+    end
+
+    stored = Repo.reload!(graph)
+    assert stored.is_public
+    refute stored.is_locked
   end
 
   describe "list_graphs/0" do

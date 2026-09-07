@@ -4,51 +4,50 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
   alias Dialectic.Responses.PromptsStructured
 
   describe "system_preamble/1" do
-    test "defines the fast, child-accessible Essential contract" do
+    test "defines a concise adult Essential contract with honest source limits" do
       prompt = PromptsStructured.system_preamble(:high_school)
 
       assert prompt =~ "Complexity level: Essential"
-      assert prompt =~ "curious seven-year-old"
-      assert prompt =~ "everyday words, short sentences, concrete examples"
+      assert prompt =~ "curious adult without specialist knowledge"
+      assert prompt =~ "preserve distinctions needed to understand the question accurately"
+      refute prompt =~ "seven-year-old"
       assert prompt =~ "Aim for a normal response body of roughly 150-250 words"
       assert prompt =~ "a few short, focused paragraphs"
       assert prompt =~ "Split a paragraph whenever it starts carrying more than one main idea"
-      assert prompt =~ "Do not perform source research"
+      assert prompt =~ "Live source research is unavailable at this level"
+      assert prompt =~ "Do not present a source-checking plan as a completed source check"
       assert prompt =~ "Do not supply direct quotations"
       refute prompt =~ "## Sources` containing"
     end
 
-    test "defines the high-school-level In-depth contract" do
+    test "defines a fuller adult In-depth contract" do
       prompt = PromptsStructured.system_preamble(:university)
 
       assert prompt =~ "Complexity level: In-depth"
-      assert prompt =~ "motivated high-school reader"
+      assert prompt =~ "intellectually curious adult seeking a fuller explanation"
       assert prompt =~ "Aim for a normal response body of roughly 300-550 words"
       assert prompt =~ "enough descriptive `##` sections"
       assert prompt =~ "Keep each paragraph focused on one idea"
       assert prompt =~ "compact list, a brief blockquote, or a comparison table"
       assert prompt =~ "renders citations directly from provider grounding metadata"
       assert prompt =~ "peer-reviewed research"
-      assert prompt =~ "normally 3-5 distinct sources and no more than 6"
+      assert prompt =~ "with no minimum count"
       assert prompt =~ "instead of adding near-duplicate sources"
       assert prompt =~ "Begin research with searches targeting the relevant academic"
       assert prompt =~ "may provide supplementary context"
       assert prompt =~ "site:.edu"
 
-      assert prompt =~
-               "aim to include one or two brief direct quotations whose exact wording adds analytical value"
-
-      assert prompt =~ "quotations do not need matching provider-grounded URLs"
+      assert prompt =~ "exact wording is available in supplied or retrieved material"
       assert prompt =~ "omit an uncertain locator rather than inventing one"
 
       assert prompt =~ "Do not add a sources or references section"
     end
 
-    test "defines the university-level Scholarly contract" do
+    test "defines the rigorous adult Scholarly contract without quotation quotas" do
       prompt = PromptsStructured.system_preamble(:expert)
 
       assert prompt =~ "Complexity level: Scholarly"
-      assert prompt =~ "university level for an undergraduate reader"
+      assert prompt =~ "informed adult willing to engage with scholarly arguments and methods"
       assert prompt =~ "do not assume postgraduate expertise"
       assert prompt =~ "Aim for a normal response body of roughly 450-750 words"
       assert prompt =~ "several descriptive `##` sections"
@@ -56,16 +55,13 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
       assert prompt =~ "renders citations directly from provider grounding metadata"
       assert prompt =~ "university-press works"
       assert prompt =~ "smallest source set that adequately supports the answer"
-      assert prompt =~ "unless the user explicitly requests a broad literature review"
+      assert prompt =~ "when a genuine comparison or literature review requires it"
       assert prompt =~ "Give primary and scholarly sources the greatest evidential weight"
       assert prompt =~ "should not displace stronger sources"
       assert prompt =~ "carry a material claim on their own"
 
-      assert prompt =~
-               "normally aim for two to four distinct brief direct quotations"
-
-      assert prompt =~ "Use fewer when additional quotations would be uncertain"
-      assert prompt =~ "quotations do not need matching provider-grounded URLs"
+      assert prompt =~ "Do not add quotations for decoration or to signal scholarly depth"
+      refute prompt =~ "two to four distinct brief direct quotations"
       assert prompt =~ "author and work"
       assert prompt =~ "matches the quoted edition or translation"
 
@@ -77,8 +73,8 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
         prompt = PromptsStructured.system_preamble(mode)
 
         assert prompt =~ "Never invent or guess quotations"
-        assert prompt =~ "Direct quotations and provider-grounded source links are separate"
-        assert prompt =~ "does not need a matching grounded URL"
+        assert prompt =~ "never wording reconstructed from memory"
+        assert prompt =~ "Supplied quotations remain unverified unless checked"
         assert prompt =~ "If the wording is uncertain, paraphrase it"
         assert prompt =~ "Do not add a sources or references section"
         assert prompt =~ "If grounded evidence is unavailable, do not invent"
@@ -86,8 +82,22 @@ defmodule Dialectic.Responses.PromptsStructuredTest do
         assert prompt =~ "Start with one concise `#` title"
         assert prompt =~ "Use descriptive `##` headings"
         assert prompt =~ "Never produce ASCII art"
-        assert prompt =~ "Add genuinely new information"
+        assert prompt =~ "Understanding takes priority over novelty"
+        assert prompt =~ "someone arriving at this node directly"
+        assert prompt =~ "preserve that task's format"
         assert prompt =~ "Check that the answer is proportionate, readable, complete"
+      end
+    end
+
+    test "aligns all levels with learning and proportional scrutiny" do
+      for mode <- [:high_school, :university, :expert] do
+        prompt = PromptsStructured.system_preamble(mode)
+
+        assert prompt =~ "explain the central idea, apply it, or judge a claim more accurately"
+        assert prompt =~ "Do not infer understanding from material generated earlier"
+        assert prompt =~ "Do not force a quiz, withhold an answer"
+        assert prompt =~ "do not manufacture controversy or give fringe claims equal standing"
+        assert prompt =~ "Correct a false premise"
       end
     end
 

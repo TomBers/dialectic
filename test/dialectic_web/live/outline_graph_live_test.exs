@@ -394,6 +394,39 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     })
   end
 
+  test "reader distinguishes recorded source links from unsourced answers", %{conn: conn} do
+    data = sample_graph_data()
+
+    nodes =
+      Enum.map(data["nodes"], fn
+        %{"id" => "3"} = node ->
+          Map.put(node, "grounding_metadata", %{
+            "google" => %{
+              "groundingChunks" => [
+                %{"web" => %{"uri" => "https://example.org/study", "title" => "Study"}}
+              ]
+            }
+          })
+
+        node ->
+          node
+      end)
+
+    graph = create_graph(%{data | "nodes" => nodes})
+    {:ok, view, _} = live(conn, ~p"/g/#{graph.slug}?node=3")
+
+    assert has_element?(
+             view,
+             "#reader-source-status-3[data-source-status='links_returned']",
+             "1 source link returned"
+           )
+
+    assert has_element?(view, "#reader-source-status-3", "not been independently verified")
+    refute has_element?(view, "#reader-source-status-2")
+    {:ok, other_view, _} = live(conn, ~p"/g/#{graph.slug}?node=5")
+    assert has_element?(other_view, "#reader-source-status-5[data-source-status='no_links']")
+  end
+
   test "mounts the reader at the start of the graph and renders through the next split", %{
     conn: conn
   } do

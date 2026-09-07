@@ -97,11 +97,12 @@ defmodule DialecticWeb.InspirationLive do
 
   defp build_prompt(assigns) do
     """
-    You are a muse for focused curiosity.
-    Generate exactly 5 distinct, open-ended questions that are specific, vivid, and easy to grasp without extra setup.
-    Each question must be a single sentence, 10–22 words, and clearly invites more than one plausible answer.
+    Help curious adults find significant, investigable questions.
+    Generate exactly 5 distinct, open-ended questions that are specific and easy to grasp without extra setup.
+    Each question must be a single sentence, 10–22 words, and invite explanation, application, or evaluation rather than mere opinion.
     Avoid yes/no questions, trivia, or broad prompts like “What do you think about X?”
     Ensure each question points to a concrete object, mechanism, tension, or scenario.
+    Do not assume a contested premise is true or manufacture disagreement about established findings. Clearly mark imagined scenarios as hypothetical.
 
     Adhere to these stylistic and thematic preferences:
 
@@ -115,7 +116,7 @@ defmodule DialecticWeb.InspirationLive do
        - Mid-range: allow present-focused questions connecting past -> present -> future.
 
     3. Depth: #{describe_scale(assigns.depth, "Beginner/General Audience", "Expert/Technical")}
-       - Beginner/General: avoid jargon, explain assumptions, rely on everyday language and analogies.
+       - Beginner/General: assume adult reasoning ability without specialist knowledge; use plain language while preserving the substance of the question.
        - Expert/Technical: assume prior knowledge; reference specific theories, models, methods, or technical debates.
 
     Output the questions as a JSON array of strings.

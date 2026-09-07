@@ -74,6 +74,7 @@ defmodule DialecticWeb.GraphLive do
   require Logger
 
   on_mount {DialecticWeb.UserAuth, :mount_current_user}
+  on_mount DialecticWeb.GraphAccess
 
   # ── handle_params: auto-start presentation from URL query params ──
   # Called after mount on initial page load and on every live_patch.
@@ -390,31 +391,46 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_event("toggle_lock_graph", _, socket) do
-    graph_struct = GraphActions.toggle_graph_locked(graph_action_params(socket))
-    can_edit = !graph_struct.is_locked
+    case GraphActions.toggle_graph_locked(
+           graph_action_params(socket),
+           socket.assigns.current_user
+         ) do
+      {:ok, graph_struct} ->
+        can_edit = !graph_struct.is_locked
 
-    {:noreply,
-     socket
-     |> assign(graph_struct: graph_struct, can_edit: can_edit)
-     |> push_event("analytics", %{
-       event: "access_settings_changed",
-       params: %{setting: "editing", enabled: to_string(can_edit)}
-     })}
+        {:noreply,
+         socket
+         |> assign(graph_struct: graph_struct, can_edit: can_edit)
+         |> push_event("analytics", %{
+           event: "access_settings_changed",
+           params: %{setting: "editing", enabled: to_string(can_edit)}
+         })}
+
+      {:error, _reason} ->
+        {:noreply, put_flash(socket, :error, "Only the grid owner can change access settings.")}
+    end
   end
 
   def handle_event("toggle_public_graph", _, socket) do
-    graph_struct = GraphActions.toggle_graph_public(graph_action_params(socket))
+    case GraphActions.toggle_graph_public(
+           graph_action_params(socket),
+           socket.assigns.current_user
+         ) do
+      {:ok, graph_struct} ->
+        {:noreply,
+         socket
+         |> assign(graph_struct: graph_struct)
+         |> push_event("analytics", %{
+           event: "access_settings_changed",
+           params: %{
+             setting: "visibility",
+             visibility: if(graph_struct.is_public, do: "public", else: "private")
+           }
+         })}
 
-    {:noreply,
-     socket
-     |> assign(graph_struct: graph_struct)
-     |> push_event("analytics", %{
-       event: "access_settings_changed",
-       params: %{
-         setting: "visibility",
-         visibility: if(graph_struct.is_public, do: "public", else: "private")
-       }
-     })}
+      {:error, _reason} ->
+        {:noreply, put_flash(socket, :error, "Only the grid owner can change access settings.")}
+    end
   end
 
   def handle_event("follow_graph", _params, socket) do
@@ -677,7 +693,7 @@ defmodule DialecticWeb.GraphLive do
          true <- Map.get(plan_node, :class) == "learning_plan",
          {:ok, _guided_plan} <- GuidedLearningPlan.normalize(plan_node.guided_plan),
          true <- guided_action_recommended?(plan_node, action),
-         {:ok, target_node} <- guided_action_target(socket.assigns.graph_id, plan_node),
+         {:ok, target_node} <- guided_action_target(socket.assigns.graph_id, plan_node, action),
          false <- guided_action_used?(plan_node, target_node, action),
          :ok <-
            GraphManager.reserve_guided_submission(
@@ -698,6 +714,14 @@ defmodule DialecticWeb.GraphLive do
 
       {:error, :already_reserved} ->
         {:noreply, put_flash(socket, :error, "That action has already been used here")}
+
+      {:error, :target_changed} ->
+        {:noreply,
+         put_flash(
+           socket,
+           :error,
+           "The answer this action applies to has changed or was removed. Create a new learning plan."
+         )}
 
       _invalid_recommendation ->
         {:noreply, put_flash(socket, :error, "That recommended action is no longer available")}
@@ -2157,12 +2181,22 @@ defmodule DialecticWeb.GraphLive do
     is_nil(socket.assigns.current_user) && guided_learning_enabled?(params)
   end
 
-  defp guided_plan_options(%{class: "learning_plan"} = plan_node) do
+  defp guided_plan_options(%{class: "learning_plan"} = plan_node, graph_id) do
     with {:ok, _guided_plan} <- GuidedLearningPlan.normalize(Map.get(plan_node, :guided_plan)),
          %{} = target_node <- List.first(Map.get(plan_node, :parents, [])) do
       actions =
         plan_node
         |> guided_next_actions()
+        |> Enum.map(fn action ->
+          target =
+            action.target ||
+              Dialectic.Responses.GuidedLearningTarget.select(
+                GraphManager.find_node_by_id(graph_id, target_node.id) || target_node,
+                &GraphManager.find_node_by_id(graph_id, &1)
+              )
+
+          Map.put(action, :target, target)
+        end)
         |> annotate_guided_actions(plan_node, target_node)
 
       paths =
@@ -2176,7 +2210,7 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  defp guided_plan_options(_node), do: {[], []}
+  defp guided_plan_options(_node, _graph_id), do: {[], []}
 
   defp guided_paths(%{class: "learning_plan", guided_plan: guided_plan})
        when is_map(guided_plan) do
@@ -2262,6 +2296,24 @@ defmodule DialecticWeb.GraphLive do
       %{} = parent -> {:ok, parent}
       parent_id when is_binary(parent_id) -> find_node_safe(graph_id, parent_id)
       _missing_parent -> {:error, :node_not_found}
+    end
+  end
+
+  defp guided_action_target(graph_id, plan_node, action) do
+    recommendation = Enum.find(guided_next_actions(plan_node), &(&1.action == action))
+    lookup = &GraphManager.find_node_by_id(graph_id, &1)
+
+    case Map.get(recommendation, :target) do
+      nil ->
+        with {:ok, parent} <- guided_action_target(graph_id, plan_node) do
+          target =
+            Dialectic.Responses.GuidedLearningTarget.select(lookup.(parent.id) || parent, lookup)
+
+          Dialectic.Responses.GuidedLearningTarget.resolve(target, lookup)
+        end
+
+      target ->
+        Dialectic.Responses.GuidedLearningTarget.resolve(target, lookup)
     end
   end
 

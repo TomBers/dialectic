@@ -172,6 +172,19 @@ defmodule DialecticWeb.CommunityLive do
           </div>
         </header>
 
+        <.link
+          id="community-question-pilot"
+          navigate={~p"/questions/does-ai-make-us-better-thinkers"}
+          class="mb-6 flex min-h-16 items-center justify-between gap-4 border-y border-stone-300 px-1 py-5 text-teal-900 hover:text-teal-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-700"
+        >
+          <span>
+            <span class="block text-xs font-semibold uppercase tracking-widest">Start with a question</span>
+            <span class="mt-1 block font-serif text-xl">Does AI make us better thinkers?</span>
+            <span class="mt-1 block text-sm text-slate-600">Read the evidence, examine an objection, test your reasoning.</span>
+          </span>
+          <.icon name="hero-arrow-right" class="h-5 w-5 shrink-0" />
+        </.link>
+
         <div class="space-y-5">
           <%= if @featured_grids != [] do %>
             <.curated_grid_section

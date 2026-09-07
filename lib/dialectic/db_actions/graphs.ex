@@ -52,6 +52,31 @@ defmodule Dialectic.DbActions.Graphs do
     if sanitized == "", do: "untitled-idea", else: sanitized
   end
 
+  def create_unique_graph(title, user, prompt_mode) do
+    create_unique_graph(title, title, user, prompt_mode, 5)
+  end
+
+  defp create_unique_graph(_title, _candidate, _user, _prompt_mode, 0),
+    do: {:error, :title_conflict}
+
+  defp create_unique_graph(title, candidate, user, prompt_mode, attempts) do
+    case create_new_graph(candidate, user, prompt_mode) do
+      {:error, %Ecto.Changeset{} = changeset} = error ->
+        if Enum.any?(changeset.errors, fn
+             {:title, {_message, metadata}} -> metadata[:constraint] == :unique
+             _ -> false
+           end) do
+          suffix = :crypto.strong_rand_bytes(4) |> Base.encode16(case: :lower)
+          create_unique_graph(title, "#{title} (#{suffix})", user, prompt_mode, attempts - 1)
+        else
+          error
+        end
+
+      result ->
+        result
+    end
+  end
+
   @doc """
   Creates a new graph with the given title.
   """
@@ -75,7 +100,7 @@ defmodule Dialectic.DbActions.Graphs do
     token = generate_share_token()
     slug = generate_unique_slug(title)
 
-    result =
+    changeset =
       %Graph{}
       |> Graph.changeset(%{
         title: title,
@@ -89,7 +114,8 @@ defmodule Dialectic.DbActions.Graphs do
         slug: slug,
         prompt_mode: prompt_mode
       })
-      |> Repo.insert()
+
+    result = Repo.transact(fn -> Repo.insert(changeset, mode: :savepoint) end)
 
     case result do
       {:ok, graph} ->
@@ -381,18 +407,32 @@ defmodule Dialectic.DbActions.Graphs do
     end
   end
 
-  def toggle_graph_locked(graph) do
-    graph
-    |> Graph.changeset(%{is_locked: !graph.is_locked})
-    |> Repo.update!()
+  def toggle_graph_locked(graph, user) do
+    update_access_setting(graph, user, :is_locked)
   end
 
-  def toggle_graph_public(graph) do
-    {:ok, graph} = Dialectic.DbActions.Sharing.ensure_share_token(graph)
+  def toggle_graph_public(graph, user) do
+    update_access_setting(graph, user, :is_public)
+  end
 
-    graph
-    |> Graph.changeset(%{is_public: !graph.is_public})
-    |> Repo.update!()
+  defp update_access_setting(graph, user, field) do
+    graph = Repo.get(Graph, graph.title)
+
+    if Dialectic.DbActions.Sharing.can_manage?(user, graph) do
+      with {:ok, graph} <- Dialectic.DbActions.Sharing.ensure_share_token(graph),
+           {:ok, updated_graph} <-
+             graph |> Graph.changeset(%{field => !Map.fetch!(graph, field)}) |> Repo.update() do
+        Phoenix.PubSub.broadcast(
+          Dialectic.PubSub,
+          "graph_update:#{graph.title}",
+          {:graph_access_updated, graph.title}
+        )
+
+        {:ok, updated_graph}
+      end
+    else
+      {:error, :forbidden}
+    end
   end
 
   @doc """

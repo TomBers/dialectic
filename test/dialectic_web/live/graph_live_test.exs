@@ -37,13 +37,11 @@ defmodule DialecticWeb.GraphLiveTest do
   end
 
   defp setup_live_for_graph(conn, graph_name) do
-    conn =
-      conn
-      |> log_in_user(
-        user_fixture(%{email: "tester-#{System.unique_integer([:positive])}@example.com"})
-      )
+    user = user_fixture(%{email: "tester-#{System.unique_integer([:positive])}@example.com"})
+    conn = log_in_user(conn, user)
 
     {:ok, graph} = Dialectic.GraphFixtures.insert_graph_fixture(graph_name)
+    graph = graph |> Ecto.Changeset.change(user_id: user.id) |> Dialectic.Repo.update!()
 
     live(conn, ~p"/g/#{graph.slug}/graph?node=1")
   end
@@ -149,6 +147,51 @@ defmodule DialecticWeb.GraphLiveTest do
         id: ^background_node_id,
         label: "The AI service is retrying…"
       })
+    end
+  end
+
+  describe "source status during generation" do
+    for {status, grounding} <- [
+          {"no_links", nil},
+          {"links_returned",
+           %{google: %{groundingChunks: [%{web: %{uri: "https://example.org/study"}}]}}}
+        ] do
+      test "waits for completion before showing #{status}", %{conn: conn} do
+        {:ok, view, _html} = setup_live_for_graph(conn, "Source Status #{unquote(status)}")
+        graph_id = :sys.get_state(view.pid).socket.assigns.graph_id
+        node = GraphManager.add_node(graph_id, %Vertex{class: "answer", content: ""})
+
+        render_click(view, "node_clicked", %{"id" => node.id})
+        set_stream_tracking(view, MapSet.new([node.id]), MapSet.new())
+
+        partial =
+          GraphManager.update_vertex_fields(graph_id, node.id, %{
+            content: "## An answer\n\nPartial text arriving before the sources."
+          })
+
+        send(view.pid, {:stream_chunk_broadcast, partial, :node_id, node.id, nil})
+
+        assert has_element?(view, "#node-menu-#{node.id}[data-streaming='true']")
+        assert has_element?(view, "#markdown-body-#{node.id}[data-md*='Partial text']")
+        refute has_element?(view, "#node-source-status-#{node.id}")
+
+        final =
+          GraphManager.update_vertex_fields(graph_id, node.id, %{
+            content: "## An answer\n\nThe complete answer.",
+            grounding_metadata: unquote(Macro.escape(grounding))
+          })
+
+        send(view.pid, {:stream_chunk_broadcast, final, :node_id, node.id, nil})
+        refute has_element?(view, "#node-source-status-#{node.id}")
+
+        send(view.pid, {:llm_request_complete, node.id})
+        assert has_element?(view, "#node-menu-#{node.id}[data-streaming='false']")
+
+        assert has_element?(
+                 view,
+                 "#node-source-status-#{node.id}[data-source-status='#{unquote(status)}']"
+               )
+      end
     end
   end
 
@@ -261,6 +304,68 @@ defmodule DialecticWeb.GraphLiveTest do
   end
 
   describe "mount/3" do
+    test "guided actions retain their serialized answer target and reject edits before reserving",
+         %{conn: conn} do
+      {:ok, view, _} = setup_live_for_graph(conn, "Explicit action target")
+
+      %{graph_id: graph_id, node: origin, current_user: user} =
+        :sys.get_state(view.pid).socket.assigns
+
+      answer =
+        GraphManager.add_child(graph_id, [origin], fn _ -> :ok end, "answer", user.email,
+          fields: %{content: "# Study evidence\nSpeed improved 25.1%, quality over 40%."}
+        )
+
+      question =
+        GraphManager.add_child(
+          graph_id,
+          [answer],
+          fn _ -> "Make a plan" end,
+          "question",
+          user.email
+        )
+
+      plan_node =
+        GraphManager.add_child(graph_id, [question], fn _ -> :ok end, "learning_plan", user.email)
+
+      {:ok, plan} =
+        GuidedLearningPlan.validate(
+          "## Learning plan: Evidence\n#{@guided_test_actions}\n#{@guided_test_paths}"
+        )
+
+      target =
+        Dialectic.Responses.GuidedLearningTarget.select(
+          GraphManager.find_node_by_id(graph_id, question.id),
+          &GraphManager.find_node_by_id(graph_id, &1)
+        )
+
+      {:ok, plan} = GuidedLearningPlan.bind_target(plan, target)
+      {:ok, content} = GuidedLearningPlan.render(plan)
+
+      GraphManager.update_vertex_fields(graph_id, plan_node.id, %{
+        content: content,
+        guided_plan: plan |> Jason.encode!() |> Jason.decode!()
+      })
+
+      render_click(view, "node_clicked", %{"id" => plan_node.id})
+      assert has_element?(view, "#guided-plan-action-target-0", "Study evidence")
+      assert has_element?(view, "#node-action-targets-#{plan_node.id}", "Study evidence")
+      view |> element("#guided-plan-action-0") |> render_click()
+      result = :sys.get_state(view.pid).socket.assigns.node
+      assert result.class == "clarify"
+      assert result.source_text == answer.content
+      assert result.source_text != question.content
+
+      GraphManager.update_vertex_fields(graph_id, answer.id, %{content: "Edited study evidence"})
+      render_click(view, "node_clicked", %{"id" => plan_node.id})
+      count = length(GraphManager.vertices(graph_id))
+      view |> element("#guided-plan-action-1") |> render_click()
+      assert has_element?(view, "#flash-error", "has changed or was removed")
+      assert length(GraphManager.vertices(graph_id)) == count
+
+      refute "action:counterexample" in GraphManager.find_node_by_id(graph_id, plan_node.id).guided_submissions
+    end
+
     test "keeps a stable anonymous LLM actor in the signed browser session", %{conn: conn} do
       first_conn = get(conn, ~p"/")
       actor_id = get_session(first_conn, :llm_actor_id)

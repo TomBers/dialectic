@@ -3,6 +3,26 @@ defmodule Dialectic.LLM.GroundingTest do
 
   alias Dialectic.LLM.Grounding
 
+  test "source status counts distinct usable links, not search requests or malformed chunks" do
+    assert Grounding.sources(nil) == []
+    assert Grounding.sources(%{"google" => %{"webSearchQueries" => ["evidence"]}}) == []
+    assert Grounding.sources(%{google: %{groundingChunks: "invalid"}}) == []
+
+    metadata = %{
+      google: %{
+        groundingChunks: [
+          %{web: %{uri: "https://example.org/paper", title: "Paper"}},
+          %{"web" => %{"uri" => "https://example.org/paper", "title" => "Duplicate"}},
+          %{web: %{uri: "javascript:alert(1)"}},
+          %{web: %{uri: "/relative"}},
+          nil
+        ]
+      }
+    }
+
+    assert Grounding.sources(metadata) == [%{url: "https://example.org/paper", title: "Paper"}]
+  end
+
   test "retains and merges the complete provider grounding metadata" do
     first =
       Grounding.merge(nil, %{

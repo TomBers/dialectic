@@ -20,6 +20,7 @@ defmodule DialecticWeb.OutlineGraphLive do
   @max_outline_indent 4
 
   on_mount {DialecticWeb.UserAuth, :mount_current_user}
+  on_mount DialecticWeb.GraphAccess
 
   @impl true
   def mount(%{"graph_name" => graph_id_uri} = params, _session, socket) do

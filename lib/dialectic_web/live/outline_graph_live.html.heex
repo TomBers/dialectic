@@ -474,6 +474,14 @@
                     </h2>
                   </div>
 
+                  <DialecticWeb.SourceStatus.source_status
+                    node={reading_node}
+                    id={"reader-source-status-#{reading_node.id}"}
+                  />
+                  <DialecticWeb.SourceStatus.action_targets
+                    node={reading_node}
+                    id={"reader-action-targets-#{reading_node.id}"}
+                  />
                   <%= if String.trim(reading_node.content || "") == "" do %>
                     <div class="mt-8 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-10 text-center text-sm text-slate-500">
                       This node does not have content yet.

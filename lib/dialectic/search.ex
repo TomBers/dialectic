@@ -7,6 +7,7 @@ defmodule Dialectic.Search do
   alias Dialectic.Accounts.User
   alias Dialectic.Repo
   alias Dialectic.Search.Document
+  alias Dialectic.Search.Query
   alias DialecticWeb.NodeSearch
 
   @default_limit 12
@@ -16,16 +17,17 @@ defmodule Dialectic.Search do
   def search_public(query, opts \\ []) do
     query = normalize_query(query)
 
-    if String.length(query) < 3 do
+    if String.length(query) < 2 do
       []
     else
       limit = Keyword.get(opts, :limit, @default_limit)
-      pattern = contains_pattern(query)
-      graph_titles = candidate_graph_titles(pattern, query, limit)
+      offset = Keyword.get(opts, :offset, 0)
+      terms = Query.terms(query)
+      graph_titles = candidate_graph_titles(terms, query, limit, offset)
 
       graph_titles
       |> graph_results(query)
-      |> add_node_matches(node_matches(pattern, query, graph_titles), query)
+      |> add_node_matches(node_matches(terms, query, graph_titles), query)
       |> prepare_results(query)
     end
   end
@@ -38,14 +40,16 @@ defmodule Dialectic.Search do
     |> String.slice(0, @max_query_length)
   end
 
-  defp candidate_graph_titles(pattern, query, limit) do
+  defp candidate_graph_titles(terms, query, limit, offset) do
+    match = match_expression(terms)
+
     from(document in Document,
       join: graph in Graph,
       on: graph.title == document.graph_title,
       where: graph.is_public == true,
       where: graph.is_published == true,
       where: graph.is_deleted == false or is_nil(graph.is_deleted),
-      where: fragment("? ILIKE ? ESCAPE E'\\\\'", document.search_text, ^pattern),
+      where: ^match,
       group_by: document.graph_title,
       order_by: [
         asc: fragment("min(CASE WHEN ? = 'graph' THEN 0 ELSE 1 END)", document.kind),
@@ -53,6 +57,7 @@ defmodule Dialectic.Search do
         asc: document.graph_title
       ],
       limit: ^limit,
+      offset: ^offset,
       select: document.graph_title
     )
     |> Repo.all()
@@ -90,14 +95,16 @@ defmodule Dialectic.Search do
     end)
   end
 
-  defp node_matches(_pattern, _query, []), do: []
+  defp node_matches(_terms, _query, []), do: []
 
-  defp node_matches(pattern, query, graph_titles) do
+  defp node_matches(terms, query, graph_titles) do
+    match = match_expression(terms)
+
     ranked_documents =
       from(document in Document,
         where: document.graph_title in ^graph_titles,
         where: document.kind == "node",
-        where: fragment("? ILIKE ? ESCAPE E'\\\\'", document.search_text, ^pattern),
+        where: ^match,
         windows: [
           per_graph: [
             partition_by: document.graph_title,
@@ -139,7 +146,11 @@ defmodule Dialectic.Search do
         "deleted" => false
       }
 
-      case NodeSearch.annotate_result(node, query) do
+      match =
+        NodeSearch.annotate_result(node, query) ||
+          Enum.find_value(Query.terms(query), &NodeSearch.annotate_result(node, &1))
+
+      case match do
         nil ->
           acc
 
@@ -192,11 +203,11 @@ defmodule Dialectic.Search do
   defp result_rank(%{graph: graph}, _query), do: {2, {9, 9}, String.downcase(graph.title)}
 
   defp graph_match_reason(graph, query) do
-    query = String.downcase(query)
+    terms = Query.terms(query)
 
     cond do
-      String.contains?(String.downcase(graph.title), query) -> :title
-      Enum.any?(graph.tags, &String.contains?(String.downcase(&1), query)) -> :topic
+      Query.matches?(graph.title, terms) -> :title
+      Query.matches?(Enum.join(graph.tags, " "), terms) -> :topic
       true -> nil
     end
   end
@@ -213,6 +224,24 @@ defmodule Dialectic.Search do
   end
 
   defp contains_pattern(query), do: "%" <> escape_like(query) <> "%"
+
+  defp match_expression([]), do: dynamic(false)
+
+  defp match_expression(terms) do
+    Enum.reduce(terms, dynamic(true), fn term, acc ->
+      if String.length(term) < 3 do
+        pattern = Query.short_term_pattern(term)
+        dynamic([document], ^acc and fragment("? ~* ?", document.search_text, ^pattern))
+      else
+        pattern = contains_pattern(term)
+
+        dynamic(
+          [document],
+          ^acc and fragment("? ILIKE ? ESCAPE E'\\\\'", document.search_text, ^pattern)
+        )
+      end
+    end)
+  end
 
   defp escape_like(query) do
     query

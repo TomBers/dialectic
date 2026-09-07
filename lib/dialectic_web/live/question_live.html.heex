@@ -1,0 +1,306 @@
+<Layouts.app flash={@flash}>
+  <article id="public-question" class="question-page" aria-labelledby="question-title">
+    <div class="question-shell">
+      <nav class="question-breadcrumb" aria-label="Breadcrumb">
+        <.link navigate={~p"/community"}>Explore questions</.link>
+        <span aria-hidden="true">/</span>
+        <span>AI &amp; human judgement</span>
+      </nav>
+
+      <header class="question-header">
+        <p class="question-eyebrow">A question worth thinking about</p>
+        <h1 id="question-title">
+          Does AI make us<br class="hidden sm:block" /> better thinkers?
+        </h1>
+        <p class="question-deck">
+          A better answer on the screen. But what changes in the person?
+        </p>
+        <p class="question-meta">
+          Three studies · An open question · A moment to think for yourself
+        </p>
+      </header>
+
+      <div class="question-layout">
+        <aside class="question-contents">
+          <nav aria-label="On this page">
+            <p class="question-eyebrow">In this question</p>
+            <a href="#short-answer">The short answer</a>
+            <a href="#evidence">What the evidence shows</a>
+            <a href="#explore">Take a closer look</a>
+            <a href="#try-it">Test your reasoning</a>
+          </nav>
+        </aside>
+
+        <div class="question-reading">
+          <section id="short-answer" class="question-answer" aria-labelledby="short-answer-title">
+            <p class="question-eyebrow">The short answer</p>
+            <h2 id="short-answer-title">
+              It can. Better output and better thinking are different achievements.
+            </h2>
+            <p>
+              AI can help people perform some tasks better, and carefully designed tutoring can
+              improve learning. It can also help someone finish an exercise while leaving them
+              less able to solve the next one alone.
+              <a href="#study-work" aria-label="Evidence: AI at work">[1]</a>
+              <a href="#study-maths" aria-label="Evidence: independent maths performance">[2]</a>
+              <a href="#study-tutor" aria-label="Evidence: structured AI tutoring">[3]</a>
+            </p>
+            <p class="question-takeaway">
+              <strong>Our interpretation:</strong> use AI to challenge and develop your reasoning,
+              and check what you can still explain when the assistance is gone.
+            </p>
+          </section>
+
+          <section class="question-section" aria-labelledby="distinction-title">
+            <h2 id="distinction-title">What do we mean by “better”?</h2>
+            <p>
+              Writing a stronger report, learning a concept and judging whether a claim is true
+              are different outcomes. A tool can improve one without improving the others.
+              Before asking whether AI helps, decide which outcome you care about.
+            </p>
+            <div class="question-distinction">
+              <div>
+                <h3>Performance with help</h3>
+                <p>Can you produce a better result while using the tool?</p>
+              </div>
+              <div>
+                <h3>Learning that stays with you</h3>
+                <p>Can you explain, apply and question the idea independently?</p>
+              </div>
+            </div>
+          </section>
+
+          <section id="evidence" class="question-section" aria-labelledby="evidence-title">
+            <p class="question-eyebrow">Follow the evidence</p>
+            <h2 id="evidence-title">Three studies. Three different tests.</h2>
+            <p>
+              These are selected studies, not a systematic review. Their results belong to
+              particular people, tasks and AI systems; they are not a verdict on every use of AI.
+            </p>
+
+            <article id="study-work" class="question-study" aria-labelledby="study-work-title">
+              <p class="question-study-label">01 / Task performance · Randomised experiment</p>
+              <h3 id="study-work-title">
+                AI helped on some consulting tasks and hurt on another.
+              </h3>
+              <p>
+                In an experiment with 758 consultants, GPT-4 users completed suitable tasks
+                25.1% more quickly on average. On a separate task designed to exceed the model’s
+                capabilities, AI users were about 19 percentage points less likely to reach
+                the correct solution.
+              </p>
+              <p class="question-study-limit">
+                <strong>The limit:</strong> this measured work produced with assistance, not
+                lasting improvements in the consultants’ thinking. The negative result involved
+                one deliberately selected task.
+              </p>
+              <a
+                id="source-work"
+                class="question-source"
+                href="https://doi.org/10.1287/orsc.2025.21838"
+              >
+                Dell’Acqua et al. · Organization Science, 2026
+                <.icon name="hero-arrow-up-right" class="h-4 w-4 shrink-0" />
+                <span class="sr-only">Read the original consulting study</span>
+              </a>
+            </article>
+
+            <article id="study-maths" class="question-study" aria-labelledby="study-maths-title">
+              <p class="question-study-label">
+                02 / Independent learning · Randomised experiment
+              </p>
+              <h3 id="study-maths-title">
+                Better practice scores concealed weaker independent performance.
+              </h3>
+              <p>
+                In a Turkish high-school maths study involving nearly 1,000 students, those
+                given a general GPT-4 interface scored 48% higher during assisted practice but
+                17% lower on subsequent unaided exams than the control group. A tutor with
+                teacher-designed safeguards largely mitigated that harm.
+              </p>
+              <p class="question-study-limit">
+                <strong>The limit:</strong> this was one school and short-term maths performance.
+                The guarded tutor did not show a statistically significant unaided exam benefit;
+                that does not prove equivalence or improvement.
+              </p>
+              <a
+                id="source-maths"
+                class="question-source"
+                href="https://doi.org/10.1073/pnas.2422633122"
+              >
+                Bastani et al. · PNAS, 2025
+                <.icon name="hero-arrow-up-right" class="h-4 w-4 shrink-0" />
+                <span class="sr-only">Read the original mathematics study</span>
+              </a>
+            </article>
+
+            <article id="study-tutor" class="question-study" aria-labelledby="study-tutor-title">
+              <p class="question-study-label">
+                03 / Structured tutoring · Randomised crossover study
+              </p>
+              <h3 id="study-tutor-title">
+                A purpose-built tutor improved learning on specific physics lessons.
+              </h3>
+              <p>
+                A Harvard undergraduate physics study involving 194 students compared a structured
+                AI tutor with active classroom learning across two lessons. Students scored higher
+                on the tests after the AI-tutored lessons.
+              </p>
+              <p class="question-study-limit">
+                <strong>The limit:</strong> a carefully designed tutor is different from an
+                unrestricted chatbot. Immediate tests on two topics do not establish long-term
+                retention, wider critical-thinking gains or a replacement for teaching.
+              </p>
+              <a
+                id="source-tutor"
+                class="question-source"
+                href="https://doi.org/10.1038/s41598-025-97652-6"
+              >
+                Kestin et al. · Scientific Reports, 2025
+                <.icon name="hero-arrow-up-right" class="h-4 w-4 shrink-0" />
+                <span class="sr-only">Read the original physics tutoring study</span>
+              </a>
+            </article>
+
+            <div id="question-uncertainty" class="question-uncertainty">
+              <h3>What these studies leave open</h3>
+              <p>
+                Whether everyday AI use strengthens judgement over months or years; whether
+                learning transfers to unfamiliar problems; and which designs work for which
+                learners. Those are further questions, not conclusions established here.
+              </p>
+            </div>
+          </section>
+
+          <section id="explore" class="question-section" aria-labelledby="explore-title">
+            <p class="question-eyebrow">Choose a direction</p>
+            <h2 id="explore-title">Where does your curiosity take you?</h2>
+            <details id="path-case" class="question-path">
+              <summary>
+                <span>Make the strongest case for AI</span><.icon
+                  name="hero-plus"
+                  class="h-5 w-5 shrink-0"
+                />
+              </summary>
+              <div>
+                <p class="question-eyebrow">An argument to examine</p>
+                <p>
+                  Thinking need not happen entirely inside one person’s head. Writing and
+                  calculation tools already help us tackle problems we could not manage unaided.
+                  If AI helps you generate alternatives, find objections and test assumptions,
+                  the person working with the tool may reason better.
+                </p>
+                <p>
+                  The challenge is to show that the combined judgement is reliable. A persuasive
+                  explanation alone is insufficient.
+                  <a href="#study-work">The consulting study</a>
+                  illustrates why the task matters.
+                </p>
+              </div>
+            </details>
+            <details id="path-objection" class="question-path">
+              <summary>
+                <span>Examine the strongest objection</span><.icon
+                  name="hero-plus"
+                  class="h-5 w-5 shrink-0"
+                />
+              </summary>
+              <div>
+                <p class="question-eyebrow">An objection to examine</p>
+                <p>
+                  What if the judgement needed to check an AI answer is the very skill you stop
+                  practising? Delegation could make today’s task easier while weakening your
+                  ability to spot tomorrow’s error.
+                  <a href="#study-maths">The maths experiment</a>
+                  gives a concrete reason to take this possibility seriously.
+                </p>
+                <p>
+                  This objection is strongest when developing independent skill is the goal.
+                  It does not establish that all delegation is harmful, or that every AI design
+                  has the same effect.
+                </p>
+              </div>
+            </details>
+            <details id="path-practice" class="question-path">
+              <summary>
+                <span>Apply this to the way you use AI</span><.icon
+                  name="hero-plus"
+                  class="h-5 w-5 shrink-0"
+                />
+              </summary>
+              <div>
+                <p class="question-eyebrow">A practical inference to try</p>
+                <ol>
+                  <li>
+                    <strong>Attempt:</strong> write your own answer and where you are uncertain.
+                  </li>
+                  <li>
+                    <strong>Challenge:</strong>
+                    ask AI for a hint, an objection or a counterexample.
+                  </li>
+                  <li><strong>Check:</strong> inspect the evidence behind an important claim.</li>
+                  <li>
+                    <strong>Transfer:</strong> close the tool and tackle a new example yourself.
+                  </li>
+                </ol>
+                <p>
+                  Treat this as a routine to test, not a proven recipe. The useful signal is
+                  what you can subsequently explain and do, rather than how fluent the exchange felt.
+                </p>
+              </div>
+            </details>
+          </section>
+
+          <section id="try-it" class="question-exercise" aria-labelledby="try-it-title">
+            <p class="question-eyebrow">Pause for 30 seconds</p>
+            <h2 id="try-it-title">What would convince you that learning happened?</h2>
+            <p>
+              A colleague writes a much stronger report using AI. They conclude:
+              “This tool is making me a better thinker.”
+            </p>
+            <p>
+              <strong>What extra evidence would you want before accepting that conclusion?</strong>
+            </p>
+            <p class="question-meta">Form an answer in your own words before opening ours.</p>
+            <details id="question-exercise-answer" class="question-path">
+              <summary>
+                <span>Compare your reasoning</span><.icon
+                  name="hero-plus"
+                  class="h-5 w-5 shrink-0"
+                />
+              </summary>
+              <div id="question-exercise-feedback">
+                <p>
+                  First clarify the claim. If they mean <strong>better work with AI</strong>,
+                  independently assessing the report’s accuracy and reasoning would help.
+                  If they mean <strong>improved personal skill</strong>, ask them to explain its
+                  reasoning, spot a planted error, or solve a fresh problem without the tool.
+                </p>
+                <p>
+                  A later test and a comparison with their earlier ability would strengthen the
+                  evidence. Attributing the change specifically to AI would also require a fair
+                  comparison with learning without it. One impressive report cannot settle all
+                  of those questions.
+                </p>
+              </div>
+            </details>
+          </section>
+
+          <footer class="question-footer">
+            <h2>Keep the question open.</h2>
+            <p>
+              Explore AI and learning in public grids, then follow the questions that matter to you.
+            </p>
+            <.link id="question-related-grids" navigate={~p"/search?q=AI"} class="question-next">
+              Explore related grids <.icon name="hero-arrow-right" class="h-5 w-5" />
+            </.link>
+            <p id="question-provenance" class="question-meta">
+              Prepared with AI assistance. Source findings checked against the linked papers on <time datetime="2026-09-07">7 September 2026</time>.
+              This page is a selected synthesis, not independent peer review.
+            </p>
+          </footer>
+        </div>
+      </div>
+    </div>
+  </article>
+</Layouts.app>
