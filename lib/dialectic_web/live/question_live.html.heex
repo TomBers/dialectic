@@ -1,5 +1,11 @@
 <Layouts.app flash={@flash}>
-  <article id="public-question" class="question-page" aria-labelledby="question-title">
+  <DialecticWeb.QuestionArticle.article :if={@published_page} page={@published_page} />
+  <article
+    :if={!@published_page}
+    id="public-question"
+    class="question-page"
+    aria-labelledby="question-title"
+  >
     <div class="question-shell">
       <nav class="question-breadcrumb" aria-label="Breadcrumb">
         <.link navigate={~p"/community"}>Explore questions</.link>
@@ -32,7 +38,11 @@
         </aside>
 
         <div class="question-reading">
-          <section id="short-answer" class="question-answer" aria-labelledby="short-answer-title">
+          <section
+            id="short-answer"
+            class="question-answer"
+            aria-labelledby="short-answer-title"
+          >
             <p class="question-eyebrow">The short answer</p>
             <h2 id="short-answer-title">
               It can. Better output and better thinking are different achievements.
@@ -238,7 +248,9 @@
                     <strong>Challenge:</strong>
                     ask AI for a hint, an objection or a counterexample.
                   </li>
-                  <li><strong>Check:</strong> inspect the evidence behind an important claim.</li>
+                  <li>
+                    <strong>Check:</strong> inspect the evidence behind an important claim.
+                  </li>
                   <li>
                     <strong>Transfer:</strong> close the tool and tackle a new example yourself.
                   </li>

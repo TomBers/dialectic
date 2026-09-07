@@ -147,6 +147,14 @@ defmodule DialecticWeb.AdminCuratedLive do
       </p>
 
       <.link
+        id="admin-question-publisher-link"
+        navigate={~p"/admin/questions"}
+        class="mb-4 inline-flex min-h-11 items-center rounded bg-teal-800 px-4 py-2 font-semibold text-white"
+      >
+        Publish question pages
+      </.link>
+
+      <.link
         navigate={~p"/admin/graphs/import"}
         class="mb-8 inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 transition"
       >

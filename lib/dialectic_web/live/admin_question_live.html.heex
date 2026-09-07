@@ -1,0 +1,338 @@
+<Layouts.app flash={@flash}>
+  <div id="question-publisher" class="mx-auto max-w-6xl px-4 py-8 sm:px-8">
+    <header class="mb-8">
+      <.link navigate={~p"/admin/curated"} class="text-sm text-teal-800 underline">Manage curated grids</.link>
+      <h1 class="mt-3 font-serif text-3xl text-slate-950">Publish question pages</h1>
+      <p class="mt-3 max-w-3xl text-slate-600">
+        Turn selected ideas from a public grid into an edited introduction. Drafts stay private until you publish them. Readers see a saved version.
+      </p>
+    </header>
+
+    <div class="grid gap-8 lg:grid-cols-[16rem_minmax(0,1fr)]">
+      <aside>
+        <.form for={@search_form} id="question-grid-search" phx-submit="search">
+          <.input field={@search_form[:query]} type="search" label="Find a public grid" />
+          <button
+            id="question-grid-search-submit"
+            class="mt-3 min-h-11 rounded bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
+          >Search grids</button>
+        </.form>
+        <div id="question-grid-results" phx-update="stream" class="mt-4 space-y-2">
+          <.link
+            :for={{id, graph} <- @streams.graphs}
+            id={id}
+            patch={~p"/admin/questions?grid=#{graph.slug}"}
+            class="block rounded border border-slate-200 p-3 text-sm text-teal-800 hover:bg-slate-50"
+          >{graph.title}</.link>
+        </div>
+        <h2 class="mt-8 font-semibold">Saved question pages</h2>
+        <div id="question-page-list" phx-update="stream" class="mt-3 space-y-2">
+          <.link
+            :for={{id, page} <- @streams.pages}
+            id={id}
+            patch={~p"/admin/questions?grid=#{page.graph_slug}"}
+            class="block rounded border border-slate-200 p-3 text-sm"
+          >
+            <span class="block font-medium">{page.draft["title"]}</span>
+            <span class="text-slate-500">{if page.published_at,
+              do: "Published · draft editable",
+              else: "Draft · not public"}</span>
+          </.link>
+        </div>
+      </aside>
+
+      <div :if={!@graph} class="rounded border border-dashed border-slate-300 p-8 text-slate-600">
+        Search for a grid to begin, or open a saved page.
+      </div>
+      <div :if={@graph} id="question-editor" class="min-w-0">
+        <h2 class="font-serif text-2xl">{@graph.title}</h2>
+        <.link
+          id="question-source-grid"
+          href={graph_path(@graph)}
+          target="_blank"
+          rel="noopener"
+          class="inline-flex min-h-11 items-center text-sm text-teal-800 underline"
+        >Open source grid in a new tab</.link>
+        <div
+          :if={@stale? || @published_stale?}
+          id="question-source-changed"
+          role="status"
+          class="my-4 rounded border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950"
+        >
+          <strong>Source grid changed — review needed.</strong>
+          <p class="mt-1">
+            The published version stays as it was. Generate a new draft from the current nodes before publishing an update.
+          </p>
+        </div>
+        <button
+          id="question-refresh-source"
+          type="button"
+          phx-click="refresh_source"
+          class="mb-5 min-h-11 px-2 text-sm text-teal-800 underline"
+        >Refresh grid status</button>
+
+        <.form
+          for={@selection_form}
+          id="question-source-selection"
+          phx-submit="generate"
+          class="rounded border border-slate-200 bg-slate-50 p-5"
+        >
+          <fieldset disabled={@generating} class="space-y-4">
+            <legend class="mb-4 font-semibold">1. Select the material</legend>
+            <p class="text-sm text-slate-600">
+              Choose one central answer, up to three evidence nodes, and up to three nodes for deeper exploration. A node may serve more than one role.
+            </p>
+            <.input
+              field={@selection_form[:answer]}
+              type="select"
+              label="Central answer"
+              options={@node_options}
+              prompt="Choose an answer"
+              required
+            />
+            <.input
+              field={@selection_form[:evidence]}
+              type="select"
+              label="Evidence nodes (1–3)"
+              options={@node_options}
+              multiple
+              size="5"
+              required
+            />
+            <.input
+              field={@selection_form[:paths]}
+              type="select"
+              label="Exploration nodes (1–3)"
+              options={@node_options}
+              multiple
+              size="5"
+              required
+            />
+            <p class="text-xs text-slate-600">
+              For multiple selections, use Command on Mac or Control on Windows. Generation replaces the saved draft; the published page stays unchanged.
+            </p>
+            <button
+              id="question-generate"
+              type="submit"
+              data-confirm={
+                if @page, do: "Replace the draft with a new one from these nodes?", else: nil
+              }
+              phx-disable-with="Starting…"
+              class="min-h-11 rounded bg-teal-800 px-5 py-2 font-semibold text-white disabled:opacity-50"
+            >Generate draft</button>
+          </fieldset>
+        </.form>
+        <p
+          :if={@generating}
+          id="question-generating"
+          role="status"
+          aria-live="polite"
+          class="my-4 flex items-center gap-3 rounded bg-teal-50 p-4 text-sm text-teal-900"
+        >
+          <.icon name="hero-arrow-path" class="h-5 w-5 animate-spin motion-reduce:animate-none" />
+          Preparing a draft from your selected nodes. You can keep reading the existing draft below.
+        </p>
+
+        <.form
+          :if={@form}
+          for={@form}
+          id="question-draft-form"
+          phx-change="validate"
+          phx-submit="save"
+          class="mt-8 space-y-5"
+        >
+          <fieldset disabled={@generating} class="space-y-5">
+            <legend class="mb-4 text-xl font-semibold">2. Edit and check the draft</legend>
+            <p class="text-sm text-slate-600">
+              The AI summarises selected content; it does not verify it. Check claims against the original sources and select only the links that support each evidence section. Use plain text.
+            </p>
+            <.input
+              field={@form[:title]}
+              label="Public question"
+              maxlength="160"
+              required
+              phx-debounce="300"
+            />
+            <.input
+              field={@form[:summary]}
+              type="textarea"
+              rows="5"
+              label="Short answer"
+              required
+              phx-debounce="300"
+            />
+            <.input
+              field={@form[:interpretation]}
+              type="textarea"
+              rows="3"
+              label="Our interpretation"
+              required
+              phx-debounce="300"
+            />
+            <.input
+              field={@form[:uncertainty]}
+              type="textarea"
+              rows="3"
+              label="What remains uncertain"
+              required
+              phx-debounce="300"
+            />
+
+            <h3 class="pt-3 font-semibold">Evidence and its limits</h3>
+            <.inputs_for :let={section} field={@form[:evidence]}>
+              <div
+                id={"question-evidence-editor-#{section.index}"}
+                class="space-y-3 rounded border border-slate-200 p-4"
+              >
+                <.input field={section[:node_id]} type="hidden" />
+                <p class="text-sm text-slate-600">
+                  Based on: {source_node(@page.source, section[:node_id].value)["title"]}
+                </p>
+                <details class="text-sm text-slate-600">
+                  <summary class="cursor-pointer py-2 text-teal-800">
+                    Read the captured node and its sources
+                  </summary>
+                  <p class="max-h-64 overflow-y-auto whitespace-pre-wrap py-3">
+                    {source_node(@page.source, section[:node_id].value)["content"]}
+                  </p>
+                  <ul class="space-y-2">
+                    <li :for={
+                      source <- source_node(@page.source, section[:node_id].value)["sources"]
+                    }>
+                      <.link
+                        href={source["url"]}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="break-words text-teal-800 underline"
+                      >{source["title"]}</.link>
+                    </li>
+                  </ul>
+                </details>
+                <.input field={section[:title]} label="Finding" required phx-debounce="300" />
+                <.input
+                  field={section[:body]}
+                  type="textarea"
+                  rows="4"
+                  label="What the evidence says"
+                  required
+                  phx-debounce="300"
+                />
+                <.input
+                  field={section[:limitation]}
+                  type="textarea"
+                  rows="3"
+                  label="What it does not establish"
+                  required
+                  phx-debounce="300"
+                />
+                <.input type="hidden" name={section[:source_ids].name <> "[]"} value="" />
+                <.input
+                  field={section[:source_ids]}
+                  type="select"
+                  label="Supporting source links (leave empty if unverified)"
+                  options={source_options(@page.source, section[:node_id].value)}
+                  multiple
+                  size="3"
+                />
+              </div>
+            </.inputs_for>
+
+            <h3 class="pt-3 font-semibold">Paths to explore</h3>
+            <.inputs_for :let={section} field={@form[:paths]}>
+              <div class="space-y-3 rounded border border-slate-200 p-4">
+                <.input field={section[:node_id]} type="hidden" />
+                <p class="text-sm text-slate-600">
+                  Leads to: {source_node(@page.source, section[:node_id].value)["title"]}
+                </p>
+                <.input
+                  field={section[:title]}
+                  label="Next question or argument"
+                  required
+                  phx-debounce="300"
+                />
+                <.input
+                  field={section[:body]}
+                  type="textarea"
+                  rows="3"
+                  label="Why explore this?"
+                  required
+                  phx-debounce="300"
+                />
+              </div>
+            </.inputs_for>
+
+            <.input
+              field={@form[:exercise_question]}
+              type="textarea"
+              rows="3"
+              label="A question for the reader to think through"
+              required
+              phx-debounce="300"
+            />
+            <.input
+              field={@form[:exercise_answer]}
+              type="textarea"
+              rows="4"
+              label="Reasoning to reveal after their attempt"
+              required
+              phx-debounce="300"
+            />
+            <div class="rounded border border-slate-200 p-4">
+              <.input
+                name="reviewed"
+                id="question-review-confirmation"
+                type="checkbox"
+                checked={@reviewed}
+                label="I have reviewed the claims, supporting links, uncertainty and exercise."
+              />
+              <div class="mt-4 flex flex-wrap gap-3">
+                <button
+                  id="question-save-draft"
+                  name="intent"
+                  value="draft"
+                  class="min-h-11 rounded border border-slate-400 px-4 py-2 font-semibold"
+                >Save draft</button>
+                <button
+                  id="question-publish"
+                  name="intent"
+                  value="publish"
+                  disabled={@stale?}
+                  data-confirm="Publish this reviewed version as a public question page?"
+                  class="min-h-11 rounded bg-teal-800 px-4 py-2 font-semibold text-white disabled:opacity-50"
+                >Publish reviewed page</button>
+              </div>
+            </div>
+          </fieldset>
+        </.form>
+
+        <details
+          :if={@preview}
+          id="question-draft-preview"
+          class="mt-6 rounded border border-slate-200"
+        >
+          <summary class="cursor-pointer p-4 font-semibold text-teal-900">
+            3. Preview the public page
+          </summary>
+          <DialecticWeb.QuestionArticle.article page={@preview} prefix="question-preview" />
+        </details>
+        <div :if={@page && @page.published_at} class="mt-6 flex flex-wrap items-center gap-4">
+          <.link
+            id="question-open-published"
+            href={~p"/questions/#{@page.slug}"}
+            target="_blank"
+            rel="noopener"
+            class="inline-flex min-h-11 items-center text-teal-800 underline"
+          >Open published page</.link>
+          <button
+            id="question-unpublish"
+            type="button"
+            phx-click="unpublish"
+            disabled={@generating}
+            data-confirm="Remove this question page from public access? Your draft is kept."
+            class="min-h-11 px-3 text-sm text-red-800 underline"
+          >Unpublish page</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layouts.app>

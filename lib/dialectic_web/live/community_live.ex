@@ -31,6 +31,7 @@ defmodule DialecticWeb.CommunityLive do
 
   @impl true
   def handle_params(params, _url, socket) do
+    question_pages = Dialectic.QuestionPages.list_public(6)
     search_term = Map.get(params, "search", "")
     tag = Map.get(params, "tag")
     category = Map.get(params, "category")
@@ -43,8 +44,11 @@ defmodule DialecticWeb.CommunityLive do
        graphs: fetch_graphs(search_term, tag, category),
        popular_tags: Graphs.list_popular_tags(@tag_limit),
        featured_grids: Graphs.list_curated_grids("featured", 20),
-       page_title: page_title(search_term, tag, category)
-     )}
+       page_title: page_title(search_term, tag, category),
+       has_question_pages: question_pages != [],
+       pilot_available?: Dialectic.QuestionPages.pilot_available?()
+     )
+     |> stream(:question_pages, question_pages, reset: true)}
   end
 
   @impl true
@@ -173,6 +177,7 @@ defmodule DialecticWeb.CommunityLive do
         </header>
 
         <.link
+          :if={@pilot_available?}
           id="community-question-pilot"
           navigate={~p"/questions/does-ai-make-us-better-thinkers"}
           class="mb-6 flex min-h-16 items-center justify-between gap-4 border-y border-stone-300 px-1 py-5 text-teal-900 hover:text-teal-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-700"
@@ -184,6 +189,12 @@ defmodule DialecticWeb.CommunityLive do
           </span>
           <.icon name="hero-arrow-right" class="h-5 w-5 shrink-0" />
         </.link>
+
+        <DialecticWeb.QuestionCards.cards
+          id="community-question-pages"
+          pages={@streams.question_pages}
+          has_pages={@has_question_pages}
+        />
 
         <div class="space-y-5">
           <%= if @featured_grids != [] do %>

@@ -83,11 +83,20 @@ defmodule DialecticWeb.HomeLive do
 
   @impl true
   def handle_params(_params, _url, socket) do
+    question_pages = Dialectic.QuestionPages.list_public(3)
+
     curated_grids =
       Graphs.list_curated_grids("curated", 20)
       |> preview_curated_grids(3, socket.assigns.preview_seed)
 
-    {:noreply, assign(socket, :curated_grids, curated_grids)}
+    {:noreply,
+     socket
+     |> assign(
+       curated_grids: curated_grids,
+       has_question_pages: question_pages != [],
+       pilot_available?: Dialectic.QuestionPages.pilot_available?()
+     )
+     |> stream(:question_pages, question_pages, reset: true)}
   end
 
   @impl true
@@ -765,6 +774,7 @@ defmodule DialecticWeb.HomeLive do
           </div>
 
           <.link
+            :if={@pilot_available?}
             id="home-question-pilot"
             navigate={~p"/questions/does-ai-make-us-better-thinkers"}
             class="mt-6 flex min-h-16 items-center justify-between gap-4 border-b border-stone-300 pb-6 text-teal-900 hover:text-teal-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-700"
@@ -776,6 +786,12 @@ defmodule DialecticWeb.HomeLive do
             </span>
             <.icon name="hero-arrow-right" class="h-5 w-5 shrink-0" />
           </.link>
+
+          <DialecticWeb.QuestionCards.cards
+            id="home-question-pages"
+            pages={@streams.question_pages}
+            has_pages={@has_question_pages}
+          />
 
           <%= if @curated_grids != [] do %>
             <section id="curated" class="mt-8">
