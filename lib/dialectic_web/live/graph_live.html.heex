@@ -196,16 +196,20 @@
   </div>
 
   <!-- Main content with drawer menu -->
-  <div class={[
-    "relative z-0 hidden min-h-0 flex-1 md:flex",
-    if(@presentation_mode == :presenting,
-      do:
-        "flex-col md:flex-row gap-0 bg-[radial-gradient(circle_at_top_left,_rgba(99,102,241,0.12),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(14,165,233,0.10),_transparent_38%),linear-gradient(180deg,_#f8fafc_0%,_#eef2ff_100%)] pt-14"
-    ),
-    if(@presentation_mode != :presenting,
-      do: "flex-col md:flex-row"
-    )
-  ]}>
+  <div
+    id="graph-keyboard-workspace"
+    phx-hook="GraphKeyboardNavigation"
+    class={[
+      "group/keyboard relative z-0 hidden min-h-0 flex-1 md:flex",
+      if(@presentation_mode == :presenting,
+        do:
+          "flex-col md:flex-row gap-0 bg-[radial-gradient(circle_at_top_left,_rgba(99,102,241,0.12),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(14,165,233,0.10),_transparent_38%),linear-gradient(180deg,_#f8fafc_0%,_#eef2ff_100%)] pt-14"
+      ),
+      if(@presentation_mode != :presenting,
+        do: "flex-col md:flex-row"
+      )
+    ]}
+  >
     <%= if @presentation_mode == :presenting do %>
       <.presentation_stage
         slides={slides}
@@ -217,7 +221,15 @@
         id="side-drawer"
         class="fixed inset-x-0 bottom-0 z-90 flex max-h-[min(72vh,44rem)] w-full flex-col rounded-t-[1.75rem] border border-slate-200 bg-white p-4 shadow-[0_-24px_48px_-30px_rgba(15,23,42,0.35)] transform translate-x-0 opacity-100 transition-all duration-300 ease-in-out md:relative md:inset-auto md:z-0 md:h-full md:max-h-none md:w-[var(--desktop-side-drawer-width)] md:flex-none md:rounded-none md:border-0 md:border-r md:border-slate-200 md:bg-white md:p-0 md:shadow-none"
       >
-        <div id="side-drawer-scroll" class="min-h-0 flex-1 overflow-y-auto" phx-hook="ScrollReset">
+        <div
+          id="side-drawer-scroll"
+          tabindex="0"
+          role="region"
+          aria-label="Node content"
+          aria-describedby="graph-keyboard-hint"
+          class="min-h-0 flex-1 overflow-y-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500"
+          phx-hook="ScrollReset"
+        >
           <% {guided_actions, guided_paths} = guided_plan_options(@node, @graph_id) %>
           <.live_component
             module={NodeComp}
@@ -504,18 +516,31 @@
             </div>
 
             <div class="max-w-[17rem] rounded-full bg-white/78 px-3 py-1.5 text-[11px] font-medium text-slate-600 shadow-[0_14px_28px_-24px_rgba(15,23,42,0.45)] ring-1 ring-white/70 backdrop-blur">
-              <span>Click a box to open it in the reader.</span>
+              <button
+                id="graph-keyboard-toggle"
+                type="button"
+                data-keyboard-toggle
+                aria-keyshortcuts="Tab Shift+Tab F6"
+                class="text-left"
+                title="Switch focus between grid and node content"
+              >
+                <span id="graph-keyboard-hint">Tab: grid ↔ content · Enter: read · /: ask · Esc: back</span>
+              </button>
             </div>
           </div>
         <% end %>
         <div id="cy-render-boundary" class="relative h-full w-full" phx-update="ignore">
-          <div id="cy-inner" class="relative h-full w-full"></div>
+          <div
+            id="cy-inner"
+            tabindex="0"
+            role="region"
+            aria-label="Grid navigation"
+            aria-describedby="graph-keyboard-hint"
+            class="relative h-full w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500"
+          >
+          </div>
         </div>
       </div>
-
-      <%= if @graph_id do %>
-        <span phx-window-keydown={show_modal("modal-graph-live-modal-comp")} phx-key="Enter"></span>
-      <% end %>
 
       <!-- Streams panel -->
 

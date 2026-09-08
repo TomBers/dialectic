@@ -104,7 +104,7 @@ defmodule DialecticWeb.InquiryActionsComp do
     ~H"""
     <div id={"#{@id}-content"} class="min-w-0">
       <%= if @context == :node do %>
-        <div class="space-y-2.5">
+        <div data-keyboard-composer class="space-y-2.5 scroll-mt-6 scroll-mb-6">
           <div
             id={"node-custom-inquiry-#{@node.id}"}
             phx-click-away={if(@advanced_tools_open, do: "close_advanced_tools")}
@@ -151,6 +151,7 @@ defmodule DialecticWeb.InquiryActionsComp do
               id={action_id(assigns, "pros-cons")}
               icon="hero-scale"
               label="Test both sides"
+              shortcut="a"
               accent="emerald"
               event="node_branch"
               node_id={@node.id}
@@ -160,6 +161,7 @@ defmodule DialecticWeb.InquiryActionsComp do
               id={action_id(assigns, "connect")}
               icon="hero-arrows-pointing-in"
               label="Connect"
+              shortcut="c"
               accent="violet"
               event={
                 Phoenix.LiveView.JS.dispatch("toggle-panel",
@@ -175,12 +177,16 @@ defmodule DialecticWeb.InquiryActionsComp do
               id={action_id(assigns, "related")}
               icon="hero-light-bulb"
               label="Related ideas"
+              shortcut="r"
               accent="orange"
               event="node_related_ideas"
               node_id={@node.id}
               disabled={!@can_edit}
             />
           </div>
+          <p class="px-1 text-[10px] text-slate-500">
+            Esc to leave the form · Hold ⌘ / Ctrl with A / C / R to use tools when not typing
+          </p>
         </div>
       <% else %>
         <div class="space-y-3">
@@ -323,6 +329,9 @@ defmodule DialecticWeb.InquiryActionsComp do
       id={@id}
       type="button"
       phx-click={@event}
+      data-reader-shortcut={@shortcut}
+      aria-keyshortcuts={"Meta+#{String.upcase(@shortcut)} Control+#{String.upcase(@shortcut)}"}
+      title={"#{@label} (⌘/Ctrl+#{String.upcase(@shortcut)} when not typing)"}
       phx-value-id={@node_id}
       disabled={@disabled}
       class={[
@@ -332,6 +341,14 @@ defmodule DialecticWeb.InquiryActionsComp do
     >
       <.icon name={@icon} class="h-3.5 w-3.5 shrink-0" />
       <span>{@label}</span>
+      <kbd
+        aria-hidden="true"
+        class="ml-auto inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded border border-b-2 border-current/20 bg-white/80 px-1 font-mono text-[10px] leading-none"
+      >
+        <span class="hidden group-data-[shortcut-platform=mac]/keyboard:inline">⌘</span>
+        <span class="group-data-[shortcut-platform=mac]/keyboard:hidden">Ctrl+</span>
+        {String.upcase(@shortcut)}
+      </kbd>
     </button>
     """
   end

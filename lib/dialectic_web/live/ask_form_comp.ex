@@ -71,8 +71,9 @@ defmodule DialecticWeb.AskFormComp do
         for={@form}
         phx-submit={@submit_event || "reply-and-answer"}
         id={@id}
-        class="w-full min-w-0"
+        class="group/shortcuts w-full min-w-0"
         aria-disabled={@disabled}
+        phx-hook="AskFormShortcuts"
       >
         <input
           :if={@query_origin}
@@ -114,7 +115,7 @@ defmodule DialecticWeb.AskFormComp do
                 "box-border w-full text-sm focus:outline-none focus:ring-0 resize-none",
                 if(@embedded,
                   do: "min-h-[4.5rem] border-0 bg-transparent px-2.5 py-2 pr-2.5",
-                  else: "h-10 min-h-[2.5rem] rounded-3xl border py-2.5 pl-4 pr-[11.25rem]"
+                  else: "h-10 min-h-[2.5rem] rounded-3xl border py-2.5 pl-4 pr-[17rem]"
                 ),
                 if(@disabled,
                   do:
@@ -160,6 +161,9 @@ defmodule DialecticWeb.AskFormComp do
                 <%!-- Post button — adds submit_action=post to form params --%>
                 <button
                   type="submit"
+                  id={"#{@id}-comment"}
+                  data-shortcut-action="comment"
+                  aria-keyshortcuts="Control+Shift+Enter Meta+Shift+Enter"
                   name="submit_action"
                   value="post"
                   disabled={@disabled}
@@ -179,9 +183,21 @@ defmodule DialecticWeb.AskFormComp do
                 >
                   <.icon name="hero-chat-bubble-left-ellipsis" class="h-3.5 w-3.5" />
                   <span>Comment</span>
+                  <kbd
+                    aria-hidden="true"
+                    class="ml-1 inline-flex h-5 items-center gap-0.5 rounded border border-b-2 border-slate-300 bg-white px-1 font-mono text-[11px] font-medium leading-none text-slate-700 shadow-sm"
+                  >
+                    <span class="hidden group-data-[shortcut-platform=mac]/shortcuts:inline">⌘</span>
+                    <span class="group-data-[shortcut-platform=mac]/shortcuts:hidden">Ctrl</span>
+                    <.icon name="hero-arrow-up" class="h-3 w-3" />
+                    <.icon name="hero-arrow-uturn-left" class="h-3 w-3" />
+                  </kbd>
                 </button>
                 <%!-- Ask button — default submit (no name, so no submit_action param) --%>
                 <button
+                  id={"#{@id}-ask"}
+                  data-shortcut-action="ask"
+                  aria-keyshortcuts="Control+Enter Meta+Enter"
                   type="submit"
                   disabled={@disabled}
                   class={[
@@ -199,7 +215,14 @@ defmodule DialecticWeb.AskFormComp do
                   }
                 >
                   <span>Ask</span>
-                  <.icon name="hero-arrow-up" class="h-3.5 w-3.5" />
+                  <kbd
+                    aria-hidden="true"
+                    class="ml-1 inline-flex h-5 items-center gap-0.5 rounded border border-b-2 border-slate-500 bg-slate-800 px-1 font-mono text-[11px] font-medium leading-none text-slate-100 shadow-sm"
+                  >
+                    <span class="hidden group-data-[shortcut-platform=mac]/shortcuts:inline">⌘</span>
+                    <span class="group-data-[shortcut-platform=mac]/shortcuts:hidden">Ctrl</span>
+                    <.icon name="hero-arrow-uturn-left" class="h-3 w-3" />
+                  </kbd>
                 </button>
               </div>
             </div>
