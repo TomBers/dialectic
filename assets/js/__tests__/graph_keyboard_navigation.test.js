@@ -132,3 +132,43 @@ it("leaves Shift+Tab inside dialogs to their focus cycle", () => {
   expect(key("Tab", { shiftKey: true }).defaultPrevented).toBe(false);
   expect(document.activeElement).toBe(dialog);
 });
+
+it("tracks pointer selection and keeps it visible after focus leaves the panel", () => {
+  grid.dispatchEvent(new Event("pointerdown", { bubbles: true }));
+  expect(hook.el.dataset.activeRegion).toBe("grid");
+  expect(document.activeElement).toBe(grid);
+  const paragraph = document.createElement("p");
+  reader.append(paragraph);
+  paragraph.dispatchEvent(new Event("pointerdown", { bubbles: true }));
+  expect(hook.el.dataset.activeRegion).toBe("reader");
+  expect(document.activeElement).toBe(reader);
+  const outside = document.createElement("button");
+  document.body.append(outside);
+  outside.focus();
+  hook.updated();
+  expect(hook.el.dataset.activeRegion).toBe("reader");
+});
+
+it("tracks focus inside the form without taking focus from its controls", () => {
+  input.focus();
+  input.dispatchEvent(new Event("pointerdown", { bubbles: true }));
+  expect(document.activeElement).toBe(input);
+  expect(hook.el.dataset.activeRegion).toBe("reader");
+  key("Tab", { shiftKey: true });
+  expect(hook.el.dataset.activeRegion).toBe("grid");
+});
+
+it("starts with the reader focused and supports region switching immediately", () => {
+  expect(document.activeElement).toBe(reader);
+  expect(hook.el.dataset.activeRegion).toBe("reader");
+  key("Tab", { shiftKey: true });
+  expect(document.activeElement).toBe(grid);
+});
+
+it("preserves existing focus when mounting", () => {
+  hook.destroyed();
+  input.focus();
+  hook.mounted();
+  expect(document.activeElement).toBe(input);
+  expect(hook.el.dataset.activeRegion).toBe("reader");
+});

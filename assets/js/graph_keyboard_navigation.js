@@ -8,8 +8,14 @@ const GraphKeyboardNavigation = {
     this.focusRegion = (region) => {
       if (region && region.getClientRects().length) region.focus({ preventScroll: true });
     };
+    this.setActiveRegion = (target) => {
+      if (this.reader()?.contains(target)) this.activeRegion = "reader";
+      else if (this.grid()?.contains(target)) this.activeRegion = "grid";
+      this.el.dataset.activeRegion = this.activeRegion || "reader";
+    };
+    this.setActiveRegion(document.activeElement);
     this.toggle = () => {
-      const inReader = this.reader()?.contains(document.activeElement);
+      const inReader = this.el.dataset.activeRegion === "reader";
       this.focusRegion(inReader ? this.grid() : this.reader());
     };
     this.onKeydown = (event) => {
@@ -62,24 +68,36 @@ const GraphKeyboardNavigation = {
         }
       }
     };
+    this.onFocusIn = (event) => this.setActiveRegion(event.target);
     this.onPointerDown = (event) => {
+      this.setActiveRegion(event.target);
       if (this.grid()?.contains(event.target)) this.focusRegion(this.grid());
+      else if (this.reader()?.contains(event.target) &&
+        !event.target.closest('a, button, input, textarea, select, summary, [contenteditable], [tabindex]:not(#side-drawer-scroll)')) {
+        this.focusRegion(this.reader());
+      }
     };
     this.onClick = (event) => {
       if (event.target.closest("[data-keyboard-toggle]")) this.toggle();
     };
     window.addEventListener("keydown", this.onKeydown, true);
+    this.el.addEventListener("focusin", this.onFocusIn);
     this.el.addEventListener("pointerdown", this.onPointerDown);
     this.el.addEventListener("click", this.onClick);
+    if (document.activeElement === document.body || document.activeElement === document.documentElement) {
+      this.focusRegion(this.reader());
+    }
   },
   updated() {
     this.updateShortcutLabels();
+    this.setActiveRegion(document.activeElement);
   },
   updateShortcutLabels() {
     syncInquiryShortcutLabels(this.el);
   },
   destroyed() {
     window.removeEventListener("keydown", this.onKeydown, true);
+    this.el.removeEventListener("focusin", this.onFocusIn);
     this.el.removeEventListener("pointerdown", this.onPointerDown);
     this.el.removeEventListener("click", this.onClick);
   },

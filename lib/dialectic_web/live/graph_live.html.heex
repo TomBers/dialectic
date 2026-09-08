@@ -199,6 +199,7 @@
   <div
     id="graph-keyboard-workspace"
     phx-hook="GraphKeyboardNavigation"
+    data-active-region="reader"
     class={[
       "group/keyboard relative z-0 hidden min-h-0 flex-1 md:flex",
       if(@presentation_mode == :presenting,
@@ -227,7 +228,7 @@
           role="region"
           aria-label="Node content"
           aria-describedby="graph-keyboard-hint"
-          class="min-h-0 flex-1 overflow-y-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500"
+          class="min-h-0 flex-1 overflow-y-auto outline-none"
           phx-hook="ScrollReset"
         >
           <% {guided_actions, guided_paths} = guided_plan_options(@node, @graph_id) %>
@@ -536,7 +537,7 @@
             role="region"
             aria-label="Grid navigation"
             aria-describedby="graph-keyboard-hint"
-            class="relative h-full w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500"
+            class="relative h-full w-full outline-none"
           >
           </div>
         </div>
