@@ -1,3 +1,5 @@
+import { handleInquiryShortcut, syncInquiryShortcutLabels } from "./inquiry_shortcuts.js";
+
 import { copyToClipboard, showToast } from "./toast.js";
 
 const ASK_MODE = "ask_question";
@@ -11,6 +13,7 @@ const SelectionActionsHook = {
 
     this.refreshElements();
     this.selectionData = null;
+    syncInquiryShortcutLabels(this.el);
 
     window.addEventListener("selection:show", this.handleSelectionShow);
     window.addEventListener("keydown", this.handleKeydown);
@@ -162,8 +165,11 @@ const SelectionActionsHook = {
   showModal() {
     if (!this.modalEl) return;
 
+    this.previousFocus = document.activeElement;
+    syncInquiryShortcutLabels(this.el);
     this.modalEl.classList.remove("hidden");
     this.modalEl.setAttribute("aria-hidden", "false");
+    this.modalEl.querySelector("[data-selection-dialog]")?.focus({ preventScroll: true });
   },
 
   closeModal() {
@@ -173,6 +179,7 @@ const SelectionActionsHook = {
     this.modalEl.setAttribute("aria-hidden", "true");
     this.selectionData = null;
     this.clearBrowserSelection();
+    if (this.previousFocus?.isConnected) this.previousFocus.focus({ preventScroll: true });
   },
 
   clearBrowserSelection() {
@@ -277,12 +284,26 @@ const SelectionActionsHook = {
   },
 
   handleKeydown(event) {
-    if (event.key !== "Escape" || this.modalEl?.classList.contains("hidden")) {
-      return;
-    }
+    if (!this.modalEl || this.modalEl.classList.contains("hidden") || event.isComposing || event.repeat) return;
+    if (handleInquiryShortcut(event, this.modalEl)) return;
+    if (event.altKey || event.metaKey || event.ctrlKey || event.shiftKey) return;
 
-    event.preventDefault();
-    this.closeModal();
+    const target = event.target;
+    const editable = target.matches("input, textarea, select") || target.isContentEditable;
+    if (event.key === "/" && !editable) {
+      const input = this.modalEl.querySelector("[data-selection-input]:not(:disabled)");
+      if (!input) return;
+      event.preventDefault();
+      input.focus({ preventScroll: true });
+      (input.closest("[data-keyboard-composer]") || input.form).scrollIntoView({ block: "center", behavior: "instant" });
+    } else if (event.key === "Escape") {
+      event.preventDefault();
+      if (editable && this.modalEl.contains(target)) {
+        this.modalEl.querySelector("[data-selection-dialog]")?.focus({ preventScroll: true });
+      } else {
+        this.closeModal();
+      }
+    }
   },
 };
 

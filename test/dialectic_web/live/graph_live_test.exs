@@ -66,6 +66,17 @@ defmodule DialecticWeb.GraphLiveTest do
     end
   end
 
+  test "the graph has one labeled keyboard focus surface", %{conn: conn} do
+    {:ok, view, _html} = setup_live(conn)
+
+    assert has_element?(
+             view,
+             "#cy-inner[tabindex='0'][role='region'][aria-label='Grid navigation'][aria-describedby='graph-keyboard-hint']"
+           )
+
+    refute has_element?(view, "#cy[tabindex]")
+  end
+
   describe "LLM retry status" do
     test "refreshes the selected node and allows its streamed title to be restored", %{conn: conn} do
       {:ok, view, _html} = setup_live_for_graph(conn, "Selected Retry Status")
@@ -565,6 +576,14 @@ defmodule DialecticWeb.GraphLiveTest do
                "#selection-actions-copy-selection-actions[data-selection-copy]",
                "Copy text"
              )
+
+      assert has_element?(
+               view,
+               "#selection-actions-focus-selection-actions[phx-hook='Phoenix.FocusWrap']"
+             )
+
+      assert has_element?(view, "#selection-actions-focus-selection-actions-start[tabindex='0']")
+      assert has_element?(view, "#selection-actions-focus-selection-actions-end[tabindex='0']")
     end
 
     test "surfaces the explanation level and opens its settings", %{conn: conn} do

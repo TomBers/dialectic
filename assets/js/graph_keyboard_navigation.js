@@ -1,0 +1,109 @@
+import { handleInquiryShortcut, syncInquiryShortcutLabels } from "./inquiry_shortcuts.js";
+
+const GraphKeyboardNavigation = {
+  mounted() {
+    this.updateShortcutLabels();
+    this.grid = () => this.el.querySelector("#cy-inner");
+    this.reader = () => this.el.querySelector("#side-drawer-scroll");
+    this.focusRegion = (region) => {
+      if (region && region.getClientRects().length) region.focus({ preventScroll: true });
+    };
+    this.setActiveRegion = (target) => {
+      if (this.reader()?.contains(target)) this.activeRegion = "reader";
+      else if (this.grid()?.contains(target)) this.activeRegion = "grid";
+      this.el.dataset.activeRegion = this.activeRegion || "reader";
+    };
+    this.setActiveRegion(document.activeElement);
+    this.toggle = () => {
+      const inReader = this.el.dataset.activeRegion === "reader";
+      this.focusRegion(inReader ? this.grid() : this.reader());
+    };
+    this.onKeydown = (event) => {
+      if (event.isComposing || event.repeat) return;
+      const target = event.target;
+      if (!this.el.contains(target)) return;
+      if (target.closest('[role="dialog"], [aria-modal="true"]')) return;
+      if (!event.metaKey && !event.ctrlKey && !event.altKey && event.key === "Tab" && event.shiftKey && this.reader() && this.grid()) {
+        event.preventDefault();
+        event.stopPropagation();
+        this.toggle();
+        return;
+      }
+      if (!this.el.contains(target)) return;
+      const reader = this.reader();
+      const inReader = reader?.contains(target);
+      const editable = target.matches('input, textarea, select') || target.isContentEditable;
+      if (handleInquiryShortcut(event, reader)) return;
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      if (target === reader && !event.shiftKey) {
+        const scroller = reader.querySelector('[id^="tt-node-"]');
+        const distance = scroller?.clientHeight * 0.9;
+        const offsets = { ArrowDown: 48, ArrowUp: -48, PageDown: distance, PageUp: -distance, " ": distance };
+        if (scroller && (event.key in offsets || event.key === "Home" || event.key === "End")) {
+          event.preventDefault();
+          event.stopPropagation();
+          if (event.key === "Home" || event.key === "End") {
+            scroller.scrollTo({ top: event.key === "Home" ? 0 : scroller.scrollHeight, behavior: "instant" });
+          } else {
+            scroller.scrollBy({ top: offsets[event.key], behavior: "instant" });
+          }
+          return;
+        }
+      }
+      let destination;
+      if (event.key === "Escape") {
+        destination = inReader && target !== reader ? reader : this.grid();
+      } else if (!editable && !event.shiftKey && event.key === "/" && inReader) {
+        destination = reader.querySelector('form[phx-hook="AskFormShortcuts"] textarea:not(:disabled)');
+      } else if (event.key === "Enter" && target === this.grid()) {
+        destination = reader;
+      }
+      if (destination) {
+        event.preventDefault();
+        event.stopPropagation();
+        this.focusRegion(destination);
+        if (destination.tagName === "TEXTAREA") {
+          const composer = destination.closest("[data-keyboard-composer]") || destination;
+          composer.scrollIntoView({ block: "center", behavior: "instant" });
+        }
+      }
+    };
+    this.onFocusIn = (event) => this.setActiveRegion(event.target);
+    this.onPointerDown = (event) => {
+      this.setActiveRegion(event.target);
+      if (this.grid()?.contains(event.target)) this.focusRegion(this.grid());
+      else if (this.reader()?.contains(event.target) &&
+        !event.target.closest('a, button, input, textarea, select, summary, [contenteditable], [tabindex]:not(#side-drawer-scroll)')) {
+        this.focusRegion(this.reader());
+      }
+    };
+    this.onClick = (event) => {
+      if (event.target.closest("[data-keyboard-toggle]")) this.toggle();
+      else if (this.grid()?.contains(event.target) &&
+        !event.target.closest('a, button, input, textarea, select, summary, [contenteditable]')) {
+        this.focusRegion(this.grid());
+      }
+    };
+    window.addEventListener("keydown", this.onKeydown, true);
+    this.el.addEventListener("focusin", this.onFocusIn);
+    this.el.addEventListener("pointerdown", this.onPointerDown);
+    this.el.addEventListener("click", this.onClick);
+    if (document.activeElement === document.body || document.activeElement === document.documentElement) {
+      this.focusRegion(this.reader());
+    }
+  },
+  updated() {
+    this.updateShortcutLabels();
+    this.setActiveRegion(document.activeElement);
+  },
+  updateShortcutLabels() {
+    syncInquiryShortcutLabels(this.el);
+  },
+  destroyed() {
+    window.removeEventListener("keydown", this.onKeydown, true);
+    this.el.removeEventListener("focusin", this.onFocusIn);
+    this.el.removeEventListener("pointerdown", this.onPointerDown);
+    this.el.removeEventListener("click", this.onClick);
+  },
+};
+export default GraphKeyboardNavigation;

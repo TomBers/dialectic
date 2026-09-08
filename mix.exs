@@ -10,10 +10,17 @@ defmodule Dialectic.MixProject do
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
       deps: deps(),
+      hex: hex_config(Mix.Dep.Lock.read(Path.join(__DIR__, "mix.lock"))),
       test_coverage: [summary: [threshold: 80], output: "cover"],
       listeners: [Phoenix.CodeReloader]
     ]
   end
+
+  def hex_config(%{decimal: {:hex, :decimal, "3.1.1", _, _, _, "hexpm", _}}) do
+    [ignore_advisories: ["EEF-CVE-2026-32686"]]
+  end
+
+  def hex_config(_lock), do: []
 
   def cli do
     [
@@ -73,7 +80,7 @@ defmodule Dialectic.MixProject do
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.5"},
       {:req, "~> 0.7.3"},
-      {:igniter, "~> 0.5"},
+      {:igniter, "~> 0.8.4"},
       {:oban, "~> 2.19"},
       {:req_llm, "~> 1.19"},
       {:hammer, "~> 7.4"},

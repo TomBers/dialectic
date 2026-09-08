@@ -96,9 +96,11 @@ defmodule DialecticWeb.SelectionActionsComp do
           class="fixed inset-0 z-[999] bg-slate-950/40 backdrop-blur-sm transition-opacity duration-200"
         >
         </div>
-        <div
+        <.focus_wrap
+          id={"selection-actions-focus-#{@id}"}
           role="dialog"
           data-selection-dialog
+          tabindex="-1"
           aria-modal="true"
           aria-label={
             if(@highlight_only, do: "Save selected passage", else: "Selected passage actions")
@@ -140,6 +142,9 @@ defmodule DialecticWeb.SelectionActionsComp do
               </button>
             </div>
 
+            <p class="mt-3 text-[10px] text-slate-500">
+              / to write · Esc to leave the form, then close · Option/Alt+Shift with A to test · R for related ideas · E to explain · H to highlight
+            </p>
             <div class="mt-4 border-t border-slate-100 pt-4">
               <.live_component
                 module={DialecticWeb.InquiryActionsComp}
@@ -152,7 +157,7 @@ defmodule DialecticWeb.SelectionActionsComp do
               />
             </div>
           </div>
-        </div>
+        </.focus_wrap>
       </div>
     </div>
     """
