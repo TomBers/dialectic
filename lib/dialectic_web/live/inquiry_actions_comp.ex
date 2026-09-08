@@ -1,5 +1,6 @@
 defmodule DialecticWeb.InquiryActionsComp do
   use DialecticWeb, :live_component
+  import DialecticWeb.KeyboardComponents
 
   alias DialecticWeb.ColUtils
 
@@ -189,12 +190,17 @@ defmodule DialecticWeb.InquiryActionsComp do
           </p>
         </div>
       <% else %>
-        <div class="space-y-3">
+        <div data-keyboard-composer class="space-y-3">
           <div
             :if={!@highlight_only}
             class="relative rounded-2xl border border-slate-300 bg-white p-2 shadow-sm transition focus-within:border-indigo-400 focus-within:ring-4 focus-within:ring-indigo-100/70"
           >
-            <form id={"selection-input-form-#{@owner_id}"} data-selection-input-form class="min-w-0">
+            <form
+              id={"selection-input-form-#{@owner_id}"}
+              data-selection-input-form
+              phx-hook="AskFormShortcuts"
+              class="min-w-0"
+            >
               <textarea
                 name="question"
                 data-selection-input
@@ -208,7 +214,7 @@ defmodule DialecticWeb.InquiryActionsComp do
                 disabled={!@can_edit}
               ></textarea>
 
-              <div class="mt-1 flex items-center gap-1.5 border-t border-slate-100 px-1 pt-2">
+              <div class="mt-1 flex flex-col gap-3 border-t border-slate-100 px-1 pb-1 pt-2">
                 <div class="flex min-w-0 items-center gap-1">
                   <button
                     id={advanced_toggle_id(assigns)}
@@ -231,30 +237,35 @@ defmodule DialecticWeb.InquiryActionsComp do
                   ></span>
                 </div>
 
-                <div class="ml-auto flex items-center gap-1">
+                <div class="grid w-full grid-cols-2 gap-3">
                   <button
                     id={"selection-submit-comment-#{@owner_id}"}
                     type="submit"
                     data-selection-input-submit
                     data-selection-submit-action="comment"
+                    data-shortcut-action="comment"
                     disabled={!@can_edit}
-                    class="inline-flex h-8 items-center gap-1 rounded-full px-2.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
+                    class="inline-flex min-h-16 min-w-0 flex-col items-center justify-center gap-2 rounded-xl border border-slate-300 bg-slate-50 px-3 py-3 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-slate-400 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-row sm:justify-between"
                     title="Add your comment without an AI reply"
                   >
-                    <.icon name="hero-chat-bubble-left-ellipsis" class="h-3.5 w-3.5" />
-                    <span>Comment</span>
+                    <span class="inline-flex items-center gap-2">
+                      <.icon name="hero-chat-bubble-left-ellipsis" class="h-4 w-4" />
+                      <span>Comment</span>
+                    </span>
+                    <.shortcut_keycap shift prominent />
                   </button>
                   <button
                     id={"selection-submit-ask-#{@owner_id}"}
                     type="submit"
                     data-selection-input-submit
                     data-selection-submit-action="ask_question"
+                    data-shortcut-action="ask"
                     disabled={!@can_edit}
-                    class="inline-flex h-8 items-center gap-1 rounded-full bg-slate-950 px-3 text-xs font-semibold text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+                    class="inline-flex min-h-16 min-w-0 flex-col items-center justify-center gap-2 rounded-xl border border-slate-950 bg-slate-950 px-3 py-3 text-sm font-semibold text-white shadow-md transition hover:border-slate-700 hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-row sm:justify-between"
                     title="Ask and get an AI response"
                   >
                     <span>Ask</span>
-                    <.icon name="hero-arrow-up" class="h-3.5 w-3.5" />
+                    <.shortcut_keycap dark prominent />
                   </button>
                 </div>
               </div>
@@ -283,6 +294,8 @@ defmodule DialecticWeb.InquiryActionsComp do
               icon="hero-question-mark-circle"
               label="Explain"
               accent="sky"
+              shortcut="e"
+              shortcut_shift
               selection_action="explain"
               disable_if_links="explain"
               disabled={!@can_edit}
@@ -292,6 +305,8 @@ defmodule DialecticWeb.InquiryActionsComp do
               icon="hero-bookmark"
               label="Highlight"
               accent="amber"
+              shortcut="h"
+              shortcut_shift
               selection_action="highlight_only"
               disable_if_highlight="true"
               disabled={!@can_edit}
@@ -302,6 +317,7 @@ defmodule DialecticWeb.InquiryActionsComp do
               icon="hero-scale"
               label="Test both sides"
               accent="emerald"
+              shortcut="a"
               selection_action="pros_cons"
               disable_if_links="pro,con"
               disabled={!@can_edit}
@@ -312,6 +328,7 @@ defmodule DialecticWeb.InquiryActionsComp do
               icon="hero-light-bulb"
               label="Related ideas"
               accent="orange"
+              shortcut="r"
               selection_action="related_ideas"
               disable_if_links="related_idea"
               disabled={!@can_edit}
@@ -341,14 +358,7 @@ defmodule DialecticWeb.InquiryActionsComp do
     >
       <.icon name={@icon} class="h-3.5 w-3.5 shrink-0" />
       <span>{@label}</span>
-      <kbd
-        aria-hidden="true"
-        class="ml-auto inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded border border-b-2 border-current/20 bg-white/80 px-1 font-mono text-[10px] leading-none"
-      >
-        <span class="hidden group-data-[shortcut-platform=mac]/keyboard:inline">⌘</span>
-        <span class="group-data-[shortcut-platform=mac]/keyboard:hidden">Ctrl+</span>
-        {String.upcase(@shortcut)}
-      </kbd>
+      <.shortcut_keycap key={@shortcut} />
     </button>
     """
   end
@@ -401,6 +411,8 @@ defmodule DialecticWeb.InquiryActionsComp do
   defp action_card(assigns) do
     assigns =
       assigns
+      |> assign_new(:shortcut_shift, fn -> false end)
+      |> assign_new(:shortcut, fn -> nil end)
       |> assign_new(:selection_action, fn -> nil end)
       |> assign_new(:disable_if_links, fn -> nil end)
       |> assign_new(:disable_if_highlight, fn -> nil end)
@@ -410,6 +422,8 @@ defmodule DialecticWeb.InquiryActionsComp do
       id={@id}
       type="button"
       data-selection-action={@selection_action}
+      data-shortcut-shift={to_string(@shortcut_shift)}
+      data-reader-shortcut={@shortcut}
       data-disable-if-links={@disable_if_links}
       data-disable-if-highlight={@disable_if_highlight}
       disabled={@disabled}
@@ -427,6 +441,7 @@ defmodule DialecticWeb.InquiryActionsComp do
       <span class="min-w-0">
         <span class="block text-sm font-semibold leading-5">{@label}</span>
       </span>
+      <.shortcut_keycap :if={@shortcut} key={@shortcut} shift={@shortcut_shift} />
     </button>
     """
   end

@@ -1,5 +1,6 @@
 defmodule DialecticWeb.AskFormComp do
   use DialecticWeb, :live_component
+  import DialecticWeb.KeyboardComponents
   alias DialecticWeb.Utils.NodeTitleHelper
 
   @moduledoc """
@@ -131,13 +132,13 @@ defmodule DialecticWeb.AskFormComp do
 
             <%!-- Two submit buttons inside the input --%>
             <div class={[
-              "flex items-center gap-1.5",
+              "flex",
               if(@embedded,
-                do: "mt-1 border-t border-slate-100 px-1 pt-2",
-                else: "absolute right-1.5 top-0 bottom-1.5 justify-end"
+                do: "mt-1 items-center gap-2 border-t border-slate-100 pb-1 pt-2",
+                else: "absolute right-1.5 top-0 bottom-1.5 items-center gap-1.5 justify-end"
               )
             ]}>
-              <div :if={@show_tools} class="flex min-w-0 items-center gap-1">
+              <div :if={@show_tools} class="flex shrink-0 items-center gap-1">
                 <button
                   id={@tools_button_id}
                   type="button"
@@ -145,7 +146,8 @@ defmodule DialecticWeb.AskFormComp do
                   phx-target={@tools_target}
                   aria-expanded={to_string(@tools_open)}
                   class={[
-                    "inline-flex h-8 shrink-0 items-center gap-1 rounded-full px-2.5 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300",
+                    "inline-flex shrink-0 items-center gap-1 rounded-lg text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300",
+                    if(@embedded, do: "h-10 px-1.5", else: "h-8 px-2.5"),
                     if(@tools_open,
                       do: "bg-indigo-100 text-indigo-800",
                       else: "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
@@ -157,7 +159,12 @@ defmodule DialecticWeb.AskFormComp do
                 </button>
               </div>
 
-              <div class="ml-auto flex items-center gap-1">
+              <div class={
+                if(@embedded,
+                  do: "ml-auto flex min-w-0 flex-1 items-center gap-2",
+                  else: "ml-auto flex items-center gap-1"
+                )
+              }>
                 <%!-- Post button — adds submit_action=post to form params --%>
                 <button
                   type="submit"
@@ -168,7 +175,12 @@ defmodule DialecticWeb.AskFormComp do
                   value="post"
                   disabled={@disabled}
                   class={[
-                    "inline-flex h-8 items-center gap-1 rounded-full px-2.5 text-xs font-semibold leading-none transition-all disabled:cursor-not-allowed disabled:opacity-50",
+                    "inline-flex items-center font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+                    if(@embedded,
+                      do:
+                        "h-10 min-w-0 flex-auto justify-center gap-1 whitespace-nowrap rounded-lg border border-slate-300 bg-slate-50 px-2 text-xs shadow-sm hover:border-slate-400",
+                      else: "h-8 gap-1 rounded-full px-2.5 text-xs leading-none"
+                    ),
                     if(@disabled,
                       do: "bg-slate-100 text-slate-400",
                       else: "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
@@ -181,17 +193,14 @@ defmodule DialecticWeb.AskFormComp do
                     )
                   }
                 >
-                  <.icon name="hero-chat-bubble-left-ellipsis" class="h-3.5 w-3.5" />
-                  <span>Comment</span>
-                  <kbd
-                    aria-hidden="true"
-                    class="ml-1 inline-flex h-5 items-center gap-0.5 rounded border border-b-2 border-slate-300 bg-white px-1 font-mono text-[11px] font-medium leading-none text-slate-700 shadow-sm"
-                  >
-                    <span class="hidden group-data-[shortcut-platform=mac]/shortcuts:inline">⌘</span>
-                    <span class="group-data-[shortcut-platform=mac]/shortcuts:hidden">Ctrl</span>
-                    <.icon name="hero-arrow-up" class="h-3 w-3" />
-                    <.icon name="hero-arrow-uturn-left" class="h-3 w-3" />
-                  </kbd>
+                  <span class="inline-flex items-center gap-2">
+                    <.icon
+                      name="hero-chat-bubble-left-ellipsis"
+                      class={if(@embedded, do: "hidden", else: "h-3.5 w-3.5")}
+                    />
+                    <span>Comment</span>
+                  </span>
+                  <.shortcut_keycap shift />
                 </button>
                 <%!-- Ask button — default submit (no name, so no submit_action param) --%>
                 <button
@@ -201,7 +210,12 @@ defmodule DialecticWeb.AskFormComp do
                   type="submit"
                   disabled={@disabled}
                   class={[
-                    "inline-flex h-8 items-center gap-1 rounded-full px-3 text-xs font-semibold leading-none shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-50",
+                    "inline-flex items-center font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+                    if(@embedded,
+                      do:
+                        "h-10 min-w-0 flex-auto justify-center gap-1 whitespace-nowrap rounded-lg border border-slate-950 px-2 text-xs shadow-md",
+                      else: "h-8 gap-1 rounded-full px-3 text-xs leading-none shadow-sm"
+                    ),
                     if(@disabled,
                       do: "bg-slate-300 text-white shadow-none",
                       else: "bg-slate-950 text-white hover:bg-slate-800 hover:shadow-md"
@@ -215,14 +229,7 @@ defmodule DialecticWeb.AskFormComp do
                   }
                 >
                   <span>Ask</span>
-                  <kbd
-                    aria-hidden="true"
-                    class="ml-1 inline-flex h-5 items-center gap-0.5 rounded border border-b-2 border-slate-500 bg-slate-800 px-1 font-mono text-[11px] font-medium leading-none text-slate-100 shadow-sm"
-                  >
-                    <span class="hidden group-data-[shortcut-platform=mac]/shortcuts:inline">⌘</span>
-                    <span class="group-data-[shortcut-platform=mac]/shortcuts:hidden">Ctrl</span>
-                    <.icon name="hero-arrow-uturn-left" class="h-3 w-3" />
-                  </kbd>
+                  <.shortcut_keycap dark />
                 </button>
               </div>
             </div>

@@ -99,6 +99,7 @@ defmodule DialecticWeb.SelectionActionsComp do
         <div
           role="dialog"
           data-selection-dialog
+          tabindex="-1"
           aria-modal="true"
           aria-label={
             if(@highlight_only, do: "Save selected passage", else: "Selected passage actions")
@@ -140,6 +141,9 @@ defmodule DialecticWeb.SelectionActionsComp do
               </button>
             </div>
 
+            <p class="mt-3 text-[10px] text-slate-500">
+              / to write · Esc to leave the form, then close · ⌘/Ctrl+A to test · ⌘/Ctrl+R for related ideas
+            </p>
             <div class="mt-4 border-t border-slate-100 pt-4">
               <.live_component
                 module={DialecticWeb.InquiryActionsComp}

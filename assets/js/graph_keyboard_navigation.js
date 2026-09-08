@@ -1,3 +1,5 @@
+import { handleInquiryShortcut, syncInquiryShortcutLabels } from "./inquiry_shortcuts.js";
+
 const GraphKeyboardNavigation = {
   mounted() {
     this.updateShortcutLabels();
@@ -24,17 +26,7 @@ const GraphKeyboardNavigation = {
       const reader = this.reader();
       const inReader = reader?.contains(target);
       const editable = target.matches('input, textarea, select') || target.isContentEditable;
-      if ((event.metaKey || event.ctrlKey) && inReader && !editable && !event.shiftKey && ["a", "c", "r"].includes(event.key.toLowerCase())) {
-        const button = reader.querySelector(`[data-reader-shortcut="${event.key.toLowerCase()}"]`);
-        if (button && !button.disabled) {
-          event.preventDefault();
-          event.stopPropagation();
-          this.focusRegion(button);
-          button.scrollIntoView({ block: "nearest" });
-          button.click();
-        }
-        return;
-      }
+      if (handleInquiryShortcut(event, reader)) return;
       if (event.metaKey || event.ctrlKey) return;
       if (target === reader && !event.shiftKey) {
         const scroller = reader.querySelector('[id^="tt-node-"]');
@@ -83,13 +75,7 @@ const GraphKeyboardNavigation = {
     this.updateShortcutLabels();
   },
   updateShortcutLabels() {
-    const mac = /Mac|iPhone|iPad|iPod/i.test(navigator.userAgentData?.platform || navigator.platform);
-    this.el.dataset.shortcutPlatform = mac ? "mac" : "windows";
-    this.el.querySelectorAll("[data-reader-shortcut]").forEach((button) => {
-      const key = button.dataset.readerShortcut.toUpperCase();
-      button.setAttribute("aria-keyshortcuts", `${mac ? "Meta" : "Control"}+${key}`);
-      button.title = `${mac ? "⌘" : "Ctrl"}+${key} (when not typing)`;
-    });
+    syncInquiryShortcutLabels(this.el);
   },
   destroyed() {
     window.removeEventListener("keydown", this.onKeydown, true);

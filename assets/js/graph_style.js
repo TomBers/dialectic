@@ -197,9 +197,9 @@ const cols = {
   default: defaultNodeStyle,
 };
 
-const SPACED_NODE_TITLE_CUTOFF = 52;
-const COMPACT_NODE_TITLE_CUTOFF = 36;
-const SPACED_NODE_WIDTH = 240;
+const SPACED_NODE_TITLE_CUTOFF = 120;
+const COMPACT_NODE_TITLE_CUTOFF = 72;
+const SPACED_NODE_WIDTH = 280;
 const SPACED_NODE_TEXT_PADDING = 28;
 const SPACED_NODE_FONT_SIZE = 16;
 const SPACED_NODE_LINE_HEIGHT = 1.35;
@@ -276,71 +276,7 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "", options = {
           if (!isCompact) return SPACED_NODE_WIDTH;
           return getCompactNodeWidth(n);
         },
-        height: (n) => {
-          const processedContent = processNodeContent(
-            n.data("content") || "",
-            false,
-            isCompact ? COMPACT_NODE_TITLE_CUTOFF : SPACED_NODE_TITLE_CUTOFF,
-          );
-
-          // Normalize content and convert <br> tags to newlines for measurement
-          const content = (processedContent || "").replace(/<br\s*\/?>/g, "\n");
-
-          // Remove zero-width spaces used for wrapping when measuring length
-          const measureText = content.replace(/\u200B/g, "");
-
-          if (!isCompact) {
-            const charWidth = 8.2;
-            const textWidth = SPACED_NODE_WIDTH - SPACED_NODE_TEXT_PADDING;
-            const approxCharsPerLine = Math.max(
-              16,
-              Math.floor(textWidth / charWidth),
-            );
-            const parts = measureText.split("\n");
-            let lines = 0;
-            for (const part of parts) {
-              const len = part.trim().length;
-              lines += Math.max(1, Math.ceil(len / approxCharsPerLine));
-            }
-            const bulletCount = (measureText.match(/•/g) || []).length;
-            const bulletExtra = bulletCount * 6;
-            const lineHeight = Math.ceil(
-              SPACED_NODE_FONT_SIZE * SPACED_NODE_LINE_HEIGHT,
-            );
-            const computed = lines * lineHeight + bulletExtra;
-            return Math.max(lineHeight, computed);
-          }
-
-          // Compact mode: calculate based on actual dynamic width
-          const lines_arr = measureText.split("\n");
-
-          const charWidth = 7.5;
-          const padding = 8;
-          // Calculate actual node width
-          const nodeWidth = getCompactNodeWidth(n);
-          const textWidth = nodeWidth - padding;
-
-          // Calculate chars per line based on actual width
-          const approxCharsPerLine = Math.floor(textWidth / charWidth);
-
-          // Estimate total wrapped lines
-          let lines = 0;
-          for (const part of lines_arr) {
-            const len = part.trim().length;
-            lines += Math.max(1, Math.ceil(len / approxCharsPerLine));
-          }
-
-          // Bullet points add extra vertical spacing
-          const bulletCount = (measureText.match(/•/g) || []).length;
-          const bulletExtra = bulletCount * 2;
-
-          const lineHeight = Math.ceil(
-            COMPACT_NODE_FONT_SIZE * COMPACT_NODE_LINE_HEIGHT,
-          );
-          const computed = lines * lineHeight + bulletExtra;
-
-          return Math.max(lineHeight, computed);
-        },
+        height: "label",
         "min-width": isCompact ? 50 : 72,
         "min-height": isCompact ? 14 : 22,
         padding: isCompact ? "4px" : "10px",
@@ -853,7 +789,7 @@ function processNodeContent(
   fullContent = fullContent.replace(/\*\*/g, ""); // Remove all **
 
   // Get only the first line
-  const firstLineCandidate = (fullContent || "").split("\n")[0] || "";
+  const firstLineCandidate = fullContent.split(/\r?\n/).find((line) => line.trim()) || "";
 
   // Strip leading Markdown heading hashes (e.g., "## ")
   const noHeading = firstLineCandidate.replace(/^\s*#{1,6}\s*/, "");
@@ -867,7 +803,12 @@ function processNodeContent(
 
   // Slice to cutoff for measurement and display purposes
   const raw = firstLineOnly;
-  const sliced = raw.slice(0, truncate);
+  let sliced = raw.slice(0, truncate);
+  if (raw.length > truncate && /\S/.test(raw[truncate])) {
+    const lastSpace = sliced.lastIndexOf(" ");
+    if (lastSpace > 0) sliced = sliced.slice(0, lastSpace);
+  }
+  sliced = sliced.trimEnd();
   const suffix = addEllipsis && raw.length > truncate ? "…" : "";
 
   // Add break opportunities to help wrapping with long slash/dash sequences
