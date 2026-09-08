@@ -73,7 +73,7 @@ defmodule Dialectic.MixProject do
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.5"},
       {:req, "~> 0.7.3"},
-      {:igniter, "~> 0.5"},
+      {:igniter, "~> 0.8.4"},
       {:oban, "~> 2.19"},
       {:req_llm, "~> 1.19"},
       {:hammer, "~> 7.4"},

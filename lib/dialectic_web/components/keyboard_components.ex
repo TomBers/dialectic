@@ -2,6 +2,7 @@ defmodule DialecticWeb.KeyboardComponents do
   use DialecticWeb, :html
 
   attr :key, :string, default: "Enter"
+  attr :modifier, :string, values: ["primary", "alt"], default: "primary"
   attr :shift, :boolean, default: false
   attr :dark, :boolean, default: false
   attr :prominent, :boolean, default: false
@@ -22,8 +23,14 @@ defmodule DialecticWeb.KeyboardComponents do
         )
       ]}
     >
-      <span class="hidden [[data-shortcut-platform=mac]_&]:inline">⌘</span>
-      <span class="[[data-shortcut-platform=mac]_&]:hidden">Ctrl</span>
+      <span class="hidden [[data-shortcut-platform=mac]_&]:inline">{if(@modifier == "alt",
+        do: "⌥",
+        else: "⌘"
+      )}</span>
+      <span class="[[data-shortcut-platform=mac]_&]:hidden">{if(@modifier == "alt",
+        do: "Alt",
+        else: "Ctrl"
+      )}</span>
       <.icon :if={@shift} name="hero-arrow-up" class={if(@prominent, do: "h-4 w-4", else: "h-3 w-3")} />
       <%= if @key == "Enter" do %>
         <.icon name="hero-arrow-uturn-left" class={if(@prominent, do: "h-4 w-4", else: "h-3 w-3")} />

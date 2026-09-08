@@ -565,6 +565,14 @@ defmodule DialecticWeb.GraphLiveTest do
                "#selection-actions-copy-selection-actions[data-selection-copy]",
                "Copy text"
              )
+
+      assert has_element?(
+               view,
+               "#selection-actions-focus-selection-actions[phx-hook='Phoenix.FocusWrap']"
+             )
+
+      assert has_element?(view, "#selection-actions-focus-selection-actions-start[tabindex='0']")
+      assert has_element?(view, "#selection-actions-focus-selection-actions-end[tabindex='0']")
     end
 
     test "surfaces the explanation level and opens its settings", %{conn: conn} do

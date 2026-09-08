@@ -306,9 +306,9 @@ it.each([["a", "pros_cons"], ["r", "related_ideas"]])("shares the modifier short
   instance.modalEl.append(button);
   showSelection();
   const dialog = instance.el.querySelector("[data-selection-dialog]");
-  dialog.dispatchEvent(new KeyboardEvent("keydown", { key, ctrlKey: true, bubbles: true, cancelable: true }));
+  dialog.dispatchEvent(new KeyboardEvent("keydown", { key, altKey: true, shiftKey: true, bubbles: true, cancelable: true }));
   expect(instance.pushEventTo).toHaveBeenCalledWith(instance.componentEl, "action", expect.objectContaining({ action }));
-  dialog.dispatchEvent(new KeyboardEvent("keydown", { key, ctrlKey: true, bubbles: true, cancelable: true }));
+  dialog.dispatchEvent(new KeyboardEvent("keydown", { key, altKey: true, shiftKey: true, bubbles: true, cancelable: true }));
   expect(instance.pushEventTo).toHaveBeenCalledTimes(1);
 });
 
@@ -325,11 +325,22 @@ it.each([["e", "explain"], ["h", "highlight_only"]])("requires modifier and Shif
   const press = (target, options) => target.dispatchEvent(new KeyboardEvent("keydown", {key, bubbles: true, cancelable: true, ...options}));
   press(dialog, {});
   press(dialog, {metaKey: true});
-  press(instance.el.querySelector("textarea"), {metaKey: true, shiftKey: true});
+  press(instance.el.querySelector("textarea"), {altKey: true, shiftKey: true});
   button.disabled = true;
-  press(dialog, {metaKey: true, shiftKey: true});
+  press(dialog, {altKey: true, shiftKey: true});
   expect(instance.pushEventTo).not.toHaveBeenCalled();
   button.disabled = false;
-  press(dialog, {metaKey: true, shiftKey: true});
+  press(dialog, {altKey: true, shiftKey: true});
   expect(instance.pushEventTo).toHaveBeenCalledWith(instance.componentEl, "action", expect.objectContaining({action}));
+});
+
+it("restores the opening control when the modal closes", () => {
+  const instance = mountHook();
+  const opener = document.createElement("button");
+  document.body.append(opener);
+  opener.focus();
+  showSelection();
+  expect(document.activeElement).toBe(instance.modalEl.querySelector("[data-selection-dialog]"));
+  instance.closeModal();
+  expect(document.activeElement).toBe(opener);
 });

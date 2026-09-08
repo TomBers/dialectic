@@ -186,7 +186,7 @@ defmodule DialecticWeb.InquiryActionsComp do
             />
           </div>
           <p class="px-1 text-[10px] text-slate-500">
-            Esc to leave the form · Hold ⌘ / Ctrl with A / C / R to use tools when not typing
+            Esc to leave the form · Hold Option/Alt + Shift with A / C / R to use tools when not typing
           </p>
         </div>
       <% else %>
@@ -295,7 +295,6 @@ defmodule DialecticWeb.InquiryActionsComp do
               label="Explain"
               accent="sky"
               shortcut="e"
-              shortcut_shift
               selection_action="explain"
               disable_if_links="explain"
               disabled={!@can_edit}
@@ -306,7 +305,6 @@ defmodule DialecticWeb.InquiryActionsComp do
               label="Highlight"
               accent="amber"
               shortcut="h"
-              shortcut_shift
               selection_action="highlight_only"
               disable_if_highlight="true"
               disabled={!@can_edit}
@@ -347,8 +345,8 @@ defmodule DialecticWeb.InquiryActionsComp do
       type="button"
       phx-click={@event}
       data-reader-shortcut={@shortcut}
-      aria-keyshortcuts={"Meta+#{String.upcase(@shortcut)} Control+#{String.upcase(@shortcut)}"}
-      title={"#{@label} (⌘/Ctrl+#{String.upcase(@shortcut)} when not typing)"}
+      aria-keyshortcuts={"Alt+Shift+#{String.upcase(@shortcut)}"}
+      title={"#{@label} (Option/Alt+Shift+#{String.upcase(@shortcut)} when not typing)"}
       phx-value-id={@node_id}
       disabled={@disabled}
       class={[
@@ -358,7 +356,7 @@ defmodule DialecticWeb.InquiryActionsComp do
     >
       <.icon name={@icon} class="h-3.5 w-3.5 shrink-0" />
       <span>{@label}</span>
-      <.shortcut_keycap key={@shortcut} />
+      <.shortcut_keycap key={@shortcut} modifier="alt" shift />
     </button>
     """
   end
@@ -411,7 +409,6 @@ defmodule DialecticWeb.InquiryActionsComp do
   defp action_card(assigns) do
     assigns =
       assigns
-      |> assign_new(:shortcut_shift, fn -> false end)
       |> assign_new(:shortcut, fn -> nil end)
       |> assign_new(:selection_action, fn -> nil end)
       |> assign_new(:disable_if_links, fn -> nil end)
@@ -421,8 +418,8 @@ defmodule DialecticWeb.InquiryActionsComp do
     <button
       id={@id}
       type="button"
+      aria-keyshortcuts={@shortcut && "Alt+Shift+#{String.upcase(@shortcut)}"}
       data-selection-action={@selection_action}
-      data-shortcut-shift={to_string(@shortcut_shift)}
       data-reader-shortcut={@shortcut}
       data-disable-if-links={@disable_if_links}
       data-disable-if-highlight={@disable_if_highlight}
@@ -441,7 +438,7 @@ defmodule DialecticWeb.InquiryActionsComp do
       <span class="min-w-0">
         <span class="block text-sm font-semibold leading-5">{@label}</span>
       </span>
-      <.shortcut_keycap :if={@shortcut} key={@shortcut} shift={@shortcut_shift} />
+      <.shortcut_keycap :if={@shortcut} key={@shortcut} modifier="alt" shift />
     </button>
     """
   end

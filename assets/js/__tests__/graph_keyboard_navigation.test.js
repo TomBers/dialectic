@@ -19,7 +19,7 @@ function key(key, options = {}) {
 }
 it("switches regions, focuses the composer, and preserves a draft on return", () => {
   grid.focus();
-  key("F6");
+  key("Tab", { shiftKey: true });
   expect(document.activeElement).toBe(reader);
   key("/");
   expect(document.activeElement).toBe(input);
@@ -30,7 +30,7 @@ it("switches regions, focuses the composer, and preserves a draft on return", ()
   expect(document.activeElement).toBe(grid);
   key("Enter");
   expect(document.activeElement).toBe(reader);
-  key("F6");
+  key("Tab", { shiftKey: true });
   expect(document.activeElement).toBe(grid);
   expect(input.value).toBe("My draft");
 });
@@ -45,7 +45,7 @@ it("preserves typing and native reader scrolling", () => {
 it("removes listeners when unmounted", () => {
   hook.destroyed();
   grid.focus();
-  key("F6");
+  key("Tab", { shiftKey: true });
   expect(document.activeElement).toBe(grid);
 });
 
@@ -62,15 +62,16 @@ it("scrolls the nested node content when the reader is focused", () => {
   expect(scroller.scrollTo).toHaveBeenCalledWith({ top: 0, behavior: "instant" });
 });
 
-it("switches regions with Tab and Shift+Tab, including from a draft", () => {
+it("switches regions with Shift+Tab while preserving forward Tab", () => {
   grid.focus();
-  expect(key("Tab").defaultPrevented).toBe(true);
+  expect(key("Tab", { shiftKey: true }).defaultPrevented).toBe(true);
   expect(document.activeElement).toBe(reader);
   key("Tab", { shiftKey: true });
   expect(document.activeElement).toBe(grid);
   input.focus();
   input.value = "Keep this draft";
-  key("Tab");
+  expect(key("Tab").defaultPrevented).toBe(false);
+  expect(key("Tab", { shiftKey: true }).defaultPrevented).toBe(true);
   expect(document.activeElement).toBe(grid);
   expect(input.value).toBe("Keep this draft");
 });
@@ -95,15 +96,39 @@ it.each(["a", "c", "r"])("activates %s only outside typing and respects disabled
   button.addEventListener("click", click);
   reader.append(button);
   input.focus();
-  expect(key(shortcut, { metaKey: true }).defaultPrevented).toBe(false);
+  expect(key(shortcut, { altKey: true, shiftKey: true }).defaultPrevented).toBe(false);
   expect(click).not.toHaveBeenCalled();
   key("Escape");
   expect(key(shortcut).defaultPrevented).toBe(false);
   expect(click).not.toHaveBeenCalled();
-  key(shortcut, { metaKey: true });
+  key(shortcut, { altKey: true, shiftKey: true });
   expect(click).toHaveBeenCalledTimes(1);
   button.disabled = true;
   reader.focus();
-  key(shortcut, { metaKey: true });
+  key(shortcut, { altKey: true, shiftKey: true });
   expect(click).toHaveBeenCalledTimes(1);
+});
+
+it("leaves Shift+Tab outside the workspace, F6, and forward Tab untouched", () => {
+  const outside = document.createElement("button");
+  document.body.append(outside);
+  outside.focus();
+  expect(key("Tab", { shiftKey: true }).defaultPrevented).toBe(false);
+  expect(document.activeElement).toBe(outside);
+  reader.focus();
+  expect(key("F6").defaultPrevented).toBe(false);
+  expect(key("Tab").defaultPrevented).toBe(false);
+  input.focus();
+  key("Tab", { shiftKey: true });
+  expect(document.activeElement).toBe(grid);
+});
+
+it("leaves Shift+Tab inside dialogs to their focus cycle", () => {
+  const dialog = document.createElement("div");
+  dialog.setAttribute("role", "dialog");
+  dialog.tabIndex = -1;
+  hook.el.append(dialog);
+  dialog.focus();
+  expect(key("Tab", { shiftKey: true }).defaultPrevented).toBe(false);
+  expect(document.activeElement).toBe(dialog);
 });

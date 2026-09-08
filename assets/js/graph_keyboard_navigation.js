@@ -13,10 +13,11 @@ const GraphKeyboardNavigation = {
       this.focusRegion(inReader ? this.grid() : this.reader());
     };
     this.onKeydown = (event) => {
-      if (event.isComposing || event.repeat || event.altKey) return;
+      if (event.isComposing || event.repeat) return;
       const target = event.target;
+      if (!this.el.contains(target)) return;
       if (target.closest('[role="dialog"], [aria-modal="true"]')) return;
-      if (!event.metaKey && !event.ctrlKey && (event.key === "F6" || (event.key === "Tab" && this.el.contains(target))) && this.reader() && this.grid()) {
+      if (!event.metaKey && !event.ctrlKey && !event.altKey && event.key === "Tab" && event.shiftKey && this.reader() && this.grid()) {
         event.preventDefault();
         event.stopPropagation();
         this.toggle();
@@ -27,7 +28,7 @@ const GraphKeyboardNavigation = {
       const inReader = reader?.contains(target);
       const editable = target.matches('input, textarea, select') || target.isContentEditable;
       if (handleInquiryShortcut(event, reader)) return;
-      if (event.metaKey || event.ctrlKey) return;
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
       if (target === reader && !event.shiftKey) {
         const scroller = reader.querySelector('[id^="tt-node-"]');
         const distance = scroller?.clientHeight * 0.9;
