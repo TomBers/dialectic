@@ -79,6 +79,10 @@ const GraphKeyboardNavigation = {
     };
     this.onClick = (event) => {
       if (event.target.closest("[data-keyboard-toggle]")) this.toggle();
+      else if (this.grid()?.contains(event.target) &&
+        !event.target.closest('a, button, input, textarea, select, summary, [contenteditable]')) {
+        this.focusRegion(this.grid());
+      }
     };
     window.addEventListener("keydown", this.onKeydown, true);
     this.el.addEventListener("focusin", this.onFocusIn);

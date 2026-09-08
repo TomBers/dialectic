@@ -172,3 +172,19 @@ it("preserves existing focus when mounting", () => {
   expect(document.activeElement).toBe(input);
   expect(hook.el.dataset.activeRegion).toBe("reader");
 });
+
+it("restores focus after Cytoscape blurs the grid during node selection", () => {
+  const canvas = document.createElement("canvas");
+  grid.append(canvas);
+  canvas.dispatchEvent(new Event("pointerdown", { bubbles: true }));
+  expect(document.activeElement).toBe(grid);
+  grid.blur();
+  expect(document.activeElement).toBe(document.body);
+  canvas.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  expect(document.activeElement).toBe(grid);
+  hook.updated();
+  const event = key("Tab", { shiftKey: true });
+  expect(event.defaultPrevented).toBe(true);
+  expect(document.activeElement).toBe(reader);
+  expect(hook.el.dataset.activeRegion).toBe("reader");
+});

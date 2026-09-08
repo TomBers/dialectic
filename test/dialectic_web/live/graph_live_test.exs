@@ -66,6 +66,17 @@ defmodule DialecticWeb.GraphLiveTest do
     end
   end
 
+  test "the graph has one labeled keyboard focus surface", %{conn: conn} do
+    {:ok, view, _html} = setup_live(conn)
+
+    assert has_element?(
+             view,
+             "#cy-inner[tabindex='0'][role='region'][aria-label='Grid navigation'][aria-describedby='graph-keyboard-hint']"
+           )
+
+    refute has_element?(view, "#cy[tabindex]")
+  end
+
   describe "LLM retry status" do
     test "refreshes the selected node and allows its streamed title to be restored", %{conn: conn} do
       {:ok, view, _html} = setup_live_for_graph(conn, "Selected Retry Status")
