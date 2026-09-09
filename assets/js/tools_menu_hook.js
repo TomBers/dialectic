@@ -12,7 +12,7 @@ export class ToolsMenuController {
     };
     this.onClick = (event) => {
       const button = event.target.closest("button[phx-click], button[data-selection-action]");
-      if (button && this.el.contains(button) && !button.disabled) this.close(false);
+      if (button && this.el.contains(button) && !button.disabled) this.close(true);
     };
   }
 
