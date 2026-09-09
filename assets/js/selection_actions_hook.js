@@ -1,3 +1,4 @@
+import { ToolsMenuController } from "./tools_menu_hook.js";
 import { handleInquiryShortcut, syncInquiryShortcutLabels } from "./inquiry_shortcuts.js";
 
 import { copyToClipboard, showToast } from "./toast.js";
@@ -13,6 +14,11 @@ const SelectionActionsHook = {
 
     this.refreshElements();
     this.selectionData = null;
+    this.pendingRequest = null;
+    this.drafts = this.readDrafts();
+    this.onDraftInput = () => this.saveDraft();
+    this.el.addEventListener("input", this.onDraftInput);
+    this.handleEvent("selection:result", (result) => this.handleResult(result));
     syncInquiryShortcutLabels(this.el);
 
     window.addEventListener("selection:show", this.handleSelectionShow);
@@ -22,6 +28,9 @@ const SelectionActionsHook = {
   },
 
   destroyed() {
+    this.saveDraft();
+    this.toolsMenu?.destroy();
+    this.el.removeEventListener("input", this.onDraftInput);
     window.clearTimeout(this.copyFeedbackTimer);
     window.removeEventListener("selection:show", this.handleSelectionShow);
     window.removeEventListener("keydown", this.handleKeydown);
@@ -37,12 +46,15 @@ const SelectionActionsHook = {
       !nodeId ||
       !offsets ||
       !Number.isInteger(offsets.start) ||
+      offsets.start < 0 ||
       !Number.isInteger(offsets.end) ||
       offsets.start >= offsets.end
     ) {
       return;
     }
 
+    if (this.pendingRequest) return;
+    this.saveDraft();
     this.refreshElements();
     this.selectionData = { selectedText, nodeId, offsets };
     this.populateSelectedText(selectedText);
@@ -129,23 +141,16 @@ const SelectionActionsHook = {
   },
 
   resetClientControls() {
-    const advancedTools = this.modalEl?.querySelector(
-      "[data-selection-advanced-tools]",
-    );
-    const advancedToggle = this.modalEl?.querySelector(
-      "[data-selection-advanced-toggle]",
-    );
-    const dialog = this.modalEl?.querySelector("[data-selection-dialog]");
+    const advancedTools = this.modalEl?.querySelector("[data-selection-advanced-tools]");
+    const advancedToggle = this.modalEl?.querySelector("[data-selection-advanced-toggle]");
     const input = this.modalEl?.querySelector("[data-selection-input]");
-
-    advancedTools?.classList.add("hidden");
-    advancedToggle?.setAttribute("aria-expanded", "false");
-    dialog?.classList.remove("max-w-[760px]");
-    dialog?.classList.add("max-w-[620px]");
-    advancedToggle?.querySelector("[class*='hero-chevron-down']")?.classList.remove(
-      "rotate-180",
-    );
-    if (input) input.value = "";
+    this.toolsMenu?.destroy();
+    this.toolsMenu = advancedTools && advancedToggle
+      ? new ToolsMenuController(advancedTools, advancedToggle)
+      : null;
+    if (input) input.value = this.drafts[this.draftKey()] || "";
+    input?.dispatchEvent(new Event("input", { bubbles: true }));
+    this.setStatus("");
     this.resetCopyFeedback();
   },
 
@@ -177,7 +182,8 @@ const SelectionActionsHook = {
 
     this.modalEl.classList.add("hidden");
     this.modalEl.setAttribute("aria-hidden", "true");
-    this.selectionData = null;
+    this.saveDraft();
+    this.toolsMenu?.close();
     this.clearBrowserSelection();
     if (this.previousFocus?.isConnected) this.previousFocus.focus({ preventScroll: true });
   },
@@ -247,19 +253,9 @@ const SelectionActionsHook = {
     });
   },
 
-  toggleAdvancedTools(toggle) {
-    const tools = this.modalEl?.querySelector("[data-selection-advanced-tools]");
-    const dialog = this.modalEl?.querySelector("[data-selection-dialog]");
-    if (!tools) return;
-
-    const expanded = tools.classList.contains("hidden");
-    tools.classList.toggle("hidden", !expanded);
-    toggle.setAttribute("aria-expanded", expanded.toString());
-    dialog?.classList.toggle("max-w-[760px]", expanded);
-    dialog?.classList.toggle("max-w-[620px]", !expanded);
-    toggle
-      .querySelector("[class*='hero-chevron-down']")
-      ?.classList.toggle("rotate-180", expanded);
+  toggleAdvancedTools() {
+    if (this.toolsMenu?.opened) this.toolsMenu.close();
+    else this.toolsMenu?.open();
   },
 
   handleSubmit(event) {
@@ -267,7 +263,7 @@ const SelectionActionsHook = {
     if (!form || !this.el.contains(form) || !this.selectionData) return;
 
     event.preventDefault();
-    const input = form.querySelector('[name="question"]');
+    const input = form.querySelector("[data-selection-input]");
     const action = event.submitter?.dataset.selectionSubmitAction || ASK_MODE;
     this.submitAction(action, { input: input?.value || "" });
   },
@@ -275,12 +271,99 @@ const SelectionActionsHook = {
   submitAction(action, extra = {}) {
     if (!this.selectionData || !this.componentEl) return;
 
+    if (this.pendingRequest) return;
+    if (["comment", ASK_MODE].includes(action) && !extra.input?.trim()) {
+      this.setStatus("Write a comment or question first.");
+      this.modalEl.querySelector("[data-selection-input]")?.focus();
+      return;
+    }
+    this.toolsMenu?.close();
+    this.saveDraft();
+    const requestId = crypto.randomUUID();
+    this.pendingRequest = { id: requestId, action, draftKey: this.draftKey() };
+    this.setPending(true);
+    this.setStatus(action === "comment" ? "Posting…" : action === "highlight_only" ? "Saving highlight…" : "Starting AI response…");
     this.pushEventTo(this.componentEl, "action", {
       ...this.selectionData,
       action,
       ...extra,
+      request_id: requestId,
     });
-    this.closeModal();
+  },
+
+  handleResult(result) {
+    const request = this.pendingRequest;
+    if (!request || result.request_id !== request.id) return;
+    this.pendingRequest = null;
+    this.setPending(false);
+    if (result.status === "ok") {
+      if (["comment", ASK_MODE].includes(request.action)) {
+        const input = this.modalEl?.querySelector("[data-selection-input]");
+        if (input) input.value = "";
+        delete this.drafts[request.draftKey];
+        this.persistDrafts();
+      }
+      this.closeModal();
+    } else {
+      this.setStatus(result.message || "Could not save. Your draft is still here.");
+    }
+  },
+
+  setStatus(message) {
+    const status = this.modalEl?.querySelector("[data-selection-status]");
+    if (status) status.textContent = message;
+  },
+
+  setPending(pending) {
+    const form = this.modalEl?.querySelector("[data-selection-input-form]");
+    form?.setAttribute("aria-busy", String(pending));
+    const input = form?.querySelector("textarea");
+    if (input) input.readOnly = pending;
+    if (pending) {
+      this.modalEl?.querySelectorAll("[data-selection-action], [data-selection-input-submit]")
+        .forEach((button) => { button.disabled = true; });
+    } else {
+      this.syncCanEditState();
+      this.syncExistingHighlightState();
+    }
+  },
+
+  draftKey() {
+    const selection = this.selectionData;
+    return selection && JSON.stringify([selection.nodeId, selection.offsets.start, selection.offsets.end, selection.selectedText]);
+  },
+
+  readDrafts() {
+    try {
+      const key = this.componentEl?.dataset.draftKey;
+      const guestKey = this.componentEl?.dataset.guestDraftKey;
+      const guest = guestKey ? JSON.parse(sessionStorage.getItem(guestKey) || "{}") : {};
+      const saved = JSON.parse(sessionStorage.getItem(key) || "{}");
+      const drafts = Object.fromEntries(Object.entries({...guest, ...saved}).filter(([, text]) => typeof text === "string").slice(-20));
+      if (guestKey && key) {
+        sessionStorage.setItem(key, JSON.stringify(drafts));
+        sessionStorage.removeItem(guestKey);
+      }
+      return drafts;
+    } catch { return {}; }
+  },
+
+  saveDraft() {
+    const key = this.draftKey();
+    const input = this.modalEl?.querySelector("[data-selection-input]");
+    if (!key || !input) return;
+    delete this.drafts[key];
+    if (input.value) this.drafts[key] = input.value;
+    this.persistDrafts();
+  },
+
+  persistDrafts() {
+    this.drafts = Object.fromEntries(Object.entries(this.drafts).slice(-20));
+    try {
+      if (this.componentEl?.dataset.draftKey) {
+        sessionStorage.setItem(this.componentEl.dataset.draftKey, JSON.stringify(this.drafts));
+      }
+    } catch { /* Keep the in-memory draft if browser storage is unavailable. */ }
   },
 
   handleKeydown(event) {

@@ -34,6 +34,7 @@ import MarkdownHook from "./markdown_hook.js";
 import { ViewModeHook } from "./view_mode_hook.js";
 import GraphKeyboardNavigation from "./graph_keyboard_navigation.js";
 import AskFormShortcuts from "./ask_form_shortcuts.js";
+import ToolsMenuHook from "./tools_menu_hook.js";
 import AutoExpandTextareaHook from "./auto_expand_textarea_hook.js";
 import SearchNav from "./search_nav_hook.js";
 import PresentationHook, {
@@ -78,6 +79,7 @@ hooks.Markdown = MarkdownHook;
 hooks.ViewMode = ViewModeHook;
 hooks.GraphKeyboardNavigation = GraphKeyboardNavigation;
 hooks.AskFormShortcuts = AskFormShortcuts;
+hooks.ToolsMenu = ToolsMenuHook;
 hooks.AutoExpandTextarea = AutoExpandTextareaHook;
 hooks.SearchNav = SearchNav;
 hooks.Presentation = PresentationHook;

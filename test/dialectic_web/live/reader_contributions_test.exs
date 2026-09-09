@@ -60,7 +60,7 @@ defmodule DialecticWeb.ReaderContributionsTest do
     refute has_element?(reader, "#reader-add-thought")
     refute has_element?(reader, "#reader-contribute-2")
     refute has_element?(reader, "#outline-reading-node-1-ask")
-    assert has_element?(reader, "#outline-reading-node-2-ask", "Challenge this answer")
+    assert has_element?(reader, "#outline-reading-node-2-ask", "Respond to this answer")
 
     {:ok, inquiry, _} =
       reader |> element("#outline-reading-node-2-ask") |> render_click() |> follow_redirect(conn)
@@ -76,7 +76,7 @@ defmodule DialecticWeb.ReaderContributionsTest do
     assert has_element?(inquiry, "#node-tools-popover-2 button[phx-click='node_counterexample']")
   end
 
-  test "a guest comments without generating an AI answer and can return to the saved comment", %{
+  test "posting a thought returns a guest to the saved contribution without generating AI", %{
     conn: conn,
     graph: graph
   } do
@@ -85,9 +85,11 @@ defmodule DialecticWeb.ReaderContributionsTest do
     before_ids = GraphManager.vertices(graph.title)
     content = "Could I explain it again a week later?"
 
-    inquiry
-    |> form("#global-chat-form", vertex: %{content: content})
-    |> render_submit(%{"submit_action" => "post"})
+    {:ok, returned_reader, _} =
+      inquiry
+      |> form("#global-chat-form", vertex: %{content: content})
+      |> render_submit(%{"submit_action" => "post"})
+      |> follow_redirect(conn)
 
     [comment] = new_nodes(graph, before_ids)
     assert comment.class == "user"
@@ -95,12 +97,18 @@ defmodule DialecticWeb.ReaderContributionsTest do
     assert comment.user == "anonymous"
     assert Enum.map(GraphActions.find_node(graph.title, comment.id).parents, & &1.id) == ["2"]
 
-    assert has_element?(
-             inquiry,
-             "#mobile-inquiry-reader-link[href='/g/#{graph.slug}?node=#{comment.id}']"
-           )
+    assert has_element?(returned_reader, "#reading-node-#{comment.id}", content)
+    assert has_element?(returned_reader, "#reader-contributor-#{comment.id}", "Thought · Guest")
+    assert has_element?(returned_reader, "#flash-info", "Your thought was added")
+    refute has_element?(returned_reader, "#reader-view-new-thoughts")
+    refute_enqueued(worker: Dialectic.Workers.LocalWorker, args: %{graph: graph.title})
 
     assert has_element?(reader, "#outline-node-#{comment.id}")
+    assert has_element?(reader, "#reader-view-new-thoughts", "1 new thought")
+    reader |> element("#reader-view-new-thoughts") |> render_click()
+    assert_patch(reader, ~p"/g/#{graph.slug}?node=#{comment.id}")
+    assert has_element?(reader, "#reading-node-#{comment.id}", content)
+    refute has_element?(reader, "#reader-view-new-thoughts")
 
     Oban.drain_queue(queue: :db_write)
     saved = Dialectic.DbActions.Graphs.get_graph_by_title(graph.title)
@@ -177,7 +185,12 @@ defmodule DialecticWeb.ReaderContributionsTest do
 
   test "Connect uses search to select a second idea on mobile", %{conn: conn, graph: graph} do
     {:ok, inquiry, _} = live(conn, ~p"/g/#{graph.slug}/graph?node=2&focus=ask")
-    inquiry |> element("#node-suggestions-2 button[phx-click*='node_combine']") |> render_click()
+    inquiry |> element("#global-chat-form [id^='node-tools-more-']") |> render_click()
+
+    inquiry
+    |> element("#node-suggestions-2 button[phx-click*='node_combine']")
+    |> render_click()
+
     inquiry |> element("#mobile-combine-search") |> render_click()
     assert has_element?(inquiry, "#quick-search-panel")
     render_click(inquiry, "node_clicked", %{"id" => "3", "from_search" => "true"})
@@ -231,6 +244,58 @@ defmodule DialecticWeb.ReaderContributionsTest do
     assert new_nodes(graph, before_ids) == []
   end
 
+  test "blank submissions never create nodes or queue AI work", %{conn: conn, graph: graph} do
+    {:ok, inquiry, _} = live(conn, ~p"/g/#{graph.slug}/graph?node=2&focus=ask")
+    before_ids = GraphManager.vertices(graph.title)
+
+    for content <- ["", " \n\t "],
+        {event, extra} <- [
+          {"answer", %{}},
+          {"reply-and-answer", %{"submit_action" => "post"}},
+          {"reply-and-answer", %{}},
+          {"reply-and-answer", %{"prefix" => "explain"}}
+        ] do
+      render_submit(inquiry, event, Map.put(extra, "vertex", %{"content" => content}))
+      assert has_element?(inquiry, "#flash-error", "Write a comment or question first")
+    end
+
+    assert new_nodes(graph, before_ids) == []
+    refute_enqueued(worker: Dialectic.Workers.LocalWorker, args: %{graph: graph.title})
+  end
+
+  test "draft recovery and other attendees' updates preserve the typed contribution", %{
+    conn: conn,
+    graph: graph
+  } do
+    {:ok, inquiry, _} = live(conn, ~p"/g/#{graph.slug}/graph?node=2&focus=ask")
+    draft = "I would test understanding a week later."
+    inquiry |> form("#global-chat-form", vertex: %{content: draft}) |> render_change()
+    inquiry |> element("#global-chat-form [id^='node-tools-more-']") |> render_click()
+    send(inquiry.pid, {:other_user_change, self()})
+    assert has_element?(inquiry, "#global-chat-input", draft)
+
+    {:ok, reader, _} =
+      inquiry
+      |> form("#global-chat-form", vertex: %{content: draft})
+      |> render_submit(%{"submit_action" => "post"})
+      |> follow_redirect(conn)
+
+    assert has_element?(reader, "#outline-reading-flow", draft)
+  end
+
+  test "a response deleted while the composer is open cannot receive a question", %{
+    conn: conn,
+    graph: graph
+  } do
+    {:ok, inquiry, _} = live(conn, ~p"/g/#{graph.slug}/graph?node=2&focus=ask")
+    GraphManager.update_vertex_fields(graph.title, "2", %{deleted: true})
+    before_ids = GraphManager.vertices(graph.title)
+    inquiry |> form("#global-chat-form", vertex: %{content: "What follows?"}) |> render_submit()
+    assert new_nodes(graph, before_ids) == []
+    assert has_element?(inquiry, "#flash-error", "Choose an existing response")
+    refute_enqueued(worker: Dialectic.Workers.LocalWorker, args: %{graph: graph.title})
+  end
+
   test "the mobile entry and return links retain private grid access", %{conn: conn, graph: graph} do
     graph =
       graph
@@ -241,6 +306,54 @@ defmodule DialecticWeb.ReaderContributionsTest do
     assert has_element?(reader, "#outline-reading-node-2-ask[href*='token=mobile-token']")
     {:ok, inquiry, _} = live(conn, ~p"/g/#{graph.slug}/graph?node=2&focus=ask&token=mobile-token")
     assert has_element?(inquiry, "#mobile-inquiry-reader-link[href*='token=mobile-token']")
+    before_ids = GraphManager.vertices(graph.title)
+
+    result =
+      inquiry
+      |> form("#global-chat-form", vertex: %{content: "Private contribution"})
+      |> render_submit(%{"submit_action" => "post"})
+
+    [thought] = new_nodes(graph, before_ids)
+    assert_redirect(inquiry, ~p"/g/#{graph.slug}?node=#{thought.id}&token=mobile-token")
+    {:ok, returned_reader, _} = follow_redirect(result, conn)
+    assert has_element?(returned_reader, "#reading-node-#{thought.id}", "Private contribution")
+  end
+
+  test "public usernames identify thoughts while AI responses have a distinct label", %{
+    conn: conn,
+    graph: graph
+  } do
+    user = user_fixture()
+    GraphManager.get_graph(graph.title)
+    GraphManager.update_vertex_fields(graph.title, "3", %{user: user.email})
+    {:ok, reader, _} = live(conn, ~p"/g/#{graph.slug}?node=3")
+    assert has_element?(reader, "#reader-contributor-3", "Question · @#{user.username}")
+    refute has_element?(reader, "#outline-layout", user.email)
+    assert has_element?(reader, "#reader-contributor-2", "AI response")
+  end
+
+  test "unknown contributors never expose their stored identity", %{conn: conn, graph: graph} do
+    GraphManager.get_graph(graph.title)
+    GraphManager.update_vertex_fields(graph.title, "3", %{user: "private@example.com"})
+    {:ok, reader, _} = live(conn, ~p"/g/#{graph.slug}?node=3")
+    assert has_element?(reader, "#reader-contributor-3", "Question · Participant")
+    refute has_element?(reader, "#outline-layout", "private@example.com")
+  end
+
+  test "posting from the full graph keeps the graph open and confirms success", %{
+    conn: conn,
+    graph: graph
+  } do
+    {:ok, inquiry, _} = live(conn, ~p"/g/#{graph.slug}/graph?node=2")
+    before_ids = GraphManager.vertices(graph.title)
+
+    inquiry
+    |> form("#global-chat-form", vertex: %{content: "A graph contribution"})
+    |> render_submit(%{"submit_action" => "post"})
+
+    assert [%{class: "user"}] = new_nodes(graph, before_ids)
+    assert has_element?(inquiry, "#graph-layout[data-mobile-inquiry='false']")
+    assert has_element?(inquiry, "#flash-info", "Your thought was added")
   end
 
   defp new_nodes(graph, before_ids) do

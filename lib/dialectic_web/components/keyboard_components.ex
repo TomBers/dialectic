@@ -12,7 +12,7 @@ defmodule DialecticWeb.KeyboardComponents do
     <kbd
       aria-hidden="true"
       class={[
-        "ml-1 inline-flex shrink-0 items-center rounded border border-b-2 font-mono font-medium leading-none shadow-sm",
+        "ml-1 hidden shrink-0 items-center rounded border border-b-2 font-mono font-medium leading-none shadow-sm md:inline-flex",
         if(@prominent,
           do: "h-7 gap-1 px-2 text-sm",
           else: "h-5 gap-0.5 px-1 text-[11px]"

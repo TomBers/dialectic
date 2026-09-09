@@ -1,6 +1,18 @@
 const AskFormShortcuts = {
   mounted() {
     this.updateShortcutLabels();
+    this.onSubmit = (event) => {
+      const input = this.el.querySelector("textarea");
+      if (input && !input.value.trim()) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        input.setCustomValidity("Write a comment or question first.");
+        input.reportValidity();
+      }
+    };
+    this.onInput = (event) => event.target.setCustomValidity?.("");
+    this.el.addEventListener("submit", this.onSubmit);
+    this.el.addEventListener("input", this.onInput);
     this.onKeydown = (event) => {
       if (event.target.tagName === "TEXTAREA" && event.key === "Enter") {
         event.stopPropagation();
@@ -45,13 +57,15 @@ const AskFormShortcuts = {
       const comment = button.dataset.shortcutAction === "comment";
       button.setAttribute("aria-keyshortcuts", `${modifier}+${comment ? "Shift+" : ""}Enter`);
       if (!button.disabled) {
-        button.title = `${comment ? "Comment" : "Ask"} (${label}+${comment ? "Shift+" : ""}Enter)`;
+        button.title = `${comment ? "Post thought" : "Ask AI"} (${label}+${comment ? "Shift+" : ""}Enter)`;
       }
     });
   },
 
   destroyed() {
     this.el.removeEventListener("keydown", this.onKeydown);
+    this.el.removeEventListener("submit", this.onSubmit);
+    this.el.removeEventListener("input", this.onInput);
   },
 };
 

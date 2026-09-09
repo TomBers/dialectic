@@ -39,6 +39,8 @@ defmodule DialecticWeb.AskFormComp do
       |> assign_new(:show_hint, fn -> true end)
       |> assign_new(:prompt_mode, fn -> "structured" end)
       |> assign_new(:node, fn -> nil end)
+      |> assign_new(:context, fn -> :node end)
+      |> assign_new(:guided_learning?, fn -> true end)
       |> assign_new(:current_user, fn -> nil end)
       |> assign_new(:show_context, fn -> true end)
       |> assign_new(:embedded, fn -> false end)
@@ -48,6 +50,7 @@ defmodule DialecticWeb.AskFormComp do
       |> assign_new(:tools_button_id, fn -> nil end)
       |> assign_new(:tools_menu_id, fn -> nil end)
       |> assign_new(:inner_block, fn -> [] end)
+      |> assign_new(:quick_actions, fn -> [] end)
       |> assign_new(:query_origin, fn -> nil end)
       |> assign_new(:disabled, fn -> false end)
       |> then(fn s ->
@@ -59,7 +62,7 @@ defmodule DialecticWeb.AskFormComp do
             assign(s, :placeholder, "Choose an existing response to continue the grid...")
 
           true ->
-            assign(s, :placeholder, "Write a comment or ask AI to continue...")
+            assign(s, :placeholder, "Share a question, objection, or example...")
         end
       end)
 
@@ -72,7 +75,10 @@ defmodule DialecticWeb.AskFormComp do
     <div class="w-full min-w-0" data-role="ask-form-container">
       <.form
         for={@form}
-        phx-submit={@submit_event || "reply-and-answer"}
+        phx-submit={if(@context == :node, do: @submit_event || "reply-and-answer")}
+        phx-change={if(@context == :node, do: "validate_inquiry")}
+        data-selection-input-form={@context == :selection}
+        data-composer-context={@context}
         id={@id}
         class="group/shortcuts w-full min-w-0"
         aria-disabled={@disabled}
@@ -87,22 +93,54 @@ defmodule DialecticWeb.AskFormComp do
         />
         <%!-- Compact Replying-to indicator --%>
         <%= if @show_context && @node && @node.id do %>
-          <button
-            type="button"
-            phx-click="node_clicked"
-            phx-value-id={@node.id}
-            class="flex items-center gap-1.5 mb-1 text-left group"
-            title="Click to focus this node on the graph"
+          <div
+            id={"#{@id}-context"}
+            class="mb-2 rounded-lg bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-600"
           >
-            <span class="text-[10px] text-gray-400">↩</span>
-            <span class={"inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium " <> DialecticWeb.ColUtils.badge_class(@node.class || "")}>
-              {DialecticWeb.ColUtils.node_type_label(@node.class || "")}
+            <span class="block font-semibold text-slate-800">Responding to</span>
+            <p class="break-words">{NodeTitleHelper.extract_node_title(@node, max_length: 180)}</p>
+          </div>
+        <% end %>
+
+        <div
+          :if={@show_tools}
+          id={"#{@id}-tools-toolbar"}
+          class="mb-2 flex flex-wrap items-center gap-1 border-b border-slate-100 pb-2"
+        >
+          {render_slot(@quick_actions)}
+          <button
+            id={@tools_button_id}
+            type="button"
+            phx-click={if(@context == :node, do: "toggle_advanced_tools")}
+            data-selection-advanced-toggle={@context == :selection}
+            phx-target={@tools_target}
+            aria-expanded={to_string(@tools_open)}
+            aria-controls={@tools_menu_id}
+            class={[
+              "data-[tools-open=true]:bg-teal-50 data-[tools-open=true]:text-teal-900 inline-flex shrink-0 items-center gap-1 rounded-lg text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300",
+              if(@embedded, do: "h-11 px-2 md:h-10 md:px-1.5", else: "h-8 px-2.5"),
+              if(@tools_open,
+                do: "bg-teal-50 text-teal-900",
+                else: "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              )
+            ]}
+          >
+            <span
+              data-tools-closed
+              class={["inline-flex items-center gap-1", @tools_open && "hidden"]}
+            >
+              <.icon name="hero-ellipsis-horizontal" class="h-4 w-4" /> More tools
             </span>
-            <span class="text-[11px] text-gray-600 group-hover:text-indigo-600 whitespace-normal break-words">
-              {NodeTitleHelper.extract_node_title(@node, max_length: :infinity)}
+            <span
+              data-tools-open
+              class={["inline-flex items-center gap-1", !@tools_open && "hidden"]}
+            >
+              <.icon name="hero-chevron-up" class="h-4 w-4" /> Hide tools
             </span>
           </button>
-        <% end %>
+        </div>
+
+        {render_slot(@inner_block)}
 
         <div class="flex items-center gap-2 w-full">
           <%!-- Input Field --%>
@@ -111,10 +149,13 @@ defmodule DialecticWeb.AskFormComp do
               field={@form[:content]}
               id={@input_id}
               type="textarea"
-              aria-label="Your question or comment"
+              aria-label="Your thought or question"
+              aria-describedby={if(@embedded, do: "#{@id}-sharing-hint")}
+              data-selection-input={@context == :selection}
               rows="1"
               placeholder={@placeholder}
               phx-hook="AutoExpandTextarea"
+              phx-debounce="300"
               disabled={@disabled}
               class={[
                 "box-border w-full text-base sm:text-sm focus:outline-none focus:ring-0 resize-none",
@@ -138,37 +179,14 @@ defmodule DialecticWeb.AskFormComp do
             <div class={[
               "relative flex items-center gap-1.5",
               if(@embedded,
-                do: "mt-1 items-center gap-2 border-t border-slate-100 pb-1 pt-2",
+                do:
+                  "mt-1 flex-wrap items-center gap-2 border-t border-slate-100 pb-1 pt-2 md:flex-nowrap",
                 else: "absolute right-1.5 top-0 bottom-1.5 items-center gap-1.5 justify-end"
               )
             ]}>
-              <div :if={@show_tools} class="flex shrink-0 items-center gap-1">
-                <button
-                  id={@tools_button_id}
-                  type="button"
-                  phx-click="toggle_advanced_tools"
-                  phx-target={@tools_target}
-                  aria-expanded={to_string(@tools_open)}
-                  aria-controls={@tools_menu_id}
-                  class={[
-                    "inline-flex shrink-0 items-center gap-1 rounded-lg text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300",
-                    if(@embedded, do: "h-10 px-1.5", else: "h-8 px-2.5"),
-                    if(@tools_open,
-                      do: "bg-indigo-100 text-indigo-800",
-                      else: "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-                    )
-                  ]}
-                >
-                  <.icon name="hero-plus" class="h-3.5 w-3.5" />
-                  <span>Tools</span>
-                </button>
-              </div>
-
-              {render_slot(@inner_block)}
-
               <div class={
                 if(@embedded,
-                  do: "ml-auto flex min-w-0 flex-1 items-center gap-2",
+                  do: "ml-auto flex w-full min-w-0 items-center gap-2 md:w-auto md:flex-1",
                   else: "ml-auto flex items-center gap-1"
                 )
               }>
@@ -177,26 +195,29 @@ defmodule DialecticWeb.AskFormComp do
                   id={"#{@id}-comment"}
                   type="submit"
                   data-shortcut-action="comment"
+                  data-selection-input-submit={@context == :selection}
+                  data-selection-submit-action={if(@context == :selection, do: "comment")}
                   aria-keyshortcuts="Control+Shift+Enter Meta+Shift+Enter"
                   name="submit_action"
                   value="post"
+                  phx-disable-with="Posting…"
                   disabled={@disabled || DialecticWeb.GraphHelpers.origin_node?(@node)}
                   class={[
                     "inline-flex items-center font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
                     if(@embedded,
                       do:
-                        "h-10 min-w-0 flex-auto justify-center gap-1 whitespace-nowrap rounded-lg border border-slate-300 bg-slate-50 px-2 text-xs shadow-sm hover:border-slate-400",
+                        "h-11 min-w-0 flex-auto justify-center gap-1 whitespace-nowrap rounded-lg border border-slate-950 px-3 text-sm shadow-sm md:h-10 md:text-xs",
                       else: "h-8 gap-1 rounded-full px-2.5 text-xs leading-none"
                     ),
                     if(@disabled,
                       do: "bg-slate-100 text-slate-400",
-                      else: "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                      else: "bg-slate-950 text-white hover:bg-slate-800"
                     )
                   ]}
                   title={
                     if(@disabled,
                       do: "Choose an existing response to continue",
-                      else: "Add your comment without an AI reply"
+                      else: "Post your thought to the shared discussion"
                     )
                   }
                 >
@@ -205,27 +226,30 @@ defmodule DialecticWeb.AskFormComp do
                       name="hero-chat-bubble-left-ellipsis"
                       class={if(@embedded, do: "hidden", else: "h-3.5 w-3.5")}
                     />
-                    <span>Comment</span>
+                    <span>Post thought</span>
                   </span>
-                  <.shortcut_keycap shift />
+                  <.shortcut_keycap shift dark />
                 </button>
                 <%!-- Ask button — default submit (no name, so no submit_action param) --%>
                 <button
                   id={"#{@id}-ask"}
                   data-shortcut-action="ask"
+                  data-selection-input-submit={@context == :selection}
+                  data-selection-submit-action={if(@context == :selection, do: "ask_question")}
                   aria-keyshortcuts="Control+Enter Meta+Enter"
+                  phx-disable-with="Asking AI…"
                   type="submit"
                   disabled={@disabled}
                   class={[
                     "inline-flex items-center font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
                     if(@embedded,
                       do:
-                        "h-10 min-w-0 flex-auto justify-center gap-1 whitespace-nowrap rounded-lg border border-slate-950 px-2 text-xs shadow-md",
+                        "h-11 min-w-0 flex-auto justify-center gap-1 whitespace-nowrap rounded-lg border border-slate-300 px-3 text-sm md:h-10 md:text-xs",
                       else: "h-8 gap-1 rounded-full px-3 text-xs leading-none shadow-sm"
                     ),
                     if(@disabled,
                       do: "bg-slate-300 text-white shadow-none",
-                      else: "bg-slate-950 text-white hover:bg-slate-800 hover:shadow-md"
+                      else: "bg-white text-slate-700 hover:bg-slate-100"
                     )
                   ]}
                   title={
@@ -235,24 +259,44 @@ defmodule DialecticWeb.AskFormComp do
                     )
                   }
                 >
-                  <span>Ask</span>
-                  <.shortcut_keycap dark />
+                  <span>Ask AI</span>
+                  <.shortcut_keycap />
                 </button>
               </div>
             </div>
           </div>
         </div>
 
-        <div :if={@embedded && !@disabled} class="mt-2 px-1">
+        <p
+          :if={@embedded}
+          id={"#{@id}-sharing-hint"}
+          class="mt-2 px-1 text-xs leading-5 text-slate-500"
+        >
+          Your thought is shared with everyone in this discussion. Ask AI adds an AI response too.
+        </p>
+        <p
+          :if={@context == :selection}
+          id={"#{@id}-status"}
+          data-selection-status
+          role="status"
+          aria-live="polite"
+          class="mt-2 px-1 text-sm text-slate-700"
+        >
+        </p>
+        <div
+          :if={@embedded && !@disabled && @guided_learning?}
+          id={"#{@id}-learning-options"}
+          class="mt-3 px-1"
+        >
           <%= if @current_user do %>
             <.input
               type="checkbox"
               id={"#{@id}-guided-learning"}
               name="guided_learning"
-              value="false"
+              value={Map.get(@form.params, "guided_learning", false)}
               variant="learning_plan"
               label="Guide my learning"
-              description="On adds ranked next actions and tailored exploration paths."
+              description="Add a personal learning plan when you ask AI."
               badge="Learning plan"
             />
           <% else %>
@@ -278,6 +322,21 @@ defmodule DialecticWeb.AskFormComp do
               </span>
             </button>
           <% end %>
+
+          <button
+            id="mobile-inquiry-settings"
+            type="button"
+            phx-click={
+              Phoenix.LiveView.JS.dispatch("toggle-panel",
+                to: "#graph-layout",
+                detail: %{id: "right-panel"}
+              )
+              |> Phoenix.LiveView.JS.push("open_prompt_settings")
+            }
+            class="mt-2 inline-flex min-h-11 items-center gap-2 rounded-lg border border-slate-200 px-3 text-xs font-semibold text-slate-700 md:hidden"
+          >
+            Answer settings
+          </button>
         </div>
       </.form>
     </div>

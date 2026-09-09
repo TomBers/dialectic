@@ -1165,26 +1165,33 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  def handle_event("answer", %{"vertex" => %{"content" => ""}}, socket), do: {:noreply, socket}
+  def handle_event("validate_inquiry", %{"vertex" => %{"content" => content}} = params, socket) do
+    form =
+      %Vertex{}
+      |> Vertex.changeset(%{
+        "content" => content,
+        "guided_learning" => guided_learning_enabled?(params)
+      })
+      |> to_form()
+
+    {:noreply, assign(socket, form: form)}
+  end
 
   def handle_event("answer", %{"vertex" => %{"content" => answer}}, socket) do
     case GraphHelpers.handle_answer(socket, answer) do
       {:ok, graph_result, operation} ->
-        socket
-        |> push_event("analytics", %{event: "claim_added", params: %{entry_method: "post"}})
-        |> update_graph(graph_result, operation)
+        finish_posting_thought(socket, graph_result, operation)
 
       {:error, :locked} ->
         {:noreply, socket |> put_flash(:error, "This graph is locked")}
 
       {:error, :invalid_comment_target} ->
         {:noreply, put_flash(socket, :error, "Choose a response to add your comment.")}
+
+      {:error, :empty_content} ->
+        {:noreply, put_flash(socket, :error, "Write a comment or question first.")}
     end
   end
-
-  # Ignore empty submissions for both Ask (AI) and Post (comment-only) paths
-  def handle_event("reply-and-answer", %{"vertex" => %{"content" => ""}}, socket),
-    do: {:noreply, socket}
 
   def handle_event(
         "reply-and-answer",
@@ -1193,15 +1200,16 @@ defmodule DialecticWeb.GraphLive do
       ) do
     case GraphHelpers.handle_answer(socket, answer) do
       {:ok, graph_result, operation} ->
-        socket
-        |> push_event("analytics", %{event: "claim_added", params: %{entry_method: "post"}})
-        |> update_graph(graph_result, operation)
+        finish_posting_thought(socket, graph_result, operation)
 
       {:error, :locked} ->
         {:noreply, socket |> put_flash(:error, "This graph is locked")}
 
       {:error, :invalid_comment_target} ->
         {:noreply, put_flash(socket, :error, "Choose a response to add your comment.")}
+
+      {:error, :empty_content} ->
+        {:noreply, put_flash(socket, :error, "Write a comment or question first.")}
     end
   end
 
@@ -1234,6 +1242,12 @@ defmodule DialecticWeb.GraphLive do
 
         {:error, :locked} ->
           {:noreply, socket |> put_flash(:error, "This graph is locked")}
+
+        {:error, :empty_content} ->
+          {:noreply, put_flash(socket, :error, "Write a comment or question first.")}
+
+        {:error, :invalid_question_target} ->
+          {:noreply, put_flash(socket, :error, "Choose an existing response to ask about.")}
       end
     end
   end
@@ -1261,6 +1275,12 @@ defmodule DialecticWeb.GraphLive do
 
         {:error, :locked} ->
           {:noreply, socket |> put_flash(:error, "This graph is locked")}
+
+        {:error, :empty_content} ->
+          {:noreply, put_flash(socket, :error, "Write a comment or question first.")}
+
+        {:error, :invalid_question_target} ->
+          {:noreply, put_flash(socket, :error, "Choose an existing response to ask about.")}
       end
     end
   end
@@ -1702,27 +1722,41 @@ defmodule DialecticWeb.GraphLive do
   # Handle selection action messages from SelectionActionsComp
   @impl true
   def handle_info({:selection_action, params}, socket) do
-    case GraphHelpers.check_selection_action_allowed(socket) do
-      {:error, :locked} ->
-        {:noreply, socket |> put_flash(:error, "This graph is locked")}
+    socket = clear_flash(socket, :error)
 
-      {:error, :unauthenticated} ->
-        {:noreply, assign(socket, show_login_modal: true)}
+    result =
+      case GraphHelpers.check_selection_action_allowed(socket) do
+        {:error, :locked} ->
+          {:noreply, socket |> put_flash(:error, "This graph is locked")}
 
-      :ok ->
-        {action, selected_text, node_id, offsets, existing_highlight, extra} =
-          GraphHelpers.unpack_selection_action(params)
+        {:error, :unauthenticated} ->
+          {:noreply,
+           socket
+           |> assign(show_login_modal: true)
+           |> put_flash(:error, "Sign in to use passage actions. Your draft will stay here.")}
 
-        handle_selection_action(
-          action,
-          selected_text,
-          node_id,
-          offsets,
-          existing_highlight,
-          extra,
-          socket
-        )
-    end
+        :ok ->
+          {action, selected_text, node_id, offsets, existing_highlight, extra} =
+            GraphHelpers.unpack_selection_action(params)
+
+          case GraphHelpers.validate_selection_target(socket, action, node_id) do
+            :ok ->
+              handle_selection_action(
+                action,
+                selected_text,
+                node_id,
+                offsets,
+                existing_highlight,
+                extra,
+                socket
+              )
+
+            {:error, message} ->
+              {:noreply, put_flash(socket, :error, message)}
+          end
+      end
+
+    GraphHelpers.acknowledge_selection(result, params)
   end
 
   def handle_info(:close_share_modal, socket) do
@@ -1903,9 +1937,13 @@ defmodule DialecticWeb.GraphLive do
       # Highlight already exists, just close modal
       {:noreply, socket}
     else
-      # Create new highlight without any linked nodes
-      _highlight = create_highlight(socket, node_id, offsets, selected_text)
-      {:noreply, socket}
+      case create_highlight(socket, node_id, offsets, selected_text) do
+        nil ->
+          {:noreply, put_flash(socket, :error, "Could not save highlight. Please try again.")}
+
+        _highlight ->
+          {:noreply, socket}
+      end
     end
   end
 
@@ -2055,7 +2093,9 @@ defmodule DialecticWeb.GraphLive do
         Highlights.add_link(highlight.id, comment_node.id, "comment")
       end
 
-      update_graph(socket, {nil, comment_node}, "user")
+      socket
+      |> put_flash(:info, "Your thought was added to the discussion.")
+      |> update_graph({nil, comment_node}, "user")
     end
   end
 
@@ -2882,6 +2922,31 @@ defmodule DialecticWeb.GraphLive do
 
   defp ensure_main_group(graph_id) do
     GraphManager.ensure_main_group(graph_id)
+  end
+
+  defp finish_posting_thought(socket, graph_result, operation) do
+    {:noreply, socket} =
+      socket
+      |> push_event("analytics", %{event: "claim_added", params: %{entry_method: "post"}})
+      |> update_graph(graph_result, operation)
+
+    socket = put_flash(socket, :info, "Your thought was added to the discussion.")
+
+    socket =
+      if socket.assigns.mobile_inquiry? do
+        push_navigate(socket,
+          to:
+            graph_path(
+              socket.assigns.graph_struct,
+              socket.assigns.node.id,
+              if(socket.assigns.token, do: [token: socket.assigns.token], else: [])
+            )
+        )
+      else
+        socket
+      end
+
+    {:noreply, socket}
   end
 
   def update_graph(socket, {_graph, node}, operation) do

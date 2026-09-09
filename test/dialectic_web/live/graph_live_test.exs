@@ -551,20 +551,20 @@ defmodule DialecticWeb.GraphLiveTest do
 
       refute has_element?(view, "#bottom-menu")
 
-      assert has_element?(view, "#node-suggestions-2 [id^='node-tool-pros-cons-']")
+      assert has_element?(view, "#global-chat-form-tools-toolbar [id^='node-tool-pros-cons-']")
       assert has_element?(view, "[id^='delete-node-'][phx-value-node='2']", "Delete node")
 
       view
       |> element("#global-chat-form [id^='node-tools-more-']")
       |> render_click()
 
-      assert has_element?(view, "#node-tools-popover-2")
+      assert has_element?(view, "#node-tools-popover-2[data-open='true']")
 
       view
       |> element("#global-chat-form [id^='node-tools-more-']")
       |> render_click()
 
-      refute has_element?(view, "#node-tools-popover-2")
+      assert has_element?(view, "#node-tools-popover-2[data-open='false']")
 
       assert has_element?(
                view,
@@ -1547,7 +1547,7 @@ defmodule DialecticWeb.GraphLiveTest do
 
       assert Process.alive?(view.pid)
       assert length(GraphManager.vertices(graph_id)) == vertex_count
-      assert has_element?(view, "#flash-error", "Node not found")
+      assert has_element?(view, "#flash-error", "Choose an existing response to continue.")
     end
   end
 
@@ -1639,7 +1639,7 @@ defmodule DialecticWeb.GraphLiveTest do
       initial_assigns = :sys.get_state(view.pid).socket.assigns
 
       view
-      |> element("#node-suggestions-2 [id^='node-tool-related-']")
+      |> element("#global-chat-form-tools-toolbar [id^='node-tool-related-']")
       |> render_click()
 
       assigns = :sys.get_state(view.pid).socket.assigns
@@ -1720,15 +1720,16 @@ defmodule DialecticWeb.GraphLiveTest do
   describe "handle_event/3" do
     # Tests can be added here for new combine mode functionality
 
-    test "answer event with empty content does nothing", %{conn: conn} do
-      {:ok, view, _html} = setup_live(conn)
-      state_before = :sys.get_state(view.pid).socket.assigns
+    test "answer event with empty content explains why nothing was posted", %{conn: conn} do
+      {:ok, view, _html} = setup_live_with_data(conn, source_text_graph_data())
+      render_click(view, "node_clicked", %{"id" => "2"})
+      graph_id = :sys.get_state(view.pid).socket.assigns.graph_id
+      before_ids = GraphManager.vertices(graph_id)
 
       render_click(view, "answer", %{"vertex" => %{"content" => ""}})
-      state_after = :sys.get_state(view.pid).socket.assigns
 
-      # No change in assigns.
-      assert state_before == state_after
+      assert has_element?(view, "#flash-error", "Write a comment or question first")
+      assert GraphManager.vertices(graph_id) == before_ids
     end
 
     # GraphActions.comment/4 returns the new node; graph mutations happen inside GraphManager.

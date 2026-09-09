@@ -159,7 +159,7 @@ defmodule DialecticWeb.CommunityLive do
           <div class="flex flex-wrap gap-2">
             <.link
               navigate={~p"/?focus=grid#start-here"}
-              class="inline-flex items-center gap-2 rounded-md bg-slate-950 px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+              class="hidden items-center gap-2 rounded-md bg-slate-950 px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 md:inline-flex"
             >
               <.icon name="hero-plus" class="h-4 w-4" /> Create a grid
             </.link>

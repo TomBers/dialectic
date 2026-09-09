@@ -578,7 +578,7 @@ defmodule DialecticWeb.HomeLive do
               id="home-mobile-community-link"
               navigate={~p"/community"}
               data-analytics-event="community_clicked"
-              data-analytics-location="mobile_read_only_prompt"
+              data-analytics-location="mobile_participation"
               class="mt-6 inline-flex min-h-11 items-center gap-2 rounded-md bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
             >
               Browse public grids <.icon name="hero-arrow-right" class="h-4 w-4" />

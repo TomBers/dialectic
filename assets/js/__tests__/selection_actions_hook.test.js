@@ -14,7 +14,7 @@ let hook;
 function mountHook() {
   document.body.innerHTML = `
     <div id="selection-actions-hook">
-      <div id="selection-actions" data-can-edit="true">
+      <div id="selection-actions" data-can-edit="true" data-draft-key="test-selection-drafts">
         <div id="selection-actions-modal-selection-actions" class="hidden" aria-hidden="true">
           <div data-selection-dialog tabindex="-1" class="max-w-[620px]"></div>
           <div data-selection-text></div>
@@ -29,12 +29,12 @@ function mountHook() {
             data-disable-if-highlight="true"
           >Highlight</button>
           <form data-selection-input-form>
-            <textarea name="question" data-selection-input></textarea>
+            <textarea name="vertex[content]" data-selection-input></textarea>
             <button
               type="button"
               data-selection-advanced-toggle
               aria-expanded="false"
-            >Tools</button>
+            ><span data-tools-closed>Thinking tools</span><span data-tools-open class="hidden">Hide tools</span></button>
             <button
               type="submit"
               data-selection-input-submit
@@ -46,7 +46,7 @@ function mountHook() {
               data-selection-submit-action="ask_question" data-shortcut-action="ask"
             >Ask</button>
           </form>
-          <div data-selection-advanced-tools class="hidden">Advanced tools</div>
+          <div data-selection-advanced-tools hidden>Advanced tools</div><p data-selection-status></p>
           <button type="button" data-selection-close>Close</button>
         </div>
       </div>
@@ -56,6 +56,7 @@ function mountHook() {
   hook = Object.create(SelectionActionsHook);
   hook.el = document.querySelector("#selection-actions-hook");
   hook.pushEventTo = vi.fn();
+  hook.handleEvent = vi.fn((name, callback) => { hook.resultHandler = callback; });
   hook.mounted();
   return hook;
 }
@@ -77,6 +78,7 @@ afterEach(() => {
   hook?.destroyed();
   hook = null;
   window.__highlightsCache = [];
+  sessionStorage.clear();
   vi.clearAllMocks();
   document.body.replaceChildren();
 });
@@ -108,12 +110,15 @@ describe("SelectionActionsHook", () => {
       instance.componentEl,
       "action",
       {
+        request_id: expect.any(String),
         action: "highlight_only",
         selectedText: "working memory",
         nodeId: "2",
         offsets: { start: 10, end: 24 },
       },
     );
+    expect(instance.modalEl.classList.contains("hidden")).toBe(false);
+    instance.resultHandler({request_id: instance.pendingRequest.id, status: "ok"});
     expect(instance.modalEl.classList.contains("hidden")).toBe(true);
   });
 
@@ -202,7 +207,7 @@ describe("SelectionActionsHook", () => {
     const instance = mountHook();
     showSelection();
 
-    instance.modalEl.querySelector('[name="question"]').value = "My interpretation";
+    instance.modalEl.querySelector("[data-selection-input]").value = "My interpretation";
     instance.modalEl
       .querySelector('[data-selection-submit-action="comment"]')
       .click();
@@ -211,6 +216,7 @@ describe("SelectionActionsHook", () => {
       instance.componentEl,
       "action",
       {
+        request_id: expect.any(String),
         action: "comment",
         input: "My interpretation",
         selectedText: "working memory",
@@ -220,22 +226,21 @@ describe("SelectionActionsHook", () => {
     );
   });
 
-  it("toggles the tools popover from the composer", () => {
+  it("toggles the integrated tools panel from the composer", () => {
     const instance = mountHook();
     showSelection();
     const toggle = instance.modalEl.querySelector("[data-selection-advanced-toggle]");
     const tools = instance.modalEl.querySelector("[data-selection-advanced-tools]");
-    const dialog = instance.modalEl.querySelector("[data-selection-dialog]");
 
     toggle.click();
-    expect(tools.classList.contains("hidden")).toBe(false);
+    expect(tools.hidden).toBe(false);
     expect(toggle.getAttribute("aria-expanded")).toBe("true");
-    expect(dialog.classList.contains("max-w-[760px]")).toBe(true);
+    expect(toggle.querySelector("[data-tools-open]").classList.contains("hidden")).toBe(false);
 
     toggle.click();
-    expect(tools.classList.contains("hidden")).toBe(true);
+    expect(tools.hidden).toBe(true);
     expect(toggle.getAttribute("aria-expanded")).toBe("false");
-    expect(dialog.classList.contains("max-w-[620px]")).toBe(true);
+    expect(toggle.querySelector("[data-tools-closed]").classList.contains("hidden")).toBe(false);
   });
 
   it("disables highlighting when the exact selection is already cached", () => {
@@ -343,4 +348,70 @@ it("restores the opening control when the modal closes", () => {
   expect(document.activeElement).toBe(instance.modalEl.querySelector("[data-selection-dialog]"));
   instance.closeModal();
   expect(document.activeElement).toBe(opener);
+});
+
+it("retains drafts when dismissed, when another passage opens, and after remount", () => {
+  const instance = mountHook();
+  showSelection();
+  const input = instance.el.querySelector("textarea");
+  input.value = "My unfinished thought";
+  input.dispatchEvent(new Event("input", {bubbles: true}));
+  instance.closeModal();
+  showSelection({offsets: {start: 50, end: 64}});
+  expect(input.value).toBe("");
+  instance.closeModal();
+  instance.destroyed();
+  const remounted = mountHook();
+  showSelection();
+  expect(remounted.el.querySelector("textarea").value).toBe("My unfinished thought");
+});
+
+it("keeps rejected submissions open and prevents duplicates while saving", () => {
+  const instance = mountHook();
+  showSelection();
+  const input = instance.el.querySelector("textarea");
+  input.value = "Keep my thought";
+  instance.submitAction("comment", {input: input.value});
+  const requestId = instance.pendingRequest.id;
+  instance.submitAction("comment", {input: input.value});
+  expect(instance.pushEventTo).toHaveBeenCalledOnce();
+  instance.resultHandler({request_id: requestId, status: "error", message: "Sign in to continue"});
+  expect(instance.modalEl.classList.contains("hidden")).toBe(false);
+  expect(input.value).toBe("Keep my thought");
+  expect(instance.el.querySelector("[data-selection-status]").textContent).toBe("Sign in to continue");
+  expect(instance.el.querySelector("[data-selection-input-submit]").disabled).toBe(false);
+});
+
+it("clears a posted draft only after server confirmation", () => {
+  const instance = mountHook();
+  showSelection();
+  const input = instance.el.querySelector("textarea");
+  input.value = "Saved thought";
+  instance.submitAction("comment", {input: input.value});
+  expect(input.value).toBe("Saved thought");
+  instance.resultHandler({request_id: "unrelated", status: "ok"});
+  expect(instance.modalEl.classList.contains("hidden")).toBe(false);
+  instance.resultHandler({request_id: instance.pendingRequest.id, status: "ok"});
+  showSelection();
+  expect(input.value).toBe("");
+});
+
+it("rejects blank text without sending an action", () => {
+  const instance = mountHook();
+  showSelection();
+  instance.submitAction("comment", {input: "  \n "});
+  expect(instance.pushEventTo).not.toHaveBeenCalled();
+  expect(instance.modalEl.classList.contains("hidden")).toBe(false);
+});
+
+it("restores a guest draft after signing in without reading another user's drafts", () => {
+  const instance = mountHook();
+  const key = JSON.stringify(["2", 10, 24, "working memory"]);
+  sessionStorage.setItem("guest-drafts", JSON.stringify({[key]: "Before sign-in"}));
+  sessionStorage.setItem("someone-else", JSON.stringify({[key]: "Another person's draft"}));
+  instance.componentEl.dataset.guestDraftKey = "guest-drafts";
+  instance.drafts = instance.readDrafts();
+  showSelection();
+  expect(instance.el.querySelector("textarea").value).toBe("Before sign-in");
+  expect(sessionStorage.getItem("guest-drafts")).toBeNull();
 });

@@ -2661,3 +2661,9 @@ button[type="submit"]:active {
   outline: 2px solid var(--color-indigo-500, #6366f1);
   outline-offset: -2px;
 }
+
+@media (width < 48rem) {
+  body:has(#graph-layout, #outline-layout) #userHeader [data-secondary-navigation] {
+    display: none;
+  }
+}

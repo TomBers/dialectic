@@ -8,6 +8,7 @@ defmodule DialecticWeb.SelectionActionsComp do
   use DialecticWeb, :live_component
 
   alias Dialectic.Highlights
+  alias DialecticWeb.GraphHelpers
 
   @critical_tool_actions %{
     "clarify" => :clarify,
@@ -50,8 +51,11 @@ defmodule DialecticWeb.SelectionActionsComp do
         socket
       )
       when is_binary(selected_text) and selected_text != "" and is_binary(node_id) and
-             is_integer(start_offset) and is_integer(end_offset) and start_offset < end_offset do
+             is_integer(start_offset) and start_offset >= 0 and is_integer(end_offset) and
+             start_offset < end_offset do
     with {:ok, action} <- Map.fetch(@selection_actions, action_key),
+         :ok <- allowed_action(socket, action),
+         :ok <- GraphHelpers.validate_selection_target(socket, action, node_id),
          {:ok, extra_params} <- action_input(action, params) do
       highlight =
         Highlights.get_highlight_for_selection(
@@ -63,6 +67,7 @@ defmodule DialecticWeb.SelectionActionsComp do
 
       selection_params = %{
         action: action,
+        request_id: Map.get(params, "request_id"),
         selected_text: selected_text,
         node_id: node_id,
         offsets: offsets,
@@ -70,26 +75,56 @@ defmodule DialecticWeb.SelectionActionsComp do
       }
 
       send(self(), {:selection_action, Map.merge(selection_params, extra_params)})
-    end
+      {:noreply, socket}
+    else
+      error ->
+        message =
+          case error do
+            {:error, message} -> message
+            _ -> "Choose an available passage action."
+          end
 
-    {:noreply, socket}
+        {:noreply,
+         push_event(socket, "selection:result", %{
+           request_id: params["request_id"],
+           status: "error",
+           message: message
+         })}
+    end
   end
 
-  def handle_event("action", _params, socket), do: {:noreply, socket}
+  def handle_event("action", params, socket),
+    do:
+      {:noreply,
+       push_event(socket, "selection:result", %{
+         request_id: params["request_id"],
+         status: "error",
+         message: "Select a passage to continue."
+       })}
 
-  defp action_input(:ask_question, %{"input" => input}) when is_binary(input),
-    do: {:ok, %{question: input}}
+  defp allowed_action(%{assigns: %{highlight_only: true}}, action) when action != :highlight_only,
+    do: {:error, "Reader view supports highlights only"}
 
-  defp action_input(:comment, %{"input" => input}) when is_binary(input),
-    do: {:ok, %{comment: input}}
+  defp allowed_action(_socket, _action), do: :ok
 
-  defp action_input(action, _params) when action in [:ask_question, :comment], do: :error
+  defp action_input(action, params) when action in [:ask_question, :comment] do
+    case GraphHelpers.inquiry_content(params["input"]) do
+      "" -> {:error, "Write a comment or question first."}
+      content -> {:ok, %{if(action == :comment, do: :comment, else: :question) => content}}
+    end
+  end
+
   defp action_input(_action, _params), do: {:ok, %{}}
 
   @impl true
   def render(assigns) do
     ~H"""
-    <div id={@id} data-can-edit={to_string(@can_edit)}>
+    <div
+      id={@id}
+      data-can-edit={to_string(@can_edit)}
+      data-draft-key={"selection-drafts:#{@graph_id}:#{if(@current_user, do: @current_user.id, else: "guest")}"}
+      data-guest-draft-key={if(@current_user, do: "selection-drafts:#{@graph_id}:guest")}
+    >
       <div id={"selection-actions-modal-#{@id}"} class="hidden" phx-update="ignore" aria-hidden="true">
         <div
           data-selection-close
@@ -142,8 +177,21 @@ defmodule DialecticWeb.SelectionActionsComp do
               </button>
             </div>
 
-            <p class="mt-3 text-[10px] text-slate-500">
-              / to write · Esc to leave the form, then close · Option/Alt+Shift with A to test · R for related ideas · E to explain · H to highlight
+            <p :if={!@current_user} id="selection-sign-in-hint" class="mt-3 text-sm text-slate-600">
+              <.link href={~p"/users/log_in"} class="font-semibold text-indigo-700 underline">Sign in</.link>
+              to use passage actions. Your draft is kept in this tab.
+            </p>
+            <div class="mt-2 flex gap-2 text-xs text-slate-500">
+              <span data-selection-question-count class="hidden"></span>
+              <span data-selection-comment-count class="hidden"></span>
+            </div>
+            <p
+              :if={@highlight_only}
+              data-selection-status
+              role="status"
+              aria-live="polite"
+              class="mt-2 text-sm text-slate-700"
+            >
             </p>
             <div class="mt-4 border-t border-slate-100 pt-4">
               <.live_component
@@ -153,6 +201,7 @@ defmodule DialecticWeb.SelectionActionsComp do
                 context={:selection}
                 graph_id={@graph_id}
                 can_edit={@can_edit}
+                current_user={@current_user}
                 highlight_only={@highlight_only}
               />
             </div>

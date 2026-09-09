@@ -1,7 +1,10 @@
 defmodule DialecticWeb.OutlineGraphLive do
   use DialecticWeb, :live_view
 
+  import Ecto.Query, only: [from: 2]
+
   alias Dialectic.Accounts.User
+  alias Dialectic.Repo
   alias Dialectic.DbActions.Notes
   alias Dialectic.Graph.GraphActions
   alias Dialectic.Follows
@@ -177,26 +180,40 @@ defmodule DialecticWeb.OutlineGraphLive do
 
   @impl true
   def handle_info({:selection_action, params}, socket) do
-    case GraphHelpers.check_selection_action_allowed(socket) do
-      {:error, :locked} ->
-        {:noreply, put_flash(socket, :error, "This graph is locked")}
+    socket = clear_flash(socket, :error)
 
-      {:error, :unauthenticated} ->
-        {:noreply, assign(socket, show_login_modal: true)}
+    result =
+      case GraphHelpers.check_selection_action_allowed(socket) do
+        {:error, :locked} ->
+          {:noreply, put_flash(socket, :error, "This graph is locked")}
 
-      :ok ->
-        {action, selected_text, node_id, offsets, existing_highlight, _extra} =
-          GraphHelpers.unpack_selection_action(params)
+        {:error, :unauthenticated} ->
+          {:noreply,
+           socket
+           |> assign(show_login_modal: true)
+           |> put_flash(:error, "Sign in to use passage actions. Your draft will stay here.")}
 
-        handle_reader_selection_action(
-          action,
-          selected_text,
-          node_id,
-          offsets,
-          existing_highlight,
-          socket
-        )
-    end
+        :ok ->
+          {action, selected_text, node_id, offsets, existing_highlight, _extra} =
+            GraphHelpers.unpack_selection_action(params)
+
+          case GraphHelpers.validate_selection_target(socket, action, node_id) do
+            :ok ->
+              handle_reader_selection_action(
+                action,
+                selected_text,
+                node_id,
+                offsets,
+                existing_highlight,
+                socket
+              )
+
+            {:error, message} ->
+              {:noreply, put_flash(socket, :error, message)}
+          end
+      end
+
+    GraphHelpers.acknowledge_selection(result, params)
   end
 
   @impl true
@@ -205,6 +222,19 @@ defmodule DialecticWeb.OutlineGraphLive do
   @impl true
   def handle_event("navigate_to_node", %{"node_id" => node_id}, socket) do
     {:noreply, navigate_to_node(socket, node_id)}
+  end
+
+  def handle_event("view_new_thoughts", _params, socket) do
+    case List.last(socket.assigns.new_thought_ids) do
+      nil ->
+        {:noreply, socket}
+
+      node_id ->
+        {:noreply,
+         socket
+         |> assign(new_thought_ids: [], path_focus_ids: [])
+         |> navigate_to_node(node_id)}
+    end
   end
 
   @impl true
@@ -475,6 +505,8 @@ defmodule DialecticWeb.OutlineGraphLive do
       nav_params: token_params(token_param),
       can_edit: !graph_db.is_locked,
       outline_nodes: outline_nodes,
+      contributor_names: contributor_names(outline_nodes),
+      new_thought_ids: [],
       visible_outline_nodes: outline_nodes,
       selected_focus_outline_nodes: outline_nodes,
       path_focus_ids: [],
@@ -602,13 +634,61 @@ defmodule DialecticWeb.OutlineGraphLive do
     {_graph_struct, graph} = GraphManager.get_graph(socket.assigns.graph_id)
     outline_nodes = build_outline_nodes(socket.assigns.graph_id, graph)
 
+    previous_ids = MapSet.new(socket.assigns.outline_nodes, & &1.id)
+    human_ids = for node <- outline_nodes, human_contribution?(node), do: node.id
+
+    new_ids =
+      human_ids |> Enum.reject(&MapSet.member?(previous_ids, &1)) |> Enum.sort_by(&sort_key/1)
+
+    pending_ids = Enum.filter(socket.assigns.new_thought_ids ++ new_ids, &(&1 in human_ids))
+
     selected_node =
       current_selected_node(socket.assigns.graph_id, socket.assigns.selected_node_id) ||
         default_target_node(socket.assigns.graph_id)
 
     socket
-    |> assign(outline_nodes: outline_nodes)
+    |> assign(
+      outline_nodes: outline_nodes,
+      contributor_names: contributor_names(outline_nodes),
+      new_thought_ids: Enum.uniq(pending_ids)
+    )
     |> assign_selected_node(selected_node)
+  end
+
+  defp human_contribution?(node), do: node.class in ["user", "question"]
+
+  defp contributor_names(nodes) do
+    identities =
+      nodes
+      |> Enum.filter(&human_contribution?/1)
+      |> Enum.map(& &1.user)
+      |> Enum.reject(&(&1 in [nil, "", "anonymous"]))
+      |> Enum.uniq()
+
+    if identities == [] do
+      %{}
+    else
+      Repo.all(
+        from user in User, where: user.email in ^identities, select: {user.email, user.username}
+      )
+      |> Map.new()
+    end
+  end
+
+  defp contribution_label(node, names) do
+    if human_contribution?(node) do
+      author =
+        case Map.get(names, Map.get(node, :user)) do
+          name when is_binary(name) and name != "" -> "@#{name}"
+          _ -> if Map.get(node, :user) in [nil, "", "anonymous"], do: "Guest", else: "Participant"
+        end
+
+      if(node.class == "user", do: "Thought", else: "Question") <> " · " <> author
+    else
+      if node.class == "answer",
+        do: "AI response",
+        else: ColUtils.node_type_label(node.class) <> " · AI"
+    end
   end
 
   defp assign_selected_node(socket, nil) do
@@ -857,6 +937,7 @@ defmodule DialecticWeb.OutlineGraphLive do
         title: display_title(node),
         full_title: display_title(node, max_length: :infinity),
         class: Map.get(node, :class, "default"),
+        user: Map.get(node, :user),
         response_level: Map.get(node, :response_level),
         branch?: length(children) > 1
       }
@@ -1278,11 +1359,11 @@ defmodule DialecticWeb.OutlineGraphLive do
     end
   end
 
-  defp challenge_action_label(%{class: "answer"}), do: "Challenge this answer"
-  defp challenge_action_label(%{class: "question"}), do: "Challenge this question"
-  defp challenge_action_label(%{class: "user"}), do: "Challenge this comment"
+  defp response_action_label(%{class: "answer"}), do: "Respond to this answer"
+  defp response_action_label(%{class: "question"}), do: "Respond to this question"
+  defp response_action_label(%{class: "user"}), do: "Respond to this thought"
 
-  defp challenge_action_label(%{class: class}) do
+  defp response_action_label(%{class: class}) do
     label =
       class
       |> ColUtils.node_type_label()
@@ -1291,7 +1372,7 @@ defmodule DialecticWeb.OutlineGraphLive do
       |> String.trim()
       |> String.downcase()
 
-    "Challenge this #{label}"
+    "Respond to this #{label}"
   end
 
   defp highlight_excerpt(%{selected_text_snapshot: text}) when is_binary(text) do

@@ -196,6 +196,7 @@ defmodule DialecticWeb.GraphHelpers do
   - `{:ok, {nil, graph_result}, "comment"}` on success
   """
   def handle_answer(socket, answer_content) do
+    answer_content = inquiry_content(answer_content)
     node = GraphActions.find_node(socket.assigns.graph_id, socket.assigns.node.id)
 
     cond do
@@ -205,6 +206,9 @@ defmodule DialecticWeb.GraphHelpers do
       is_nil(node) or origin_node?(node) or Map.get(node, :deleted, false) ->
         {:error, :invalid_comment_target}
 
+      answer_content == "" ->
+        {:error, :empty_content}
+
       true ->
         graph_result = GraphActions.comment(graph_action_params(socket, node), answer_content)
         {:ok, {nil, graph_result}, "comment"}
@@ -212,6 +216,48 @@ defmodule DialecticWeb.GraphHelpers do
   end
 
   # ── Selection action helpers ──────────────────────────────────────────
+
+  def inquiry_content(content) when is_binary(content), do: String.trim(content)
+  def inquiry_content(_content), do: ""
+
+  def validate_selection_target(socket, action, node_id) do
+    node = GraphActions.find_node(socket.assigns.graph_id, node_id)
+
+    cond do
+      !socket.assigns.can_edit ->
+        {:error, "This graph is locked"}
+
+      is_nil(socket.assigns.current_user) ->
+        {:error, "Sign in to use passage actions. Your draft will stay here."}
+
+      is_nil(node) || Map.get(node, :deleted, false) ->
+        {:error, "Choose an existing response to continue."}
+
+      action == :comment && origin_node?(node) ->
+        {:error, "Choose a response to add your comment."}
+
+      true ->
+        :ok
+    end
+  end
+
+  def acknowledge_selection({:noreply, socket}, params) do
+    case Map.get(params, :request_id) do
+      nil ->
+        {:noreply, socket}
+
+      request_id ->
+        error = Phoenix.Flash.get(socket.assigns.flash, :error)
+
+        result = %{
+          request_id: request_id,
+          status: if(error, do: "error", else: "ok"),
+          message: error
+        }
+
+        {:noreply, Phoenix.LiveView.push_event(socket, "selection:result", result)}
+    end
+  end
 
   @doc """
   Checks if a selection action can proceed based on socket assigns.
@@ -262,17 +308,28 @@ defmodule DialecticWeb.GraphHelpers do
     returns `{graph, node}` directly, not wrapped in `{nil, ...}`)
   """
   def handle_reply_and_answer(socket, answer_content, opts \\ []) do
-    if not socket.assigns.can_edit do
-      {:error, :locked}
-    else
-      graph_result =
-        GraphActions.ask_and_answer(
-          graph_action_params(socket, socket.assigns.node),
-          answer_content,
-          opts
-        )
+    answer_content = inquiry_content(answer_content)
+    node = GraphActions.find_node(socket.assigns.graph_id, socket.assigns.node.id)
 
-      {:ok, graph_result, "answer"}
+    cond do
+      not socket.assigns.can_edit ->
+        {:error, :locked}
+
+      is_nil(node) or node.deleted ->
+        {:error, :invalid_question_target}
+
+      answer_content == "" ->
+        {:error, :empty_content}
+
+      true ->
+        graph_result =
+          GraphActions.ask_and_answer(
+            graph_action_params(socket, node),
+            answer_content,
+            opts
+          )
+
+        {:ok, graph_result, "answer"}
     end
   end
 end
