@@ -1,5 +1,6 @@
 defmodule DialecticWeb.AskFormComp do
   use DialecticWeb, :live_component
+  import DialecticWeb.KeyboardComponents
   alias DialecticWeb.Utils.NodeTitleHelper
 
   @moduledoc """
@@ -73,8 +74,9 @@ defmodule DialecticWeb.AskFormComp do
         for={@form}
         phx-submit={@submit_event || "reply-and-answer"}
         id={@id}
-        class="w-full min-w-0"
+        class="group/shortcuts w-full min-w-0"
         aria-disabled={@disabled}
+        phx-hook="AskFormShortcuts"
       >
         <input
           :if={@query_origin}
@@ -118,7 +120,7 @@ defmodule DialecticWeb.AskFormComp do
                 "box-border w-full text-base sm:text-sm focus:outline-none focus:ring-0 resize-none",
                 if(@embedded,
                   do: "min-h-[4.5rem] border-0 bg-transparent px-2.5 py-2 pr-2.5",
-                  else: "h-10 min-h-[2.5rem] rounded-3xl border py-2.5 pl-4 pr-[11.25rem]"
+                  else: "h-10 min-h-[2.5rem] rounded-3xl border py-2.5 pl-4 pr-[17rem]"
                 ),
                 if(@disabled,
                   do:
@@ -136,11 +138,11 @@ defmodule DialecticWeb.AskFormComp do
             <div class={[
               "relative flex items-center gap-1.5",
               if(@embedded,
-                do: "mt-1 border-t border-slate-100 px-1 pt-2",
-                else: "absolute right-1.5 top-0 bottom-1.5 justify-end"
+                do: "mt-1 items-center gap-2 border-t border-slate-100 pb-1 pt-2",
+                else: "absolute right-1.5 top-0 bottom-1.5 items-center gap-1.5 justify-end"
               )
             ]}>
-              <div :if={@show_tools} class="flex min-w-0 items-center gap-1">
+              <div :if={@show_tools} class="flex shrink-0 items-center gap-1">
                 <button
                   id={@tools_button_id}
                   type="button"
@@ -149,7 +151,8 @@ defmodule DialecticWeb.AskFormComp do
                   aria-expanded={to_string(@tools_open)}
                   aria-controls={@tools_menu_id}
                   class={[
-                    "inline-flex h-8 shrink-0 items-center gap-1 rounded-full px-2.5 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300",
+                    "inline-flex shrink-0 items-center gap-1 rounded-lg text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300",
+                    if(@embedded, do: "h-10 px-1.5", else: "h-8 px-2.5"),
                     if(@tools_open,
                       do: "bg-indigo-100 text-indigo-800",
                       else: "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
@@ -163,16 +166,28 @@ defmodule DialecticWeb.AskFormComp do
 
               {render_slot(@inner_block)}
 
-              <div class="ml-auto flex items-center gap-1">
+              <div class={
+                if(@embedded,
+                  do: "ml-auto flex min-w-0 flex-1 items-center gap-2",
+                  else: "ml-auto flex items-center gap-1"
+                )
+              }>
                 <%!-- Post button — adds submit_action=post to form params --%>
                 <button
                   id={"#{@id}-comment"}
                   type="submit"
+                  data-shortcut-action="comment"
+                  aria-keyshortcuts="Control+Shift+Enter Meta+Shift+Enter"
                   name="submit_action"
                   value="post"
                   disabled={@disabled || DialecticWeb.GraphHelpers.origin_node?(@node)}
                   class={[
-                    "inline-flex h-8 items-center gap-1 rounded-full px-2.5 text-xs font-semibold leading-none transition-all disabled:cursor-not-allowed disabled:opacity-50",
+                    "inline-flex items-center font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+                    if(@embedded,
+                      do:
+                        "h-10 min-w-0 flex-auto justify-center gap-1 whitespace-nowrap rounded-lg border border-slate-300 bg-slate-50 px-2 text-xs shadow-sm hover:border-slate-400",
+                      else: "h-8 gap-1 rounded-full px-2.5 text-xs leading-none"
+                    ),
                     if(@disabled,
                       do: "bg-slate-100 text-slate-400",
                       else: "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
@@ -185,16 +200,29 @@ defmodule DialecticWeb.AskFormComp do
                     )
                   }
                 >
-                  <.icon name="hero-chat-bubble-left-ellipsis" class="h-3.5 w-3.5" />
-                  <span>Comment</span>
+                  <span class="inline-flex items-center gap-2">
+                    <.icon
+                      name="hero-chat-bubble-left-ellipsis"
+                      class={if(@embedded, do: "hidden", else: "h-3.5 w-3.5")}
+                    />
+                    <span>Comment</span>
+                  </span>
+                  <.shortcut_keycap shift />
                 </button>
                 <%!-- Ask button — default submit (no name, so no submit_action param) --%>
                 <button
                   id={"#{@id}-ask"}
+                  data-shortcut-action="ask"
+                  aria-keyshortcuts="Control+Enter Meta+Enter"
                   type="submit"
                   disabled={@disabled}
                   class={[
-                    "inline-flex h-8 items-center gap-1 rounded-full px-3 text-xs font-semibold leading-none shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-50",
+                    "inline-flex items-center font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+                    if(@embedded,
+                      do:
+                        "h-10 min-w-0 flex-auto justify-center gap-1 whitespace-nowrap rounded-lg border border-slate-950 px-2 text-xs shadow-md",
+                      else: "h-8 gap-1 rounded-full px-3 text-xs leading-none shadow-sm"
+                    ),
                     if(@disabled,
                       do: "bg-slate-300 text-white shadow-none",
                       else: "bg-slate-950 text-white hover:bg-slate-800 hover:shadow-md"
@@ -208,7 +236,7 @@ defmodule DialecticWeb.AskFormComp do
                   }
                 >
                   <span>Ask</span>
-                  <.icon name="hero-arrow-up" class="h-3.5 w-3.5" />
+                  <.shortcut_keycap dark />
                 </button>
               </div>
             </div>

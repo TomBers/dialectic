@@ -2655,3 +2655,9 @@ button[type="submit"]:active {
     margin-left: 0.125rem;
     margin-right: 0.125rem;
 }
+
+#graph-keyboard-workspace[data-active-region="reader"] #side-drawer-scroll,
+#graph-keyboard-workspace[data-active-region="grid"] #cy-inner {
+  outline: 2px solid var(--color-indigo-500, #6366f1);
+  outline-offset: -2px;
+}

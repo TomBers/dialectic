@@ -628,6 +628,7 @@ export function draw_graph(
         (target.isContentEditable ||
           target.closest('[contenteditable="true"], [contenteditable=""]')));
     if (isEditable) return;
+    if (container.closest("#graph-keyboard-workspace") && !container.contains(target)) return;
 
     if (e.code === "Space" && !isSpaceDown) {
       isSpaceDown = true;

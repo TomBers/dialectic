@@ -90,12 +90,11 @@ describe("graph layout proportions", () => {
 
   it("uses compact idea labels without counting node padding twice", () => {
     const nodeStyle = styleFor(graphStyle("spaced", "Example"), "node");
-    const oneLineNode = { data: () => "A short node title" };
 
     expect(nodeStyle["font-size"]).toBe(16);
     expect(nodeStyle["font-weight"]).toBe(500);
     expect(nodeStyle["text-metrics"]).toBe("glyph");
-    expect(nodeStyle.height(oneLineNode)).toBe(22);
+    expect(nodeStyle.height).toBe("label");
     expect(nodeStyle.padding).toBe("10px");
     expect(nodeStyle.ghost).toBe("no");
   });
@@ -171,8 +170,28 @@ describe("graph layout proportions", () => {
     const spacedStyle = styleFor(graphStyle("spaced", "Example"), "node");
     const compactStyle = styleFor(graphStyle("compact", "Example"), "node");
 
-    expect(spacedStyle.label(node)).toBe(`${"A".repeat(52)}…`);
-    expect(compactStyle.label(node)).toBe(`${"A".repeat(36)}…`);
+    expect(spacedStyle.label(node)).toBe(`${"A".repeat(120)}…`);
+    expect(compactStyle.label(node)).toBe(`${"A".repeat(72)}…`);
     expect(compactStyle["font-size"]).toBe(11);
   });
+});
+
+it("shows a complete descriptive title instead of cutting it at the old limit", () => {
+  const title = "How individual liberty and social responsibility shape John Stuart Mill's account of human flourishing";
+  const style = styleFor(graphStyle("spaced", "Example"), "node");
+  expect(style.label({ data: () => `\n\n## **${title}**\nLonger body text` })).toBe(title);
+});
+
+it("cuts long labels at word boundaries and uses rendered label height", () => {
+  for (const [mode, cutoff] of [["spaced", 120], ["compact", 72]]) {
+    const style = styleFor(graphStyle(mode, "Example"), "node");
+    const title = "Understanding the relationship between individual freedom and collective responsibility in democratic societies requires careful consideration";
+    const node = { data: () => title };
+    const label = style.label(node);
+    const visible = label.replace(/…$/, "");
+    expect(label.endsWith("…")).toBe(true);
+    expect(visible.length).toBeLessThanOrEqual(cutoff);
+    expect(title[visible.length]).toBe(" ");
+    expect(style.height).toBe("label");
+  }
 });

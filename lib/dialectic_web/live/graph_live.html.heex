@@ -223,17 +223,22 @@
     </div>
 
     <%!-- Main content with drawer menu --%>
-    <div class={[
-      "relative z-0 min-h-0 flex-1 md:flex",
-      if(@mobile_inquiry?, do: "flex", else: "hidden"),
-      if(@presentation_mode == :presenting,
-        do:
-          "flex-col md:flex-row gap-0 bg-[radial-gradient(circle_at_top_left,_rgba(99,102,241,0.12),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(14,165,233,0.10),_transparent_38%),linear-gradient(180deg,_#f8fafc_0%,_#eef2ff_100%)] pt-14"
-      ),
-      if(@presentation_mode != :presenting,
-        do: "flex-col md:flex-row"
-      )
-    ]}>
+    <div
+      id="graph-keyboard-workspace"
+      phx-hook="GraphKeyboardNavigation"
+      data-active-region="reader"
+      class={[
+        "relative z-0 min-h-0 flex-1 md:flex",
+        if(@mobile_inquiry?, do: "flex", else: "hidden"),
+        if(@presentation_mode == :presenting,
+          do:
+            "flex-col md:flex-row gap-0 bg-[radial-gradient(circle_at_top_left,_rgba(99,102,241,0.12),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(14,165,233,0.10),_transparent_38%),linear-gradient(180deg,_#f8fafc_0%,_#eef2ff_100%)] pt-14"
+        ),
+        if(@presentation_mode != :presenting,
+          do: "flex-col md:flex-row"
+        )
+      ]}
+    >
       <%= if @presentation_mode == :presenting do %>
         <.presentation_stage
           slides={slides}
@@ -254,7 +259,11 @@
         >
           <div
             id="side-drawer-scroll"
-            class="min-h-0 flex-1 overflow-y-auto"
+            tabindex="0"
+            role="region"
+            aria-label="Node content"
+            aria-describedby="graph-keyboard-hint"
+            class="min-h-0 flex-1 overflow-y-auto outline-none"
             phx-hook="ScrollReset"
           >
             <% {guided_actions, guided_paths} = guided_plan_options(@node, @graph_id) %>
@@ -486,7 +495,6 @@
           data-enter-shortcut="reader"
           data-ignore-inputs="true"
           phx-hook="Graph"
-          tabindex="0"
         >
           <%= if @presentation_mode != :presenting do %>
             <.grid_chat_toggle
@@ -559,7 +567,15 @@
             </div>
           <% end %>
           <div id="cy-render-boundary" class="relative h-full w-full" phx-update="ignore">
-            <div id="cy-inner" class="relative h-full w-full"></div>
+            <div
+              id="cy-inner"
+              tabindex="0"
+              role="region"
+              aria-label="Grid navigation"
+              aria-describedby="graph-keyboard-hint"
+              class="relative h-full w-full outline-none"
+            >
+            </div>
           </div>
         </div>
 

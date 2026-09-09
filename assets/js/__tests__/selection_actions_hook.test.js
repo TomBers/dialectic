@@ -5,6 +5,7 @@ vi.mock("../toast.js", () => ({
   showToast: vi.fn(),
 }));
 
+import AskFormShortcuts from "../ask_form_shortcuts.js";
 import SelectionActionsHook from "../selection_actions_hook.js";
 import { copyToClipboard, showToast } from "../toast.js";
 
@@ -15,7 +16,7 @@ function mountHook() {
     <div id="selection-actions-hook">
       <div id="selection-actions" data-can-edit="true">
         <div id="selection-actions-modal-selection-actions" class="hidden" aria-hidden="true">
-          <div data-selection-dialog class="max-w-[620px]"></div>
+          <div data-selection-dialog tabindex="-1" class="max-w-[620px]"></div>
           <div data-selection-text></div>
           <button type="button" data-selection-copy>
             <span data-selection-copy-icon>Copy icon</span>
@@ -37,12 +38,12 @@ function mountHook() {
             <button
               type="submit"
               data-selection-input-submit
-              data-selection-submit-action="comment"
+              data-selection-submit-action="comment" data-shortcut-action="comment"
             >Comment</button>
             <button
               type="submit"
               data-selection-input-submit
-              data-selection-submit-action="ask_question"
+              data-selection-submit-action="ask_question" data-shortcut-action="ask"
             >Ask</button>
           </form>
           <div data-selection-advanced-tools class="hidden">Advanced tools</div>
@@ -258,4 +259,88 @@ describe("SelectionActionsHook", () => {
     ).toBe(true);
     expect(instance.pushEventTo).not.toHaveBeenCalled();
   });
+});
+
+it.each([false, true])("submits the selected passage through the shared form shortcut (comment: %s)", (shiftKey) => {
+  const instance = mountHook();
+  const form = instance.el.querySelector("form");
+  const formHook = { ...AskFormShortcuts, el: form };
+  formHook.mounted();
+  try {
+    showSelection();
+    const input = form.querySelector("textarea");
+    input.value = "My question or comment";
+    input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", metaKey: true, shiftKey, bubbles: true, cancelable: true }));
+    expect(instance.pushEventTo).toHaveBeenCalledWith(instance.componentEl, "action", expect.objectContaining({
+      selectedText: "working memory", nodeId: "2", offsets: { start: 10, end: 24 },
+      action: shiftKey ? "comment" : "ask_question", input: "My question or comment",
+    }));
+  } finally { formHook.destroyed(); }
+});
+
+it("focuses with slash and leaves the draft before closing with Escape", () => {
+  const instance = mountHook();
+  showSelection();
+  const form = instance.el.querySelector("form");
+  form.scrollIntoView = vi.fn();
+  const input = form.querySelector("textarea");
+  const dialog = instance.el.querySelector("[data-selection-dialog]");
+  dialog.dispatchEvent(new KeyboardEvent("keydown", { key: "/", bubbles: true, cancelable: true }));
+  expect(document.activeElement).toBe(input);
+  input.value = "Keep this draft";
+  input.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
+  expect(document.activeElement).toBe(dialog);
+  expect(input.value).toBe("Keep this draft");
+  expect(instance.modalEl.classList.contains("hidden")).toBe(false);
+  dialog.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
+  expect(instance.modalEl.classList.contains("hidden")).toBe(true);
+  expect(instance.pushEventTo).not.toHaveBeenCalled();
+});
+
+it.each([["a", "pros_cons"], ["r", "related_ideas"]])("shares the modifier shortcut for %s and ignores it when closed", (key, action) => {
+  const instance = mountHook();
+  const button = document.createElement("button");
+  button.dataset.readerShortcut = key;
+  button.dataset.selectionAction = action;
+  button.scrollIntoView = vi.fn();
+  instance.modalEl.append(button);
+  showSelection();
+  const dialog = instance.el.querySelector("[data-selection-dialog]");
+  dialog.dispatchEvent(new KeyboardEvent("keydown", { key, altKey: true, shiftKey: true, bubbles: true, cancelable: true }));
+  expect(instance.pushEventTo).toHaveBeenCalledWith(instance.componentEl, "action", expect.objectContaining({ action }));
+  dialog.dispatchEvent(new KeyboardEvent("keydown", { key, altKey: true, shiftKey: true, bubbles: true, cancelable: true }));
+  expect(instance.pushEventTo).toHaveBeenCalledTimes(1);
+});
+
+it.each([["e", "explain"], ["h", "highlight_only"]])("requires modifier and Shift for %s, respecting typing and disabled actions", (key, action) => {
+  const instance = mountHook();
+  const button = document.createElement("button");
+  button.dataset.readerShortcut = key;
+  button.dataset.shortcutShift = "true";
+  button.dataset.selectionAction = action;
+  button.scrollIntoView = vi.fn();
+  instance.modalEl.append(button);
+  showSelection();
+  const dialog = instance.el.querySelector("[data-selection-dialog]");
+  const press = (target, options) => target.dispatchEvent(new KeyboardEvent("keydown", {key, bubbles: true, cancelable: true, ...options}));
+  press(dialog, {});
+  press(dialog, {metaKey: true});
+  press(instance.el.querySelector("textarea"), {altKey: true, shiftKey: true});
+  button.disabled = true;
+  press(dialog, {altKey: true, shiftKey: true});
+  expect(instance.pushEventTo).not.toHaveBeenCalled();
+  button.disabled = false;
+  press(dialog, {altKey: true, shiftKey: true});
+  expect(instance.pushEventTo).toHaveBeenCalledWith(instance.componentEl, "action", expect.objectContaining({action}));
+});
+
+it("restores the opening control when the modal closes", () => {
+  const instance = mountHook();
+  const opener = document.createElement("button");
+  document.body.append(opener);
+  opener.focus();
+  showSelection();
+  expect(document.activeElement).toBe(instance.modalEl.querySelector("[data-selection-dialog]"));
+  instance.closeModal();
+  expect(document.activeElement).toBe(opener);
 });
