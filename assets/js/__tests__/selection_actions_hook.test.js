@@ -11,10 +11,11 @@ import { copyToClipboard, showToast } from "../toast.js";
 
 let hook;
 
-function mountHook() {
+function mountHook(context = "selection") {
+  vi.spyOn(navigator, "platform", "get").mockReturnValue("MacIntel");
   document.body.innerHTML = `
     <div id="selection-actions-hook">
-      <div id="selection-actions" data-can-edit="true" data-draft-key="test-selection-drafts">
+      <div id="selection-actions" data-can-edit="true" data-action-context="${context}" data-draft-key="test-selection-drafts">
         <div id="selection-actions-modal-selection-actions" class="hidden" aria-hidden="true">
           <div data-selection-dialog tabindex="-1" class="max-w-[620px]"></div>
           <div data-selection-text></div>
@@ -30,6 +31,7 @@ function mountHook() {
           >Highlight</button>
           <form data-selection-input-form>
             <textarea name="vertex[content]" data-selection-input></textarea>
+            ${context === "answer" ? '<input type="checkbox" name="guided_learning"><button type="button" data-answer-bookmark data-selection-action="bookmark" data-reader-shortcut="b"><span data-tool-label>Bookmark</span></button>' : ''}
             <button
               type="button"
               data-selection-advanced-toggle
@@ -46,7 +48,7 @@ function mountHook() {
               data-selection-submit-action="ask_question" data-shortcut-action="ask"
             >Ask</button>
           </form>
-          <div data-selection-advanced-tools hidden>Advanced tools</div><p data-selection-status></p>
+          <div data-selection-advanced-tools hidden>Advanced tools<button data-tools-close>Close tools</button></div><p data-selection-status></p>
           <button type="button" data-selection-close>Close</button>
         </div>
       </div>
@@ -80,6 +82,7 @@ afterEach(() => {
   window.__highlightsCache = [];
   sessionStorage.clear();
   vi.clearAllMocks();
+  vi.restoreAllMocks();
   document.body.replaceChildren();
 });
 
@@ -243,6 +246,19 @@ describe("SelectionActionsHook", () => {
     expect(toggle.querySelector("[data-tools-closed]").classList.contains("hidden")).toBe(false);
   });
 
+  it("closes just the tools and preserves the passage draft", () => {
+    const instance = mountHook();
+    showSelection();
+    const input = instance.modalEl.querySelector("[data-selection-input]");
+    input.value = "My draft";
+    instance.modalEl.querySelector("[data-selection-advanced-toggle]").click();
+    instance.modalEl.querySelector("[data-tools-close]").click();
+    expect(instance.modalEl.querySelector("[data-selection-advanced-tools]").hidden).toBe(true);
+    expect(instance.modalEl.classList.contains("hidden")).toBe(false);
+    expect(input.value).toBe("My draft");
+    expect(instance.pushEventTo).not.toHaveBeenCalled();
+  });
+
   it("disables highlighting when the exact selection is already cached", () => {
     window.__highlightsCache = [
       {
@@ -311,17 +327,16 @@ it.each([["a", "pros_cons"], ["r", "related_ideas"]])("shares the modifier short
   instance.modalEl.append(button);
   showSelection();
   const dialog = instance.el.querySelector("[data-selection-dialog]");
-  dialog.dispatchEvent(new KeyboardEvent("keydown", { key, altKey: true, shiftKey: true, bubbles: true, cancelable: true }));
+  dialog.dispatchEvent(new KeyboardEvent("keydown", { key, metaKey: true, bubbles: true, cancelable: true }));
   expect(instance.pushEventTo).toHaveBeenCalledWith(instance.componentEl, "action", expect.objectContaining({ action }));
-  dialog.dispatchEvent(new KeyboardEvent("keydown", { key, altKey: true, shiftKey: true, bubbles: true, cancelable: true }));
+  dialog.dispatchEvent(new KeyboardEvent("keydown", { key, metaKey: true, bubbles: true, cancelable: true }));
   expect(instance.pushEventTo).toHaveBeenCalledTimes(1);
 });
 
-it.each([["e", "explain"], ["h", "highlight_only"]])("requires modifier and Shift for %s, respecting typing and disabled actions", (key, action) => {
+it.each([["e", "explain"], ["h", "highlight_only"]])("requires the primary modifier for %s, respecting typing and disabled actions", (key, action) => {
   const instance = mountHook();
   const button = document.createElement("button");
   button.dataset.readerShortcut = key;
-  button.dataset.shortcutShift = "true";
   button.dataset.selectionAction = action;
   button.scrollIntoView = vi.fn();
   instance.modalEl.append(button);
@@ -329,13 +344,13 @@ it.each([["e", "explain"], ["h", "highlight_only"]])("requires modifier and Shif
   const dialog = instance.el.querySelector("[data-selection-dialog]");
   const press = (target, options) => target.dispatchEvent(new KeyboardEvent("keydown", {key, bubbles: true, cancelable: true, ...options}));
   press(dialog, {});
-  press(dialog, {metaKey: true});
-  press(instance.el.querySelector("textarea"), {altKey: true, shiftKey: true});
+  press(dialog, {metaKey: true, shiftKey: true});
+  press(instance.el.querySelector("textarea"), {metaKey: true});
   button.disabled = true;
-  press(dialog, {altKey: true, shiftKey: true});
+  press(dialog, {metaKey: true});
   expect(instance.pushEventTo).not.toHaveBeenCalled();
   button.disabled = false;
-  press(dialog, {altKey: true, shiftKey: true});
+  press(dialog, {metaKey: true});
   expect(instance.pushEventTo).toHaveBeenCalledWith(instance.componentEl, "action", expect.objectContaining({action}));
 });
 
@@ -414,4 +429,95 @@ it("restores a guest draft after signing in without reading another user's draft
   showSelection();
   expect(instance.el.querySelector("textarea").value).toBe("Before sign-in");
   expect(sessionStorage.getItem("guest-drafts")).toBeNull();
+});
+
+function showAnswer(detail = {}) {
+  window.dispatchEvent(new CustomEvent("answer:show", {
+    detail: {nodeId: "2", title: "Practice in your own words", bookmarked: false, ...detail},
+  }));
+}
+
+it("opens the answer modal without a text selection and ignores passage events", () => {
+  const instance = mountHook("answer");
+  showSelection();
+  expect(instance.modalEl.classList.contains("hidden")).toBe(true);
+  showAnswer();
+  expect(instance.modalEl.classList.contains("hidden")).toBe(false);
+  expect(instance.modalEl.querySelector("[data-selection-text]").textContent).toBe("Practice in your own words");
+  expect(instance.selectionData).toEqual({nodeId: "2"});
+  expect(instance.pushEventTo).not.toHaveBeenCalled();
+});
+
+it("does not open a passage modal for an answer action", () => {
+  const instance = mountHook();
+  showAnswer();
+  expect(instance.modalEl.classList.contains("hidden")).toBe(true);
+});
+
+it("preserves each answer draft and learning preference across closing and remounting", () => {
+  const instance = mountHook("answer");
+  showAnswer();
+  instance.el.querySelector("textarea").value = "How would I practise?";
+  instance.el.querySelector('[name="guided_learning"]').checked = true;
+  instance.closeModal();
+  showAnswer({nodeId: "3", title: "Recall"});
+  expect(instance.el.querySelector("textarea").value).toBe("");
+  expect(instance.el.querySelector('[name="guided_learning"]').checked).toBe(false);
+  instance.closeModal();
+  instance.destroyed();
+  const remounted = mountHook("answer");
+  showAnswer();
+  expect(remounted.el.querySelector("textarea").value).toBe("How would I practise?");
+  expect(remounted.el.querySelector('[name="guided_learning"]').checked).toBe(true);
+});
+
+it("submits whole-answer questions with their learning preference and no passage offsets", () => {
+  const instance = mountHook("answer");
+  showAnswer();
+  const form = instance.el.querySelector("form");
+  form.querySelector("textarea").value = "How can I practise?";
+  form.querySelector('[name="guided_learning"]').checked = true;
+  const submitter = form.querySelector('[data-selection-submit-action="ask_question"]');
+  form.dispatchEvent(new SubmitEvent("submit", {bubbles: true, cancelable: true, submitter}));
+  expect(instance.pushEventTo).toHaveBeenCalledWith(instance.componentEl, "action", {
+    nodeId: "2", input: "How can I practise?", action: "ask_question", guided_learning: true, request_id: expect.any(String),
+  });
+  instance.resultHandler({request_id: instance.pendingRequest.id, status: "ok"});
+  showAnswer();
+  expect(form.querySelector("textarea").value).toBe("");
+  expect(form.querySelector('[name="guided_learning"]').checked).toBe(false);
+});
+
+it("confirms bookmarks while keeping the modal and draft open", () => {
+  const instance = mountHook("answer");
+  showAnswer();
+  const bookmark = instance.el.querySelector("[data-answer-bookmark]");
+  const input = instance.el.querySelector("textarea");
+  input.value = "Keep my thinking";
+  bookmark.click();
+  expect(instance.pushEventTo).toHaveBeenCalledWith(instance.componentEl, "action", {
+    nodeId: "2", action: "bookmark", request_id: expect.any(String),
+  });
+  instance.resultHandler({request_id: instance.pendingRequest.id, status: "ok", bookmarked: true});
+  expect(bookmark.getAttribute("aria-pressed")).toBe("true");
+  expect(bookmark.textContent).toBe("Bookmarked");
+  expect(instance.modalEl.classList.contains("hidden")).toBe(false);
+  expect(input.value).toBe("Keep my thinking");
+  bookmark.click();
+  instance.resultHandler({request_id: instance.pendingRequest.id, status: "ok", bookmarked: false});
+  expect(bookmark.getAttribute("aria-pressed")).toBe("false");
+  expect(input.value).toBe("Keep my thinking");
+});
+
+it("closes the answer modal back to its trigger without losing the draft", () => {
+  const instance = mountHook("answer");
+  const trigger = document.createElement("button");
+  document.body.appendChild(trigger);
+  trigger.focus();
+  showAnswer();
+  instance.el.querySelector("textarea").value = "A draft";
+  instance.modalEl.querySelector("[data-selection-close]").click();
+  expect(document.activeElement).toBe(trigger);
+  showAnswer();
+  expect(instance.el.querySelector("textarea").value).toBe("A draft");
 });

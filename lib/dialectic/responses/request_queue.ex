@@ -40,6 +40,20 @@ defmodule Dialectic.Responses.RequestQueue do
     end
   end
 
+  def pending_node_ids(graph, live_view_topic) do
+    workers = Enum.map([LLMWorker, LocalWorker], &Oban.Worker.to_string/1)
+
+    from(job in Oban.Job,
+      where: job.worker in ^workers and job.state in ^@active_states,
+      where: fragment("?->>'graph' = ?", job.args, ^graph),
+      where: fragment("?->>'live_view_topic' = ?", job.args, ^live_view_topic),
+      select: fragment("?->>'to_node'", job.args)
+    )
+    |> Repo.all()
+    |> MapSet.new()
+    |> MapSet.delete(nil)
+  end
+
   def run_local(params) do
     Logger.debug(fn ->
       "[RequestQueue] Queueing LOCAL job for graph=#{inspect(params.graph)} node=#{inspect(params.to_node)}"

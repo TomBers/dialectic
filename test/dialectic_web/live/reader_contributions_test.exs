@@ -62,18 +62,19 @@ defmodule DialecticWeb.ReaderContributionsTest do
     refute has_element?(reader, "#outline-reading-node-1-ask")
     assert has_element?(reader, "#outline-reading-node-2-ask", "Respond to this answer")
 
-    {:ok, inquiry, _} =
-      reader |> element("#outline-reading-node-2-ask") |> render_click() |> follow_redirect(conn)
+    assert has_element?(reader, "button#outline-reading-node-2-ask[aria-haspopup='dialog']")
+    refute has_element?(reader, "#outline-reading-node-2-ask[href]")
+    assert has_element?(reader, "#answer-actions[data-action-context='answer']")
+    assert has_element?(reader, "#selection-input-form-answer-actions-comment")
+    assert has_element?(reader, "#selection-input-form-answer-actions-ask")
+    assert has_element?(reader, "#answer-action-bookmark-answer-actions")
 
-    assert has_element?(inquiry, "#graph-layout[data-mobile-inquiry='true']")
-    assert has_element?(inquiry, "#global-chat-form-comment")
-    assert has_element?(inquiry, "#global-chat-form-ask")
-    assert has_element?(inquiry, "#mobile-inquiry-reader-link[href='/g/#{graph.slug}?node=2']")
-    assert has_element?(inquiry, "#node-suggestions-2")
-    assert has_element?(inquiry, "#mobile-inquiry-settings")
+    assert has_element?(
+             reader,
+             "#selection-tools-popover-answer-actions [data-selection-action='counterexample']"
+           )
 
-    inquiry |> element("#global-chat-form [id^='node-tools-more-']") |> render_click()
-    assert has_element?(inquiry, "#node-tools-popover-2 button[phx-click='node_counterexample']")
+    refute has_element?(reader, "#answer-actions [data-selection-action='highlight_only']")
   end
 
   test "posting a thought returns a guest to the saved contribution without generating AI", %{
@@ -188,7 +189,7 @@ defmodule DialecticWeb.ReaderContributionsTest do
     inquiry |> element("#global-chat-form [id^='node-tools-more-']") |> render_click()
 
     inquiry
-    |> element("#node-suggestions-2 button[phx-click*='node_combine']")
+    |> element("#global-chat-form-tools-toolbar button[phx-click*='node_combine']")
     |> render_click()
 
     inquiry |> element("#mobile-combine-search") |> render_click()
@@ -303,7 +304,12 @@ defmodule DialecticWeb.ReaderContributionsTest do
       |> Dialectic.Repo.update!()
 
     {:ok, reader, _} = live(conn, ~p"/g/#{graph.slug}?node=2&token=mobile-token")
-    assert has_element?(reader, "#outline-reading-node-2-ask[href*='token=mobile-token']")
+
+    assert has_element?(
+             reader,
+             "button#outline-reading-node-2-ask[aria-controls='selection-actions-focus-answer-actions']"
+           )
+
     {:ok, inquiry, _} = live(conn, ~p"/g/#{graph.slug}/graph?node=2&focus=ask&token=mobile-token")
     assert has_element?(inquiry, "#mobile-inquiry-reader-link[href*='token=mobile-token']")
     before_ids = GraphManager.vertices(graph.title)

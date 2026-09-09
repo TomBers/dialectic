@@ -21,7 +21,8 @@ const SelectionActionsHook = {
     this.handleEvent("selection:result", (result) => this.handleResult(result));
     syncInquiryShortcutLabels(this.el);
 
-    window.addEventListener("selection:show", this.handleSelectionShow);
+    this.showEventName = this.answerContext() ? "answer:show" : "selection:show";
+    window.addEventListener(this.showEventName, this.handleSelectionShow);
     window.addEventListener("keydown", this.handleKeydown);
     this.el.addEventListener("click", this.handleClick);
     this.el.addEventListener("submit", this.handleSubmit);
@@ -32,13 +33,32 @@ const SelectionActionsHook = {
     this.toolsMenu?.destroy();
     this.el.removeEventListener("input", this.onDraftInput);
     window.clearTimeout(this.copyFeedbackTimer);
-    window.removeEventListener("selection:show", this.handleSelectionShow);
+    window.removeEventListener(this.showEventName, this.handleSelectionShow);
     window.removeEventListener("keydown", this.handleKeydown);
     this.el.removeEventListener("click", this.handleClick);
     this.el.removeEventListener("submit", this.handleSubmit);
   },
 
+  answerContext() {
+    return this.componentEl?.dataset.actionContext === "answer";
+  },
+
   handleSelectionShow(event) {
+    if (this.answerContext()) {
+      const { nodeId, title, bookmarked } = event.detail || {};
+      if (!nodeId || !title || this.pendingRequest) return;
+      this.saveDraft();
+      this.refreshElements();
+      this.selectionData = { nodeId };
+      const heading = this.modalEl?.querySelector("[data-selection-text]");
+      if (heading) heading.textContent = title;
+      this.resetClientControls();
+      this.syncCanEditState();
+      this.syncExistingHighlightState();
+      this.syncBookmarkState(bookmarked === true);
+      this.showModal();
+      return;
+    }
     const { selectedText, nodeId, offsets } = event.detail || {};
 
     if (
@@ -93,7 +113,7 @@ const SelectionActionsHook = {
   },
 
   exactHighlightForSelection() {
-    if (!this.selectionData) return null;
+    if (!this.selectionData || this.answerContext()) return null;
 
     const { nodeId, offsets } = this.selectionData;
 
@@ -120,7 +140,7 @@ const SelectionActionsHook = {
           button.dataset.disableIfHighlight === "true" && !!highlight;
         const blockedByLink = blockedLinks.some((type) => linkTypes.has(type));
 
-        button.disabled = !this.canEdit() || blockedByHighlight || blockedByLink;
+        button.disabled = button.dataset.selectionAction === "bookmark" ? false : !this.canEdit() || blockedByHighlight || blockedByLink;
       });
 
     this.syncLinkCount("question", links);
@@ -148,7 +168,10 @@ const SelectionActionsHook = {
     this.toolsMenu = advancedTools && advancedToggle
       ? new ToolsMenuController(advancedTools, advancedToggle)
       : null;
-    if (input) input.value = this.drafts[this.draftKey()] || "";
+    const draft = this.drafts[this.draftKey()];
+    if (input) input.value = typeof draft === "string" ? draft : draft?.input || "";
+    const learning = this.modalEl?.querySelector('input[type="checkbox"][name="guided_learning"]');
+    if (learning) learning.checked = draft?.guidedLearning === true;
     input?.dispatchEvent(new Event("input", { bubbles: true }));
     this.setStatus("");
     this.resetCopyFeedback();
@@ -265,7 +288,9 @@ const SelectionActionsHook = {
     event.preventDefault();
     const input = form.querySelector("[data-selection-input]");
     const action = event.submitter?.dataset.selectionSubmitAction || ASK_MODE;
-    this.submitAction(action, { input: input?.value || "" });
+    const extra = { input: input?.value || "" };
+    if (this.answerContext()) extra.guided_learning = form.querySelector('input[type="checkbox"][name="guided_learning"]')?.checked || false;
+    this.submitAction(action, extra);
   },
 
   submitAction(action, extra = {}) {
@@ -282,7 +307,7 @@ const SelectionActionsHook = {
     const requestId = crypto.randomUUID();
     this.pendingRequest = { id: requestId, action, draftKey: this.draftKey() };
     this.setPending(true);
-    this.setStatus(action === "comment" ? "Posting…" : action === "highlight_only" ? "Saving highlight…" : "Starting AI response…");
+    this.setStatus(action === "comment" ? "Posting…" : ["highlight_only", "bookmark"].includes(action) ? "Saving…" : "Starting AI response…");
     this.pushEventTo(this.componentEl, "action", {
       ...this.selectionData,
       action,
@@ -297,9 +322,16 @@ const SelectionActionsHook = {
     this.pendingRequest = null;
     this.setPending(false);
     if (result.status === "ok") {
+      if (request.action === "bookmark") {
+        this.syncBookmarkState(result.bookmarked);
+        this.setStatus(result.bookmarked ? "Answer bookmarked." : "Bookmark removed.");
+        return;
+      }
       if (["comment", ASK_MODE].includes(request.action)) {
         const input = this.modalEl?.querySelector("[data-selection-input]");
         if (input) input.value = "";
+        const learning = this.modalEl?.querySelector('input[type="checkbox"][name="guided_learning"]');
+        if (learning) learning.checked = false;
         delete this.drafts[request.draftKey];
         this.persistDrafts();
       }
@@ -307,6 +339,18 @@ const SelectionActionsHook = {
     } else {
       this.setStatus(result.message || "Could not save. Your draft is still here.");
     }
+  },
+
+  syncBookmarkState(bookmarked) {
+    const button = this.modalEl?.querySelector("[data-answer-bookmark]");
+    if (!button) return;
+    button.setAttribute("aria-pressed", String(bookmarked));
+    button.setAttribute("aria-label", bookmarked ? "Remove bookmark" : "Bookmark this answer");
+    const label = button.querySelector("[data-tool-label]");
+    if (label) label.textContent = bookmarked ? "Bookmarked" : "Bookmark";
+    const icon = button.querySelector(".hero-bookmark, .hero-bookmark-solid");
+    icon?.classList.toggle("hero-bookmark", !bookmarked);
+    icon?.classList.toggle("hero-bookmark-solid", bookmarked);
   },
 
   setStatus(message) {
@@ -330,6 +374,7 @@ const SelectionActionsHook = {
 
   draftKey() {
     const selection = this.selectionData;
+    if (selection && this.answerContext()) return JSON.stringify(["answer", selection.nodeId]);
     return selection && JSON.stringify([selection.nodeId, selection.offsets.start, selection.offsets.end, selection.selectedText]);
   },
 
@@ -339,7 +384,7 @@ const SelectionActionsHook = {
       const guestKey = this.componentEl?.dataset.guestDraftKey;
       const guest = guestKey ? JSON.parse(sessionStorage.getItem(guestKey) || "{}") : {};
       const saved = JSON.parse(sessionStorage.getItem(key) || "{}");
-      const drafts = Object.fromEntries(Object.entries({...guest, ...saved}).filter(([, text]) => typeof text === "string").slice(-20));
+      const drafts = Object.fromEntries(Object.entries({...guest, ...saved}).filter(([, draft]) => typeof draft === "string" || (draft && typeof draft.input === "string" && typeof draft.guidedLearning === "boolean")).slice(-20));
       if (guestKey && key) {
         sessionStorage.setItem(key, JSON.stringify(drafts));
         sessionStorage.removeItem(guestKey);
@@ -353,7 +398,8 @@ const SelectionActionsHook = {
     const input = this.modalEl?.querySelector("[data-selection-input]");
     if (!key || !input) return;
     delete this.drafts[key];
-    if (input.value) this.drafts[key] = input.value;
+    const guidedLearning = this.modalEl?.querySelector('input[type="checkbox"][name="guided_learning"]')?.checked || false;
+    if (input.value || guidedLearning) this.drafts[key] = this.answerContext() ? { input: input.value, guidedLearning } : input.value;
     this.persistDrafts();
   },
 

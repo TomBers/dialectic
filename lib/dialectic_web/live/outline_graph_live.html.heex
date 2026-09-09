@@ -505,39 +505,54 @@
                       node={reading_node}
                       id={"reader-action-targets-#{reading_node.id}"}
                     />
-                    <%= if String.trim(reading_node.content || "") == "" do %>
-                      <div class="mt-8 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-10 text-center text-sm text-slate-500">
-                        This node does not have content yet.
-                      </div>
-                    <% else %>
-                      <%= if String.trim(reading_node.body_content || "") != "" do %>
+                    <%= cond do %>
+                      <% MapSet.member?(@selection_pending_node_ids, reading_node.id) -> %>
+                        <DialecticWeb.GenerationComponents.response_placeholder
+                          id={"reader-generation-#{reading_node.id}"}
+                          status_id={"reader-generation-status-#{reading_node.id}"}
+                          response_level={reading_node.response_level}
+                          label="Generating an AI response…"
+                          class="mt-8"
+                        />
+                      <% String.trim(reading_node.content || "") == "" -> %>
                         <div
-                          id={"reading-highlight-#{reading_node.id}"}
-                          class="mt-6 w-full sm:mt-8"
-                          phx-hook="TextSelectionHook"
-                          data-node-id={reading_node.id}
-                          data-mudg-id={@graph_id}
-                          data-highlights-only="false"
+                          id={"reader-generation-#{reading_node.id}"}
+                          role="status"
+                          class="mt-8 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-10 text-center text-sm text-slate-500"
                         >
-                          <article class="reader-prose reader-prose-wide prose prose-slate max-w-none prose-headings:tracking-tight prose-a:break-words">
-                            <div
-                              phx-hook="Markdown"
-                              id={"outline-markdown-body-#{reading_node.id}"}
-                              data-md={reading_node.content || ""}
-                              data-grounding={DialecticWeb.MarkdownGrounding.encode(reading_node)}
-                              data-body-only="true"
-                              data-enhance-follow-up-questions="false"
-                            >
-                              <div
-                                data-role="server-markdown-fallback"
-                                class="whitespace-pre-wrap"
-                              >
-                                {reading_node.body_content}
-                              </div>
-                            </div>
-                          </article>
+                          This node does not have content yet.
                         </div>
-                      <% end %>
+                      <% true -> %>
+                        <%= if String.trim(reading_node.body_content || "") != "" do %>
+                          <div
+                            id={"reading-highlight-#{reading_node.id}"}
+                            class="mt-6 w-full sm:mt-8"
+                            phx-hook="TextSelectionHook"
+                            data-node-id={reading_node.id}
+                            data-mudg-id={@graph_id}
+                            data-highlights-only="false"
+                          >
+                            <article class="reader-prose reader-prose-wide prose prose-slate max-w-none prose-headings:tracking-tight prose-a:break-words">
+                              <div
+                                phx-hook="Markdown"
+                                id={"outline-markdown-body-#{reading_node.id}"}
+                                data-md={reading_node.content || ""}
+                                data-grounding={
+                                  DialecticWeb.MarkdownGrounding.encode(reading_node)
+                                }
+                                data-body-only="true"
+                                data-enhance-follow-up-questions="false"
+                              >
+                                <div
+                                  data-role="server-markdown-fallback"
+                                  class="whitespace-pre-wrap"
+                                >
+                                  {reading_node.body_content}
+                                </div>
+                              </div>
+                            </article>
+                          </div>
+                        <% end %>
                     <% end %>
 
                     <div class="mt-6 grid grid-cols-[auto_auto_minmax(0,1fr)_auto] items-center gap-2 border-t border-slate-200 pt-3">
@@ -655,16 +670,24 @@
 
                       <%= if @can_edit && contribution_target?(reading_node) do %>
                         <% response_label = response_action_label(reading_node) %>
-                        <.link
+                        <button
                           id={"outline-reading-node-#{reading_node.id}-ask"}
-                          navigate={
-                            graph_editor_path(@graph_struct, reading_node.id, [
-                              {"focus", "ask"} | @nav_params
-                            ])
+                          type="button"
+                          phx-click={
+                            JS.dispatch("answer:show",
+                              detail: %{
+                                nodeId: reading_node.id,
+                                title:
+                                  NodeTitleHelper.extract_node_title(reading_node,
+                                    max_length: 180
+                                  ),
+                                bookmarked: MapSet.member?(@bookmarked_node_ids, reading_node.id)
+                              }
+                            )
                           }
+                          aria-haspopup="dialog"
+                          aria-controls="selection-actions-focus-answer-actions"
                           class="group col-span-full mt-2 flex min-h-16 items-center gap-3 rounded-xl border border-teal-200 bg-teal-50 px-4 py-3 text-left transition hover:border-teal-300 hover:bg-teal-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600"
-                          data-view-transition="mode-switch"
-                          data-view-transition-direction="graph"
                           aria-label={response_label}
                           aria-describedby={"outline-reading-node-#{reading_node.id}-respond-hint"}
                         >
@@ -681,10 +704,10 @@
                             </span>
                           </span>
                           <.icon
-                            name="hero-arrow-right"
-                            class="h-4 w-4 shrink-0 text-teal-700 transition group-hover:translate-x-0.5"
+                            name="hero-plus"
+                            class="h-4 w-4 shrink-0 text-teal-700 transition"
                           />
-                        </.link>
+                        </button>
                       <% end %>
                     </div>
                   <% end %>
@@ -719,6 +742,7 @@
                         }
                         title={choice.title}
                         node_class={choice.class}
+                        loading={MapSet.member?(@selection_pending_node_ids, choice.id)}
                       />
                     <% end %>
                   </div>
@@ -803,6 +827,7 @@
                       }
                       title={branch.lead.full_title}
                       node_class={branch.lead.class}
+                      loading={MapSet.member?(@selection_pending_node_ids, branch.lead.id)}
                     />
                   <% end %>
                 </div>
@@ -878,6 +903,17 @@
       </div>
     </div>
 
+    <div phx-hook="SelectionActions" id="reader-answer-actions-hook">
+      <.live_component
+        module={DialecticWeb.SelectionActionsComp}
+        id="answer-actions"
+        context={:answer}
+        current_user={@current_user}
+        graph_id={@graph_id}
+        can_edit={@can_edit}
+      />
+    </div>
+
     <div phx-hook="SelectionActions" id="reader-selection-actions-hook">
       <.live_component
         module={DialecticWeb.SelectionActionsComp}
@@ -885,7 +921,6 @@
         current_user={@current_user}
         graph_id={@graph_id}
         can_edit={@can_edit}
-        highlight_only
       />
     </div>
   </div>

@@ -86,6 +86,7 @@ defmodule DialecticWeb.InquiryActionsComp do
      |> assign_new(:highlight_only, fn -> false end)
      |> assign_new(:node, fn -> nil end)
      |> assign_new(:current_user, fn -> nil end)
+     |> assign_new(:user, fn -> nil end)
      |> assign_new(:form, fn ->
        to_form(Dialectic.Graph.Vertex.changeset(%Dialectic.Graph.Vertex{}))
      end)
@@ -136,7 +137,7 @@ defmodule DialecticWeb.InquiryActionsComp do
             current_user={@current_user}
             node={@node}
             show_context={@context == :node}
-            guided_learning?={@context == :node}
+            guided_learning?={@context in [:node, :answer]}
             embedded
             show_tools
             tools_open={@advanced_tools_open}
@@ -147,8 +148,22 @@ defmodule DialecticWeb.InquiryActionsComp do
             disabled={!@can_edit}
           >
             <:quick_actions>
-              <%= if @context == :selection do %>
+              <%= if @context in [:selection, :answer] do %>
                 <.tool_button
+                  :if={@context == :answer}
+                  id={"answer-action-bookmark-#{@owner_id}"}
+                  icon="hero-bookmark"
+                  label="Bookmark"
+                  tone="highlight"
+                  shortcut="b"
+                  selection_action="bookmark"
+                  pressed={false}
+                  rest={%{"data-answer-bookmark" => "true"}}
+                  disabled={false}
+                  compact
+                />
+                <.tool_button
+                  :if={@context == :selection}
                   id={"selection-action-highlight-#{@owner_id}"}
                   icon="hero-bookmark"
                   label="Highlight"
@@ -170,6 +185,28 @@ defmodule DialecticWeb.InquiryActionsComp do
                   disabled={!@can_edit}
                   compact
                 />
+                <.tool_button
+                  id={action_id(assigns, "pros-cons")}
+                  icon="hero-scale"
+                  label="Test both sides"
+                  tone="thesis"
+                  shortcut="a"
+                  selection_action="pros_cons"
+                  disable_if_links="pro,con"
+                  disabled={!@can_edit}
+                  compact
+                />
+                <.tool_button
+                  id={action_id(assigns, "related")}
+                  icon="hero-light-bulb"
+                  label="Related ideas"
+                  tone="ideas"
+                  shortcut="r"
+                  selection_action="related_ideas"
+                  disable_if_links="related_idea"
+                  disabled={!@can_edit}
+                  compact
+                />
               <% else %>
                 <.tool_button
                   id={action_id(assigns, "pros-cons")}
@@ -178,6 +215,23 @@ defmodule DialecticWeb.InquiryActionsComp do
                   tone="thesis"
                   shortcut="a"
                   event="node_branch"
+                  node_id={@node.id}
+                  disabled={!@can_edit}
+                  compact
+                />
+                <.tool_button
+                  id={action_id(assigns, "connect")}
+                  icon="hero-arrows-pointing-in"
+                  label="Synthesis"
+                  tone="synthesis"
+                  shortcut="c"
+                  event={
+                    Phoenix.LiveView.JS.dispatch("toggle-panel",
+                      to: "#graph-layout",
+                      detail: %{id: "combine-drawer"}
+                    )
+                    |> Phoenix.LiveView.JS.push("node_combine")
+                  }
                   node_id={@node.id}
                   disabled={!@can_edit}
                   compact
@@ -193,78 +247,59 @@ defmodule DialecticWeb.InquiryActionsComp do
                   disabled={!@can_edit}
                   compact
                 />
+                <% noted? = @user in (Map.get(@node, :noted_by) || []) %>
+                <.tool_button
+                  id={"graph-bookmark-node-#{@node.id}"}
+                  icon={if(noted?, do: "hero-bookmark-solid", else: "hero-bookmark")}
+                  label={if(noted?, do: "Bookmarked", else: "Bookmark")}
+                  tone="highlight"
+                  shortcut="b"
+                  event={if(noted?, do: "unnote", else: "note")}
+                  pressed={noted?}
+                  rest={
+                    %{
+                      "phx-value-node" => @node.id,
+                      "aria-label" => if(noted?, do: "Remove bookmark", else: "Bookmark this node"),
+                      "title" => if(noted?, do: "Remove bookmark", else: "Bookmark this node")
+                    }
+                  }
+                  disabled={false}
+                  compact
+                />
               <% end %>
             </:quick_actions>
             <div
               id={tools_menu_id(assigns)}
-              role="region"
+              role="dialog"
               aria-label="Thinking tools"
+              popover="manual"
               phx-hook={if(@context == :node, do: "ToolsMenu")}
               phx-update="ignore"
-              hidden={@context == :selection || !@advanced_tools_open}
+              hidden={@context in [:selection, :answer] || !@advanced_tools_open}
               data-open={to_string(@advanced_tools_open)}
-              data-selection-advanced-tools={@context == :selection}
+              data-selection-advanced-tools={@context in [:selection, :answer]}
               data-trigger-id={advanced_toggle_id(assigns)}
               phx-target={if(@context == :node, do: @myself)}
-              class="mb-3 overflow-hidden rounded-xl border border-slate-200 bg-slate-50"
+              class="tools-menu-popover overflow-hidden rounded-xl border border-slate-200 bg-slate-50 shadow-xl shadow-slate-900/15"
             >
-              <div class="border-b border-slate-200 px-3 py-2.5">
-                <p class="text-sm font-semibold text-slate-800">Thinking tools</p>
-                <p class="mt-0.5 text-xs leading-5 text-slate-500">
-                  Explore {if(@context == :selection, do: "this passage", else: "this answer")} with AI.
-                </p>
+              <div class="flex shrink-0 items-start justify-between gap-3 border-b border-slate-200 px-3 py-2.5">
+                <div>
+                  <p class="text-sm font-semibold text-slate-800">Thinking tools</p>
+                  <p class="mt-0.5 text-xs leading-5 text-slate-500">
+                    Explore {if(@context == :selection, do: "this passage", else: "this answer")} with AI.
+                  </p>
+                </div>
+                <button
+                  id={"#{tools_menu_id(assigns)}-close"}
+                  type="button"
+                  data-tools-close
+                  aria-label="Close tools"
+                  class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-200 hover:text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-slate-500"
+                >
+                  <.icon name="hero-x-mark" class="h-4 w-4" />
+                </button>
               </div>
-              <div class="max-h-80 space-y-3 overflow-y-auto overscroll-contain p-2">
-                <section class="space-y-1">
-                  <h4 class="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                    Connect
-                  </h4>
-                  <div :if={@context == :node} id={"node-suggestions-#{@node.id}"}>
-                    <.tool_button
-                      id={action_id(assigns, "connect")}
-                      icon="hero-arrows-pointing-in"
-                      label="Synthesis"
-                      tone="synthesis"
-                      description="Bring two ideas together."
-                      shortcut="c"
-                      event={
-                        Phoenix.LiveView.JS.dispatch("toggle-panel",
-                          to: "#graph-layout",
-                          detail: %{id: "combine-drawer"}
-                        )
-                        |> Phoenix.LiveView.JS.push("node_combine")
-                      }
-                      node_id={@node.id}
-                      disabled={!@can_edit}
-                    />
-                  </div>
-                  <%= if @context == :selection do %>
-                    <div class="grid grid-cols-1 gap-1 sm:grid-cols-2">
-                      <.tool_button
-                        id={action_id(assigns, "pros-cons")}
-                        icon="hero-scale"
-                        label="Test both sides"
-                        tone="thesis"
-                        description="Compare arguments for and against."
-                        shortcut="a"
-                        selection_action="pros_cons"
-                        disable_if_links="pro,con"
-                        disabled={!@can_edit}
-                      />
-                      <.tool_button
-                        id={action_id(assigns, "related")}
-                        icon="hero-light-bulb"
-                        label="Related ideas"
-                        tone="ideas"
-                        description="Discover useful connections."
-                        shortcut="r"
-                        selection_action="related_ideas"
-                        disable_if_links="related_idea"
-                        disabled={!@can_edit}
-                      />
-                    </div>
-                  <% end %>
-                </section>
+              <div data-tools-scroll class="min-h-0 flex-1 space-y-3 overflow-y-auto p-2">
                 <.advanced_tools
                   context={@context}
                   sections={@critical_tool_sections}
@@ -273,6 +308,24 @@ defmodule DialecticWeb.InquiryActionsComp do
                   owner_id={@owner_id}
                   can_edit={@can_edit}
                 />
+              </div>
+              <div class="shrink-0 border-t border-slate-200 bg-slate-50 p-2">
+                <p
+                  id={"#{tools_menu_id(assigns)}-scroll-hint"}
+                  data-tools-scroll-hint
+                  hidden
+                  class="mb-2 flex items-center justify-center gap-1.5 py-1 text-xs font-medium text-slate-600"
+                >
+                  <.icon name="hero-arrow-down" class="h-3.5 w-3.5" /> Scroll for more tools
+                </p>
+                <button
+                  id={"#{tools_menu_id(assigns)}-done"}
+                  type="button"
+                  data-tools-close
+                  class="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-slate-500"
+                >
+                  <.icon name="hero-chevron-up" class="h-4 w-4" /> Close tools
+                </button>
               </div>
             </div>
           </.live_component>
@@ -291,10 +344,14 @@ defmodule DialecticWeb.InquiryActionsComp do
           />
         </div>
         <p :if={!@highlight_only} class="hidden px-1 text-[10px] text-slate-500 md:block">
-          <%= if @context == :selection do %>
-            / to write · Esc to leave the form, then close · Option/Alt + Shift with A / R / E / H to use tools
+          <%= if @context in [:selection, :answer] do %>
+            / to write · Esc to leave the form, then close · Command/Ctrl + A / R / E / {if(
+              @context == :answer,
+              do: "B",
+              else: "H"
+            )} to use tools when not typing
           <% else %>
-            Esc to leave the form · Option/Alt + Shift with A / C / R to use tools when not typing
+            Esc to leave the form · Command/Ctrl + A / C / R / B to use tools when not typing
           <% end %>
         </p>
       </div>
@@ -317,8 +374,8 @@ defmodule DialecticWeb.InquiryActionsComp do
             id={tool_id(assigns, tool.key)}
             event={if(@context == :node, do: "node_#{tool.key}")}
             node_id={if(@context == :node, do: @node.id)}
-            selection_action={if(@context == :selection, do: tool.key)}
-            disable_if_links={if(@context == :selection, do: tool.key)}
+            selection_action={if(@context in [:selection, :answer], do: tool.key)}
+            disable_if_links={if(@context in [:selection, :answer], do: tool.key)}
             icon={tool.icon}
             label={tool.label}
             tone={tool.key}
@@ -342,6 +399,8 @@ defmodule DialecticWeb.InquiryActionsComp do
       |> assign_new(:node_id, fn -> nil end)
       |> assign_new(:description, fn -> nil end)
       |> assign_new(:compact, fn -> false end)
+      |> assign_new(:pressed, fn -> nil end)
+      |> assign_new(:rest, fn -> %{} end)
 
     ~H"""
     <button
@@ -349,32 +408,45 @@ defmodule DialecticWeb.InquiryActionsComp do
       type="button"
       phx-click={@event}
       phx-value-id={@node_id}
-      aria-keyshortcuts={@shortcut && "Alt+Shift+#{String.upcase(@shortcut)}"}
+      aria-pressed={if(is_boolean(@pressed), do: to_string(@pressed))}
+      aria-keyshortcuts={
+        @shortcut && "Meta+#{String.upcase(@shortcut)} Control+#{String.upcase(@shortcut)}"
+      }
       data-selection-action={@selection_action}
       data-reader-shortcut={@shortcut}
       data-disable-if-links={@disable_if_links}
       data-disable-if-highlight={@disable_if_highlight}
       disabled={@disabled}
+      {@rest}
       class={[
-        "group flex min-h-11 min-w-0 rounded-lg border border-transparent text-left transition hover:brightness-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current disabled:cursor-not-allowed disabled:opacity-50",
-        ColUtils.tool_color_class(@tone),
+        "group/tool flex min-h-11 min-w-0 rounded-xl border bg-white text-left text-slate-700 transition duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-500 disabled:cursor-not-allowed disabled:opacity-50",
         if(@compact,
-          do: "items-center gap-1.5 px-2.5 py-2",
-          else: "w-full items-start gap-2.5 p-2.5"
+          do:
+            "inquiry-tool-compact aria-pressed:border-amber-300 aria-pressed:bg-amber-50 items-center gap-2 border-slate-200/80 py-1.5 pl-1.5 pr-3 shadow-sm shadow-slate-900/[0.03] hover:border-slate-300 hover:bg-slate-50",
+          else:
+            "w-full items-start gap-3 border-transparent p-2.5 hover:border-slate-200 hover:shadow-sm"
         )
       ]}
     >
       <span class={[
-        "inline-flex shrink-0 items-center justify-center",
-        !@compact && "h-7 w-7 rounded-md bg-white/70 ring-1 ring-black/5"
+        "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg",
+        ColUtils.tool_color_class(@tone)
       ]}>
         <.icon name={@icon} class="h-4 w-4" />
       </span>
-      <span class="min-w-0 flex-1">
-        <span class="block text-xs font-semibold leading-5">{@label}</span>
-        <span :if={@description} class="mt-0.5 block text-[11px] leading-4 text-slate-500">{@description}</span>
+      <span class={[
+        "min-w-0 flex-1",
+        @compact && "flex items-center justify-between gap-2"
+      ]}>
+        <span data-tool-label class="block min-w-0 text-[13px] font-medium leading-5">{@label}</span>
+        <.shortcut_keycap
+          :if={@compact && @shortcut}
+          key={@shortcut}
+          modifier="primary"
+        />
+        <span :if={@description} class="mt-0.5 block text-xs leading-4 text-slate-500">{@description}</span>
       </span>
-      <.shortcut_keycap :if={@shortcut} key={@shortcut} modifier="alt" shift />
+      <.shortcut_keycap :if={!@compact && @shortcut} key={@shortcut} modifier="primary" quiet />
     </button>
     """
   end

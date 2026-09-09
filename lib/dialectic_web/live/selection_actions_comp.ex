@@ -36,10 +36,24 @@ defmodule DialecticWeb.SelectionActionsComp do
 
   @impl true
   def update(assigns, socket) do
-    {:ok, socket |> assign(assigns) |> assign_new(:highlight_only, fn -> false end)}
+    {:ok,
+     socket
+     |> assign(assigns)
+     |> assign_new(:highlight_only, fn -> false end)
+     |> assign_new(:context, fn -> :selection end)}
   end
 
   @impl true
+  def handle_event(
+        "action",
+        %{"nodeId" => node_id} = params,
+        %{assigns: %{context: :answer}} = socket
+      )
+      when is_binary(node_id) do
+    send(self(), {:answer_action, params})
+    {:noreply, socket}
+  end
+
   def handle_event(
         "action",
         %{
@@ -122,8 +136,9 @@ defmodule DialecticWeb.SelectionActionsComp do
     <div
       id={@id}
       data-can-edit={to_string(@can_edit)}
-      data-draft-key={"selection-drafts:#{@graph_id}:#{if(@current_user, do: @current_user.id, else: "guest")}"}
-      data-guest-draft-key={if(@current_user, do: "selection-drafts:#{@graph_id}:guest")}
+      data-action-context={@context}
+      data-draft-key={"#{@context}-drafts:#{@graph_id}:#{if(@current_user, do: @current_user.id, else: "guest")}"}
+      data-guest-draft-key={if(@current_user, do: "#{@context}-drafts:#{@graph_id}:guest")}
     >
       <div id={"selection-actions-modal-#{@id}"} class="hidden" phx-update="ignore" aria-hidden="true">
         <div
@@ -138,13 +153,20 @@ defmodule DialecticWeb.SelectionActionsComp do
           tabindex="-1"
           aria-modal="true"
           aria-label={
-            if(@highlight_only, do: "Save selected passage", else: "Selected passage actions")
+            cond do
+              @context == :answer -> "Respond to this answer"
+              @highlight_only -> "Save selected passage"
+              true -> "Selected passage actions"
+            end
           }
           class="fixed left-1/2 top-1/2 z-[1000] flex max-h-[88vh] w-[92vw] max-w-[620px] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-[1.35rem] border border-slate-200 bg-white shadow-[0_28px_72px_rgba(15,23,42,0.2)] ring-1 ring-slate-950/5 transition-[max-width,opacity,transform] duration-200 opacity-100 scale-100"
         >
           <div class="relative overflow-y-auto px-4 pb-5 pt-4 sm:px-5 sm:pb-5 sm:pt-5">
             <div class="flex items-start gap-3">
               <div class="min-w-0 flex-1">
+                <p :if={@context == :answer} class="mb-1 text-xs font-semibold text-slate-500">
+                  Responding to
+                </p>
                 <blockquote
                   id={"selection-actions-passage-#{@id}"}
                   data-selection-text
@@ -152,6 +174,7 @@ defmodule DialecticWeb.SelectionActionsComp do
                 >
                 </blockquote>
                 <button
+                  :if={@context == :selection}
                   id={"selection-actions-copy-#{@id}"}
                   type="button"
                   data-selection-copy
@@ -171,13 +194,19 @@ defmodule DialecticWeb.SelectionActionsComp do
                 type="button"
                 data-selection-close
                 class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 transition-colors hover:bg-slate-50 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
-                aria-label="Close selection actions"
+                aria-label={
+                  if(@context == :answer, do: "Close answer actions", else: "Close selection actions")
+                }
               >
                 <.icon name="hero-x-mark" class="h-4 w-4" />
               </button>
             </div>
 
-            <p :if={!@current_user} id="selection-sign-in-hint" class="mt-3 text-sm text-slate-600">
+            <p
+              :if={!@current_user && @context == :selection}
+              id="selection-sign-in-hint"
+              class="mt-3 text-sm text-slate-600"
+            >
               <.link href={~p"/users/log_in"} class="font-semibold text-indigo-700 underline">Sign in</.link>
               to use passage actions. Your draft is kept in this tab.
             </p>
@@ -198,7 +227,7 @@ defmodule DialecticWeb.SelectionActionsComp do
                 module={DialecticWeb.InquiryActionsComp}
                 id={"selection-inquiry-actions-#{@id}"}
                 owner_id={@id}
-                context={:selection}
+                context={@context}
                 graph_id={@graph_id}
                 can_edit={@can_edit}
                 current_user={@current_user}

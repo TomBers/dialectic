@@ -26,8 +26,9 @@ defmodule DialecticWeb.OutlineGraphLive do
   on_mount DialecticWeb.GraphAccess
 
   @impl true
-  def mount(%{"graph_name" => graph_id_uri} = params, _session, socket) do
+  def mount(%{"graph_name" => graph_id_uri} = params, session, socket) do
     graph_id = URI.decode(graph_id_uri)
+    socket = assign(socket, :llm_actor_id, session["llm_actor_id"] || "graph:#{graph_id}")
 
     case Dialectic.DbActions.Graphs.get_graph_by_slug_or_title(graph_id) do
       nil ->
@@ -127,8 +128,14 @@ defmodule DialecticWeb.OutlineGraphLive do
   end
 
   @impl true
-  def handle_info({:llm_request_complete, _node_id}, socket) do
-    {:noreply, refresh_outline(socket)}
+  def handle_info({:llm_request_complete, node_id}, socket) do
+    {:noreply,
+     socket
+     |> assign(
+       :selection_pending_node_ids,
+       MapSet.delete(socket.assigns.selection_pending_node_ids, node_id)
+     )
+     |> refresh_outline()}
   end
 
   @impl true
@@ -194,26 +201,47 @@ defmodule DialecticWeb.OutlineGraphLive do
            |> put_flash(:error, "Sign in to use passage actions. Your draft will stay here.")}
 
         :ok ->
-          {action, selected_text, node_id, offsets, existing_highlight, _extra} =
-            GraphHelpers.unpack_selection_action(params)
-
-          case GraphHelpers.validate_selection_target(socket, action, node_id) do
-            :ok ->
-              handle_reader_selection_action(
-                action,
-                selected_text,
-                node_id,
-                offsets,
-                existing_highlight,
-                socket
-              )
-
-            {:error, message} ->
-              {:noreply, put_flash(socket, :error, message)}
+          case DialecticWeb.SelectionActions.perform(socket, params) do
+            {:ok, result} -> finish_selection_action(socket, result)
+            {:error, message} -> {:noreply, put_flash(socket, :error, message)}
           end
       end
 
     GraphHelpers.acknowledge_selection(result, params)
+  end
+
+  @impl true
+  def handle_info({:answer_action, params}, socket) do
+    case DialecticWeb.AnswerActions.perform(socket, params) do
+      {:ok, %{kind: :bookmark} = result} ->
+        bookmarked_node_ids =
+          if result.bookmarked,
+            do: MapSet.put(socket.assigns.bookmarked_node_ids, result.node_id),
+            else: MapSet.delete(socket.assigns.bookmarked_node_ids, result.node_id)
+
+        {:noreply,
+         socket
+         |> assign(:bookmarked_node_ids, bookmarked_node_ids)
+         |> push_event("selection:result", %{
+           request_id: params["request_id"],
+           status: "ok",
+           bookmarked: result.bookmarked
+         })}
+
+      {:ok, result} ->
+        {:noreply, socket} = finish_selection_action(socket, result)
+
+        {:noreply,
+         push_event(socket, "selection:result", %{request_id: params["request_id"], status: "ok"})}
+
+      {:error, message} ->
+        {:noreply,
+         push_event(socket, "selection:result", %{
+           request_id: params["request_id"],
+           status: "error",
+           message: message
+         })}
+    end
   end
 
   @impl true
@@ -495,6 +523,9 @@ defmodule DialecticWeb.OutlineGraphLive do
       graph_id: graph_db.title,
       graph_struct: graph_db,
       graph_topic: graph_topic,
+      live_view_topic: graph_topic,
+      selection_pending_node_ids:
+        Dialectic.Responses.RequestQueue.pending_node_ids(graph_db.title, graph_topic),
       user: UserUtils.current_identity(socket.assigns),
       bookmarked_node_ids:
         graph_db.title
@@ -1250,50 +1281,46 @@ defmodule DialecticWeb.OutlineGraphLive do
     end
   end
 
-  defp handle_reader_selection_action(
-         :highlight_only,
-         selected_text,
-         node_id,
-         offsets,
-         existing_highlight,
-         socket
-       ) do
-    if existing_highlight do
-      {:noreply, socket}
-    else
-      attrs = %{
-        mudg_id: socket.assigns.graph_id,
-        node_id: node_id,
-        text_source_type: "node",
-        selection_start: selection_offset(offsets, :start),
-        selection_end: selection_offset(offsets, :end),
-        selected_text_snapshot: selected_text,
-        created_by_user_id: socket.assigns.current_user.id
-      }
+  defp finish_selection_action(socket, %{kind: :highlight}), do: {:noreply, socket}
 
-      case Highlights.create_highlight(attrs) do
-        {:ok, _highlight} ->
-          {:noreply, socket}
+  defp finish_selection_action(socket, %{kind: :comment, node: node}) do
+    broadcast_selection_change(socket, "comment", node)
 
-        {:error, _changeset} ->
-          {:noreply, put_flash(socket, :error, "Could not save highlight")}
-      end
+    {:noreply,
+     socket
+     |> refresh_outline()
+     |> update(:new_thought_ids, &List.delete(&1, node.id))
+     |> put_flash(:info, "Your thought was added to the discussion.")
+     |> navigate_to_node(node.id)}
+  end
+
+  defp finish_selection_action(socket, %{kind: :generation} = result) do
+    broadcast_selection_change(socket, result.operation, List.last(result.nodes))
+
+    pending_ids =
+      Enum.reduce(result.nodes, socket.assigns.selection_pending_node_ids, &MapSet.put(&2, &1.id))
+
+    {:noreply,
+     socket
+     |> assign(:selection_pending_node_ids, pending_ids)
+     |> refresh_outline()
+     |> put_flash(:info, "#{result.label}…")
+     |> navigate_to_node(result.target_node_id)}
+  end
+
+  defp broadcast_selection_change(socket, operation, node) do
+    action = Dialectic.GridActivity.Actions.for_graph_operation(operation)
+
+    if action do
+      Dialectic.GridActivity.record_node_event_async(
+        socket.assigns.graph_id,
+        socket.assigns.current_user,
+        action,
+        node
+      )
     end
-  end
 
-  defp handle_reader_selection_action(
-         _action,
-         _selected_text,
-         _node_id,
-         _offsets,
-         _highlight,
-         socket
-       ) do
-    {:noreply, put_flash(socket, :error, "Reader view supports highlights only")}
-  end
-
-  defp selection_offset(offsets, key) do
-    Map.get(offsets, key) || Map.get(offsets, Atom.to_string(key))
+    PubSub.broadcast(Dialectic.PubSub, socket.assigns.graph_topic, {:other_user_change, self()})
   end
 
   defp navigate_to_node(socket, node_id) do

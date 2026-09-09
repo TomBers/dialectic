@@ -6,37 +6,65 @@ defmodule DialecticWeb.KeyboardComponents do
   attr :shift, :boolean, default: false
   attr :dark, :boolean, default: false
   attr :prominent, :boolean, default: false
+  attr :quiet, :boolean, default: false
+  attr :always_visible, :boolean, default: false
 
   def shortcut_keycap(assigns) do
+    assigns =
+      assigns
+      |> assign(
+        :mac_keys,
+        Enum.join(
+          Enum.reject(
+            [
+              if(assigns.modifier == "alt", do: "⌥", else: "⌘"),
+              if(assigns.shift, do: "⇧"),
+              if(assigns.key == "Enter", do: "↵", else: String.upcase(assigns.key))
+            ],
+            &is_nil/1
+          ),
+          " "
+        )
+      )
+      |> assign(
+        :other_keys,
+        Enum.join(
+          Enum.reject(
+            [
+              if(assigns.modifier == "alt", do: "Alt", else: "Ctrl"),
+              if(assigns.shift, do: "Shift"),
+              if(assigns.key == "Enter", do: "Enter", else: String.upcase(assigns.key))
+            ],
+            &is_nil/1
+          ),
+          "+"
+        )
+      )
+
     ~H"""
     <kbd
       aria-hidden="true"
       class={[
-        "ml-1 hidden shrink-0 items-center rounded border border-b-2 font-mono font-medium leading-none shadow-sm md:inline-flex",
+        "ml-1 shrink-0 items-center font-mono font-medium leading-none",
+        if(@always_visible, do: "inline-flex", else: "hidden md:inline-flex"),
+        if(@quiet,
+          do:
+            "text-slate-500 transition-colors group-hover/tool:text-slate-700 group-focus-visible/tool:text-slate-700",
+          else: "rounded border border-b-2 shadow-sm"
+        ),
         if(@prominent,
           do: "h-7 gap-1 px-2 text-sm",
           else: "h-5 gap-0.5 px-1 text-[11px]"
         ),
-        if(@dark,
-          do: "border-slate-500 bg-slate-800 text-slate-100",
-          else: "border-slate-300 bg-white text-slate-700"
-        )
+        !@quiet &&
+          if(@dark,
+            do: "border-slate-500 bg-slate-800 text-slate-100",
+            else: "border-slate-300 bg-white text-slate-700"
+          )
       ]}
     >
-      <span class="hidden [[data-shortcut-platform=mac]_&]:inline">{if(@modifier == "alt",
-        do: "⌥",
-        else: "⌘"
-      )}</span>
-      <span class="[[data-shortcut-platform=mac]_&]:hidden">{if(@modifier == "alt",
-        do: "Alt",
-        else: "Ctrl"
-      )}</span>
-      <.icon :if={@shift} name="hero-arrow-up" class={if(@prominent, do: "h-4 w-4", else: "h-3 w-3")} />
-      <%= if @key == "Enter" do %>
-        <.icon name="hero-arrow-uturn-left" class={if(@prominent, do: "h-4 w-4", else: "h-3 w-3")} />
-      <% else %>
-        {String.upcase(@key)}
-      <% end %>
+      <span data-shortcut-label="mac">{@mac_keys}</span>
+      <span data-shortcut-label="other">{@other_keys}</span>
     </kbd>
     """
   end

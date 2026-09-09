@@ -1093,7 +1093,9 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
              "Copy text"
            )
 
-    refute has_element?(view, "#selection-actions button[data-selection-action='explain']")
+    assert has_element?(view, "#selection-actions button[data-selection-action='explain']")
+    assert has_element?(view, "#selection-input-form-selection-actions-ask")
+    assert has_element?(view, "#selection-input-form-selection-actions-comment")
 
     assert_push_event(view, "highlights_loaded", %{
       highlights: [%{node_id: "5", links: [%{node_id: "3", link_type: "explain"}]}]
