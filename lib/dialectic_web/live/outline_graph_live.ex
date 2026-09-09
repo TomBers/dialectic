@@ -248,6 +248,26 @@ defmodule DialecticWeb.OutlineGraphLive do
   def handle_info(_msg, socket), do: {:noreply, socket}
 
   @impl true
+  def handle_event("toggle_answer_drawer", %{"id" => node_id}, socket) do
+    node = Enum.find(socket.assigns.visible_reading_chain, &(&1.id == node_id))
+
+    if socket.assigns.can_edit && node && contribution_target?(node) do
+      open_node_id = if socket.assigns.answer_drawer_node_id == node_id, do: nil, else: node_id
+      {:noreply, assign(socket, :answer_drawer_node_id, open_node_id)}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  def handle_event("close_answer_drawer", %{"node_id" => node_id}, socket) do
+    if socket.assigns.answer_drawer_node_id == node_id do
+      {:noreply, assign(socket, :answer_drawer_node_id, nil)}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  @impl true
   def handle_event("navigate_to_node", %{"node_id" => node_id}, socket) do
     {:noreply, navigate_to_node(socket, node_id)}
   end
@@ -524,6 +544,7 @@ defmodule DialecticWeb.OutlineGraphLive do
       graph_struct: graph_db,
       graph_topic: graph_topic,
       live_view_topic: graph_topic,
+      answer_drawer_node_id: nil,
       selection_pending_node_ids:
         Dialectic.Responses.RequestQueue.pending_node_ids(graph_db.title, graph_topic),
       user: UserUtils.current_identity(socket.assigns),

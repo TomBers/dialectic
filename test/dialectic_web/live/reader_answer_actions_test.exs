@@ -173,7 +173,8 @@ defmodule DialecticWeb.ReaderAnswerActionsTest do
 
   test "signed-in attendees can request a learning plan", %{conn: conn, graph: graph, user: user} do
     {:ok, view, _} = live(log_in_user(conn, user), ~p"/g/#{graph.slug}?node=2")
-    assert has_element?(view, "#selection-input-form-answer-actions-guided-learning")
+    view |> element("#outline-reading-node-2-ask") |> render_click()
+    assert has_element?(view, "#selection-input-form-answer-actions-2-guided-learning")
     before_ids = GraphManager.vertices(graph.title)
 
     submit(view, %{
@@ -269,7 +270,19 @@ defmodule DialecticWeb.ReaderAnswerActionsTest do
     {:ok, view, _} = live(conn, ~p"/g/#{graph.slug}?node=2")
     refute has_element?(view, "#outline-reading-node-2-ask")
     before_ids = GraphManager.vertices(graph.title)
-    submit(view, %{"action" => "comment", "input" => "Blocked"})
+
+    send(
+      view.pid,
+      {:answer_action,
+       %{
+         "nodeId" => "2",
+         "request_id" => "answer-test",
+         "action" => "comment",
+         "input" => "Blocked"
+       }}
+    )
+
+    render(view)
 
     assert_push_event(view, "selection:result", %{
       status: "error",
@@ -291,9 +304,37 @@ defmodule DialecticWeb.ReaderAnswerActionsTest do
     assert_patch(view, ~p"/g/#{graph.slug}?node=#{comment.id}&token=reader-answer-token")
   end
 
+  test "only one answer drawer opens, and its disclosure button tracks hiding and switching", %{
+    conn: conn,
+    graph: graph
+  } do
+    {:ok, view, _} = live(conn, ~p"/g/#{graph.slug}?node=2")
+    view |> element("#outline-reading-node-2-ask") |> render_click()
+    assert has_element?(view, "#reading-node-2 #answer-actions-2[data-presentation='drawer']")
+    assert has_element?(view, "#selection-actions-focus-answer-actions-2[role='region']")
+    refute has_element?(view, "#answer-actions-2 [phx-hook='Phoenix.FocusWrap']")
+    assert has_element?(view, "#selection-actions-focus-selection-actions[aria-modal='true']")
+    view |> element("#outline-reading-node-2-ask") |> render_click()
+    assert has_element?(view, "#reader-answer-drawer-2[hidden]")
+    refute has_element?(view, "#answer-actions-2")
+    view |> element("#outline-reading-node-3-ask") |> render_click()
+    assert has_element?(view, "#answer-actions-3")
+    view |> element("#outline-reading-node-2-ask") |> render_click()
+    assert has_element?(view, "#answer-actions-2")
+    refute has_element?(view, "#answer-actions-3")
+    render_hook(view, "close_answer_drawer", %{"node_id" => "3"})
+    assert has_element?(view, "#answer-actions-2")
+    render_hook(view, "close_answer_drawer", %{"node_id" => "2"})
+    assert has_element?(view, "#outline-reading-node-2-ask[aria-expanded='false']")
+  end
+
   defp submit(view, params) do
+    unless has_element?(view, "#answer-actions-2") do
+      view |> element("#outline-reading-node-2-ask") |> render_click()
+    end
+
     view
-    |> with_target("#answer-actions")
+    |> with_target("#answer-actions-2")
     |> render_hook("action", Map.merge(%{"nodeId" => "2", "request_id" => "answer-test"}, params))
 
     render(view)

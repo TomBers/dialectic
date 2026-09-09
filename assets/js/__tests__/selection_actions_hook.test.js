@@ -11,11 +11,12 @@ import { copyToClipboard, showToast } from "../toast.js";
 
 let hook;
 
-function mountHook(context = "selection") {
+function mountHook(context = "selection", presentation = "modal") {
   vi.spyOn(navigator, "platform", "get").mockReturnValue("MacIntel");
   document.body.innerHTML = `
+    <button id="answer-trigger">Respond</button>
     <div id="selection-actions-hook">
-      <div id="selection-actions" data-can-edit="true" data-action-context="${context}" data-draft-key="test-selection-drafts">
+      <div id="selection-actions" data-can-edit="true" data-action-context="${context}" data-presentation="${presentation}" data-node-id="2" data-answer-title="Practice" data-bookmarked="false" data-trigger-id="answer-trigger" data-draft-key="test-selection-drafts">
         <div id="selection-actions-modal-selection-actions" class="hidden" aria-hidden="true">
           <div data-selection-dialog tabindex="-1" class="max-w-[620px]"></div>
           <div data-selection-text></div>
@@ -58,6 +59,7 @@ function mountHook(context = "selection") {
   hook = Object.create(SelectionActionsHook);
   hook.el = document.querySelector("#selection-actions-hook");
   hook.pushEventTo = vi.fn();
+  hook.pushEvent = vi.fn();
   hook.handleEvent = vi.fn((name, callback) => { hook.resultHandler = callback; });
   hook.mounted();
   return hook;
@@ -509,6 +511,59 @@ it("confirms bookmarks while keeping the modal and draft open", () => {
   expect(input.value).toBe("Keep my thinking");
 });
 
+it.each([
+  ["drawer", "MacIntel", "metaKey"],
+  ["drawer", "Win32", "ctrlKey"],
+  ["modal", "MacIntel", "metaKey"],
+  ["modal", "Win32", "ctrlKey"],
+])("keeps repeated bookmark shortcuts focused in the %s on %s", (presentation, platform, modifier) => {
+  const instance = mountHook("answer", presentation);
+  vi.spyOn(navigator, "platform", "get").mockReturnValue(platform);
+  if (presentation === "modal") showAnswer();
+  const bookmark = instance.el.querySelector("[data-answer-bookmark]");
+  bookmark.scrollIntoView = vi.fn();
+  const region = instance.modalEl.querySelector("[data-selection-dialog]");
+  region.focus();
+
+  for (const bookmarked of [true, false]) {
+    document.activeElement.dispatchEvent(new KeyboardEvent("keydown", {
+      key: "b", code: "KeyB", [modifier]: true, bubbles: true, cancelable: true,
+    }));
+    expect(instance.pendingRequest?.action).toBe("bookmark");
+    expect(bookmark.disabled).toBe(true);
+    expect(document.activeElement).toBe(region);
+    instance.resultHandler({request_id: instance.pendingRequest.id, status: "ok", bookmarked});
+    expect(document.activeElement).toBe(bookmark);
+    expect(bookmark.getAttribute("aria-pressed")).toBe(String(bookmarked));
+  }
+  expect(instance.pushEventTo).toHaveBeenCalledTimes(2);
+});
+
+it("keeps the bookmark focused after a failed save so it can be retried", () => {
+  const instance = mountHook("answer", "drawer");
+  const bookmark = instance.el.querySelector("[data-answer-bookmark]");
+  bookmark.focus();
+  bookmark.click();
+  expect(document.activeElement).toBe(instance.modalEl.querySelector("[data-selection-dialog]"));
+  instance.resultHandler({request_id: instance.pendingRequest.id, status: "error", message: "Try again"});
+  expect(document.activeElement).toBe(bookmark);
+  expect(bookmark.disabled).toBe(false);
+  expect(bookmark.getAttribute("aria-pressed")).toBe("false");
+});
+
+it.each(["textarea", "outside"])("does not take focus back from %s after saving a bookmark", (destination) => {
+  const instance = mountHook("answer", "drawer");
+  const bookmark = instance.el.querySelector("[data-answer-bookmark]");
+  bookmark.focus();
+  bookmark.click();
+  const nextFocus = destination === "textarea"
+    ? instance.el.querySelector("textarea")
+    : document.body.appendChild(document.createElement("button"));
+  nextFocus.focus();
+  instance.resultHandler({request_id: instance.pendingRequest.id, status: "ok", bookmarked: true});
+  expect(document.activeElement).toBe(nextFocus);
+});
+
 it("closes the answer modal back to its trigger without losing the draft", () => {
   const instance = mountHook("answer");
   const trigger = document.createElement("button");
@@ -520,4 +575,51 @@ it("closes the answer modal back to its trigger without losing the draft", () =>
   expect(document.activeElement).toBe(trigger);
   showAnswer();
   expect(instance.el.querySelector("textarea").value).toBe("A draft");
+});
+
+it("opens a drawer for its answer without moving keyboard focus into a modal", () => {
+  const instance = mountHook("answer", "drawer");
+  expect(instance.selectionData).toEqual({nodeId: "2"});
+  expect(instance.modalEl.classList.contains("hidden")).toBe(false);
+  expect(instance.modalEl.contains(document.activeElement)).toBe(false);
+  expect(instance.pushEventTo).not.toHaveBeenCalled();
+});
+
+it("hides the drawer through its owner and restores its draft after remount", () => {
+  const instance = mountHook("answer", "drawer");
+  instance.el.querySelector("textarea").value = "My drawer draft";
+  instance.el.querySelector("[data-selection-close]").click();
+  expect(instance.pushEvent).toHaveBeenCalledWith("close_answer_drawer", {node_id: "2"});
+  expect(document.activeElement.id).toBe("answer-trigger");
+  instance.destroyed();
+  const remounted = mountHook("answer", "drawer");
+  expect(remounted.el.querySelector("textarea").value).toBe("My drawer draft");
+});
+
+it("ignores page keyboard events while a drawer is open", () => {
+  const instance = mountHook("answer", "drawer");
+  const trigger = document.getElementById("answer-trigger");
+  trigger.focus();
+  trigger.dispatchEvent(new KeyboardEvent("keydown", {key: "Escape", bubbles: true, cancelable: true}));
+  expect(instance.pushEvent).not.toHaveBeenCalled();
+  expect(instance.modalEl.classList.contains("hidden")).toBe(false);
+  const region = instance.modalEl.querySelector("[data-selection-dialog]");
+  region.focus();
+  region.dispatchEvent(new KeyboardEvent("keydown", {key: "Escape", bubbles: true, cancelable: true}));
+  expect(instance.pushEvent).toHaveBeenCalledWith("close_answer_drawer", {node_id: "2"});
+});
+
+it("keeps the drawer mounted during submission so confirmation can clear the draft", () => {
+  const instance = mountHook("answer", "drawer");
+  instance.el.querySelector("textarea").value = "My submitted thought";
+  instance.submitAction("comment", {input: "My submitted thought"});
+  expect(document.getElementById("answer-trigger").disabled).toBe(true);
+  instance.closeModal();
+  expect(instance.pushEvent).not.toHaveBeenCalled();
+  instance.resultHandler({request_id: instance.pendingRequest.id, status: "ok"});
+  expect(document.getElementById("answer-trigger").disabled).toBe(false);
+  expect(instance.pushEvent).toHaveBeenCalledWith("close_answer_drawer", {node_id: "2"});
+  instance.destroyed();
+  const remounted = mountHook("answer", "drawer");
+  expect(remounted.el.querySelector("textarea").value).toBe("");
 });

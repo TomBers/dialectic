@@ -26,6 +26,13 @@ const SelectionActionsHook = {
     window.addEventListener("keydown", this.handleKeydown);
     this.el.addEventListener("click", this.handleClick);
     this.el.addEventListener("submit", this.handleSubmit);
+    if (this.drawerContext()) {
+      this.handleSelectionShow({detail: {
+        nodeId: this.componentEl.dataset.nodeId,
+        title: this.componentEl.dataset.answerTitle,
+        bookmarked: this.componentEl.dataset.bookmarked === "true",
+      }});
+    }
   },
 
   destroyed() {
@@ -41,6 +48,10 @@ const SelectionActionsHook = {
 
   answerContext() {
     return this.componentEl?.dataset.actionContext === "answer";
+  },
+
+  drawerContext() {
+    return this.componentEl?.dataset.presentation === "drawer";
   },
 
   handleSelectionShow(event) {
@@ -193,15 +204,17 @@ const SelectionActionsHook = {
   showModal() {
     if (!this.modalEl) return;
 
-    this.previousFocus = document.activeElement;
+    this.previousFocus = this.drawerContext()
+      ? document.getElementById(this.componentEl.dataset.triggerId)
+      : document.activeElement;
     syncInquiryShortcutLabels(this.el);
     this.modalEl.classList.remove("hidden");
     this.modalEl.setAttribute("aria-hidden", "false");
-    this.modalEl.querySelector("[data-selection-dialog]")?.focus({ preventScroll: true });
+    if (!this.drawerContext()) this.modalEl.querySelector("[data-selection-dialog]")?.focus({ preventScroll: true });
   },
 
   closeModal() {
-    if (!this.modalEl) return;
+    if (!this.modalEl || (this.drawerContext() && this.pendingRequest)) return;
 
     this.modalEl.classList.add("hidden");
     this.modalEl.setAttribute("aria-hidden", "true");
@@ -209,6 +222,7 @@ const SelectionActionsHook = {
     this.toolsMenu?.close();
     this.clearBrowserSelection();
     if (this.previousFocus?.isConnected) this.previousFocus.focus({ preventScroll: true });
+    if (this.drawerContext()) this.pushEvent("close_answer_drawer", {node_id: this.selectionData.nodeId});
   },
 
   clearBrowserSelection() {
@@ -359,16 +373,35 @@ const SelectionActionsHook = {
   },
 
   setPending(pending) {
+    if (this.drawerContext()) {
+      const trigger = document.getElementById(this.componentEl.dataset.triggerId);
+      if (trigger) trigger.disabled = pending;
+      this.modalEl?.querySelectorAll("[data-selection-close]").forEach(button => { button.disabled = pending; });
+    }
     const form = this.modalEl?.querySelector("[data-selection-input-form]");
     form?.setAttribute("aria-busy", String(pending));
     const input = form?.querySelector("textarea");
     if (input) input.readOnly = pending;
     if (pending) {
-      this.modalEl?.querySelectorAll("[data-selection-action], [data-selection-input-submit]")
-        .forEach((button) => { button.disabled = true; });
+      const buttons = Array.from(this.modalEl?.querySelectorAll("[data-selection-action], [data-selection-input-submit]") || []);
+      const control = document.activeElement;
+      const region = this.modalEl?.querySelector("[data-selection-dialog]");
+      this.pendingFocus = null;
+      if (region && buttons.includes(control)) {
+        this.pendingFocus = { control, region };
+        // Disabling the focused button would send keyboard focus back to the page.
+        region.focus({ preventScroll: true });
+      }
+      buttons.forEach((button) => { button.disabled = true; });
     } else {
       this.syncCanEditState();
       this.syncExistingHighlightState();
+      const focus = this.pendingFocus;
+      this.pendingFocus = null;
+      if (focus && document.activeElement === focus.region && focus.control.isConnected &&
+          !focus.control.disabled && !this.modalEl.classList.contains("hidden")) {
+        focus.control.focus({ preventScroll: true });
+      }
     }
   },
 
@@ -414,6 +447,8 @@ const SelectionActionsHook = {
 
   handleKeydown(event) {
     if (!this.modalEl || this.modalEl.classList.contains("hidden") || event.isComposing || event.repeat) return;
+    if (this.drawerContext() && !this.modalEl.contains(event.target)) return;
+    if (event.defaultPrevented) return;
     if (handleInquiryShortcut(event, this.modalEl)) return;
     if (event.altKey || event.metaKey || event.ctrlKey || event.shiftKey) return;
 

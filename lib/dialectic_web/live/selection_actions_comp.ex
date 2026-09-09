@@ -40,7 +40,12 @@ defmodule DialecticWeb.SelectionActionsComp do
      socket
      |> assign(assigns)
      |> assign_new(:highlight_only, fn -> false end)
-     |> assign_new(:context, fn -> :selection end)}
+     |> assign_new(:context, fn -> :selection end)
+     |> assign_new(:presentation, fn -> :modal end)
+     |> assign_new(:node_id, fn -> nil end)
+     |> assign_new(:answer_title, fn -> nil end)
+     |> assign_new(:bookmarked, fn -> false end)
+     |> assign_new(:trigger_id, fn -> nil end)}
   end
 
   @impl true
@@ -137,10 +142,21 @@ defmodule DialecticWeb.SelectionActionsComp do
       id={@id}
       data-can-edit={to_string(@can_edit)}
       data-action-context={@context}
+      data-presentation={@presentation}
+      data-node-id={@node_id}
+      data-answer-title={@answer_title}
+      data-bookmarked={to_string(@bookmarked)}
+      data-trigger-id={@trigger_id}
       data-draft-key={"#{@context}-drafts:#{@graph_id}:#{if(@current_user, do: @current_user.id, else: "guest")}"}
       data-guest-draft-key={if(@current_user, do: "#{@context}-drafts:#{@graph_id}:guest")}
     >
-      <div id={"selection-actions-modal-#{@id}"} class="hidden" phx-update="ignore" aria-hidden="true">
+      <div
+        :if={@presentation == :modal}
+        id={"selection-actions-modal-#{@id}"}
+        class="hidden"
+        phx-update="ignore"
+        aria-hidden="true"
+      >
         <div
           data-selection-close
           class="fixed inset-0 z-[999] bg-slate-950/40 backdrop-blur-sm transition-opacity duration-200"
@@ -161,81 +177,111 @@ defmodule DialecticWeb.SelectionActionsComp do
           }
           class="fixed left-1/2 top-1/2 z-[1000] flex max-h-[88vh] w-[92vw] max-w-[620px] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-[1.35rem] border border-slate-200 bg-white shadow-[0_28px_72px_rgba(15,23,42,0.2)] ring-1 ring-slate-950/5 transition-[max-width,opacity,transform] duration-200 opacity-100 scale-100"
         >
-          <div class="relative overflow-y-auto px-4 pb-5 pt-4 sm:px-5 sm:pb-5 sm:pt-5">
-            <div class="flex items-start gap-3">
-              <div class="min-w-0 flex-1">
-                <p :if={@context == :answer} class="mb-1 text-xs font-semibold text-slate-500">
-                  Responding to
-                </p>
-                <blockquote
-                  id={"selection-actions-passage-#{@id}"}
-                  data-selection-text
-                  class="font-serif text-xl font-medium leading-7 tracking-tight text-slate-950 sm:text-[1.35rem] sm:leading-8"
-                >
-                </blockquote>
-                <button
-                  :if={@context == :selection}
-                  id={"selection-actions-copy-#{@id}"}
-                  type="button"
-                  data-selection-copy
-                  class="mt-3 inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
-                >
-                  <span data-selection-copy-icon>
-                    <.icon name="hero-clipboard-document" class="h-3.5 w-3.5" />
-                  </span>
-                  <span data-selection-copy-check class="hidden text-emerald-600">
-                    <.icon name="hero-check" class="h-3.5 w-3.5" />
-                  </span>
-                  <span data-selection-copy-label aria-live="polite">Copy text</span>
-                </button>
-              </div>
-              <button
-                id={"selection-actions-close-#{@id}"}
-                type="button"
-                data-selection-close
-                class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 transition-colors hover:bg-slate-50 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
-                aria-label={
-                  if(@context == :answer, do: "Close answer actions", else: "Close selection actions")
-                }
-              >
-                <.icon name="hero-x-mark" class="h-4 w-4" />
-              </button>
-            </div>
-
-            <p
-              :if={!@current_user && @context == :selection}
-              id="selection-sign-in-hint"
-              class="mt-3 text-sm text-slate-600"
-            >
-              <.link href={~p"/users/log_in"} class="font-semibold text-indigo-700 underline">Sign in</.link>
-              to use passage actions. Your draft is kept in this tab.
-            </p>
-            <div class="mt-2 flex gap-2 text-xs text-slate-500">
-              <span data-selection-question-count class="hidden"></span>
-              <span data-selection-comment-count class="hidden"></span>
-            </div>
-            <p
-              :if={@highlight_only}
-              data-selection-status
-              role="status"
-              aria-live="polite"
-              class="mt-2 text-sm text-slate-700"
-            >
-            </p>
-            <div class="mt-4 border-t border-slate-100 pt-4">
-              <.live_component
-                module={DialecticWeb.InquiryActionsComp}
-                id={"selection-inquiry-actions-#{@id}"}
-                owner_id={@id}
-                context={@context}
-                graph_id={@graph_id}
-                can_edit={@can_edit}
-                current_user={@current_user}
-                highlight_only={@highlight_only}
-              />
-            </div>
-          </div>
+          <.action_content {assigns} />
         </.focus_wrap>
+      </div>
+      <div
+        :if={@presentation == :drawer}
+        id={"selection-actions-modal-#{@id}"}
+        phx-update="ignore"
+        class="hidden rounded-xl border border-teal-200 bg-white shadow-sm"
+        aria-hidden="true"
+      >
+        <div
+          id={"selection-actions-focus-#{@id}"}
+          role="region"
+          data-selection-dialog
+          tabindex="-1"
+          aria-label="Response form"
+        >
+          <.action_content {assigns} />
+        </div>
+      </div>
+    </div>
+    """
+  end
+
+  defp action_content(assigns) do
+    ~H"""
+    <div class="relative overflow-y-auto px-4 pb-5 pt-4 sm:px-5 sm:pb-5 sm:pt-5">
+      <div class="flex items-start gap-3">
+        <div class="min-w-0 flex-1">
+          <p :if={@context == :answer} class="mb-1 text-xs font-semibold text-slate-500">
+            Responding to
+          </p>
+          <blockquote
+            id={"selection-actions-passage-#{@id}"}
+            data-selection-text
+            class="font-serif text-xl font-medium leading-7 tracking-tight text-slate-950 sm:text-[1.35rem] sm:leading-8"
+          >
+          </blockquote>
+          <button
+            :if={@context == :selection}
+            id={"selection-actions-copy-#{@id}"}
+            type="button"
+            data-selection-copy
+            class="mt-3 inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+          >
+            <span data-selection-copy-icon>
+              <.icon name="hero-clipboard-document" class="h-3.5 w-3.5" />
+            </span>
+            <span data-selection-copy-check class="hidden text-emerald-600">
+              <.icon name="hero-check" class="h-3.5 w-3.5" />
+            </span>
+            <span data-selection-copy-label aria-live="polite">Copy text</span>
+          </button>
+        </div>
+        <button
+          id={"selection-actions-close-#{@id}"}
+          type="button"
+          data-selection-close
+          class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 transition-colors hover:bg-slate-50 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+          aria-label={
+            cond do
+              @presentation == :drawer -> "Hide response form"
+              @context == :answer -> "Close answer actions"
+              true -> "Close selection actions"
+            end
+          }
+        >
+          <.icon
+            name={if(@presentation == :drawer, do: "hero-chevron-up", else: "hero-x-mark")}
+            class="h-4 w-4"
+          />
+        </button>
+      </div>
+
+      <p
+        :if={!@current_user && @context == :selection}
+        id="selection-sign-in-hint"
+        class="mt-3 text-sm text-slate-600"
+      >
+        <.link href={~p"/users/log_in"} class="font-semibold text-indigo-700 underline">Sign in</.link>
+        to use passage actions. Your draft is kept in this tab.
+      </p>
+      <div class="mt-2 flex gap-2 text-xs text-slate-500">
+        <span data-selection-question-count class="hidden"></span>
+        <span data-selection-comment-count class="hidden"></span>
+      </div>
+      <p
+        :if={@highlight_only}
+        data-selection-status
+        role="status"
+        aria-live="polite"
+        class="mt-2 text-sm text-slate-700"
+      >
+      </p>
+      <div class="mt-4 border-t border-slate-100 pt-4">
+        <.live_component
+          module={DialecticWeb.InquiryActionsComp}
+          id={"selection-inquiry-actions-#{@id}"}
+          owner_id={@id}
+          context={@context}
+          graph_id={@graph_id}
+          can_edit={@can_edit}
+          current_user={@current_user}
+          highlight_only={@highlight_only}
+        />
       </div>
     </div>
     """

@@ -62,19 +62,30 @@ defmodule DialecticWeb.ReaderContributionsTest do
     refute has_element?(reader, "#outline-reading-node-1-ask")
     assert has_element?(reader, "#outline-reading-node-2-ask", "Respond to this answer")
 
-    assert has_element?(reader, "button#outline-reading-node-2-ask[aria-haspopup='dialog']")
+    assert has_element?(reader, "button#outline-reading-node-2-ask[aria-expanded='false']")
     refute has_element?(reader, "#outline-reading-node-2-ask[href]")
-    assert has_element?(reader, "#answer-actions[data-action-context='answer']")
-    assert has_element?(reader, "#selection-input-form-answer-actions-comment")
-    assert has_element?(reader, "#selection-input-form-answer-actions-ask")
-    assert has_element?(reader, "#answer-action-bookmark-answer-actions")
+    assert has_element?(reader, "#reader-answer-drawer-2[hidden]")
+    reader |> element("#outline-reading-node-2-ask") |> render_click()
 
     assert has_element?(
              reader,
-             "#selection-tools-popover-answer-actions [data-selection-action='counterexample']"
+             "#outline-reading-node-2-ask[aria-expanded='true']",
+             "Hide response form"
            )
 
-    refute has_element?(reader, "#answer-actions [data-selection-action='highlight_only']")
+    refute has_element?(reader, "#reader-answer-drawer-2[hidden]")
+    refute has_element?(reader, "#reader-answer-drawer-2 [aria-modal='true']")
+    assert has_element?(reader, "#answer-actions-2[data-action-context='answer']")
+    assert has_element?(reader, "#selection-input-form-answer-actions-2-comment")
+    assert has_element?(reader, "#selection-input-form-answer-actions-2-ask")
+    assert has_element?(reader, "#answer-action-bookmark-answer-actions-2")
+
+    assert has_element?(
+             reader,
+             "#selection-tools-popover-answer-actions-2 [data-selection-action='counterexample']"
+           )
+
+    refute has_element?(reader, "#answer-actions-2 [data-selection-action='highlight_only']")
   end
 
   test "posting a thought returns a guest to the saved contribution without generating AI", %{
@@ -307,7 +318,7 @@ defmodule DialecticWeb.ReaderContributionsTest do
 
     assert has_element?(
              reader,
-             "button#outline-reading-node-2-ask[aria-controls='selection-actions-focus-answer-actions']"
+             "button#outline-reading-node-2-ask[aria-controls='reader-answer-drawer-2']"
            )
 
     {:ok, inquiry, _} = live(conn, ~p"/g/#{graph.slug}/graph?node=2&focus=ask&token=mobile-token")

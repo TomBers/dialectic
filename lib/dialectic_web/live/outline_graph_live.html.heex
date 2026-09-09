@@ -670,44 +670,81 @@
 
                       <%= if @can_edit && contribution_target?(reading_node) do %>
                         <% response_label = response_action_label(reading_node) %>
+                        <% drawer_open? = @answer_drawer_node_id == reading_node.id %>
                         <button
                           id={"outline-reading-node-#{reading_node.id}-ask"}
                           type="button"
-                          phx-click={
-                            JS.dispatch("answer:show",
-                              detail: %{
-                                nodeId: reading_node.id,
-                                title:
-                                  NodeTitleHelper.extract_node_title(reading_node,
-                                    max_length: 180
-                                  ),
-                                bookmarked: MapSet.member?(@bookmarked_node_ids, reading_node.id)
-                              }
-                            )
+                          phx-click="toggle_answer_drawer"
+                          phx-value-id={reading_node.id}
+                          aria-expanded={to_string(drawer_open?)}
+                          aria-controls={"reader-answer-drawer-#{reading_node.id}"}
+                          aria-label={
+                            if(drawer_open?, do: "Hide response form", else: response_label)
                           }
-                          aria-haspopup="dialog"
-                          aria-controls="selection-actions-focus-answer-actions"
-                          class="group col-span-full mt-2 flex min-h-16 items-center gap-3 rounded-xl border border-teal-200 bg-teal-50 px-4 py-3 text-left transition hover:border-teal-300 hover:bg-teal-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600"
-                          aria-label={response_label}
                           aria-describedby={"outline-reading-node-#{reading_node.id}-respond-hint"}
+                          class={[
+                            "group col-span-full mt-2 flex min-h-14 w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600",
+                            if(drawer_open?,
+                              do: "border-teal-300 bg-teal-50 text-teal-950",
+                              else:
+                                "border-teal-200 bg-white text-teal-900 hover:border-teal-300 hover:bg-teal-50"
+                            )
+                          ]}
                         >
-                          <span class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-teal-700 ring-1 ring-teal-200/70">
-                            <.icon name="hero-chat-bubble-left-right" class="h-5 w-5" />
-                          </span>
+                          <.icon
+                            name="hero-chat-bubble-left-right"
+                            class="h-5 w-5 shrink-0 text-teal-700"
+                          />
                           <span class="min-w-0 flex-1">
-                            <span class="block text-sm font-semibold text-teal-950">{response_label}</span>
+                            <span class="block text-sm font-semibold">
+                              {if(drawer_open?, do: "Hide response form", else: response_label)}
+                            </span>
                             <span
                               id={"outline-reading-node-#{reading_node.id}-respond-hint"}
                               class="mt-0.5 block text-xs leading-5 text-slate-600"
                             >
-                              Share your view or ask a follow-up.
+                              {if(drawer_open?,
+                                do: "Your draft is kept when you hide this.",
+                                else: "Ask a question or share your view."
+                              )}
                             </span>
                           </span>
                           <.icon
-                            name="hero-plus"
-                            class="h-4 w-4 shrink-0 text-teal-700 transition"
+                            name="hero-chevron-down"
+                            class={[
+                              "h-4 w-4 shrink-0 text-teal-700 transition-transform motion-reduce:transition-none",
+                              drawer_open? && "rotate-180"
+                            ]}
                           />
                         </button>
+                        <div
+                          id={"reader-answer-drawer-#{reading_node.id}"}
+                          hidden={!drawer_open?}
+                          class="col-span-full"
+                        >
+                          <div
+                            :if={drawer_open?}
+                            id={"reader-answer-actions-hook-#{reading_node.id}"}
+                            phx-hook="SelectionActions"
+                            class="col-span-full"
+                          >
+                            <.live_component
+                              module={DialecticWeb.SelectionActionsComp}
+                              id={"answer-actions-#{reading_node.id}"}
+                              context={:answer}
+                              presentation={:drawer}
+                              node_id={reading_node.id}
+                              answer_title={
+                                NodeTitleHelper.extract_node_title(reading_node, max_length: 180)
+                              }
+                              bookmarked={MapSet.member?(@bookmarked_node_ids, reading_node.id)}
+                              trigger_id={"outline-reading-node-#{reading_node.id}-ask"}
+                              current_user={@current_user}
+                              graph_id={@graph_id}
+                              can_edit={@can_edit}
+                            />
+                          </div>
+                        </div>
                       <% end %>
                     </div>
                   <% end %>
@@ -901,17 +938,6 @@
           </div>
         </div>
       </div>
-    </div>
-
-    <div phx-hook="SelectionActions" id="reader-answer-actions-hook">
-      <.live_component
-        module={DialecticWeb.SelectionActionsComp}
-        id="answer-actions"
-        context={:answer}
-        current_user={@current_user}
-        graph_id={@graph_id}
-        can_edit={@can_edit}
-      />
     </div>
 
     <div phx-hook="SelectionActions" id="reader-selection-actions-hook">
