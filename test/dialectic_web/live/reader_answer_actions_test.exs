@@ -154,6 +154,57 @@ defmodule DialecticWeb.ReaderAnswerActionsTest do
     end
   end
 
+  test "the reader discovers an answer started from the grid", %{conn: conn, graph: graph} do
+    {:ok, grid, _} = live(conn, ~p"/g/#{graph.slug}/graph?node=2&focus=ask")
+    before_ids = GraphManager.vertices(graph.title)
+
+    grid
+    |> form("#global-chat-form", %{"vertex" => %{"content" => "How can I test this?"}})
+    |> render_submit()
+
+    answer = Enum.find(created(graph, before_ids), &(&1.class == "answer"))
+    {:ok, reader, _} = live(conn, ~p"/g/#{graph.slug}?node=#{answer.id}")
+    assert has_element?(reader, "#reader-generation-status-#{answer.id}")
+
+    GraphManager.set_node_content(graph.title, answer.id, "## A test\nTry it tomorrow.")
+    [job] = all_enqueued(worker: Dialectic.Workers.LocalWorker, args: %{graph: graph.title})
+    job |> Ecto.Changeset.change(state: "completed") |> Dialectic.Repo.update!()
+    send(grid.pid, {:llm_request_complete, answer.id})
+    render(grid)
+    refute has_element?(reader, "#reader-generation-status-#{answer.id}")
+    assert has_element?(reader, "#outline-markdown-body-#{answer.id}", "Try it tomorrow.")
+  end
+
+  test "an open reader discovers late queued work and clears cancelled work", %{
+    conn: conn,
+    graph: graph
+  } do
+    GraphManager.get_graph(graph.title)
+    GraphManager.set_node_content(graph.title, "2", "")
+    {:ok, reader, _} = live(conn, ~p"/g/#{graph.slug}?node=2")
+    refute has_element?(reader, "#reader-generation-status-2")
+
+    {:ok, job} =
+      Dialectic.Responses.RequestQueue.add(
+        "Explain this",
+        "SYSTEM",
+        "2",
+        graph.title,
+        "graph_update:another-grid-session"
+      )
+
+    assert has_element?(reader, "#reader-generation-status-2")
+    GraphManager.set_node_content(graph.title, "2", "## Starting\nA partial response")
+    send(reader.pid, {:other_user_change, self()})
+    assert has_element?(reader, "#reader-generation-status-2")
+    refute has_element?(reader, "#outline-markdown-body-2")
+
+    Oban.cancel_job(job.id)
+    send(reader.pid, :refresh_pending_responses)
+    refute has_element?(reader, "#reader-generation-status-2")
+    assert has_element?(reader, "#outline-markdown-body-2", "A partial response")
+  end
+
   test "cancelled work does not turn an empty answer into an active loader on reload", %{
     conn: conn,
     graph: graph

@@ -5,6 +5,7 @@ defmodule DialecticWeb.OutlineGraphLive do
 
   alias Dialectic.Accounts.User
   alias Dialectic.Repo
+  alias Dialectic.Responses.RequestQueue
   alias Dialectic.DbActions.Notes
   alias Dialectic.Graph.GraphActions
   alias Dialectic.Follows
@@ -131,10 +132,15 @@ defmodule DialecticWeb.OutlineGraphLive do
   def handle_info({:llm_request_complete, node_id}, socket) do
     {:noreply,
      socket
-     |> assign(
-       :selection_pending_node_ids,
-       MapSet.delete(socket.assigns.selection_pending_node_ids, node_id)
-     )
+     |> refresh_outline()
+     |> update(:selection_pending_node_ids, &MapSet.delete(&1, node_id))}
+  end
+
+  @impl true
+  def handle_info(:refresh_pending_responses, socket) do
+    {:noreply,
+     socket
+     |> assign(:pending_refresh_timer, nil)
      |> refresh_outline()}
   end
 
@@ -545,8 +551,8 @@ defmodule DialecticWeb.OutlineGraphLive do
       graph_topic: graph_topic,
       live_view_topic: graph_topic,
       answer_drawer_node_id: nil,
-      selection_pending_node_ids:
-        Dialectic.Responses.RequestQueue.pending_node_ids(graph_db.title, graph_topic),
+      selection_pending_node_ids: RequestQueue.pending_node_ids(graph_db.title),
+      pending_refresh_timer: nil,
       user: UserUtils.current_identity(socket.assigns),
       bookmarked_node_ids:
         graph_db.title
@@ -594,6 +600,7 @@ defmodule DialecticWeb.OutlineGraphLive do
       json_ld: json_ld,
       noindex: !indexable_graph?(graph_db)
     )
+    |> schedule_pending_refresh()
   end
 
   defp contribution_target?(%{id: "1"}), do: false
@@ -702,9 +709,24 @@ defmodule DialecticWeb.OutlineGraphLive do
     |> assign(
       outline_nodes: outline_nodes,
       contributor_names: contributor_names(outline_nodes),
+      selection_pending_node_ids: RequestQueue.pending_node_ids(socket.assigns.graph_id),
       new_thought_ids: Enum.uniq(pending_ids)
     )
     |> assign_selected_node(selected_node)
+    |> schedule_pending_refresh()
+  end
+
+  defp schedule_pending_refresh(socket) do
+    if connected?(socket) && is_nil(socket.assigns.pending_refresh_timer) &&
+         MapSet.size(socket.assigns.selection_pending_node_ids) > 0 do
+      assign(
+        socket,
+        :pending_refresh_timer,
+        Process.send_after(self(), :refresh_pending_responses, 1_000)
+      )
+    else
+      socket
+    end
   end
 
   defp human_contribution?(node), do: node.class in ["user", "question"]
@@ -1318,13 +1340,13 @@ defmodule DialecticWeb.OutlineGraphLive do
   defp finish_selection_action(socket, %{kind: :generation} = result) do
     broadcast_selection_change(socket, result.operation, List.last(result.nodes))
 
-    pending_ids =
-      Enum.reduce(result.nodes, socket.assigns.selection_pending_node_ids, &MapSet.put(&2, &1.id))
-
     {:noreply,
      socket
-     |> assign(:selection_pending_node_ids, pending_ids)
      |> refresh_outline()
+     |> update(:selection_pending_node_ids, fn ids ->
+       Enum.reduce(result.nodes, ids, &MapSet.put(&2, &1.id))
+     end)
+     |> schedule_pending_refresh()
      |> update(:new_thought_ids, &(&1 -- result.created_node_ids))
      |> put_flash(:info, "#{result.label}…")
      |> navigate_to_node(result.target_node_id)}

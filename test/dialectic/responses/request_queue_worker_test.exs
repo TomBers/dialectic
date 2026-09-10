@@ -155,6 +155,31 @@ defmodule Dialectic.Responses.RequestQueueWorkerTest do
     end
   end
 
+  test "pending nodes include every delivery topic but only active response jobs in the graph" do
+    graph = "PendingGraph-#{System.unique_integer([:positive])}"
+
+    for {worker, state, job_graph, node_id, topic} <- [
+          {LLMWorker, "available", graph, "queued", "graph_update:grid-socket"},
+          {LocalWorker, "executing", graph, "running", "graph_update:#{graph}"},
+          {LLMWorker, "scheduled", graph, "scheduled", "graph_update:another-socket"},
+          {LLMWorker, "retryable", graph, "retrying", nil},
+          {LLMWorker, "completed", graph, "finished", "graph_update:#{graph}"},
+          {LLMWorker, "cancelled", graph, "cancelled", "graph_update:#{graph}"},
+          {LLMWorker, "discarded", graph, "failed", "graph_update:#{graph}"},
+          {LLMWorker, "executing", "AnotherGraph", "unrelated", "graph_update:#{graph}"},
+          {Dialectic.Workers.EmailWorker, "available", graph, "email", "graph_update:#{graph}"},
+          {LocalWorker, "available", graph, nil, "graph_update:#{graph}"}
+        ] do
+      %{"graph" => job_graph, "to_node" => node_id, "live_view_topic" => topic}
+      |> worker.new()
+      |> Ecto.Changeset.put_change(:state, state)
+      |> Repo.insert!()
+    end
+
+    assert RequestQueue.pending_node_ids(graph) ==
+             MapSet.new(~w(queued running scheduled retrying))
+  end
+
   describe "RequestQueue.run_llm/1 admission controls" do
     test "limits active requests per actor while allowing other actors" do
       Application.put_env(:dialectic, :llm_admission,
