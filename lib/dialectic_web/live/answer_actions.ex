@@ -14,7 +14,7 @@ defmodule DialecticWeb.AnswerActions do
          :ok <- validate_input(socket, action, params) do
       perform_action(action, socket, node, params)
     else
-      :error -> {:error, "Choose an available answer action."}
+      :error -> {:error, "Choose an available response action."}
       error -> error
     end
   end
@@ -41,7 +41,7 @@ defmodule DialecticWeb.AnswerActions do
         {:error, "Write a comment or question first."}
 
       is_nil(socket.assigns.current_user) && action == :bookmark ->
-        {:error, "Sign in to bookmark this answer. Your draft will stay here."}
+        {:error, "Sign in to bookmark this response. Your draft will stay here."}
 
       is_nil(socket.assigns.current_user) && action == :ask_question && guided_learning?(params) ->
         {:error, "Sign in to add a personal learning plan. Your draft will stay here."}
@@ -82,22 +82,22 @@ defmodule DialecticWeb.AnswerActions do
         guided_learning: guided_learning?(params)
       )
 
-    generation([answer], "answer", "Answering your question")
+    generation([answer], "answer", "Answering your question", created_parents: true)
   end
 
   defp perform_action(:explain, socket, node, _params) do
     {_, answer} =
       GraphActions.ask_and_answer(
         GraphHelpers.graph_action_params(socket, node),
-        "Please explain this answer in simpler terms."
+        "Please explain this response in simpler terms."
       )
 
-    generation([answer], "explain", "Explaining this answer")
+    generation([answer], "explain", "Explaining this response", created_parents: true)
   end
 
   defp perform_action(:pros_cons, socket, node, _params) do
     nodes = GraphActions.branch(GraphHelpers.graph_action_params(socket, node))
-    generation(nodes, "branch", "Testing both sides", node.id)
+    generation(nodes, "branch", "Testing both sides", target_node_id: node.id)
   end
 
   defp perform_action(:related_ideas, socket, node, _params) do
@@ -109,24 +109,30 @@ defmodule DialecticWeb.AnswerActions do
     result =
       GraphActions.apply_thinking_tool(action, GraphHelpers.graph_action_params(socket, node))
 
-    generation([result], Atom.to_string(action), "Exploring this answer")
+    generation([result], Atom.to_string(action), "Exploring this response")
   end
 
   defp guided_learning?(params), do: params["guided_learning"] in [true, "true", "on", "1"]
 
-  defp generation(nodes, operation, label, target_node_id \\ nil) do
+  defp generation(nodes, operation, label, opts \\ []) do
     case Enum.filter(nodes, &is_map/1) do
       [] ->
         {:error, "The response could not be started. Please try again."}
 
       nodes ->
+        created_nodes =
+          if Keyword.get(opts, :created_parents, false),
+            do: Enum.flat_map(nodes, &[&1 | &1.parents]),
+            else: nodes
+
         {:ok,
          %{
            kind: :generation,
            nodes: nodes,
+           created_node_ids: Enum.map(created_nodes, & &1.id),
            operation: operation,
            label: label,
-           target_node_id: target_node_id || List.last(nodes).id
+           target_node_id: Keyword.get(opts, :target_node_id, List.last(nodes).id)
          }}
     end
   end

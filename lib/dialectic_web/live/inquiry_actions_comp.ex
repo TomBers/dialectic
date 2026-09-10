@@ -322,13 +322,13 @@ defmodule DialecticWeb.InquiryActionsComp do
         </div>
         <p :if={!@highlight_only} class="hidden px-1 text-[10px] text-slate-500 md:block">
           <%= if @context in [:selection, :answer] do %>
-            / to write · T for tools · Esc to leave the form, then close · Command/Ctrl + A / R / E / {if(
+            / to write · T for tools · Esc to leave the form, then close · Option/Alt + Shift + A / R / E / {if(
               @context == :answer,
               do: "B",
               else: "H"
             )} to use tools when not typing
           <% else %>
-            T for tools · Esc to leave the form · Command/Ctrl + A / C / R / B to use tools when not typing
+            T for tools · Esc to leave the form · Option/Alt + Shift + A / C / R / B to use tools when not typing
           <% end %>
         </p>
       </div>
@@ -387,9 +387,7 @@ defmodule DialecticWeb.InquiryActionsComp do
       phx-click={@event}
       phx-value-id={@node_id}
       aria-pressed={if(is_boolean(@pressed), do: to_string(@pressed))}
-      aria-keyshortcuts={
-        @shortcut && "Meta+#{String.upcase(@shortcut)} Control+#{String.upcase(@shortcut)}"
-      }
+      aria-keyshortcuts={@shortcut && "Alt+Shift+#{String.upcase(@shortcut)}"}
       data-selection-action={@selection_action}
       data-reader-shortcut={@shortcut}
       data-disable-if-links={@disable_if_links}
@@ -420,11 +418,12 @@ defmodule DialecticWeb.InquiryActionsComp do
         <.shortcut_keycap
           :if={@compact && @shortcut}
           key={@shortcut}
-          modifier="primary"
+          modifier="alt"
+          shift
         />
         <span :if={@description} class="mt-0.5 block text-xs leading-4 text-slate-500">{@description}</span>
       </span>
-      <.shortcut_keycap :if={!@compact && @shortcut} key={@shortcut} modifier="primary" quiet />
+      <.shortcut_keycap :if={!@compact && @shortcut} key={@shortcut} modifier="alt" shift quiet />
     </button>
     """
   end

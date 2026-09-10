@@ -97,16 +97,17 @@ it.each(["a", "c", "r", "b"])("activates %s only outside typing and respects dis
   button.addEventListener("click", click);
   reader.append(button);
   input.focus();
-  expect(key(shortcut, { metaKey: true }).defaultPrevented).toBe(false);
+  expect(key(shortcut, { altKey: true, shiftKey: true }).defaultPrevented).toBe(false);
   expect(click).not.toHaveBeenCalled();
   key("Escape");
   expect(key(shortcut).defaultPrevented).toBe(false);
+  expect(key(shortcut, { metaKey: true }).defaultPrevented).toBe(false);
   expect(click).not.toHaveBeenCalled();
-  key(shortcut, { metaKey: true });
+  key(shortcut, { altKey: true, shiftKey: true });
   expect(click).toHaveBeenCalledTimes(1);
   button.disabled = true;
   reader.focus();
-  key(shortcut, { metaKey: true });
+  key(shortcut, { altKey: true, shiftKey: true });
   expect(click).toHaveBeenCalledTimes(1);
 });
 

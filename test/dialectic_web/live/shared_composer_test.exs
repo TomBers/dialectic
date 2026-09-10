@@ -96,13 +96,13 @@ defmodule DialecticWeb.SharedComposerTest do
     assert has_element?(
              view,
              "#global-chat-form-tools-toolbar [data-reader-shortcut='a'] [data-shortcut-label='mac']",
-             "⌘ A"
+             "⌥ ⇧ A"
            )
 
     assert has_element?(
              view,
              "#global-chat-form-tools-toolbar [data-reader-shortcut='r'] [data-shortcut-label='other']",
-             "Ctrl+R"
+             "Alt+Shift+R"
            )
 
     assert has_element?(view, "#global-chat-form-comment [data-shortcut-label='mac']", "⌘ ⇧ ↵")
@@ -147,8 +147,8 @@ defmodule DialecticWeb.SharedComposerTest do
       view |> element(button) |> render_click()
       assert has_element?(view, "#{button}[aria-pressed='true']", "Bookmarked")
       assert has_element?(view, "#{button} .hero-bookmark-solid")
-      assert has_element?(view, "#{button} [data-shortcut-label='mac']", "⌘ B")
-      assert has_element?(view, "#{button} [data-shortcut-label='other']", "Ctrl+B")
+      assert has_element?(view, "#{button} [data-shortcut-label='mac']", "⌥ ⇧ B")
+      assert has_element?(view, "#{button} [data-shortcut-label='other']", "Alt+Shift+B")
       assert Dialectic.DbActions.Notes.list_noted_node_ids(graph.title, user) == ["2"]
       refute_push_event(view, "scroll_to_top", %{})
 
@@ -266,6 +266,7 @@ defmodule DialecticWeb.SharedComposerTest do
 
         assert Enum.sort(Enum.map(nodes, & &1.class)) == unquote(classes)
         assert Enum.all?(nodes, &(&1.source_text == "Explain an idea"))
+        if unquote(mode) == :reader, do: refute(has_element?(view, "#reader-view-new-thoughts"))
         [highlight] = Dialectic.Highlights.list_highlights_with_links(mudg_id: graph.title)
         assert Enum.sort(Enum.map(highlight.links, & &1.link_type)) == unquote(link_types)
 
@@ -311,6 +312,7 @@ defmodule DialecticWeb.SharedComposerTest do
       {:ok, view, _} = live(log_in_user(conn, user), selection_path(graph, unquote(mode)))
       before_ids = GraphManager.vertices(graph.title)
       submit_selection(view, %{"action" => "ask_question", "input" => " How would I test this? "})
+      if unquote(mode) == :reader, do: refute(has_element?(view, "#reader-view-new-thoughts"))
       assert_push_event(view, "selection:result", %{request_id: "selection-test", status: "ok"})
 
       nodes =

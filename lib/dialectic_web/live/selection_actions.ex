@@ -70,7 +70,10 @@ defmodule DialecticWeb.SelectionActions do
       )
 
     link(highlight, node, "question")
-    generation([node], "selection_question", "Answering your question about #{quoted(text)}")
+
+    generation([node], "selection_question", "Answering your question about #{quoted(text)}",
+      created_parents: true
+    )
   end
 
   defp perform_action(:explain, context, text, _extra, highlight) do
@@ -81,7 +84,7 @@ defmodule DialecticWeb.SelectionActions do
       )
 
     link(highlight, node, "explain")
-    generation([node], "explain", "Explaining #{quoted(text)}")
+    generation([node], "explain", "Explaining #{quoted(text)}", created_parents: true)
   end
 
   defp perform_action(:pros_cons, {_, parent, _, _} = context, text, _extra, highlight) do
@@ -91,7 +94,10 @@ defmodule DialecticWeb.SelectionActions do
       |> Enum.sort_by(fn node -> if node.class == "thesis", do: 0, else: 1 end)
 
     Enum.each(nodes, &link(highlight, &1, if(&1.class == "thesis", do: "pro", else: "con")))
-    generation(nodes, "branch", "Testing both sides of #{quoted(text)}", parent.id)
+
+    generation(nodes, "branch", "Testing both sides of #{quoted(text)}",
+      target_node_id: parent.id
+    )
   end
 
   defp perform_action(:related_ideas, context, text, _extra, highlight) do
@@ -112,19 +118,25 @@ defmodule DialecticWeb.SelectionActions do
     )
   end
 
-  defp generation(nodes, operation, label, target_node_id \\ nil) do
+  defp generation(nodes, operation, label, opts \\ []) do
     case Enum.filter(nodes, &is_map/1) do
       [] ->
         {:error, "The response could not be started"}
 
       nodes ->
+        created_nodes =
+          if Keyword.get(opts, :created_parents, false),
+            do: Enum.flat_map(nodes, &[&1 | &1.parents]),
+            else: nodes
+
         {:ok,
          %{
            kind: :generation,
            nodes: nodes,
+           created_node_ids: Enum.map(created_nodes, & &1.id),
            operation: operation,
            label: label,
-           target_node_id: target_node_id || List.last(nodes).id
+           target_node_id: Keyword.get(opts, :target_node_id, List.last(nodes).id)
          }}
     end
   end

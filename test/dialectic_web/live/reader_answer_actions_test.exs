@@ -82,6 +82,7 @@ defmodule DialecticWeb.ReaderAnswerActionsTest do
     assert Dialectic.Highlights.list_highlights_with_links(mudg_id: graph.title) == []
     assert_patch(view, ~p"/g/#{graph.slug}?node=#{answer.id}")
     assert has_element?(view, "#reader-generation-#{answer.id}[role='status']")
+    refute has_element?(view, "#reader-view-new-thoughts")
 
     assert has_element?(
              view,
@@ -228,6 +229,7 @@ defmodule DialecticWeb.ReaderAnswerActionsTest do
       assert Enum.sort(Enum.map(nodes, & &1.class)) == unquote(classes)
       assert Enum.all?(nodes, &is_nil(&1.source_text))
       assert Dialectic.Highlights.list_highlights_with_links(mudg_id: graph.title) == []
+      refute has_element?(view, "#reader-view-new-thoughts")
 
       for node <- nodes, node.class != "question" do
         assert_enqueued(
@@ -236,6 +238,30 @@ defmodule DialecticWeb.ReaderAnswerActionsTest do
         )
       end
     end
+  end
+
+  test "asking keeps unread thoughts from other attendees and notifies their reader", %{
+    conn: conn,
+    graph: graph
+  } do
+    {:ok, view, _} = live(conn, ~p"/g/#{graph.slug}?node=2")
+    {:ok, other_reader, _} = live(conn, ~p"/g/#{graph.slug}?node=2")
+    before_ids = GraphManager.vertices(graph.title)
+    submit(other_reader, %{"action" => "comment", "input" => "Another attendee's thought"})
+    [thought] = created(graph, before_ids)
+    assert has_element?(view, "#reader-view-new-thoughts", "1 new thought")
+
+    before_ids = GraphManager.vertices(graph.title)
+    submit(view, %{"action" => "ask_question", "input" => "How can we test this?"})
+    question = Enum.find(created(graph, before_ids), &(&1.class == "question"))
+    send(view.pid, {:other_user_change, self()})
+    assert has_element?(view, "#reader-view-new-thoughts", "1 new thought")
+    assert has_element?(other_reader, "#reader-view-new-thoughts", "1 new thought")
+
+    view |> element("#reader-view-new-thoughts") |> render_click()
+    assert_patch(view, ~p"/g/#{graph.slug}?node=#{thought.id}")
+    other_reader |> element("#reader-view-new-thoughts") |> render_click()
+    assert_patch(other_reader, ~p"/g/#{graph.slug}?node=#{question.id}")
   end
 
   test "invalid input, roots, missing answers and restricted guest actions are rejected", %{

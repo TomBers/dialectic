@@ -4,7 +4,7 @@ import { handleInquiryShortcut, syncInquiryShortcutLabels } from "../inquiry_sho
 let root, button;
 beforeEach(() => {
   vi.spyOn(navigator, "platform", "get").mockReturnValue("MacIntel");
-  document.body.innerHTML = '<section tabindex="0"><button data-reader-shortcut="a">Test</button><button data-reader-shortcut="c">Synthesis</button><button data-reader-shortcut="r">Related</button><button data-reader-shortcut="b">Bookmark</button><button data-reader-shortcut="t" data-reader-shortcut-modifier="none">More tools</button><textarea></textarea><p>Selected passage</p></section>';
+  document.body.innerHTML = '<section tabindex="0"><button data-reader-shortcut="a">Test</button><button data-reader-shortcut="c">Synthesis</button><button data-reader-shortcut="r">Related</button><button data-reader-shortcut="b">Bookmark</button><button data-reader-shortcut="e">Explain</button><button data-reader-shortcut="h">Highlight</button><button data-reader-shortcut="t" data-reader-shortcut-modifier="none">More tools</button><textarea></textarea><p>Selected passage</p></section>';
   root = document.querySelector("section");
   button = root.querySelector("button");
   root.querySelectorAll("button").forEach(button => { button.scrollIntoView = vi.fn(); });
@@ -21,13 +21,13 @@ function press(options, target = root) {
   return event;
 }
 
-it.each([["MacIntel", "metaKey"], ["Win32", "ctrlKey"]])("activates A/C/R/B using the primary modifier on %s", (platform, modifier) => {
+it.each(["MacIntel", "Win32"])("activates tools using Option/Alt+Shift on %s", (platform) => {
   vi.spyOn(navigator, "platform", "get").mockReturnValue(platform);
-  for (const key of ["a", "c", "r", "b"]) {
+  for (const key of ["a", "c", "r", "b", "e", "h"]) {
     const targetButton = root.querySelector(`[data-reader-shortcut="${key}"]`);
     const clicks = vi.fn();
     targetButton.addEventListener("click", clicks);
-    expect(press({key, [modifier]: true}).defaultPrevented).toBe(true);
+    expect(press({key, altKey: true, shiftKey: true}).defaultPrevented).toBe(true);
     expect(clicks).toHaveBeenCalledOnce();
     expect(document.activeElement).toBe(targetButton);
   }
@@ -39,8 +39,26 @@ it.each([["MacIntel", "metaKey"], ["Win32", "ctrlKey"]])("preserves native short
   root.addEventListener("click", clicks);
   for (const key of ["a", "c", "r", "b", "e", "h"]) {
     expect(press({key, [modifier]: true}, root.querySelector("textarea")).defaultPrevented).toBe(false);
+    expect(press({key, altKey: true, shiftKey: true}, root.querySelector("textarea")).defaultPrevented).toBe(false);
   }
   expect(clicks).not.toHaveBeenCalled();
+});
+
+it.each([["MacIntel", "metaKey"], ["Win32", "ctrlKey"]])("leaves browser commands available even when the response area is focused on %s", (platform, modifier) => {
+  vi.spyOn(navigator, "platform", "get").mockReturnValue(platform);
+  const clicks = vi.fn();
+  root.addEventListener("click", clicks);
+  for (const key of ["a", "c", "r", "b", "e", "h"]) {
+    expect(press({key, [modifier]: true}).defaultPrevented).toBe(false);
+  }
+  expect(clicks).not.toHaveBeenCalled();
+});
+
+it("recognizes Option+Shift shortcuts when the character differs from the letter key", () => {
+  const clicks = vi.fn();
+  button.addEventListener("click", clicks);
+  expect(press({key: "Å", code: "KeyA", altKey: true, shiftKey: true}).defaultPrevented).toBe(true);
+  expect(clicks).toHaveBeenCalledOnce();
 });
 
 it.each(["MacIntel", "Win32"])("uses plain T for tools and preserves modified browser shortcuts on %s", (platform) => {
@@ -75,18 +93,18 @@ it("preserves copy when a passage is selected", () => {
 it("ignores other modifiers, repeating events, and disabled tools", () => {
   const clicks = vi.fn();
   button.addEventListener("click", clicks);
-  for (const options of [{}, {ctrlKey: true}, {altKey: true, shiftKey: true}, {metaKey: true, shiftKey: true}, {metaKey: true, repeat: true}]) {
+  for (const options of [{}, {ctrlKey: true}, {altKey: true}, {shiftKey: true}, {metaKey: true, altKey: true, shiftKey: true}, {ctrlKey: true, altKey: true, shiftKey: true}, {altKey: true, shiftKey: true, repeat: true}]) {
     expect(press(options).defaultPrevented).toBe(false);
   }
   button.disabled = true;
-  expect(press({metaKey: true}).defaultPrevented).toBe(false);
+  expect(press({altKey: true, shiftKey: true}).defaultPrevented).toBe(false);
   expect(clicks).not.toHaveBeenCalled();
 });
 
 it.each(["a", "t"])("does not intercept %s outside the reader", (key) => {
   const outside = document.createElement("button");
   document.body.append(outside);
-  const event = new KeyboardEvent("keydown", { key, metaKey: key === "a", bubbles: true, cancelable: true });
+  const event = new KeyboardEvent("keydown", { key, altKey: key === "a", shiftKey: key === "a", bubbles: true, cancelable: true });
   outside.addEventListener("keydown", event => {
     expect(handleInquiryShortcut(event, root)).toBe(false);
   });
@@ -94,7 +112,7 @@ it.each(["a", "t"])("does not intercept %s outside the reader", (key) => {
   expect(event.defaultPrevented).toBe(false);
 });
 
-it.each([["MacIntel", "Meta+A", "Command+A"], ["Win32", "Control+A", "Ctrl+A"]])("publishes matching shortcut labels for %s", (platform, aria, title) => {
+it.each([["MacIntel", "Alt+Shift+A", "Option+Shift+A"], ["Win32", "Alt+Shift+A", "Alt+Shift+A"]])("publishes matching shortcut labels for %s", (platform, aria, title) => {
   vi.spyOn(navigator, "platform", "get").mockReturnValue(platform);
   syncInquiryShortcutLabels(root);
   expect(button.getAttribute("aria-keyshortcuts")).toBe(aria);

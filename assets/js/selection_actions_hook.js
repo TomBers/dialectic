@@ -337,7 +337,7 @@ const SelectionActionsHook = {
     if (result.status === "ok") {
       if (request.action === "bookmark") {
         this.syncBookmarkState(result.bookmarked);
-        this.setStatus(result.bookmarked ? "Answer bookmarked." : "Bookmark removed.");
+        this.setStatus(result.bookmarked ? "Bookmarked." : "Bookmark removed.");
         return;
       }
       if (["comment", ASK_MODE].includes(request.action)) {
@@ -358,7 +358,7 @@ const SelectionActionsHook = {
     const button = this.modalEl?.querySelector("[data-answer-bookmark]");
     if (!button) return;
     button.setAttribute("aria-pressed", String(bookmarked));
-    button.setAttribute("aria-label", bookmarked ? "Remove bookmark" : "Bookmark this answer");
+    button.setAttribute("aria-label", bookmarked ? "Remove bookmark" : "Bookmark this response");
     const label = button.querySelector("[data-tool-label]");
     if (label) label.textContent = bookmarked ? "Bookmarked" : "Bookmark";
     const icon = button.querySelector(".hero-bookmark, .hero-bookmark-solid");

@@ -1325,6 +1325,7 @@ defmodule DialecticWeb.OutlineGraphLive do
      socket
      |> assign(:selection_pending_node_ids, pending_ids)
      |> refresh_outline()
+     |> update(:new_thought_ids, &(&1 -- result.created_node_ids))
      |> put_flash(:info, "#{result.label}…")
      |> navigate_to_node(result.target_node_id)}
   end

@@ -375,13 +375,13 @@ it.each([["a", "pros_cons"], ["r", "related_ideas"]])("shares the modifier short
   instance.modalEl.append(button);
   showSelection();
   const dialog = instance.el.querySelector("[data-selection-dialog]");
-  dialog.dispatchEvent(new KeyboardEvent("keydown", { key, metaKey: true, bubbles: true, cancelable: true }));
+  dialog.dispatchEvent(new KeyboardEvent("keydown", { key, altKey: true, shiftKey: true, bubbles: true, cancelable: true }));
   expect(instance.pushEventTo).toHaveBeenCalledWith(instance.componentEl, "action", expect.objectContaining({ action }));
-  dialog.dispatchEvent(new KeyboardEvent("keydown", { key, metaKey: true, bubbles: true, cancelable: true }));
+  dialog.dispatchEvent(new KeyboardEvent("keydown", { key, altKey: true, shiftKey: true, bubbles: true, cancelable: true }));
   expect(instance.pushEventTo).toHaveBeenCalledTimes(1);
 });
 
-it.each([["e", "explain"], ["h", "highlight_only"]])("requires the primary modifier for %s, respecting typing and disabled actions", (key, action) => {
+it.each([["e", "explain"], ["h", "highlight_only"]])("requires Alt+Shift for %s, respecting typing and disabled actions", (key, action) => {
   const instance = mountHook();
   const button = document.createElement("button");
   button.dataset.readerShortcut = key;
@@ -393,12 +393,13 @@ it.each([["e", "explain"], ["h", "highlight_only"]])("requires the primary modif
   const press = (target, options) => target.dispatchEvent(new KeyboardEvent("keydown", {key, bubbles: true, cancelable: true, ...options}));
   press(dialog, {});
   press(dialog, {metaKey: true, shiftKey: true});
-  press(instance.el.querySelector("textarea"), {metaKey: true});
-  button.disabled = true;
   press(dialog, {metaKey: true});
+  press(instance.el.querySelector("textarea"), {altKey: true, shiftKey: true});
+  button.disabled = true;
+  press(dialog, {altKey: true, shiftKey: true});
   expect(instance.pushEventTo).not.toHaveBeenCalled();
   button.disabled = false;
-  press(dialog, {metaKey: true});
+  press(dialog, {altKey: true, shiftKey: true});
   expect(instance.pushEventTo).toHaveBeenCalledWith(instance.componentEl, "action", expect.objectContaining({action}));
 });
 
@@ -551,18 +552,20 @@ it("confirms bookmarks while keeping the modal and draft open", () => {
   expect(bookmark.textContent).toBe("Bookmarked");
   expect(instance.modalEl.classList.contains("hidden")).toBe(false);
   expect(input.value).toBe("Keep my thinking");
+  expect(instance.modalEl.querySelector("[data-selection-status]").textContent).toBe("Bookmarked.");
   bookmark.click();
   instance.resultHandler({request_id: instance.pendingRequest.id, status: "ok", bookmarked: false});
   expect(bookmark.getAttribute("aria-pressed")).toBe("false");
+  expect(bookmark.getAttribute("aria-label")).toBe("Bookmark this response");
   expect(input.value).toBe("Keep my thinking");
 });
 
 it.each([
-  ["drawer", "MacIntel", "metaKey"],
-  ["drawer", "Win32", "ctrlKey"],
-  ["modal", "MacIntel", "metaKey"],
-  ["modal", "Win32", "ctrlKey"],
-])("keeps repeated bookmark shortcuts focused in the %s on %s", (presentation, platform, modifier) => {
+  ["drawer", "MacIntel"],
+  ["drawer", "Win32"],
+  ["modal", "MacIntel"],
+  ["modal", "Win32"],
+])("keeps repeated bookmark shortcuts focused in the %s on %s", (presentation, platform) => {
   const instance = mountHook("answer", presentation);
   vi.spyOn(navigator, "platform", "get").mockReturnValue(platform);
   if (presentation === "modal") showAnswer();
@@ -573,7 +576,7 @@ it.each([
 
   for (const bookmarked of [true, false]) {
     document.activeElement.dispatchEvent(new KeyboardEvent("keydown", {
-      key: "b", code: "KeyB", [modifier]: true, bubbles: true, cancelable: true,
+      key: "b", code: "KeyB", altKey: true, shiftKey: true, bubbles: true, cancelable: true,
     }));
     expect(instance.pendingRequest?.action).toBe("bookmark");
     expect(bookmark.disabled).toBe(true);
