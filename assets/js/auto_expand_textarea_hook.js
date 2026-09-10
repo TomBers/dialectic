@@ -47,8 +47,19 @@ const AutoExpandTextareaHook = {
     this.textarea.addEventListener("input", this.handleInput);
     window.addEventListener("resize", this.handleResize);
 
+    this.resizeFrame = null;
+    this.observedWidth = null;
     if (typeof ResizeObserver !== "undefined") {
-      this.resizeObserver = new ResizeObserver(() => this.adjustHeight());
+      this.resizeObserver = new ResizeObserver(([entry]) => {
+        if (!entry || entry.contentRect.width === this.observedWidth) return;
+
+        this.observedWidth = entry.contentRect.width;
+        if (this.resizeFrame !== null) cancelAnimationFrame(this.resizeFrame);
+        this.resizeFrame = requestAnimationFrame(() => {
+          this.resizeFrame = null;
+          this.adjustHeight();
+        });
+      });
       this.resizeObserver.observe(this.textarea.parentElement || this.textarea);
     }
 
@@ -68,6 +79,7 @@ const AutoExpandTextareaHook = {
       this.resizeObserver.disconnect();
       this.resizeObserver = null;
     }
+    if (this.resizeFrame !== null) cancelAnimationFrame(this.resizeFrame);
   },
 
   handleInput() {

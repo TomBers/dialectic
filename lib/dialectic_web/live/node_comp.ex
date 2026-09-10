@@ -388,9 +388,10 @@ defmodule DialecticWeb.NodeComp do
                         ></span>
                       </h2>
                     </div>
-                    <span class={[
-                      "absolute right-3 top-2.5 flex items-center gap-2"
-                    ]}>
+                    <span
+                      :if={GraphHelpers.origin_branching_disabled?(@node)}
+                      class="absolute right-3 top-2.5 flex items-center gap-2"
+                    >
                       <% noted? =
                         Enum.any?(Map.get(@node || %{}, :noted_by, []), fn u -> u == @user end) %>
                       <button
@@ -586,92 +587,37 @@ defmodule DialecticWeb.NodeComp do
           </div>
 
           <%= if String.length(@node.content) == 0 do %>
-            <div class="node relative mb-2 overflow-hidden rounded-[1.75rem] border border-indigo-100 bg-gradient-to-br from-white via-indigo-50/70 to-sky-50/60 p-6 shadow-[0_24px_70px_rgba(79,70,229,0.14)] sm:p-8">
-              <div class="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full bg-indigo-200/40 blur-3xl">
-              </div>
-              <div class="pointer-events-none absolute -bottom-20 left-6 h-36 w-36 rounded-full bg-sky-200/30 blur-3xl">
-              </div>
-
-              <div class="relative space-y-6">
-                <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                  <div class="flex items-start gap-3">
-                    <span class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-200/80">
-                      <.icon name="hero-sparkles" class="h-5 w-5" />
-                    </span>
-                    <div class="min-w-0">
-                      <p class="text-sm font-semibold uppercase tracking-[0.18em] text-indigo-500">
-                        Generating response
-                      </p>
-                      <h3
-                        id={"generation-status-#{@node.id}"}
-                        phx-hook="GenerationStatus"
-                        phx-update="ignore"
-                        data-response-level={Map.get(@node, :response_level, "")}
-                        class="mt-1 text-lg font-semibold tracking-tight text-slate-950 sm:text-xl"
-                      >
-                        <span data-generation-status>Preparing response</span>
-                      </h3>
-                    </div>
-                  </div>
-
-                  <div class="flex items-center gap-1.5 rounded-full border border-indigo-100 bg-white/80 px-3 py-1.5 shadow-sm backdrop-blur">
-                    <span class="text-xs font-medium text-indigo-700">Thinking</span>
-                    <span class="flex gap-0.5">
-                      <span class="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-[typing_1.4s_ease-in-out_infinite]"></span>
-                      <span class="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-[typing_1.4s_ease-in-out_-0.16s_infinite]"></span>
-                      <span class="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-[typing_1.4s_ease-in-out_-0.32s_infinite]"></span>
-                    </span>
-                  </div>
+            <DialecticWeb.GenerationComponents.response_placeholder
+              id={"generation-placeholder-#{@node.id}"}
+              status_id={"generation-status-#{@node.id}"}
+              response_level={Map.get(@node, :response_level)}
+              class="node mb-2"
+            >
+              <div
+                :if={@can_edit && show_regenerate_cta?(@node)}
+                class="thinking-regenerate-cta flex flex-col gap-3 rounded-2xl border border-indigo-200 bg-white/90 p-4 shadow-lg shadow-indigo-100/70 backdrop-blur sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div class="min-w-0">
+                  <p class="text-sm font-semibold text-slate-900">Taking longer than expected?</p>
+                  <p class="mt-0.5 text-sm text-slate-600">
+                    You can safely replace this placeholder and try generating it again.
+                  </p>
                 </div>
 
-                <%!-- Animated shimmer skeleton lines --%>
-                <div class="rounded-2xl border border-white/70 bg-white/65 p-4 shadow-inner shadow-indigo-100/40 backdrop-blur-sm">
-                  <div class="space-y-4">
-                    <div class="h-5 rounded-md w-3/4 bg-gradient-to-r from-indigo-100/70 via-white to-indigo-100/70 bg-[length:200%_100%] animate-[shimmer_1.5s_ease-in-out_infinite]">
-                    </div>
-                    <div class="space-y-2.5">
-                      <div class="h-3.5 rounded-md w-full bg-gradient-to-r from-slate-100 via-white to-indigo-100/70 bg-[length:200%_100%] animate-[shimmer_1.5s_ease-in-out_0.1s_infinite]">
-                      </div>
-                      <div class="h-3.5 rounded-md w-5/6 bg-gradient-to-r from-slate-100 via-white to-indigo-100/70 bg-[length:200%_100%] animate-[shimmer_1.5s_ease-in-out_0.2s_infinite]">
-                      </div>
-                      <div class="h-3.5 rounded-md w-4/6 bg-gradient-to-r from-slate-100 via-white to-indigo-100/70 bg-[length:200%_100%] animate-[shimmer_1.5s_ease-in-out_0.3s_infinite]">
-                      </div>
-                    </div>
-                    <div class="space-y-2.5 pt-2">
-                      <div class="h-3.5 rounded-md w-full bg-gradient-to-r from-slate-100 via-white to-indigo-100/70 bg-[length:200%_100%] animate-[shimmer_1.5s_ease-in-out_0.4s_infinite]">
-                      </div>
-                      <div class="h-3.5 rounded-md w-2/3 bg-gradient-to-r from-slate-100 via-white to-indigo-100/70 bg-[length:200%_100%] animate-[shimmer_1.5s_ease-in-out_0.5s_infinite]">
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div
-                  :if={@can_edit && show_regenerate_cta?(@node)}
-                  class="thinking-regenerate-cta flex flex-col gap-3 rounded-2xl border border-indigo-200 bg-white/90 p-4 shadow-lg shadow-indigo-100/70 backdrop-blur sm:flex-row sm:items-center sm:justify-between"
+                <button
+                  id={"regenerate-thinking-node-#{@node.id}"}
+                  type="button"
+                  class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-200/80 transition hover:bg-indigo-700 hover:shadow-indigo-300/80 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-200"
+                  phx-click="node_regenerate"
+                  phx-value-id={@node.id}
+                  data-confirm="Try generating this node again? The stuck placeholder will be replaced."
+                  title="Regenerate this stuck node"
                 >
-                  <div class="min-w-0">
-                    <p class="text-sm font-semibold text-slate-900">Taking longer than expected?</p>
-                    <p class="mt-0.5 text-sm text-slate-600">
-                      You can safely replace this placeholder and try generating it again.
-                    </p>
-                  </div>
-
-                  <button
-                    id={"regenerate-thinking-node-#{@node.id}"}
-                    type="button"
-                    class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-200/80 transition hover:bg-indigo-700 hover:shadow-indigo-300/80 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-200"
-                    phx-click="node_regenerate"
-                    phx-value-id={@node.id}
-                    data-confirm="Try generating this node again? The stuck placeholder will be replaced."
-                    title="Regenerate this stuck node"
-                  >
-                    <.icon name="hero-arrow-path" class="h-4 w-4" />
-                    <span>Regenerate</span>
-                  </button>
-                </div>
+                  <.icon name="hero-arrow-path" class="h-4 w-4" />
+                  <span>Regenerate</span>
+                </button>
               </div>
-            </div>
+            </DialecticWeb.GenerationComponents.response_placeholder>
           <% end %>
         <% end %>
       </div>

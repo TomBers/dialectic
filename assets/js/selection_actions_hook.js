@@ -1,3 +1,4 @@
+import { ToolsMenuController } from "./tools_menu_hook.js";
 import { handleInquiryShortcut, syncInquiryShortcutLabels } from "./inquiry_shortcuts.js";
 
 import { copyToClipboard, showToast } from "./toast.js";
@@ -13,23 +14,62 @@ const SelectionActionsHook = {
 
     this.refreshElements();
     this.selectionData = null;
+    this.pendingRequest = null;
+    this.drafts = this.readDrafts();
+    this.onDraftInput = () => this.saveDraft();
+    this.el.addEventListener("input", this.onDraftInput);
+    this.handleEvent("selection:result", (result) => this.handleResult(result));
     syncInquiryShortcutLabels(this.el);
 
-    window.addEventListener("selection:show", this.handleSelectionShow);
+    this.showEventName = this.answerContext() ? "answer:show" : "selection:show";
+    window.addEventListener(this.showEventName, this.handleSelectionShow);
     window.addEventListener("keydown", this.handleKeydown);
     this.el.addEventListener("click", this.handleClick);
     this.el.addEventListener("submit", this.handleSubmit);
+    if (this.drawerContext()) {
+      this.handleSelectionShow({detail: {
+        nodeId: this.componentEl.dataset.nodeId,
+        title: this.componentEl.dataset.answerTitle,
+        bookmarked: this.componentEl.dataset.bookmarked === "true",
+      }});
+    }
   },
 
   destroyed() {
+    this.saveDraft();
+    this.toolsMenu?.destroy();
+    this.el.removeEventListener("input", this.onDraftInput);
     window.clearTimeout(this.copyFeedbackTimer);
-    window.removeEventListener("selection:show", this.handleSelectionShow);
+    window.removeEventListener(this.showEventName, this.handleSelectionShow);
     window.removeEventListener("keydown", this.handleKeydown);
     this.el.removeEventListener("click", this.handleClick);
     this.el.removeEventListener("submit", this.handleSubmit);
   },
 
+  answerContext() {
+    return this.componentEl?.dataset.actionContext === "answer";
+  },
+
+  drawerContext() {
+    return this.componentEl?.dataset.presentation === "drawer";
+  },
+
   handleSelectionShow(event) {
+    if (this.answerContext()) {
+      const { nodeId, title, bookmarked } = event.detail || {};
+      if (!nodeId || !title || this.pendingRequest) return;
+      this.saveDraft();
+      this.refreshElements();
+      this.selectionData = { nodeId };
+      const heading = this.modalEl?.querySelector("[data-selection-text]");
+      if (heading) heading.textContent = title;
+      this.resetClientControls();
+      this.syncCanEditState();
+      this.syncExistingHighlightState();
+      this.syncBookmarkState(bookmarked === true);
+      this.showModal();
+      return;
+    }
     const { selectedText, nodeId, offsets } = event.detail || {};
 
     if (
@@ -37,12 +77,15 @@ const SelectionActionsHook = {
       !nodeId ||
       !offsets ||
       !Number.isInteger(offsets.start) ||
+      offsets.start < 0 ||
       !Number.isInteger(offsets.end) ||
       offsets.start >= offsets.end
     ) {
       return;
     }
 
+    if (this.pendingRequest) return;
+    this.saveDraft();
     this.refreshElements();
     this.selectionData = { selectedText, nodeId, offsets };
     this.populateSelectedText(selectedText);
@@ -81,7 +124,7 @@ const SelectionActionsHook = {
   },
 
   exactHighlightForSelection() {
-    if (!this.selectionData) return null;
+    if (!this.selectionData || this.answerContext()) return null;
 
     const { nodeId, offsets } = this.selectionData;
 
@@ -108,7 +151,7 @@ const SelectionActionsHook = {
           button.dataset.disableIfHighlight === "true" && !!highlight;
         const blockedByLink = blockedLinks.some((type) => linkTypes.has(type));
 
-        button.disabled = !this.canEdit() || blockedByHighlight || blockedByLink;
+        button.disabled = button.dataset.selectionAction === "bookmark" ? false : !this.canEdit() || blockedByHighlight || blockedByLink;
       });
 
     this.syncLinkCount("question", links);
@@ -129,23 +172,19 @@ const SelectionActionsHook = {
   },
 
   resetClientControls() {
-    const advancedTools = this.modalEl?.querySelector(
-      "[data-selection-advanced-tools]",
-    );
-    const advancedToggle = this.modalEl?.querySelector(
-      "[data-selection-advanced-toggle]",
-    );
-    const dialog = this.modalEl?.querySelector("[data-selection-dialog]");
+    const advancedTools = this.modalEl?.querySelector("[data-selection-advanced-tools]");
+    const advancedToggle = this.modalEl?.querySelector("[data-selection-advanced-toggle]");
     const input = this.modalEl?.querySelector("[data-selection-input]");
-
-    advancedTools?.classList.add("hidden");
-    advancedToggle?.setAttribute("aria-expanded", "false");
-    dialog?.classList.remove("max-w-[760px]");
-    dialog?.classList.add("max-w-[620px]");
-    advancedToggle?.querySelector("[class*='hero-chevron-down']")?.classList.remove(
-      "rotate-180",
-    );
-    if (input) input.value = "";
+    this.toolsMenu?.destroy();
+    this.toolsMenu = advancedTools && advancedToggle
+      ? new ToolsMenuController(advancedTools, advancedToggle)
+      : null;
+    const draft = this.drafts[this.draftKey()];
+    if (input) input.value = typeof draft === "string" ? draft : draft?.input || "";
+    const learning = this.modalEl?.querySelector('input[type="checkbox"][name="guided_learning"]');
+    if (learning) learning.checked = draft?.guidedLearning === true;
+    input?.dispatchEvent(new Event("input", { bubbles: true }));
+    this.setStatus("");
     this.resetCopyFeedback();
   },
 
@@ -165,7 +204,9 @@ const SelectionActionsHook = {
   showModal() {
     if (!this.modalEl) return;
 
-    this.previousFocus = document.activeElement;
+    this.previousFocus = this.drawerContext()
+      ? document.getElementById(this.componentEl.dataset.triggerId)
+      : document.activeElement;
     syncInquiryShortcutLabels(this.el);
     this.modalEl.classList.remove("hidden");
     this.modalEl.setAttribute("aria-hidden", "false");
@@ -173,13 +214,15 @@ const SelectionActionsHook = {
   },
 
   closeModal() {
-    if (!this.modalEl) return;
+    if (!this.modalEl || (this.drawerContext() && this.pendingRequest)) return;
 
     this.modalEl.classList.add("hidden");
     this.modalEl.setAttribute("aria-hidden", "true");
-    this.selectionData = null;
+    this.saveDraft();
+    this.toolsMenu?.close();
     this.clearBrowserSelection();
     if (this.previousFocus?.isConnected) this.previousFocus.focus({ preventScroll: true });
+    if (this.drawerContext()) this.pushEvent("close_answer_drawer", {node_id: this.selectionData.nodeId});
   },
 
   clearBrowserSelection() {
@@ -247,19 +290,9 @@ const SelectionActionsHook = {
     });
   },
 
-  toggleAdvancedTools(toggle) {
-    const tools = this.modalEl?.querySelector("[data-selection-advanced-tools]");
-    const dialog = this.modalEl?.querySelector("[data-selection-dialog]");
-    if (!tools) return;
-
-    const expanded = tools.classList.contains("hidden");
-    tools.classList.toggle("hidden", !expanded);
-    toggle.setAttribute("aria-expanded", expanded.toString());
-    dialog?.classList.toggle("max-w-[760px]", expanded);
-    dialog?.classList.toggle("max-w-[620px]", !expanded);
-    toggle
-      .querySelector("[class*='hero-chevron-down']")
-      ?.classList.toggle("rotate-180", expanded);
+  toggleAdvancedTools() {
+    if (this.toolsMenu?.opened) this.toolsMenu.close();
+    else this.toolsMenu?.open();
   },
 
   handleSubmit(event) {
@@ -267,24 +300,154 @@ const SelectionActionsHook = {
     if (!form || !this.el.contains(form) || !this.selectionData) return;
 
     event.preventDefault();
-    const input = form.querySelector('[name="question"]');
+    const input = form.querySelector("[data-selection-input]");
     const action = event.submitter?.dataset.selectionSubmitAction || ASK_MODE;
-    this.submitAction(action, { input: input?.value || "" });
+    const extra = { input: input?.value || "" };
+    if (this.answerContext()) extra.guided_learning = form.querySelector('input[type="checkbox"][name="guided_learning"]')?.checked || false;
+    this.submitAction(action, extra);
   },
 
   submitAction(action, extra = {}) {
     if (!this.selectionData || !this.componentEl) return;
 
+    if (this.pendingRequest) return;
+    if (["comment", ASK_MODE].includes(action) && !extra.input?.trim()) {
+      this.setStatus("Write a comment or question first.");
+      this.modalEl.querySelector("[data-selection-input]")?.focus();
+      return;
+    }
+    this.saveDraft();
+    const requestId = crypto.randomUUID();
+    this.pendingRequest = { id: requestId, action, draftKey: this.draftKey() };
+    this.setPending(true);
+    this.setStatus(action === "comment" ? "Posting…" : ["highlight_only", "bookmark"].includes(action) ? "Saving…" : "Starting AI response…");
     this.pushEventTo(this.componentEl, "action", {
       ...this.selectionData,
       action,
       ...extra,
+      request_id: requestId,
     });
-    this.closeModal();
+  },
+
+  handleResult(result) {
+    const request = this.pendingRequest;
+    if (!request || result.request_id !== request.id) return;
+    this.pendingRequest = null;
+    this.setPending(false);
+    if (result.status === "ok") {
+      if (request.action === "bookmark") {
+        this.syncBookmarkState(result.bookmarked);
+        this.setStatus(result.bookmarked ? "Bookmarked." : "Bookmark removed.");
+        return;
+      }
+      if (["comment", ASK_MODE].includes(request.action)) {
+        const input = this.modalEl?.querySelector("[data-selection-input]");
+        if (input) input.value = "";
+        const learning = this.modalEl?.querySelector('input[type="checkbox"][name="guided_learning"]');
+        if (learning) learning.checked = false;
+        delete this.drafts[request.draftKey];
+        this.persistDrafts();
+      }
+      this.closeModal();
+    } else {
+      this.setStatus(result.message || "Could not save. Your draft is still here.");
+    }
+  },
+
+  syncBookmarkState(bookmarked) {
+    const button = this.modalEl?.querySelector("[data-answer-bookmark]");
+    if (!button) return;
+    button.setAttribute("aria-pressed", String(bookmarked));
+    button.setAttribute("aria-label", bookmarked ? "Remove bookmark" : "Bookmark this response");
+    const label = button.querySelector("[data-tool-label]");
+    if (label) label.textContent = bookmarked ? "Bookmarked" : "Bookmark";
+    const icon = button.querySelector(".hero-bookmark, .hero-bookmark-solid");
+    icon?.classList.toggle("hero-bookmark", !bookmarked);
+    icon?.classList.toggle("hero-bookmark-solid", bookmarked);
+  },
+
+  setStatus(message) {
+    const status = this.modalEl?.querySelector("[data-selection-status]");
+    if (status) status.textContent = message;
+  },
+
+  setPending(pending) {
+    if (this.drawerContext()) {
+      const trigger = document.getElementById(this.componentEl.dataset.triggerId);
+      if (trigger) trigger.disabled = pending;
+      this.modalEl?.querySelectorAll("[data-selection-close]").forEach(button => { button.disabled = pending; });
+    }
+    const form = this.modalEl?.querySelector("[data-selection-input-form]");
+    form?.setAttribute("aria-busy", String(pending));
+    const input = form?.querySelector("textarea");
+    if (input) input.readOnly = pending;
+    if (pending) {
+      const buttons = Array.from(this.modalEl?.querySelectorAll("[data-selection-action], [data-selection-input-submit]") || []);
+      const control = document.activeElement;
+      const region = this.modalEl?.querySelector("[data-selection-dialog]");
+      this.pendingFocus = null;
+      if (region && buttons.includes(control)) {
+        this.pendingFocus = { control, region };
+        // Disabling the focused button would send keyboard focus back to the page.
+        region.focus({ preventScroll: true });
+      }
+      buttons.forEach((button) => { button.disabled = true; });
+    } else {
+      this.syncCanEditState();
+      this.syncExistingHighlightState();
+      const focus = this.pendingFocus;
+      this.pendingFocus = null;
+      if (focus && document.activeElement === focus.region && focus.control.isConnected &&
+          !focus.control.disabled && !this.modalEl.classList.contains("hidden")) {
+        focus.control.focus({ preventScroll: true });
+      }
+    }
+  },
+
+  draftKey() {
+    const selection = this.selectionData;
+    if (selection && this.answerContext()) return JSON.stringify(["answer", selection.nodeId]);
+    return selection && JSON.stringify([selection.nodeId, selection.offsets.start, selection.offsets.end, selection.selectedText]);
+  },
+
+  readDrafts() {
+    try {
+      const key = this.componentEl?.dataset.draftKey;
+      const guestKey = this.componentEl?.dataset.guestDraftKey;
+      const guest = guestKey ? JSON.parse(sessionStorage.getItem(guestKey) || "{}") : {};
+      const saved = JSON.parse(sessionStorage.getItem(key) || "{}");
+      const drafts = Object.fromEntries(Object.entries({...guest, ...saved}).filter(([, draft]) => typeof draft === "string" || (draft && typeof draft.input === "string" && typeof draft.guidedLearning === "boolean")).slice(-20));
+      if (guestKey && key) {
+        sessionStorage.setItem(key, JSON.stringify(drafts));
+        sessionStorage.removeItem(guestKey);
+      }
+      return drafts;
+    } catch { return {}; }
+  },
+
+  saveDraft() {
+    const key = this.draftKey();
+    const input = this.modalEl?.querySelector("[data-selection-input]");
+    if (!key || !input) return;
+    delete this.drafts[key];
+    const guidedLearning = this.modalEl?.querySelector('input[type="checkbox"][name="guided_learning"]')?.checked || false;
+    if (input.value || guidedLearning) this.drafts[key] = this.answerContext() ? { input: input.value, guidedLearning } : input.value;
+    this.persistDrafts();
+  },
+
+  persistDrafts() {
+    this.drafts = Object.fromEntries(Object.entries(this.drafts).slice(-20));
+    try {
+      if (this.componentEl?.dataset.draftKey) {
+        sessionStorage.setItem(this.componentEl.dataset.draftKey, JSON.stringify(this.drafts));
+      }
+    } catch { /* Keep the in-memory draft if browser storage is unavailable. */ }
   },
 
   handleKeydown(event) {
     if (!this.modalEl || this.modalEl.classList.contains("hidden") || event.isComposing || event.repeat) return;
+    if (this.drawerContext() && !this.modalEl.contains(event.target)) return;
+    if (event.defaultPrevented) return;
     if (handleInquiryShortcut(event, this.modalEl)) return;
     if (event.altKey || event.metaKey || event.ctrlKey || event.shiftKey) return;
 

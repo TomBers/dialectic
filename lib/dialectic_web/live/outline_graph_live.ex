@@ -1,7 +1,11 @@
 defmodule DialecticWeb.OutlineGraphLive do
   use DialecticWeb, :live_view
 
+  import Ecto.Query, only: [from: 2]
+
   alias Dialectic.Accounts.User
+  alias Dialectic.Repo
+  alias Dialectic.Responses.RequestQueue
   alias Dialectic.DbActions.Notes
   alias Dialectic.Graph.GraphActions
   alias Dialectic.Follows
@@ -23,8 +27,9 @@ defmodule DialecticWeb.OutlineGraphLive do
   on_mount DialecticWeb.GraphAccess
 
   @impl true
-  def mount(%{"graph_name" => graph_id_uri} = params, _session, socket) do
+  def mount(%{"graph_name" => graph_id_uri} = params, session, socket) do
     graph_id = URI.decode(graph_id_uri)
+    socket = assign(socket, :llm_actor_id, session["llm_actor_id"] || "graph:#{graph_id}")
 
     case Dialectic.DbActions.Graphs.get_graph_by_slug_or_title(graph_id) do
       nil ->
@@ -45,7 +50,7 @@ defmodule DialecticWeb.OutlineGraphLive do
 
         if has_access do
           try do
-            {:ok, mount_graph(socket, graph_db, token_param)}
+            {:ok, mount_graph(socket, graph_db, token_param), layout: false}
           rescue
             e ->
               Logger.error(
@@ -124,6 +129,22 @@ defmodule DialecticWeb.OutlineGraphLive do
   end
 
   @impl true
+  def handle_info({:llm_request_complete, node_id}, socket) do
+    {:noreply,
+     socket
+     |> refresh_outline()
+     |> update(:selection_pending_node_ids, &MapSet.delete(&1, node_id))}
+  end
+
+  @impl true
+  def handle_info(:refresh_pending_responses, socket) do
+    {:noreply,
+     socket
+     |> assign(:pending_refresh_timer, nil)
+     |> refresh_outline()}
+  end
+
+  @impl true
   def handle_info({:created, highlight}, socket) do
     highlight = Dialectic.Repo.preload(highlight, :links)
     highlights = [highlight | socket.assigns.highlights]
@@ -172,25 +193,60 @@ defmodule DialecticWeb.OutlineGraphLive do
 
   @impl true
   def handle_info({:selection_action, params}, socket) do
-    case GraphHelpers.check_selection_action_allowed(socket) do
-      {:error, :locked} ->
-        {:noreply, put_flash(socket, :error, "This graph is locked")}
+    socket = clear_flash(socket, :error)
 
-      {:error, :unauthenticated} ->
-        {:noreply, assign(socket, show_login_modal: true)}
+    result =
+      case GraphHelpers.check_selection_action_allowed(socket) do
+        {:error, :locked} ->
+          {:noreply, put_flash(socket, :error, "This graph is locked")}
 
-      :ok ->
-        {action, selected_text, node_id, offsets, existing_highlight, _extra} =
-          GraphHelpers.unpack_selection_action(params)
+        {:error, :unauthenticated} ->
+          {:noreply,
+           socket
+           |> assign(show_login_modal: true)
+           |> put_flash(:error, "Sign in to use passage actions. Your draft will stay here.")}
 
-        handle_reader_selection_action(
-          action,
-          selected_text,
-          node_id,
-          offsets,
-          existing_highlight,
-          socket
-        )
+        :ok ->
+          case DialecticWeb.SelectionActions.perform(socket, params) do
+            {:ok, result} -> finish_selection_action(socket, result)
+            {:error, message} -> {:noreply, put_flash(socket, :error, message)}
+          end
+      end
+
+    GraphHelpers.acknowledge_selection(result, params)
+  end
+
+  @impl true
+  def handle_info({:answer_action, params}, socket) do
+    case DialecticWeb.AnswerActions.perform(socket, params) do
+      {:ok, %{kind: :bookmark} = result} ->
+        bookmarked_node_ids =
+          if result.bookmarked,
+            do: MapSet.put(socket.assigns.bookmarked_node_ids, result.node_id),
+            else: MapSet.delete(socket.assigns.bookmarked_node_ids, result.node_id)
+
+        {:noreply,
+         socket
+         |> assign(:bookmarked_node_ids, bookmarked_node_ids)
+         |> push_event("selection:result", %{
+           request_id: params["request_id"],
+           status: "ok",
+           bookmarked: result.bookmarked
+         })}
+
+      {:ok, result} ->
+        {:noreply, socket} = finish_selection_action(socket, result)
+
+        {:noreply,
+         push_event(socket, "selection:result", %{request_id: params["request_id"], status: "ok"})}
+
+      {:error, message} ->
+        {:noreply,
+         push_event(socket, "selection:result", %{
+           request_id: params["request_id"],
+           status: "error",
+           message: message
+         })}
     end
   end
 
@@ -198,8 +254,41 @@ defmodule DialecticWeb.OutlineGraphLive do
   def handle_info(_msg, socket), do: {:noreply, socket}
 
   @impl true
+  def handle_event("toggle_answer_drawer", %{"id" => node_id}, socket) do
+    node = Enum.find(socket.assigns.visible_reading_chain, &(&1.id == node_id))
+
+    if socket.assigns.can_edit && node && contribution_target?(node) do
+      open_node_id = if socket.assigns.answer_drawer_node_id == node_id, do: nil, else: node_id
+      {:noreply, assign(socket, :answer_drawer_node_id, open_node_id)}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  def handle_event("close_answer_drawer", %{"node_id" => node_id}, socket) do
+    if socket.assigns.answer_drawer_node_id == node_id do
+      {:noreply, assign(socket, :answer_drawer_node_id, nil)}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  @impl true
   def handle_event("navigate_to_node", %{"node_id" => node_id}, socket) do
     {:noreply, navigate_to_node(socket, node_id)}
+  end
+
+  def handle_event("view_new_thoughts", _params, socket) do
+    case List.last(socket.assigns.new_thought_ids) do
+      nil ->
+        {:noreply, socket}
+
+      node_id ->
+        {:noreply,
+         socket
+         |> assign(new_thought_ids: [], path_focus_ids: [])
+         |> navigate_to_node(node_id)}
+    end
   end
 
   @impl true
@@ -460,6 +549,10 @@ defmodule DialecticWeb.OutlineGraphLive do
       graph_id: graph_db.title,
       graph_struct: graph_db,
       graph_topic: graph_topic,
+      live_view_topic: graph_topic,
+      answer_drawer_node_id: nil,
+      selection_pending_node_ids: RequestQueue.pending_node_ids(graph_db.title),
+      pending_refresh_timer: nil,
       user: UserUtils.current_identity(socket.assigns),
       bookmarked_node_ids:
         graph_db.title
@@ -470,6 +563,8 @@ defmodule DialecticWeb.OutlineGraphLive do
       nav_params: token_params(token_param),
       can_edit: !graph_db.is_locked,
       outline_nodes: outline_nodes,
+      contributor_names: contributor_names(outline_nodes),
+      new_thought_ids: [],
       visible_outline_nodes: outline_nodes,
       selected_focus_outline_nodes: outline_nodes,
       path_focus_ids: [],
@@ -505,7 +600,12 @@ defmodule DialecticWeb.OutlineGraphLive do
       json_ld: json_ld,
       noindex: !indexable_graph?(graph_db)
     )
+    |> schedule_pending_refresh()
   end
+
+  defp contribution_target?(%{id: "1"}), do: false
+  defp contribution_target?(%{class: "origin"}), do: false
+  defp contribution_target?(node), do: visible_node?(node)
 
   defp update_reader_bookmark(socket, node_id, action) do
     case GraphHelpers.handle_note(socket, node_id, action) do
@@ -593,13 +693,76 @@ defmodule DialecticWeb.OutlineGraphLive do
     {_graph_struct, graph} = GraphManager.get_graph(socket.assigns.graph_id)
     outline_nodes = build_outline_nodes(socket.assigns.graph_id, graph)
 
+    previous_ids = MapSet.new(socket.assigns.outline_nodes, & &1.id)
+    human_ids = for node <- outline_nodes, human_contribution?(node), do: node.id
+
+    new_ids =
+      human_ids |> Enum.reject(&MapSet.member?(previous_ids, &1)) |> Enum.sort_by(&sort_key/1)
+
+    pending_ids = Enum.filter(socket.assigns.new_thought_ids ++ new_ids, &(&1 in human_ids))
+
     selected_node =
       current_selected_node(socket.assigns.graph_id, socket.assigns.selected_node_id) ||
         default_target_node(socket.assigns.graph_id)
 
     socket
-    |> assign(outline_nodes: outline_nodes)
+    |> assign(
+      outline_nodes: outline_nodes,
+      contributor_names: contributor_names(outline_nodes),
+      selection_pending_node_ids: RequestQueue.pending_node_ids(socket.assigns.graph_id),
+      new_thought_ids: Enum.uniq(pending_ids)
+    )
     |> assign_selected_node(selected_node)
+    |> schedule_pending_refresh()
+  end
+
+  defp schedule_pending_refresh(socket) do
+    if connected?(socket) && is_nil(socket.assigns.pending_refresh_timer) &&
+         MapSet.size(socket.assigns.selection_pending_node_ids) > 0 do
+      assign(
+        socket,
+        :pending_refresh_timer,
+        Process.send_after(self(), :refresh_pending_responses, 1_000)
+      )
+    else
+      socket
+    end
+  end
+
+  defp human_contribution?(node), do: node.class in ["user", "question"]
+
+  defp contributor_names(nodes) do
+    identities =
+      nodes
+      |> Enum.filter(&human_contribution?/1)
+      |> Enum.map(& &1.user)
+      |> Enum.reject(&(&1 in [nil, "", "anonymous"]))
+      |> Enum.uniq()
+
+    if identities == [] do
+      %{}
+    else
+      Repo.all(
+        from user in User, where: user.email in ^identities, select: {user.email, user.username}
+      )
+      |> Map.new()
+    end
+  end
+
+  defp contribution_label(node, names) do
+    if human_contribution?(node) do
+      author =
+        case Map.get(names, Map.get(node, :user)) do
+          name when is_binary(name) and name != "" -> "@#{name}"
+          _ -> if Map.get(node, :user) in [nil, "", "anonymous"], do: "Guest", else: "Participant"
+        end
+
+      if(node.class == "user", do: "Thought", else: "Question") <> " · " <> author
+    else
+      if node.class == "answer",
+        do: "AI response",
+        else: ColUtils.node_type_label(node.class) <> " · AI"
+    end
   end
 
   defp assign_selected_node(socket, nil) do
@@ -848,6 +1011,7 @@ defmodule DialecticWeb.OutlineGraphLive do
         title: display_title(node),
         full_title: display_title(node, max_length: :infinity),
         class: Map.get(node, :class, "default"),
+        user: Map.get(node, :user),
         response_level: Map.get(node, :response_level),
         branch?: length(children) > 1
       }
@@ -1160,50 +1324,47 @@ defmodule DialecticWeb.OutlineGraphLive do
     end
   end
 
-  defp handle_reader_selection_action(
-         :highlight_only,
-         selected_text,
-         node_id,
-         offsets,
-         existing_highlight,
-         socket
-       ) do
-    if existing_highlight do
-      {:noreply, socket}
-    else
-      attrs = %{
-        mudg_id: socket.assigns.graph_id,
-        node_id: node_id,
-        text_source_type: "node",
-        selection_start: selection_offset(offsets, :start),
-        selection_end: selection_offset(offsets, :end),
-        selected_text_snapshot: selected_text,
-        created_by_user_id: socket.assigns.current_user.id
-      }
+  defp finish_selection_action(socket, %{kind: :highlight}), do: {:noreply, socket}
 
-      case Highlights.create_highlight(attrs) do
-        {:ok, _highlight} ->
-          {:noreply, socket}
+  defp finish_selection_action(socket, %{kind: :comment, node: node}) do
+    broadcast_selection_change(socket, "comment", node)
 
-        {:error, _changeset} ->
-          {:noreply, put_flash(socket, :error, "Could not save highlight")}
-      end
+    {:noreply,
+     socket
+     |> refresh_outline()
+     |> update(:new_thought_ids, &List.delete(&1, node.id))
+     |> put_flash(:info, "Your thought was added to the discussion.")
+     |> navigate_to_node(node.id)}
+  end
+
+  defp finish_selection_action(socket, %{kind: :generation} = result) do
+    broadcast_selection_change(socket, result.operation, List.last(result.nodes))
+
+    {:noreply,
+     socket
+     |> refresh_outline()
+     |> update(:selection_pending_node_ids, fn ids ->
+       Enum.reduce(result.nodes, ids, &MapSet.put(&2, &1.id))
+     end)
+     |> schedule_pending_refresh()
+     |> update(:new_thought_ids, &(&1 -- result.created_node_ids))
+     |> put_flash(:info, "#{result.label}…")
+     |> navigate_to_node(result.target_node_id)}
+  end
+
+  defp broadcast_selection_change(socket, operation, node) do
+    action = Dialectic.GridActivity.Actions.for_graph_operation(operation)
+
+    if action do
+      Dialectic.GridActivity.record_node_event_async(
+        socket.assigns.graph_id,
+        socket.assigns.current_user,
+        action,
+        node
+      )
     end
-  end
 
-  defp handle_reader_selection_action(
-         _action,
-         _selected_text,
-         _node_id,
-         _offsets,
-         _highlight,
-         socket
-       ) do
-    {:noreply, put_flash(socket, :error, "Reader view supports highlights only")}
-  end
-
-  defp selection_offset(offsets, key) do
-    Map.get(offsets, key) || Map.get(offsets, Atom.to_string(key))
+    PubSub.broadcast(Dialectic.PubSub, socket.assigns.graph_topic, {:other_user_change, self()})
   end
 
   defp navigate_to_node(socket, node_id) do
@@ -1269,11 +1430,11 @@ defmodule DialecticWeb.OutlineGraphLive do
     end
   end
 
-  defp challenge_action_label(%{class: "answer"}), do: "Challenge this answer"
-  defp challenge_action_label(%{class: "question"}), do: "Challenge this question"
-  defp challenge_action_label(%{class: "user"}), do: "Challenge this comment"
+  defp response_action_label(%{class: "answer"}), do: "Respond to this answer"
+  defp response_action_label(%{class: "question"}), do: "Respond to this question"
+  defp response_action_label(%{class: "user"}), do: "Respond to this thought"
 
-  defp challenge_action_label(%{class: class}) do
+  defp response_action_label(%{class: class}) do
     label =
       class
       |> ColUtils.node_type_label()
@@ -1282,7 +1443,7 @@ defmodule DialecticWeb.OutlineGraphLive do
       |> String.trim()
       |> String.downcase()
 
-    "Challenge this #{label}"
+    "Respond to this #{label}"
   end
 
   defp highlight_excerpt(%{selected_text_snapshot: text}) when is_binary(text) do

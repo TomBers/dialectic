@@ -34,6 +34,7 @@ import MarkdownHook from "./markdown_hook.js";
 import { ViewModeHook } from "./view_mode_hook.js";
 import GraphKeyboardNavigation from "./graph_keyboard_navigation.js";
 import AskFormShortcuts from "./ask_form_shortcuts.js";
+import ToolsMenuHook from "./tools_menu_hook.js";
 import AutoExpandTextareaHook from "./auto_expand_textarea_hook.js";
 import SearchNav from "./search_nav_hook.js";
 import PresentationHook, {
@@ -78,6 +79,7 @@ hooks.Markdown = MarkdownHook;
 hooks.ViewMode = ViewModeHook;
 hooks.GraphKeyboardNavigation = GraphKeyboardNavigation;
 hooks.AskFormShortcuts = AskFormShortcuts;
+hooks.ToolsMenu = ToolsMenuHook;
 hooks.AutoExpandTextarea = AutoExpandTextareaHook;
 hooks.SearchNav = SearchNav;
 hooks.Presentation = PresentationHook;
@@ -244,6 +246,7 @@ hooks.GraphLayout = {
     this._reopenSideDrawerAfterCombine = false;
     this._mobileOutlineCloseTimer = null;
     this._askFocusTimer = null;
+    this._askFocusApplied = false;
     this._handleMobileGraphResize = () => {
       this._redirectMobileGraphToReader();
       this._syncOutlineDetailForPanel(this.activePanelId);
@@ -668,7 +671,12 @@ hooks.GraphLayout = {
     const isGraphLayout = this.el.id === "graph-layout";
     const isPresenting = this.el.dataset.presenting === "true";
 
-    if (!isGraphLayout || !mobileReaderPath || isPresenting) return;
+    if (
+      !isGraphLayout ||
+      !mobileReaderPath ||
+      isPresenting ||
+      this.el.dataset.mobileInquiry === "true"
+    ) return;
     if (!window.matchMedia("(max-width: 767px)").matches) return;
 
     const currentPath = `${window.location.pathname}${window.location.search}`;
@@ -677,7 +685,7 @@ hooks.GraphLayout = {
     window.location.replace(mobileReaderPath);
   },
   _focusAskInputFromUrl() {
-    if (this.el.id !== "graph-layout") return;
+    if (this.el.id !== "graph-layout" || this._askFocusApplied) return;
 
     const url = new URL(window.location.href);
     this._pendingAskFocus = url.searchParams.get("focus") === "ask";
@@ -701,7 +709,16 @@ hooks.GraphLayout = {
       }
 
       input.focus({ preventScroll: true });
+      if (
+        this.el.dataset.mobileInquiry === "true" &&
+        window.matchMedia("(max-width: 767px)").matches
+      ) {
+        input.scrollIntoView({ block: "center", behavior: "instant" });
+      }
       this._pendingAskFocus = false;
+      this._askFocusApplied = true;
+
+      if (this.el.dataset.mobileInquiry === "true") return;
 
       const cleanUrl = new URL(window.location.href);
       cleanUrl.searchParams.delete("focus");

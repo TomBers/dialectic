@@ -65,6 +65,11 @@ defmodule DialecticWeb.ColUtils do
   # Cluster 3 — Clarity & Communication
   def badge_class(_), do: "bg-gray-100 text-gray-600 ring-1 ring-gray-500/10"
 
+  def tool_color_class("highlight"),
+    do: "bg-amber-50/70 text-amber-800 ring-1 ring-amber-200/70"
+
+  def tool_color_class(type), do: badge_class(type)
+
   @doc """
   Returns the class string for the small colored dot in the minimap/tree view.
   """

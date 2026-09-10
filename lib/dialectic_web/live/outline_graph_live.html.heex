@@ -1,984 +1,1063 @@
-<div
-  id="outline-layout"
-  phx-hook="GraphLayout"
-  class="flex w-full flex-col overflow-hidden bg-slate-50"
-  style="height: calc(100vh - 2.5rem); height: calc(100dvh - 2.5rem);"
-  data-graph-id={@graph_id}
-  data-reading-density={@appearance_preferences.reading_density}
-  data-reading-font={@appearance_preferences.reading_font}
-  data-graph-view-mode={@appearance_preferences.graph_view_mode}
-  data-graph-direction={@appearance_preferences.graph_direction}
-  data-reduce-motion={if(@appearance_preferences.reduce_motion, do: "true", else: "false")}
->
-  <.login_required_modal id="reader-login-modal" show={@show_login_modal} />
+<Layouts.app flash={@flash}>
+  <div
+    id="outline-layout"
+    phx-hook="GraphLayout"
+    class="flex w-full flex-col overflow-hidden bg-slate-50"
+    style="height: calc(100vh - 2.5rem); height: calc(100dvh - 2.5rem);"
+    data-graph-id={@graph_id}
+    data-reading-density={@appearance_preferences.reading_density}
+    data-reading-font={@appearance_preferences.reading_font}
+    data-graph-view-mode={@appearance_preferences.graph_view_mode}
+    data-graph-direction={@appearance_preferences.graph_direction}
+    data-reduce-motion={if(@appearance_preferences.reduce_motion, do: "true", else: "false")}
+  >
+    <.login_required_modal id="reader-login-modal" show={@show_login_modal} />
 
-  <div class="flex-none border-b border-slate-200/90 bg-white/97 shadow-[0_12px_24px_-26px_rgba(15,23,42,0.22)] backdrop-blur-lg sm:shadow-[0_16px_32px_-30px_rgba(15,23,42,0.28)]">
-    <div class="grid grid-cols-1 lg:grid-cols-[20rem_minmax(0,1fr)] xl:grid-cols-[22rem_minmax(0,1fr)]">
-      <div class="hidden border-r border-slate-200 bg-slate-50/70 lg:flex lg:items-center lg:px-4 xl:px-5">
-        <span class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
-          <.icon name="hero-document-text" class="h-3 w-3" /> Reader
-        </span>
-      </div>
+    <div id="reader-new-thoughts-status" aria-live="polite" aria-atomic="true" class="shrink-0">
+      <button
+        :if={@new_thought_ids != []}
+        id="reader-view-new-thoughts"
+        type="button"
+        phx-click="view_new_thoughts"
+        class="flex min-h-11 w-full items-center justify-center gap-2 bg-teal-50 px-4 py-2 text-sm font-semibold text-teal-900"
+      >
+        <.icon name="hero-chat-bubble-left-right" class="h-4 w-4" />
+        {length(@new_thought_ids)} new {if(length(@new_thought_ids) == 1,
+          do: "thought",
+          else: "thoughts"
+        )} · View latest
+      </button>
+    </div>
 
-      <div class="px-4 py-2 sm:px-5 sm:py-2.5 lg:px-6">
-        <div class="grid gap-2.5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-4">
-          <div class="min-w-0">
-            <div class="flex min-w-0 items-center gap-1.5 sm:flex-wrap sm:gap-2 lg:min-h-[38px]">
-              <span class="hidden items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600 sm:inline-flex lg:hidden">
-                <.icon name="hero-document-text" class="h-3 w-3" /> Reader
-              </span>
+    <div class="flex-none border-b border-slate-200/90 bg-white/97 shadow-[0_12px_24px_-26px_rgba(15,23,42,0.22)] backdrop-blur-lg sm:shadow-[0_16px_32px_-30px_rgba(15,23,42,0.28)]">
+      <div class="grid grid-cols-1 lg:grid-cols-[20rem_minmax(0,1fr)] xl:grid-cols-[22rem_minmax(0,1fr)]">
+        <div class="hidden border-r border-slate-200 bg-slate-50/70 lg:flex lg:items-center lg:px-4 xl:px-5">
+          <span class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
+            <.icon name="hero-document-text" class="h-3 w-3" /> Reader
+          </span>
+        </div>
 
-              <h1 class="min-w-0 truncate text-base font-semibold leading-tight tracking-tight text-slate-950 sm:text-lg">
-                {@graph_struct.title}
-              </h1>
+        <div class="px-4 py-2 sm:px-5 sm:py-2.5 lg:px-6">
+          <div class="grid gap-2.5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-4">
+            <div class="min-w-0">
+              <div class="flex min-w-0 items-center gap-1.5 sm:flex-wrap sm:gap-2 lg:min-h-[38px]">
+                <span class="hidden items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600 sm:inline-flex lg:hidden">
+                  <.icon name="hero-document-text" class="h-3 w-3" /> Reader
+                </span>
+
+                <h1 class="min-w-0 truncate text-base font-semibold leading-tight tracking-tight text-slate-950 sm:text-lg">
+                  {@graph_struct.title}
+                </h1>
+              </div>
+            </div>
+
+            <div class="flex min-w-0 flex-nowrap items-center gap-2 lg:justify-self-end">
+              <DialecticWeb.WorkspaceBarComp.workspace_bar
+                id="reader-workspace-bar"
+                mode={:reader}
+                graph_struct={@graph_struct}
+                node_id={@selected_node_id}
+                nav_params={reader_nav_params(@nav_params, @path_focus_ids)}
+                mobile_aux_id="reader-workspace-bar-outline"
+                mobile_aux_click={JS.dispatch("toggle-mobile-outline", to: "#outline-layout")}
+                mobile_aux_label="Conversation outline"
+                mobile_aux_title="Show conversation outline"
+                mobile_aux_icon="hero-bars-3-bottom-left"
+                mobile_aux_controls="outline-mobile-nav-panel"
+                show_search
+                search_click="open_search_overlay_click"
+                highlights_click={
+                  JS.dispatch("toggle-panel",
+                    to: "#outline-layout",
+                    detail: %{id: "highlights-drawer"}
+                  )
+                }
+                highlights_count={length(@visible_highlights)}
+                highlights_panel_id="highlights-drawer"
+                share_click="open_share_modal"
+                compact
+              />
+
+              <%= if @current_user do %>
+                <button
+                  id="reader-follow-grid-button"
+                  type="button"
+                  phx-click={if(@following_graph?, do: "unfollow_graph", else: "follow_graph")}
+                  aria-label={
+                    if(@following_graph?,
+                      do: "Stop receiving grid updates in Activity",
+                      else: "Get notified about grid changes in Activity"
+                    )
+                  }
+                  aria-pressed={to_string(@following_graph?)}
+                  title={
+                    if(@following_graph?,
+                      do: "Updates from this grid appear in Activity. Click to turn them off.",
+                      else: "Get notified when this grid changes and see updates in Activity."
+                    )
+                  }
+                  class={[
+                    "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-slate-600 transition duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 sm:h-7 sm:w-7",
+                    if(@following_graph?,
+                      do: "border-sky-200 bg-sky-100 text-sky-700 hover:bg-sky-200",
+                      else:
+                        "border-transparent bg-slate-50 hover:bg-slate-100 hover:text-slate-950 sm:bg-transparent"
+                    )
+                  ]}
+                >
+                  <.icon
+                    name={if(@following_graph?, do: "hero-bell-solid", else: "hero-bell-alert")}
+                    class="h-4 w-4"
+                  />
+                </button>
+              <% else %>
+                <.link
+                  navigate={~p"/users/log_in"}
+                  id="reader-follow-grid-login-link"
+                  aria-label="Sign in to get notified about grid changes in Activity"
+                  title="Sign in to get notified when this grid changes and see updates in Activity."
+                  class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-transparent bg-slate-50 text-slate-600 transition duration-150 hover:bg-slate-100 hover:text-slate-950 sm:h-7 sm:w-7 sm:bg-transparent"
+                >
+                  <.icon name="hero-bell-alert" class="h-4 w-4" />
+                </.link>
+              <% end %>
+
+              <%= if !@can_edit do %>
+                <span class="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700">
+                  <.icon name="hero-lock-closed" class="h-3.5 w-3.5" /> Read only
+                </span>
+              <% end %>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
 
-          <div class="flex min-w-0 flex-nowrap items-center gap-2 lg:justify-self-end">
-            <DialecticWeb.WorkspaceBarComp.workspace_bar
-              id="reader-workspace-bar"
-              mode={:reader}
-              graph_struct={@graph_struct}
-              node_id={@selected_node_id}
-              nav_params={reader_nav_params(@nav_params, @path_focus_ids)}
-              mobile_aux_id="reader-workspace-bar-outline"
-              mobile_aux_click={JS.dispatch("toggle-mobile-outline", to: "#outline-layout")}
-              mobile_aux_label="Conversation outline"
-              mobile_aux_title="Show conversation outline"
-              mobile_aux_icon="hero-bars-3-bottom-left"
-              mobile_aux_controls="outline-mobile-nav-panel"
-              show_search
-              search_click="open_search_overlay_click"
-              highlights_click={
+    <div
+      id="outline-scroll-shell"
+      class="relative flex flex-1 min-h-0 flex-col overflow-x-hidden overflow-y-auto lg:grid lg:grid-cols-[20rem_minmax(0,1fr)] lg:overflow-clip xl:grid-cols-[22rem_minmax(0,1fr)]"
+      phx-hook="ReaderScroll"
+    >
+      <aside
+        id="outline-tree"
+        class="hidden min-h-0 overflow-y-auto border-b border-slate-200 bg-white lg:block lg:border-b-0 lg:border-r"
+        phx-hook="OutlineNav"
+      >
+        <div class="sticky top-0 z-10 border-b border-slate-200 bg-white px-4 py-4">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <h2 class="text-sm font-semibold text-slate-900">Conversation Outline</h2>
+              <p class="mt-1 text-xs text-slate-500">Choose a point in the conversation.</p>
+            </div>
+            <button
+              :if={@paths_filtered?}
+              id="outline-show-all-paths"
+              type="button"
+              phx-click="show_all_paths"
+              class="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700 transition hover:border-blue-300 hover:bg-blue-100"
+            >
+              Clear path filter <.icon name="hero-x-mark" class="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+
+        <%= if @outline_nodes == [] do %>
+          <div id="outline-empty-state" class="px-4 py-12 text-center text-sm text-slate-500">
+            This graph does not have any visible nodes yet.
+          </div>
+        <% else %>
+          <nav class="space-y-1 px-2 py-3">
+            <%= for row <- @visible_outline_nodes do %>
+              <% selected? = @selected_node_id == row.id %>
+              <% in_path? = MapSet.member?(@selected_path_ids, row.id) %>
+              <% row_response_level = Map.get(row, :response_level) %>
+              <.link
+                id={"outline-node-#{row.id}"}
+                patch={
+                  graph_path(
+                    @graph_struct,
+                    row.id,
+                    reader_nav_params(@nav_params, @path_focus_ids)
+                  )
+                }
+                data-outline-selected={to_string(selected?)}
+                style={outline_indent_style(row.indent)}
+                class={[
+                  "group block rounded-xl border px-3 py-2.5 transition-all",
+                  if(selected?,
+                    do: "border-blue-200 bg-blue-50 text-slate-950 shadow-sm",
+                    else:
+                      "border-transparent text-slate-800 hover:border-slate-200 hover:bg-slate-50"
+                  ),
+                  in_path? && !selected? && "border-slate-200 bg-slate-50/80"
+                ]}
+              >
+                <div class="flex items-start gap-3">
+                  <div class="mt-1 flex shrink-0 items-center gap-1">
+                    <%= for _ <- outline_indent_guides(row.indent) do %>
+                      <span class="h-4 w-px rounded-full bg-slate-200"></span>
+                    <% end %>
+                  </div>
+
+                  <span class={[
+                    "mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ring-2 shadow-sm",
+                    if(selected?, do: "ring-slate-700", else: "ring-white"),
+                    DialecticWeb.ColUtils.dot_class(row.class),
+                    !selected? && !in_path? && "opacity-35 saturate-50"
+                  ]}></span>
+
+                  <div class="min-w-0 flex-1">
+                    <p class={[
+                      "text-sm leading-5 break-words transition-colors",
+                      cond do
+                        selected? -> "font-semibold text-slate-950"
+                        in_path? -> "font-semibold text-slate-900"
+                        true -> "font-medium text-slate-500 group-hover:text-slate-700"
+                      end
+                    ]}>
+                      {row.full_title}
+                    </p>
+                  </div>
+
+                  <div class="flex items-center gap-2 text-[11px]">
+                    <span
+                      :if={response_level_label(row_response_level)}
+                      id={"outline-response-level-#{row.id}"}
+                      data-response-level={row_response_level}
+                      class={[
+                        "rounded-full px-2 py-0.5 font-semibold ring-1 ring-inset",
+                        response_level_badge_class(row_response_level)
+                      ]}
+                      title={
+                      "Generated using the #{response_level_label(row_response_level)} answer level"
+                    }
+                    >
+                      {response_level_label(row_response_level)}
+                    </span>
+
+                    <%= if row.branch? do %>
+                      <span class="rounded-full bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-700">
+                        Split
+                      </span>
+                    <% end %>
+                  </div>
+                </div>
+              </.link>
+              <button
+                :if={selected? && @can_choose_path? && !@paths_filtered?}
+                id="outline-choose-path"
+                type="button"
+                phx-click="choose_path"
+                class="mt-1 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-teal-600 bg-teal-600 px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:border-teal-700 hover:bg-teal-700"
+              >
+                <.icon name="hero-map" class="h-3.5 w-3.5" /> Choose this path
+              </button>
+            <% end %>
+          </nav>
+        <% end %>
+      </aside>
+
+      <main
+        id="outline-detail"
+        class="order-1 min-h-0 min-w-0 overflow-visible lg:order-none lg:overflow-y-auto"
+        phx-hook="ReaderScroll"
+        data-reader-scroll-key={"reader-position:#{@graph_struct.slug}"}
+        data-selected-reader-node-id={@selected_node_id}
+      >
+        <%= if @node do %>
+          <div class="mx-auto max-w-4xl space-y-8 px-5 pb-8 pt-3 sm:px-8 lg:px-10">
+            <section id="outline-mobile-nav" class="lg:hidden">
+              <div
+                id="outline-mobile-nav-panel"
+                class="fixed inset-x-0 bottom-0 top-[4.75rem] z-40 hidden overflow-y-auto border-y border-slate-200 bg-white opacity-0 shadow-[0_14px_24px_-20px_rgba(15,23,42,0.25)] transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] translate-x-8 pointer-events-none"
+              >
+                <div class="border-b border-slate-200 bg-slate-50/75 px-5 py-3">
+                  <div class="flex items-start justify-between gap-3">
+                    <div>
+                      <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                        Browse
+                      </p>
+                      <h2 class="mt-1 text-sm font-semibold text-slate-900">
+                        Conversation Outline
+                      </h2>
+                      <p class="mt-1 text-xs text-slate-500">
+                        Jump to another point in the conversation.
+                      </p>
+                    </div>
+                    <button
+                      :if={@paths_filtered?}
+                      id="outline-mobile-show-all-paths"
+                      type="button"
+                      phx-click="show_all_paths"
+                      class="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700 transition hover:border-blue-300 hover:bg-blue-100"
+                    >
+                      Clear filter <.icon name="hero-x-mark" class="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+
+                <div class="bg-slate-50/70 px-2 py-3">
+                  <%= if @outline_nodes == [] do %>
+                    <div id="outline-mobile-empty-state" class="px-4 py-8 text-sm text-slate-500">
+                      This graph does not have any visible nodes yet.
+                    </div>
+                  <% else %>
+                    <nav class="space-y-1">
+                      <%= for row <- @visible_outline_nodes do %>
+                        <% selected? = @selected_node_id == row.id %>
+                        <% in_path? = MapSet.member?(@selected_path_ids, row.id) %>
+                        <% row_response_level = Map.get(row, :response_level) %>
+                        <.link
+                          id={"outline-mobile-node-#{row.id}"}
+                          patch={
+                            graph_path(
+                              @graph_struct,
+                              row.id,
+                              reader_nav_params(@nav_params, @path_focus_ids)
+                            )
+                          }
+                          phx-click={JS.dispatch("close-mobile-outline", to: "#outline-layout")}
+                          data-outline-selected={to_string(selected?)}
+                          style={outline_indent_style(row.indent, 0.35)}
+                          class={[
+                            "group block rounded-xl border px-3 py-2.5 transition-all",
+                            if(selected?,
+                              do: "border-blue-200 bg-blue-50 text-slate-950 shadow-sm",
+                              else:
+                                "border-transparent text-slate-800 hover:border-slate-200 hover:bg-slate-50"
+                            ),
+                            in_path? && !selected? && "border-slate-200 bg-slate-50/80"
+                          ]}
+                        >
+                          <div class="flex items-start gap-3">
+                            <div class="mt-1 flex shrink-0 items-center gap-1">
+                              <%= for _ <- outline_indent_guides(row.indent) do %>
+                                <span class="h-4 w-px rounded-full bg-slate-200"></span>
+                              <% end %>
+                            </div>
+
+                            <span class={[
+                              "mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ring-2 shadow-sm",
+                              if(selected?, do: "ring-slate-700", else: "ring-white"),
+                              DialecticWeb.ColUtils.dot_class(row.class),
+                              !selected? && !in_path? && "opacity-35 saturate-50"
+                            ]}></span>
+
+                            <div class="min-w-0 flex-1">
+                              <p class={[
+                                "text-sm leading-5 break-words transition-colors",
+                                cond do
+                                  selected? -> "font-semibold text-slate-950"
+                                  in_path? -> "font-semibold text-slate-900"
+                                  true -> "font-medium text-slate-500 group-hover:text-slate-700"
+                                end
+                              ]}>
+                                {row.full_title}
+                              </p>
+                            </div>
+
+                            <div class="flex items-center gap-2 text-[11px]">
+                              <span
+                                :if={response_level_label(row_response_level)}
+                                id={"outline-mobile-response-level-#{row.id}"}
+                                data-response-level={row_response_level}
+                                class={[
+                                  "rounded-full px-2 py-0.5 font-semibold ring-1 ring-inset",
+                                  response_level_badge_class(row_response_level)
+                                ]}
+                                title={
+                                "Generated using the #{response_level_label(row_response_level)} answer level"
+                              }
+                              >
+                                {response_level_label(row_response_level)}
+                              </span>
+
+                              <%= if row.branch? do %>
+                                <span class="rounded-full bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-700">
+                                  Split
+                                </span>
+                              <% end %>
+                            </div>
+                          </div>
+                        </.link>
+                        <button
+                          :if={selected? && @can_choose_path? && !@paths_filtered?}
+                          id="outline-mobile-choose-path"
+                          type="button"
+                          phx-click="choose_path"
+                          class="mt-1 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-teal-600 bg-teal-600 px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:border-teal-700 hover:bg-teal-700"
+                        >
+                          <.icon name="hero-map" class="h-3.5 w-3.5" /> Choose this path
+                        </button>
+                      <% end %>
+                    </nav>
+                  <% end %>
+                </div>
+              </div>
+            </section>
+
+            <section
+              id="outline-reading-flow"
+              class="-mx-5 overflow-hidden border-y border-slate-200 bg-white shadow-sm sm:mx-0 sm:rounded-[2rem] sm:border"
+            >
+              <%= for {reading_node, index} <- Enum.with_index(@visible_reading_chain) do %>
+                <% reading_response_level = Map.get(reading_node, :response_level) %>
+                <% selected_reading_node? = reading_node.id == @selected_node_id %>
+                <% node_highlights =
+                  Enum.filter(@visible_highlights, &(&1.node_id == reading_node.id)) %>
+                <% node_highlight_count = length(node_highlights) %>
+                <article
+                  id={"reading-node-#{reading_node.id}"}
+                  data-reading-selected={to_string(selected_reading_node?)}
+                  class={[
+                    if(index == 0,
+                      do: "bg-slate-950 px-5 py-6 text-white sm:px-12 sm:py-8",
+                      else: "bg-white px-5 sm:px-12"
+                    ),
+                    index > 0 &&
+                      if(String.trim(reading_node.body_content || "") == "",
+                        do: "py-6 sm:py-9",
+                        else: "py-8 sm:py-12"
+                      ),
+                    index > 0 && "border-t border-slate-200",
+                    selected_reading_node? && index > 0 && "bg-teal-50/50"
+                  ]}
+                >
+                  <% bookmarked? = MapSet.member?(@bookmarked_node_ids, reading_node.id) %>
+                  <%= if index == 0 do %>
+                    <div class="max-w-[68ch]">
+                      <div class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-teal-200">
+                        <img src={~p"/images/favicon-32.png"} alt="" class="h-5 w-5" />
+                        Starting question
+                      </div>
+                      <h2 class="reader-heading mt-3 text-balance text-[1.7rem] font-semibold leading-[1.12] tracking-tight text-white sm:text-[2.1rem]">
+                        {reading_node.full_title || reading_node.title}
+                      </h2>
+                      <%= if String.trim(reading_node.body_content || "") != "" do %>
+                        <div
+                          id={"reading-highlight-#{reading_node.id}"}
+                          class="mt-4 max-w-[68ch] border-t border-white/15 pt-4 sm:mt-5 sm:pt-5"
+                          phx-hook="TextSelectionHook"
+                          data-node-id={reading_node.id}
+                          data-mudg-id={@graph_id}
+                          data-highlights-only="false"
+                        >
+                          <article class="reader-prose reader-prose-dark prose prose-invert max-w-none prose-headings:tracking-tight prose-a:break-words">
+                            <div
+                              phx-hook="Markdown"
+                              id={"outline-markdown-body-#{reading_node.id}"}
+                              data-md={reading_node.content || ""}
+                              data-grounding={DialecticWeb.MarkdownGrounding.encode(reading_node)}
+                              data-body-only="true"
+                              data-enhance-follow-up-questions="false"
+                            >
+                              <div
+                                data-role="server-markdown-fallback"
+                                class="whitespace-pre-wrap"
+                              >
+                                {reading_node.body_content}
+                              </div>
+                            </div>
+                          </article>
+                        </div>
+                      <% end %>
+                    </div>
+                  <% else %>
+                    <div>
+                      <div class="flex flex-wrap items-center gap-2 text-[13px] font-medium text-slate-500 sm:text-sm">
+                        <span>Then</span>
+                        <span class="h-1 w-1 rounded-full bg-slate-300"></span>
+                        <span
+                          id={"reader-contributor-#{reading_node.id}"}
+                          class={[
+                            "inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold",
+                            DialecticWeb.ColUtils.badge_class(reading_node.class)
+                          ]}
+                        >
+                          {contribution_label(reading_node, @contributor_names)}
+                        </span>
+                        <span
+                          :if={response_level_label(reading_response_level)}
+                          id={"reader-response-level-#{reading_node.id}"}
+                          data-response-level={reading_response_level}
+                          class={[
+                            "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ring-inset",
+                            response_level_badge_class(reading_response_level)
+                          ]}
+                          title={
+                            "Generated using the #{response_level_label(reading_response_level)} answer level"
+                          }
+                        >
+                          <.icon name="hero-adjustments-horizontal" class="h-3 w-3" />
+                          {response_level_label(reading_response_level)} level
+                        </span>
+                      </div>
+                      <h2 class="reader-heading mt-3 max-w-[78ch] text-balance text-[1.28rem] font-semibold leading-[1.15] tracking-tight text-slate-950 sm:text-[1.6rem]">
+                        {reading_node.full_title || reading_node.title}
+                      </h2>
+                    </div>
+
+                    <DialecticWeb.SourceStatus.source_status
+                      node={reading_node}
+                      id={"reader-source-status-#{reading_node.id}"}
+                    />
+                    <DialecticWeb.SourceStatus.action_targets
+                      node={reading_node}
+                      id={"reader-action-targets-#{reading_node.id}"}
+                    />
+                    <%= cond do %>
+                      <% MapSet.member?(@selection_pending_node_ids, reading_node.id) -> %>
+                        <DialecticWeb.GenerationComponents.response_placeholder
+                          id={"reader-generation-#{reading_node.id}"}
+                          status_id={"reader-generation-status-#{reading_node.id}"}
+                          response_level={reading_node.response_level}
+                          label="Generating an AI response…"
+                          class="mt-8"
+                        />
+                      <% String.trim(reading_node.content || "") == "" -> %>
+                        <div
+                          id={"reader-generation-#{reading_node.id}"}
+                          role="status"
+                          class="mt-8 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-10 text-center text-sm text-slate-500"
+                        >
+                          This node does not have content yet.
+                        </div>
+                      <% true -> %>
+                        <%= if String.trim(reading_node.body_content || "") != "" do %>
+                          <div
+                            id={"reading-highlight-#{reading_node.id}"}
+                            class="mt-6 w-full sm:mt-8"
+                            phx-hook="TextSelectionHook"
+                            data-node-id={reading_node.id}
+                            data-mudg-id={@graph_id}
+                            data-highlights-only="false"
+                          >
+                            <article class="reader-prose reader-prose-wide prose prose-slate max-w-none prose-headings:tracking-tight prose-a:break-words">
+                              <div
+                                phx-hook="Markdown"
+                                id={"outline-markdown-body-#{reading_node.id}"}
+                                data-md={reading_node.content || ""}
+                                data-grounding={
+                                  DialecticWeb.MarkdownGrounding.encode(reading_node)
+                                }
+                                data-body-only="true"
+                                data-enhance-follow-up-questions="false"
+                              >
+                                <div
+                                  data-role="server-markdown-fallback"
+                                  class="whitespace-pre-wrap"
+                                >
+                                  {reading_node.body_content}
+                                </div>
+                              </div>
+                            </article>
+                          </div>
+                        <% end %>
+                    <% end %>
+
+                    <div class="mt-6 grid grid-cols-[auto_auto_minmax(0,1fr)_auto] items-center gap-2 border-t border-slate-200 pt-3">
+                      <button
+                        id={"reader-bookmark-node-#{reading_node.id}"}
+                        type="button"
+                        phx-click={if(bookmarked?, do: "unnote", else: "note")}
+                        phx-value-node={reading_node.id}
+                        aria-label={
+                          if(bookmarked?, do: "Remove bookmark", else: "Save for later")
+                        }
+                        aria-pressed={to_string(bookmarked?)}
+                        title={if(bookmarked?, do: "Remove bookmark", else: "Save for later")}
+                        class={[
+                          "inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-700",
+                          if(bookmarked?,
+                            do: "border-cyan-300 bg-cyan-100 text-cyan-900 hover:bg-cyan-200",
+                            else:
+                              "border-slate-200 bg-white text-slate-600 hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-900"
+                          )
+                        ]}
+                      >
+                        <.icon
+                          name={if(bookmarked?, do: "hero-bookmark-solid", else: "hero-bookmark")}
+                          class="h-4 w-4"
+                        />
+                        <span>{if(bookmarked?, do: "Saved", else: "Save for later")}</span>
+                      </button>
+
+                      <button
+                        :if={node_highlight_count > 0}
+                        id={"reader-node-#{reading_node.id}-highlights"}
+                        type="button"
+                        phx-click="toggle_node_highlights"
+                        phx-value-node-id={reading_node.id}
+                        aria-expanded={to_string(@node_highlights_open == reading_node.id)}
+                        aria-controls={"reader-node-#{reading_node.id}-highlight-list"}
+                        class="group inline-flex items-center"
+                      >
+                        <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-800 transition group-hover:text-amber-950 group-focus-visible:outline group-focus-visible:outline-2 group-focus-visible:outline-offset-2 group-focus-visible:outline-amber-600">
+                          <.icon name="hero-pencil" class="h-4 w-4" />
+                          Show {node_highlight_count} {if(node_highlight_count == 1,
+                            do: "highlight",
+                            else: "highlights"
+                          )}
+                          <span class={[
+                            "inline-flex transition-transform",
+                            @node_highlights_open == reading_node.id && "rotate-180"
+                          ]}>
+                            <.icon name="hero-chevron-down" class="h-3.5 w-3.5" />
+                          </span>
+                        </span>
+                      </button>
+                      <ol
+                        :if={@node_highlights_open == reading_node.id}
+                        id={"reader-node-#{reading_node.id}-highlight-list"}
+                        class="col-span-full mt-1 divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white px-3 text-sm"
+                      >
+                        <%= for {highlight, highlight_index} <- Enum.with_index(node_highlights, 1) do %>
+                          <li class="grid grid-cols-[1.5rem_minmax(0,1fr)] items-start gap-2 py-3">
+                            <span class="pt-0.5 text-right text-xs font-semibold leading-5 text-amber-700">
+                              {highlight_index}.
+                            </span>
+                            <div class="min-w-0">
+                              <button
+                                id={"reader-highlight-link-#{highlight.id}"}
+                                type="button"
+                                phx-click={
+                                  JS.push("highlight_clicked",
+                                    value: %{
+                                      id: highlight.id,
+                                      node_id: reading_node.id,
+                                      source: "node_list"
+                                    }
+                                  )
+                                }
+                                class="w-full rounded-md text-left italic leading-5 text-slate-800 transition hover:text-amber-950"
+                                title="Jump to this highlighted passage"
+                              >
+                                {highlight_excerpt(highlight)}
+                              </button>
+                              <%= if highlight.links && highlight.links != [] do %>
+                                <div class="mt-2 flex flex-wrap items-center gap-1.5">
+                                  <span class="text-[10px] font-semibold uppercase tracking-[0.12em] text-indigo-700">
+                                    Connected ideas
+                                  </span>
+                                  <%= for link <- highlight.links do %>
+                                    <button
+                                      id={"reader-highlight-link-#{highlight.id}-node-#{link.node_id}"}
+                                      type="button"
+                                      phx-click="navigate_to_node"
+                                      phx-value-node_id={link.node_id}
+                                      class="inline-flex max-w-full items-start gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-1.5 text-left text-[11px] font-medium leading-4 text-indigo-800 transition hover:border-indigo-300 hover:bg-indigo-100"
+                                      title="Open connected idea"
+                                    >
+                                      <.icon name="hero-link" class="mt-0.5 h-3 w-3 shrink-0" />
+                                      <span class="min-w-0 whitespace-normal break-words">
+                                        {highlight_link_title(@outline_nodes, link.node_id)}
+                                      </span>
+                                    </button>
+                                  <% end %>
+                                </div>
+                              <% end %>
+                            </div>
+                          </li>
+                        <% end %>
+                      </ol>
+
+                      <p
+                        :if={node_highlight_count == 0}
+                        class="text-xs text-slate-500"
+                      >
+                        Select text to highlight passages.
+                      </p>
+
+                      <%= if @can_edit && contribution_target?(reading_node) do %>
+                        <% response_label = response_action_label(reading_node) %>
+                        <% drawer_open? = @answer_drawer_node_id == reading_node.id %>
+                        <button
+                          id={"outline-reading-node-#{reading_node.id}-ask"}
+                          type="button"
+                          phx-click="toggle_answer_drawer"
+                          phx-value-id={reading_node.id}
+                          aria-expanded={to_string(drawer_open?)}
+                          aria-controls={"reader-answer-drawer-#{reading_node.id}"}
+                          aria-label={
+                            if(drawer_open?, do: "Hide response form", else: response_label)
+                          }
+                          class="inquiry-disclosure group col-span-full mt-2 w-full py-1.5 pl-1.5 pr-3 text-left"
+                        >
+                          <span class="inquiry-disclosure-icon">
+                            <.icon name="hero-chat-bubble-left-right" class="h-4 w-4" />
+                          </span>
+                          <span class="min-w-0 flex-1">
+                            <span class="block text-sm font-semibold">
+                              {if(drawer_open?, do: "Hide response form", else: response_label)}
+                            </span>
+                          </span>
+                          <.icon
+                            name="hero-chevron-down"
+                            class={[
+                              "h-4 w-4 shrink-0 text-slate-400 transition-transform group-hover:text-teal-700 motion-reduce:transition-none",
+                              drawer_open? && "rotate-180 text-teal-700"
+                            ]}
+                          />
+                        </button>
+                        <div
+                          id={"reader-answer-drawer-#{reading_node.id}"}
+                          hidden={!drawer_open?}
+                          class="col-span-full"
+                        >
+                          <div
+                            :if={drawer_open?}
+                            id={"reader-answer-actions-hook-#{reading_node.id}"}
+                            phx-hook="SelectionActions"
+                            class="col-span-full"
+                          >
+                            <.live_component
+                              module={DialecticWeb.SelectionActionsComp}
+                              id={"answer-actions-#{reading_node.id}"}
+                              context={:answer}
+                              presentation={:drawer}
+                              node_id={reading_node.id}
+                              answer_title={
+                                NodeTitleHelper.extract_node_title(reading_node, max_length: 180)
+                              }
+                              bookmarked={MapSet.member?(@bookmarked_node_ids, reading_node.id)}
+                              trigger_id={"outline-reading-node-#{reading_node.id}-ask"}
+                              current_user={@current_user}
+                              graph_id={@graph_id}
+                              can_edit={@can_edit}
+                            />
+                          </div>
+                        </div>
+                      <% end %>
+                    </div>
+                  <% end %>
+                </article>
+              <% end %>
+            </section>
+
+            <%= cond do %>
+              <% @paths_filtered? -> %>
+              <% @next_choices != [] -> %>
+                <section
+                  id="outline-next-choices"
+                  class="rounded-[1.65rem] border border-slate-200 bg-white p-4 shadow-sm sm:rounded-2xl sm:p-6"
+                >
+                  <h3 class="text-xl font-semibold tracking-tight text-slate-950">
+                    Choose a path from here
+                  </h3>
+                  <p class="mt-2 text-sm leading-6 text-slate-500">
+                    {next_choices_message(@reading_terminal, @node)}
+                  </p>
+
+                  <div class="mt-5 grid gap-3 sm:grid-cols-2">
+                    <%= for choice <- @next_choices do %>
+                      <DialecticWeb.PathActionCardComp.path_action_card
+                        id={"next-choice-#{choice.id}"}
+                        patch={
+                          graph_path(
+                            @graph_struct,
+                            choice.id,
+                            reader_nav_params(@nav_params, @path_focus_ids)
+                          )
+                        }
+                        title={choice.title}
+                        node_class={choice.class}
+                        loading={MapSet.member?(@selection_pending_node_ids, choice.id)}
+                      />
+                    <% end %>
+                  </div>
+                </section>
+              <% true -> %>
+                <section
+                  id="outline-end-state"
+                  class="overflow-hidden rounded-[1.75rem] border border-slate-200 bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950 p-6 text-white shadow-[0_18px_40px_rgba(15,23,42,0.18)]"
+                >
+                  <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                    <div class="max-w-2xl">
+                      <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-200/80">
+                        Continue this thread
+                      </p>
+                      <h3 class="mt-2 text-xl font-semibold tracking-tight text-white">
+                        This path ends here for now.
+                      </h3>
+                      <%= if @can_edit do %>
+                        <p class="mt-2 text-sm leading-6 text-slate-300">
+                          Share your perspective, offer an example, or ask a follow-up to continue the discussion.
+                        </p>
+                      <% else %>
+                        <p class="mt-3 text-xs font-medium text-amber-200/90">
+                          This grid is read only, so only the owner can continue it in the editor.
+                        </p>
+                      <% end %>
+                    </div>
+
+                    <%= if @can_edit && @reading_terminal do %>
+                      <.link
+                        id="outline-end-editor-link"
+                        navigate={
+                          graph_editor_path(@graph_struct, @reading_terminal.id, @nav_params)
+                        }
+                        class="group hidden h-11 shrink-0 items-center gap-2.5 rounded-full border border-sky-300/35 bg-sky-400/10 px-4 text-sm font-medium text-sky-100 shadow-sm transition hover:border-sky-200/60 hover:bg-sky-400/15 lg:inline-flex"
+                        data-view-transition="mode-switch"
+                        data-view-transition-direction="graph"
+                      >
+                        <.icon name="hero-squares-2x2" class="h-4 w-4" />
+                        <span>Open editor to continue</span>
+                        <.icon
+                          name="hero-arrow-right"
+                          class="h-4 w-4 transition group-hover:translate-x-0.5"
+                        />
+                      </.link>
+                    <% end %>
+                  </div>
+                </section>
+            <% end %>
+
+            <% inactive_branches = Enum.reject(@compare_branches, & &1.active?) %>
+            <% compare_section_hidden? =
+              @compare_context && @reading_terminal &&
+                @compare_context.root.id == @reading_terminal.id %>
+            <%= if !@paths_filtered? && @compare_context && inactive_branches != [] && !compare_section_hidden? do %>
+              <section
+                id="outline-branch-compare"
+                class="rounded-[1.65rem] border border-slate-200 bg-white p-4 shadow-sm sm:rounded-2xl sm:p-6"
+              >
+                <h3 class="text-xl font-semibold tracking-tight text-slate-950">
+                  Other paths you could read
+                </h3>
+                <p class="mt-2 text-sm leading-6 text-slate-500">
+                  Earlier, at <span class="font-medium text-slate-700">{@compare_context.root.title}</span>,
+                  the conversation split. If this is not the thread you want, you can switch to {pluralize(
+                    length(inactive_branches),
+                    " the other path",
+                    " one of the other paths"
+                  )} below.
+                </p>
+
+                <div class="mt-5 grid gap-3 sm:grid-cols-2">
+                  <%= for branch <- inactive_branches do %>
+                    <DialecticWeb.PathActionCardComp.path_action_card
+                      id={"branch-compare-card-#{branch.id}"}
+                      patch={
+                        graph_path(
+                          @graph_struct,
+                          branch.id,
+                          reader_nav_params(@nav_params, @path_focus_ids)
+                        )
+                      }
+                      title={branch.lead.full_title}
+                      node_class={branch.lead.class}
+                      loading={MapSet.member?(@selection_pending_node_ids, branch.lead.id)}
+                    />
+                  <% end %>
+                </div>
+              </section>
+            <% end %>
+          </div>
+        <% else %>
+          <div class="flex h-full items-center justify-center px-6 py-12 text-center">
+            <div class="max-w-md rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+              <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-slate-100">
+                <.icon name="hero-bars-3-bottom-left" class="h-7 w-7 text-slate-500" />
+              </div>
+              <h2 class="mt-4 text-lg font-semibold text-slate-900">No node selected</h2>
+              <p class="mt-2 text-sm leading-6 text-slate-500">
+                Pick a node from the outline to inspect its content and nearby branches.
+              </p>
+            </div>
+          </div>
+        <% end %>
+      </main>
+
+      <div
+        id="highlights-drawer"
+        data-right-drawer
+        class="fixed inset-y-0 right-0 z-50 w-0 overflow-hidden border-l border-slate-200 bg-slate-50 opacity-0 shadow-[-20px_0_45px_-32px_rgba(15,23,42,0.35)] transform translate-x-full transition-all duration-300 ease-in-out lg:absolute"
+      >
+        <div class="flex h-full flex-col">
+          <div class="flex items-center justify-between gap-4 border-b border-slate-200 bg-white px-5 py-4">
+            <div class="flex min-w-0 items-center gap-3">
+              <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200/70">
+                <.icon name="hero-pencil" class="h-5 w-5" />
+              </span>
+              <div class="min-w-0">
+                <h2 class="text-base font-semibold tracking-tight text-slate-950">Highlights</h2>
+                <p class="mt-0.5 text-xs leading-5 text-slate-500">
+                  {length(@visible_highlights)} saved {if(length(@visible_highlights) == 1,
+                    do: "passage",
+                    else: "passages"
+                  )} and connected ideas
+                </p>
+              </div>
+            </div>
+
+            <button
+              id="reader-highlights-close"
+              type="button"
+              phx-click={
                 JS.dispatch("toggle-panel",
                   to: "#outline-layout",
                   detail: %{id: "highlights-drawer"}
                 )
               }
-              highlights_count={length(@visible_highlights)}
-              highlights_panel_id="highlights-drawer"
-              share_click="open_share_modal"
-              compact
-            />
-
-            <%= if @current_user do %>
-              <button
-                id="reader-follow-grid-button"
-                type="button"
-                phx-click={if(@following_graph?, do: "unfollow_graph", else: "follow_graph")}
-                aria-label={
-                  if(@following_graph?,
-                    do: "Stop receiving grid updates in Activity",
-                    else: "Get notified about grid changes in Activity"
-                  )
-                }
-                aria-pressed={to_string(@following_graph?)}
-                title={
-                  if(@following_graph?,
-                    do: "Updates from this grid appear in Activity. Click to turn them off.",
-                    else: "Get notified when this grid changes and see updates in Activity."
-                  )
-                }
-                class={[
-                  "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-slate-600 transition duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 sm:h-7 sm:w-7",
-                  if(@following_graph?,
-                    do: "border-sky-200 bg-sky-100 text-sky-700 hover:bg-sky-200",
-                    else:
-                      "border-transparent bg-slate-50 hover:bg-slate-100 hover:text-slate-950 sm:bg-transparent"
-                  )
-                ]}
-              >
-                <.icon
-                  name={if(@following_graph?, do: "hero-bell-solid", else: "hero-bell-alert")}
-                  class="h-4 w-4"
-                />
-              </button>
-            <% else %>
-              <.link
-                navigate={~p"/users/log_in"}
-                id="reader-follow-grid-login-link"
-                aria-label="Sign in to get notified about grid changes in Activity"
-                title="Sign in to get notified when this grid changes and see updates in Activity."
-                class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-transparent bg-slate-50 text-slate-600 transition duration-150 hover:bg-slate-100 hover:text-slate-950 sm:h-7 sm:w-7 sm:bg-transparent"
-              >
-                <.icon name="hero-bell-alert" class="h-4 w-4" />
-              </.link>
-            <% end %>
-
-            <%= if !@can_edit do %>
-              <span class="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700">
-                <.icon name="hero-lock-closed" class="h-3.5 w-3.5" /> Read only
-              </span>
-            <% end %>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div
-    id="outline-scroll-shell"
-    class="relative flex flex-1 min-h-0 flex-col overflow-x-hidden overflow-y-auto lg:grid lg:grid-cols-[20rem_minmax(0,1fr)] lg:overflow-clip xl:grid-cols-[22rem_minmax(0,1fr)]"
-    phx-hook="ReaderScroll"
-  >
-    <aside
-      id="outline-tree"
-      class="hidden min-h-0 overflow-y-auto border-b border-slate-200 bg-white lg:block lg:border-b-0 lg:border-r"
-      phx-hook="OutlineNav"
-    >
-      <div class="sticky top-0 z-10 border-b border-slate-200 bg-white px-4 py-4">
-        <div class="flex items-start justify-between gap-3">
-          <div>
-            <h2 class="text-sm font-semibold text-slate-900">Conversation Outline</h2>
-            <p class="mt-1 text-xs text-slate-500">Choose a point in the conversation.</p>
-          </div>
-          <button
-            :if={@paths_filtered?}
-            id="outline-show-all-paths"
-            type="button"
-            phx-click="show_all_paths"
-            class="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700 transition hover:border-blue-300 hover:bg-blue-100"
-          >
-            Clear path filter <.icon name="hero-x-mark" class="h-3.5 w-3.5" />
-          </button>
-        </div>
-      </div>
-
-      <%= if @outline_nodes == [] do %>
-        <div id="outline-empty-state" class="px-4 py-12 text-center text-sm text-slate-500">
-          This graph does not have any visible nodes yet.
-        </div>
-      <% else %>
-        <nav class="space-y-1 px-2 py-3">
-          <%= for row <- @visible_outline_nodes do %>
-            <% selected? = @selected_node_id == row.id %>
-            <% in_path? = MapSet.member?(@selected_path_ids, row.id) %>
-            <% row_response_level = Map.get(row, :response_level) %>
-            <.link
-              id={"outline-node-#{row.id}"}
-              patch={
-                graph_path(
-                  @graph_struct,
-                  row.id,
-                  reader_nav_params(@nav_params, @path_focus_ids)
-                )
-              }
-              data-outline-selected={to_string(selected?)}
-              style={outline_indent_style(row.indent)}
-              class={[
-                "group block rounded-xl border px-3 py-2.5 transition-all",
-                if(selected?,
-                  do: "border-blue-200 bg-blue-50 text-slate-950 shadow-sm",
-                  else:
-                    "border-transparent text-slate-800 hover:border-slate-200 hover:bg-slate-50"
-                ),
-                in_path? && !selected? && "border-slate-200 bg-slate-50/80"
-              ]}
+              class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600"
+              aria-label="Close highlights panel"
+              title="Close panel"
             >
-              <div class="flex items-start gap-3">
-                <div class="mt-1 flex shrink-0 items-center gap-1">
-                  <%= for _ <- outline_indent_guides(row.indent) do %>
-                    <span class="h-4 w-px rounded-full bg-slate-200"></span>
-                  <% end %>
-                </div>
-
-                <span class={[
-                  "mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ring-2 shadow-sm",
-                  if(selected?, do: "ring-slate-700", else: "ring-white"),
-                  DialecticWeb.ColUtils.dot_class(row.class),
-                  !selected? && !in_path? && "opacity-35 saturate-50"
-                ]}></span>
-
-                <div class="min-w-0 flex-1">
-                  <p class={[
-                    "text-sm leading-5 break-words transition-colors",
-                    cond do
-                      selected? -> "font-semibold text-slate-950"
-                      in_path? -> "font-semibold text-slate-900"
-                      true -> "font-medium text-slate-500 group-hover:text-slate-700"
-                    end
-                  ]}>
-                    {row.full_title}
-                  </p>
-                </div>
-
-                <div class="flex items-center gap-2 text-[11px]">
-                  <span
-                    :if={response_level_label(row_response_level)}
-                    id={"outline-response-level-#{row.id}"}
-                    data-response-level={row_response_level}
-                    class={[
-                      "rounded-full px-2 py-0.5 font-semibold ring-1 ring-inset",
-                      response_level_badge_class(row_response_level)
-                    ]}
-                    title={
-                      "Generated using the #{response_level_label(row_response_level)} answer level"
-                    }
-                  >
-                    {response_level_label(row_response_level)}
-                  </span>
-
-                  <%= if row.branch? do %>
-                    <span class="rounded-full bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-700">
-                      Split
-                    </span>
-                  <% end %>
-                </div>
-              </div>
-            </.link>
-            <button
-              :if={selected? && @can_choose_path? && !@paths_filtered?}
-              id="outline-choose-path"
-              type="button"
-              phx-click="choose_path"
-              class="mt-1 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-teal-600 bg-teal-600 px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:border-teal-700 hover:bg-teal-700"
-            >
-              <.icon name="hero-map" class="h-3.5 w-3.5" /> Choose this path
+              <.icon name="hero-x-mark" class="h-4 w-4" />
             </button>
-          <% end %>
-        </nav>
-      <% end %>
-    </aside>
-
-    <main
-      id="outline-detail"
-      class="order-1 min-h-0 min-w-0 overflow-visible lg:order-none lg:overflow-y-auto"
-      phx-hook="ReaderScroll"
-      data-reader-scroll-key={"reader-position:#{@graph_struct.slug}"}
-      data-selected-reader-node-id={@selected_node_id}
-    >
-      <%= if @node do %>
-        <div class="mx-auto max-w-4xl space-y-8 px-5 pb-8 pt-3 sm:px-8 lg:px-10">
-          <section id="outline-mobile-nav" class="lg:hidden">
-            <div
-              id="outline-mobile-nav-panel"
-              class="fixed inset-x-0 bottom-0 top-[4.75rem] z-40 hidden overflow-y-auto border-y border-slate-200 bg-white opacity-0 shadow-[0_14px_24px_-20px_rgba(15,23,42,0.25)] transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] translate-x-8 pointer-events-none"
-            >
-              <div class="border-b border-slate-200 bg-slate-50/75 px-5 py-3">
-                <div class="flex items-start justify-between gap-3">
-                  <div>
-                    <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-                      Browse
-                    </p>
-                    <h2 class="mt-1 text-sm font-semibold text-slate-900">
-                      Conversation Outline
-                    </h2>
-                    <p class="mt-1 text-xs text-slate-500">
-                      Jump to another point in the conversation.
-                    </p>
-                  </div>
-                  <button
-                    :if={@paths_filtered?}
-                    id="outline-mobile-show-all-paths"
-                    type="button"
-                    phx-click="show_all_paths"
-                    class="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700 transition hover:border-blue-300 hover:bg-blue-100"
-                  >
-                    Clear filter <.icon name="hero-x-mark" class="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              </div>
-
-              <div class="bg-slate-50/70 px-2 py-3">
-                <%= if @outline_nodes == [] do %>
-                  <div id="outline-mobile-empty-state" class="px-4 py-8 text-sm text-slate-500">
-                    This graph does not have any visible nodes yet.
-                  </div>
-                <% else %>
-                  <nav class="space-y-1">
-                    <%= for row <- @visible_outline_nodes do %>
-                      <% selected? = @selected_node_id == row.id %>
-                      <% in_path? = MapSet.member?(@selected_path_ids, row.id) %>
-                      <% row_response_level = Map.get(row, :response_level) %>
-                      <.link
-                        id={"outline-mobile-node-#{row.id}"}
-                        patch={
-                          graph_path(
-                            @graph_struct,
-                            row.id,
-                            reader_nav_params(@nav_params, @path_focus_ids)
-                          )
-                        }
-                        phx-click={JS.dispatch("close-mobile-outline", to: "#outline-layout")}
-                        data-outline-selected={to_string(selected?)}
-                        style={outline_indent_style(row.indent, 0.35)}
-                        class={[
-                          "group block rounded-xl border px-3 py-2.5 transition-all",
-                          if(selected?,
-                            do: "border-blue-200 bg-blue-50 text-slate-950 shadow-sm",
-                            else:
-                              "border-transparent text-slate-800 hover:border-slate-200 hover:bg-slate-50"
-                          ),
-                          in_path? && !selected? && "border-slate-200 bg-slate-50/80"
-                        ]}
-                      >
-                        <div class="flex items-start gap-3">
-                          <div class="mt-1 flex shrink-0 items-center gap-1">
-                            <%= for _ <- outline_indent_guides(row.indent) do %>
-                              <span class="h-4 w-px rounded-full bg-slate-200"></span>
-                            <% end %>
-                          </div>
-
-                          <span class={[
-                            "mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ring-2 shadow-sm",
-                            if(selected?, do: "ring-slate-700", else: "ring-white"),
-                            DialecticWeb.ColUtils.dot_class(row.class),
-                            !selected? && !in_path? && "opacity-35 saturate-50"
-                          ]}></span>
-
-                          <div class="min-w-0 flex-1">
-                            <p class={[
-                              "text-sm leading-5 break-words transition-colors",
-                              cond do
-                                selected? -> "font-semibold text-slate-950"
-                                in_path? -> "font-semibold text-slate-900"
-                                true -> "font-medium text-slate-500 group-hover:text-slate-700"
-                              end
-                            ]}>
-                              {row.full_title}
-                            </p>
-                          </div>
-
-                          <div class="flex items-center gap-2 text-[11px]">
-                            <span
-                              :if={response_level_label(row_response_level)}
-                              id={"outline-mobile-response-level-#{row.id}"}
-                              data-response-level={row_response_level}
-                              class={[
-                                "rounded-full px-2 py-0.5 font-semibold ring-1 ring-inset",
-                                response_level_badge_class(row_response_level)
-                              ]}
-                              title={
-                                "Generated using the #{response_level_label(row_response_level)} answer level"
-                              }
-                            >
-                              {response_level_label(row_response_level)}
-                            </span>
-
-                            <%= if row.branch? do %>
-                              <span class="rounded-full bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-700">
-                                Split
-                              </span>
-                            <% end %>
-                          </div>
-                        </div>
-                      </.link>
-                      <button
-                        :if={selected? && @can_choose_path? && !@paths_filtered?}
-                        id="outline-mobile-choose-path"
-                        type="button"
-                        phx-click="choose_path"
-                        class="mt-1 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-teal-600 bg-teal-600 px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:border-teal-700 hover:bg-teal-700"
-                      >
-                        <.icon name="hero-map" class="h-3.5 w-3.5" /> Choose this path
-                      </button>
-                    <% end %>
-                  </nav>
-                <% end %>
-              </div>
-            </div>
-          </section>
-
-          <section
-            id="outline-reading-flow"
-            class="-mx-5 overflow-hidden border-y border-slate-200 bg-white shadow-sm sm:mx-0 sm:rounded-[2rem] sm:border"
-          >
-            <%= for {reading_node, index} <- Enum.with_index(@visible_reading_chain) do %>
-              <% reading_response_level = Map.get(reading_node, :response_level) %>
-              <% selected_reading_node? = reading_node.id == @selected_node_id %>
-              <% node_highlights =
-                Enum.filter(@visible_highlights, &(&1.node_id == reading_node.id)) %>
-              <% node_highlight_count = length(node_highlights) %>
-              <article
-                id={"reading-node-#{reading_node.id}"}
-                data-reading-selected={to_string(selected_reading_node?)}
-                class={[
-                  if(index == 0,
-                    do: "bg-slate-950 px-5 py-6 text-white sm:px-12 sm:py-8",
-                    else: "bg-white px-5 sm:px-12"
-                  ),
-                  index > 0 &&
-                    if(String.trim(reading_node.body_content || "") == "",
-                      do: "py-6 sm:py-9",
-                      else: "py-8 sm:py-12"
-                    ),
-                  index > 0 && "border-t border-slate-200",
-                  selected_reading_node? && index > 0 && "bg-teal-50/50"
-                ]}
-              >
-                <% bookmarked? = MapSet.member?(@bookmarked_node_ids, reading_node.id) %>
-                <%= if index == 0 do %>
-                  <div class="max-w-[68ch]">
-                    <div class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-teal-200">
-                      <img src={~p"/images/favicon-32.png"} alt="" class="h-5 w-5" />
-                      Starting question
-                    </div>
-                    <h2 class="reader-heading mt-3 text-balance text-[1.7rem] font-semibold leading-[1.12] tracking-tight text-white sm:text-[2.1rem]">
-                      {reading_node.full_title || reading_node.title}
-                    </h2>
-                    <%= if String.trim(reading_node.body_content || "") != "" do %>
-                      <div
-                        id={"reading-highlight-#{reading_node.id}"}
-                        class="mt-4 max-w-[68ch] border-t border-white/15 pt-4 sm:mt-5 sm:pt-5"
-                        phx-hook="TextSelectionHook"
-                        data-node-id={reading_node.id}
-                        data-mudg-id={@graph_id}
-                        data-highlights-only="false"
-                      >
-                        <article class="reader-prose reader-prose-dark prose prose-invert max-w-none prose-headings:tracking-tight prose-a:break-words">
-                          <div
-                            phx-hook="Markdown"
-                            id={"outline-markdown-body-#{reading_node.id}"}
-                            data-md={reading_node.content || ""}
-                            data-grounding={DialecticWeb.MarkdownGrounding.encode(reading_node)}
-                            data-body-only="true"
-                            data-enhance-follow-up-questions="false"
-                          >
-                            <div data-role="server-markdown-fallback" class="whitespace-pre-wrap">
-                              {reading_node.body_content}
-                            </div>
-                          </div>
-                        </article>
-                      </div>
-                    <% end %>
-                  </div>
-                <% else %>
-                  <div>
-                    <div class="flex flex-wrap items-center gap-2 text-[13px] font-medium text-slate-500 sm:text-sm">
-                      <span>Then</span>
-                      <span class="h-1 w-1 rounded-full bg-slate-300"></span>
-                      <span class={[
-                        "inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold",
-                        DialecticWeb.ColUtils.badge_class(reading_node.class)
-                      ]}>
-                        {DialecticWeb.ColUtils.node_type_label(reading_node.class)}
-                      </span>
-                      <span
-                        :if={response_level_label(reading_response_level)}
-                        id={"reader-response-level-#{reading_node.id}"}
-                        data-response-level={reading_response_level}
-                        class={[
-                          "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ring-inset",
-                          response_level_badge_class(reading_response_level)
-                        ]}
-                        title={
-                            "Generated using the #{response_level_label(reading_response_level)} answer level"
-                          }
-                      >
-                        <.icon name="hero-adjustments-horizontal" class="h-3 w-3" />
-                        {response_level_label(reading_response_level)} level
-                      </span>
-                    </div>
-                    <h2 class="reader-heading mt-3 max-w-[78ch] text-balance text-[1.28rem] font-semibold leading-[1.15] tracking-tight text-slate-950 sm:text-[1.6rem]">
-                      {reading_node.full_title || reading_node.title}
-                    </h2>
-                  </div>
-
-                  <DialecticWeb.SourceStatus.source_status
-                    node={reading_node}
-                    id={"reader-source-status-#{reading_node.id}"}
-                  />
-                  <DialecticWeb.SourceStatus.action_targets
-                    node={reading_node}
-                    id={"reader-action-targets-#{reading_node.id}"}
-                  />
-                  <%= if String.trim(reading_node.content || "") == "" do %>
-                    <div class="mt-8 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-10 text-center text-sm text-slate-500">
-                      This node does not have content yet.
-                    </div>
-                  <% else %>
-                    <%= if String.trim(reading_node.body_content || "") != "" do %>
-                      <div
-                        id={"reading-highlight-#{reading_node.id}"}
-                        class="mt-6 w-full sm:mt-8"
-                        phx-hook="TextSelectionHook"
-                        data-node-id={reading_node.id}
-                        data-mudg-id={@graph_id}
-                        data-highlights-only="false"
-                      >
-                        <article class="reader-prose reader-prose-wide prose prose-slate max-w-none prose-headings:tracking-tight prose-a:break-words">
-                          <div
-                            phx-hook="Markdown"
-                            id={"outline-markdown-body-#{reading_node.id}"}
-                            data-md={reading_node.content || ""}
-                            data-grounding={DialecticWeb.MarkdownGrounding.encode(reading_node)}
-                            data-body-only="true"
-                            data-enhance-follow-up-questions="false"
-                          >
-                            <div data-role="server-markdown-fallback" class="whitespace-pre-wrap">
-                              {reading_node.body_content}
-                            </div>
-                          </div>
-                        </article>
-                      </div>
-                    <% end %>
-                  <% end %>
-
-                  <div class="mt-6 grid grid-cols-[auto_auto_minmax(0,1fr)_auto] items-center gap-2 border-t border-slate-200 pt-3">
-                    <button
-                      id={"reader-bookmark-node-#{reading_node.id}"}
-                      type="button"
-                      phx-click={if(bookmarked?, do: "unnote", else: "note")}
-                      phx-value-node={reading_node.id}
-                      aria-label={if(bookmarked?, do: "Remove bookmark", else: "Save for later")}
-                      aria-pressed={to_string(bookmarked?)}
-                      title={if(bookmarked?, do: "Remove bookmark", else: "Save for later")}
-                      class={[
-                        "inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-700",
-                        if(bookmarked?,
-                          do: "border-cyan-300 bg-cyan-100 text-cyan-900 hover:bg-cyan-200",
-                          else:
-                            "border-slate-200 bg-white text-slate-600 hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-900"
-                        )
-                      ]}
-                    >
-                      <.icon
-                        name={if(bookmarked?, do: "hero-bookmark-solid", else: "hero-bookmark")}
-                        class="h-4 w-4"
-                      />
-                      <span>{if(bookmarked?, do: "Saved", else: "Save for later")}</span>
-                    </button>
-
-                    <button
-                      :if={node_highlight_count > 0}
-                      id={"reader-node-#{reading_node.id}-highlights"}
-                      type="button"
-                      phx-click="toggle_node_highlights"
-                      phx-value-node-id={reading_node.id}
-                      aria-expanded={to_string(@node_highlights_open == reading_node.id)}
-                      aria-controls={"reader-node-#{reading_node.id}-highlight-list"}
-                      class="group inline-flex items-center"
-                    >
-                      <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-800 transition group-hover:text-amber-950 group-focus-visible:outline group-focus-visible:outline-2 group-focus-visible:outline-offset-2 group-focus-visible:outline-amber-600">
-                        <.icon name="hero-pencil" class="h-4 w-4" />
-                        Show {node_highlight_count} {if(node_highlight_count == 1,
-                          do: "highlight",
-                          else: "highlights"
-                        )}
-                        <.icon
-                          name="hero-chevron-down"
-                          class={[
-                            "h-3.5 w-3.5 transition-transform",
-                            @node_highlights_open == reading_node.id && "rotate-180"
-                          ]}
-                        />
-                      </span>
-                    </button>
-                    <ol
-                      :if={@node_highlights_open == reading_node.id}
-                      id={"reader-node-#{reading_node.id}-highlight-list"}
-                      class="col-span-full mt-1 divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white px-3 text-sm"
-                    >
-                      <%= for {highlight, highlight_index} <- Enum.with_index(node_highlights, 1) do %>
-                        <li class="grid grid-cols-[1.5rem_minmax(0,1fr)] items-start gap-2 py-3">
-                          <span class="pt-0.5 text-right text-xs font-semibold leading-5 text-amber-700">
-                            {highlight_index}.
-                          </span>
-                          <div class="min-w-0">
-                            <button
-                              id={"reader-highlight-link-#{highlight.id}"}
-                              type="button"
-                              phx-click={
-                                JS.push("highlight_clicked",
-                                  value: %{
-                                    id: highlight.id,
-                                    node_id: reading_node.id,
-                                    source: "node_list"
-                                  }
-                                )
-                              }
-                              class="w-full rounded-md text-left italic leading-5 text-slate-800 transition hover:text-amber-950"
-                              title="Jump to this highlighted passage"
-                            >
-                              {highlight_excerpt(highlight)}
-                            </button>
-                            <%= if highlight.links && highlight.links != [] do %>
-                              <div class="mt-2 flex flex-wrap items-center gap-1.5">
-                                <span class="text-[10px] font-semibold uppercase tracking-[0.12em] text-indigo-700">
-                                  Connected ideas
-                                </span>
-                                <%= for link <- highlight.links do %>
-                                  <button
-                                    id={"reader-highlight-link-#{highlight.id}-node-#{link.node_id}"}
-                                    type="button"
-                                    phx-click="navigate_to_node"
-                                    phx-value-node_id={link.node_id}
-                                    class="inline-flex max-w-full items-start gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-1.5 text-left text-[11px] font-medium leading-4 text-indigo-800 transition hover:border-indigo-300 hover:bg-indigo-100"
-                                    title="Open connected idea"
-                                  >
-                                    <.icon name="hero-link" class="mt-0.5 h-3 w-3 shrink-0" />
-                                    <span class="min-w-0 whitespace-normal break-words">
-                                      {highlight_link_title(@outline_nodes, link.node_id)}
-                                    </span>
-                                  </button>
-                                <% end %>
-                              </div>
-                            <% end %>
-                          </div>
-                        </li>
-                      <% end %>
-                    </ol>
-
-                    <p
-                      :if={node_highlight_count == 0}
-                      class="text-xs text-slate-500"
-                    >
-                      Select text to highlight passages.
-                    </p>
-
-                    <%= if reading_node.class == "answer" do %>
-                      <% challenge_label = challenge_action_label(reading_node) %>
-                      <.link
-                        id={"outline-reading-node-#{reading_node.id}-ask"}
-                        navigate={
-                          graph_editor_path(@graph_struct, reading_node.id, [
-                            {"focus", "ask"} | @nav_params
-                          ])
-                        }
-                        class="group col-start-4 row-start-1 hidden h-8 shrink-0 items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-700 transition hover:border-teal-400 hover:bg-teal-50 hover:text-teal-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600 md:inline-flex"
-                        data-view-transition="mode-switch"
-                        data-view-transition-direction="graph"
-                        title={"#{challenge_label} from this point"}
-                      >
-                        <.icon name="hero-scale" class="h-4 w-4 text-slate-500" />
-                        <span>{challenge_label}</span>
-                        <span class="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-teal-600 text-white transition group-hover:translate-x-0.5 group-hover:bg-teal-700">
-                          <.icon name="hero-arrow-right-solid" class="h-3.5 w-3.5" />
-                        </span>
-                      </.link>
-                    <% end %>
-                  </div>
-                <% end %>
-              </article>
-            <% end %>
-          </section>
-
-          <%= cond do %>
-            <% @paths_filtered? -> %>
-            <% @next_choices != [] -> %>
-              <section
-                id="outline-next-choices"
-                class="rounded-[1.65rem] border border-slate-200 bg-white p-4 shadow-sm sm:rounded-2xl sm:p-6"
-              >
-                <h3 class="text-xl font-semibold tracking-tight text-slate-950">
-                  Choose a path from here
-                </h3>
-                <p class="mt-2 text-sm leading-6 text-slate-500">
-                  {next_choices_message(@reading_terminal, @node)}
-                </p>
-
-                <div class="mt-5 grid gap-3 sm:grid-cols-2">
-                  <%= for choice <- @next_choices do %>
-                    <DialecticWeb.PathActionCardComp.path_action_card
-                      id={"next-choice-#{choice.id}"}
-                      patch={
-                        graph_path(
-                          @graph_struct,
-                          choice.id,
-                          reader_nav_params(@nav_params, @path_focus_ids)
-                        )
-                      }
-                      title={choice.title}
-                      node_class={choice.class}
-                    />
-                  <% end %>
-                </div>
-              </section>
-            <% true -> %>
-              <section
-                id="outline-end-state"
-                class="overflow-hidden rounded-[1.75rem] border border-slate-200 bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950 p-6 text-white shadow-[0_18px_40px_rgba(15,23,42,0.18)]"
-              >
-                <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                  <div class="max-w-2xl">
-                    <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-200/80">
-                      Continue this thread
-                    </p>
-                    <h3 class="mt-2 text-xl font-semibold tracking-tight text-white">
-                      This path ends here for now.
-                    </h3>
-                    <p class="mt-2 text-sm leading-6 text-slate-300">
-                      If you want to keep exploring this line of thought, open the editor and add
-                      the next question or answer from this endpoint.
-                    </p>
-                    <%= if @can_edit do %>
-                      <p class="mt-3 text-xs font-medium text-slate-400 lg:hidden">
-                        Continue this thread in the editor on desktop.
-                      </p>
-                    <% else %>
-                      <p class="mt-3 text-xs font-medium text-amber-200/90">
-                        This grid is read only, so only the owner can continue it in the editor.
-                      </p>
-                    <% end %>
-                  </div>
-
-                  <%= if @can_edit && @reading_terminal do %>
-                    <.link
-                      id="outline-end-editor-link"
-                      navigate={
-                        graph_editor_path(@graph_struct, @reading_terminal.id, @nav_params)
-                      }
-                      class="group hidden h-11 shrink-0 items-center gap-2.5 rounded-full border border-sky-300/35 bg-sky-400/10 px-4 text-sm font-medium text-sky-100 shadow-sm transition hover:border-sky-200/60 hover:bg-sky-400/15 lg:inline-flex"
-                      data-view-transition="mode-switch"
-                      data-view-transition-direction="graph"
-                    >
-                      <.icon name="hero-squares-2x2" class="h-4 w-4" />
-                      <span>Open editor to continue</span>
-                      <.icon
-                        name="hero-arrow-right"
-                        class="h-4 w-4 transition group-hover:translate-x-0.5"
-                      />
-                    </.link>
-                  <% end %>
-                </div>
-              </section>
-          <% end %>
-
-          <% inactive_branches = Enum.reject(@compare_branches, & &1.active?) %>
-          <% compare_section_hidden? =
-            @compare_context && @reading_terminal &&
-              @compare_context.root.id == @reading_terminal.id %>
-          <%= if !@paths_filtered? && @compare_context && inactive_branches != [] && !compare_section_hidden? do %>
-            <section
-              id="outline-branch-compare"
-              class="rounded-[1.65rem] border border-slate-200 bg-white p-4 shadow-sm sm:rounded-2xl sm:p-6"
-            >
-              <h3 class="text-xl font-semibold tracking-tight text-slate-950">
-                Other paths you could read
-              </h3>
-              <p class="mt-2 text-sm leading-6 text-slate-500">
-                Earlier, at <span class="font-medium text-slate-700">{@compare_context.root.title}</span>,
-                the conversation split. If this is not the thread you want, you can switch to {pluralize(
-                  length(inactive_branches),
-                  " the other path",
-                  " one of the other paths"
-                )} below.
-              </p>
-
-              <div class="mt-5 grid gap-3 sm:grid-cols-2">
-                <%= for branch <- inactive_branches do %>
-                  <DialecticWeb.PathActionCardComp.path_action_card
-                    id={"branch-compare-card-#{branch.id}"}
-                    patch={
-                      graph_path(
-                        @graph_struct,
-                        branch.id,
-                        reader_nav_params(@nav_params, @path_focus_ids)
-                      )
-                    }
-                    title={branch.lead.full_title}
-                    node_class={branch.lead.class}
-                  />
-                <% end %>
-              </div>
-            </section>
-          <% end %>
-        </div>
-      <% else %>
-        <div class="flex h-full items-center justify-center px-6 py-12 text-center">
-          <div class="max-w-md rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-slate-100">
-              <.icon name="hero-bars-3-bottom-left" class="h-7 w-7 text-slate-500" />
-            </div>
-            <h2 class="mt-4 text-lg font-semibold text-slate-900">No node selected</h2>
-            <p class="mt-2 text-sm leading-6 text-slate-500">
-              Pick a node from the outline to inspect its content and nearby branches.
-            </p>
-          </div>
-        </div>
-      <% end %>
-    </main>
-
-    <div
-      id="highlights-drawer"
-      data-right-drawer
-      class="fixed inset-y-0 right-0 z-50 w-0 overflow-hidden border-l border-slate-200 bg-slate-50 opacity-0 shadow-[-20px_0_45px_-32px_rgba(15,23,42,0.35)] transform translate-x-full transition-all duration-300 ease-in-out lg:absolute"
-    >
-      <div class="flex h-full flex-col">
-        <div class="flex items-center justify-between gap-4 border-b border-slate-200 bg-white px-5 py-4">
-          <div class="flex min-w-0 items-center gap-3">
-            <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200/70">
-              <.icon name="hero-pencil" class="h-5 w-5" />
-            </span>
-            <div class="min-w-0">
-              <h2 class="text-base font-semibold tracking-tight text-slate-950">Highlights</h2>
-              <p class="mt-0.5 text-xs leading-5 text-slate-500">
-                {length(@visible_highlights)} saved {if(length(@visible_highlights) == 1,
-                  do: "passage",
-                  else: "passages"
-                )} and connected ideas
-              </p>
-            </div>
           </div>
 
-          <button
-            id="reader-highlights-close"
-            type="button"
-            phx-click={
-              JS.dispatch("toggle-panel",
-                to: "#outline-layout",
-                detail: %{id: "highlights-drawer"}
-              )
-            }
-            class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600"
-            aria-label="Close highlights panel"
-            title="Close panel"
-          >
-            <.icon name="hero-x-mark" class="h-4 w-4" />
-          </button>
-        </div>
-
-        <div class="min-h-0 flex-1 overflow-y-auto px-4 pt-4 sm:px-5">
-          <.live_component
-            module={DialecticWeb.HighlightsPanelComp}
-            id="reader-highlights-panel"
-            highlights={@visible_highlights}
-            current_user={@current_user}
-            graph_struct={@graph_struct}
-            graph_id={@graph_id}
-            visible_node_ids={MapSet.to_list(@highlight_node_ids)}
-          />
+          <div class="min-h-0 flex-1 overflow-y-auto px-4 pt-4 sm:px-5">
+            <.live_component
+              module={DialecticWeb.HighlightsPanelComp}
+              id="reader-highlights-panel"
+              highlights={@visible_highlights}
+              current_user={@current_user}
+              graph_struct={@graph_struct}
+              graph_id={@graph_id}
+              visible_node_ids={MapSet.to_list(@highlight_node_ids)}
+            />
+          </div>
         </div>
       </div>
     </div>
+
+    <div phx-hook="SelectionActions" id="reader-selection-actions-hook">
+      <.live_component
+        module={DialecticWeb.SelectionActionsComp}
+        id="selection-actions"
+        current_user={@current_user}
+        graph_id={@graph_id}
+        can_edit={@can_edit}
+      />
+    </div>
   </div>
 
-  <div phx-hook="SelectionActions" id="reader-selection-actions-hook">
-    <.live_component
-      module={DialecticWeb.SelectionActionsComp}
-      id="selection-actions"
-      current_user={@current_user}
-      graph_id={@graph_id}
-      can_edit={@can_edit}
-      highlight_only
-    />
-  </div>
-</div>
+  <%= if assigns[:graph_id] do %>
+    <div id="outline-quick-search-container" phx-window-keydown="open_search_overlay" phx-key="k">
+      <%= if @show_search_overlay do %>
+        <button
+          type="button"
+          id="outline-quick-search-backdrop"
+          class="fixed inset-0 z-[9990] border-0 bg-black/20 p-0"
+          phx-click="close_search_overlay"
+          aria-label="Close search overlay"
+        ></button>
 
-<%= if assigns[:graph_id] do %>
-  <div id="outline-quick-search-container" phx-window-keydown="open_search_overlay" phx-key="k">
-    <%= if @show_search_overlay do %>
-      <button
-        type="button"
-        id="outline-quick-search-backdrop"
-        class="fixed inset-0 z-[9990] border-0 bg-black/20 p-0"
-        phx-click="close_search_overlay"
-        aria-label="Close search overlay"
-      ></button>
-
-      <div
-        id="outline-quick-search-panel"
-        class="fixed left-1/2 top-24 z-[9991] w-full max-w-md -translate-x-1/2 px-4"
-        phx-window-keydown="close_search_overlay"
-        phx-key="Escape"
-        phx-hook="SearchNav"
-      >
         <div
-          class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="outline-quick-search-title"
+          id="outline-quick-search-panel"
+          class="fixed left-1/2 top-24 z-[9991] w-full max-w-md -translate-x-1/2 px-4"
+          phx-window-keydown="close_search_overlay"
+          phx-key="Escape"
+          phx-hook="SearchNav"
         >
-          <div class="flex items-center gap-2 border-b border-gray-100 px-4 py-3">
-            <.icon name="hero-magnifying-glass" class="h-5 w-5 shrink-0 text-gray-400" />
-            <h2 id="outline-quick-search-title" class="sr-only">Search topics</h2>
+          <div
+            class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="outline-quick-search-title"
+          >
+            <div class="flex items-center gap-2 border-b border-gray-100 px-4 py-3">
+              <.icon name="hero-magnifying-glass" class="h-5 w-5 shrink-0 text-gray-400" />
+              <h2 id="outline-quick-search-title" class="sr-only">Search topics</h2>
 
-            <form id="outline-quick-search-form" phx-change="search_nodes" class="flex-1">
-              <input
-                type="text"
-                name="search_term"
-                id="outline-quick-search-input"
-                value={@search_term || ""}
-                placeholder="Search topics..."
-                class="w-full border-0 bg-transparent p-0 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-0"
-                autocomplete="off"
-                autofocus
-                phx-debounce="200"
-              />
-            </form>
+              <form id="outline-quick-search-form" phx-change="search_nodes" class="flex-1">
+                <input
+                  type="text"
+                  name="search_term"
+                  id="outline-quick-search-input"
+                  value={@search_term || ""}
+                  placeholder="Search topics..."
+                  class="w-full border-0 bg-transparent p-0 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-0"
+                  autocomplete="off"
+                  autofocus
+                  phx-debounce="200"
+                />
+              </form>
 
-            <kbd class="hidden items-center gap-1 rounded border border-gray-200 bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-400 sm:inline-flex">
-              esc
-            </kbd>
-          </div>
+              <kbd class="hidden items-center gap-1 rounded border border-gray-200 bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-400 sm:inline-flex">
+                esc
+              </kbd>
+            </div>
 
-          <%= if (@search_term || "") != "" do %>
-            <div class="max-h-72 overflow-y-auto">
-              <%= if length(@search_results || []) > 0 do %>
-                <ul class="py-1">
-                  <%= for node <- @search_results || [] do %>
-                    <li>
-                      <button
-                        id={"outline-search-result-#{node.id}"}
-                        type="button"
-                        phx-click="search_result_clicked"
-                        phx-value-id={node.id}
-                        class="w-full cursor-pointer px-4 py-2.5 text-left transition-colors hover:bg-indigo-50 focus:bg-indigo-50 focus:outline-none"
-                      >
-                        <div class="flex items-center gap-2">
-                          <span class={[
-                            "inline-block h-2 w-2 shrink-0 rounded-full",
-                            node.class == "question" && "bg-sky-400",
-                            node.class == "user" && "bg-sky-400",
-                            node.class == "thesis" && "bg-emerald-400",
-                            node.class == "antithesis" && "bg-rose-400",
-                            node.class == "synthesis" && "bg-purple-400",
-                            node.class == "ideas" && "bg-orange-400",
-                            node.class == "learning_plan" && "bg-indigo-500",
-                            node.class == "origin" && "bg-slate-400",
-                            node.class not in ~w(question user thesis antithesis synthesis ideas learning_plan origin) &&
-                              "bg-gray-400"
-                          ]} />
-                          <span class="shrink-0 text-xs text-gray-400">
-                            {node.class}
-                          </span>
-                        </div>
-
-                        <div class="mt-0.5 text-sm text-gray-900 truncate">
-                          {Map.get(node, :full_title) || Map.get(node, :title)}
-                        </div>
-
-                        <%= if Map.get(node, :search_preview) do %>
-                          <div class="mt-1.5 flex items-start gap-2 text-left">
-                            <span class="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-gray-500">
-                              {Map.get(node, :search_preview_label)}
+            <%= if (@search_term || "") != "" do %>
+              <div class="max-h-72 overflow-y-auto">
+                <%= if @search_results != [] do %>
+                  <ul class="py-1">
+                    <%= for node <- @search_results do %>
+                      <li>
+                        <button
+                          id={"outline-search-result-#{node.id}"}
+                          type="button"
+                          phx-click="search_result_clicked"
+                          phx-value-id={node.id}
+                          class="w-full cursor-pointer px-4 py-2.5 text-left transition-colors hover:bg-indigo-50 focus:bg-indigo-50 focus:outline-none"
+                        >
+                          <div class="flex items-center gap-2">
+                            <span class={[
+                              "inline-block h-2 w-2 shrink-0 rounded-full",
+                              node.class == "question" && "bg-sky-400",
+                              node.class == "user" && "bg-sky-400",
+                              node.class == "thesis" && "bg-emerald-400",
+                              node.class == "antithesis" && "bg-rose-400",
+                              node.class == "synthesis" && "bg-purple-400",
+                              node.class == "ideas" && "bg-orange-400",
+                              node.class == "learning_plan" && "bg-indigo-500",
+                              node.class == "origin" && "bg-slate-400",
+                              node.class not in ~w(question user thesis antithesis synthesis ideas learning_plan origin) &&
+                                "bg-gray-400"
+                            ]} />
+                            <span class="shrink-0 text-xs text-gray-400">
+                              {node.class}
                             </span>
-                            <p class="line-clamp-2 text-xs leading-5 text-gray-500">
-                              {Map.get(node, :search_preview)}
-                            </p>
                           </div>
-                        <% end %>
-                      </button>
-                    </li>
-                  <% end %>
-                </ul>
-              <% else %>
-                <div class="px-4 py-6 text-center">
-                  <p class="text-sm text-gray-500">No topics found for "{@search_term}"</p>
-                </div>
-              <% end %>
-            </div>
-          <% else %>
-            <div class="px-4 py-4 text-center">
-              <p class="text-xs text-gray-400">Type to search across all topics</p>
-            </div>
-          <% end %>
-        </div>
-      </div>
-    <% end %>
-  </div>
-<% end %>
 
-<.live_component
-  module={DialecticWeb.ShareModalComp}
-  id="outline-share-modal"
-  show={@show_share_modal}
-  graph_struct={@graph_struct}
-  current_user={@current_user}
-  selected_node={@share_node}
-  selected_highlight={@selected_share_highlight}
-  share_node={true}
-  share_target={:reader}
-  reader_path_endpoint={List.last(@path_focus_ids)}
-  show_preview={false}
-/>
+                          <div class="mt-0.5 text-sm text-gray-900 truncate">
+                            {Map.get(node, :full_title) || Map.get(node, :title)}
+                          </div>
+
+                          <%= if Map.get(node, :search_preview) do %>
+                            <div class="mt-1.5 flex items-start gap-2 text-left">
+                              <span class="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-gray-500">
+                                {Map.get(node, :search_preview_label)}
+                              </span>
+                              <p class="line-clamp-2 text-xs leading-5 text-gray-500">
+                                {Map.get(node, :search_preview)}
+                              </p>
+                            </div>
+                          <% end %>
+                        </button>
+                      </li>
+                    <% end %>
+                  </ul>
+                <% else %>
+                  <div class="px-4 py-6 text-center">
+                    <p class="text-sm text-gray-500">No topics found for "{@search_term}"</p>
+                  </div>
+                <% end %>
+              </div>
+            <% else %>
+              <div class="px-4 py-4 text-center">
+                <p class="text-xs text-gray-400">Type to search across all topics</p>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <.live_component
+    module={DialecticWeb.ShareModalComp}
+    id="outline-share-modal"
+    show={@show_share_modal}
+    graph_struct={@graph_struct}
+    current_user={@current_user}
+    selected_node={@share_node}
+    selected_highlight={@selected_share_highlight}
+    share_node={true}
+    share_target={:reader}
+    reader_path_endpoint={List.last(@path_focus_ids)}
+    show_preview={false}
+  />
+</Layouts.app>

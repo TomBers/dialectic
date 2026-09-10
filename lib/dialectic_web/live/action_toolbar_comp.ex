@@ -51,6 +51,7 @@ defmodule DialecticWeb.ActionToolbarComp do
         id={"node-inquiry-actions-#{@node.id}"}
         context={:node}
         node={@node}
+        user={@user}
         graph_id={@graph_id}
         can_edit={@can_edit}
         current_user={@current_user}

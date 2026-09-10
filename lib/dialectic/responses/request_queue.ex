@@ -40,6 +40,19 @@ defmodule Dialectic.Responses.RequestQueue do
     end
   end
 
+  def pending_node_ids(graph) do
+    workers = Enum.map([LLMWorker, LocalWorker], &Oban.Worker.to_string/1)
+
+    from(job in Oban.Job,
+      where: job.worker in ^workers and job.state in ^@active_states,
+      where: fragment("?->>'graph' = ?", job.args, ^graph),
+      select: fragment("?->>'to_node'", job.args)
+    )
+    |> Repo.all()
+    |> MapSet.new()
+    |> MapSet.delete(nil)
+  end
+
   def run_local(params) do
     Logger.debug(fn ->
       "[RequestQueue] Queueing LOCAL job for graph=#{inspect(params.graph)} node=#{inspect(params.to_node)}"
@@ -71,6 +84,7 @@ defmodule Dialectic.Responses.RequestQueue do
           "[RequestQueue] LOCAL job inserted job_id=#{oban_job.id} for graph=#{inspect(params.graph)} node=#{inspect(params.to_node)}"
         end)
 
+        broadcast_pending(params.graph)
         {:ok, oban_job}
 
       {:error, reason} = error ->
@@ -118,6 +132,7 @@ defmodule Dialectic.Responses.RequestQueue do
           "[RequestQueue] LLM job inserted job_id=#{oban_job.id} for graph=#{inspect(params.graph)} node=#{inspect(params.to_node)}"
         end)
 
+        broadcast_pending(params.graph)
         {:ok, oban_job}
 
       {:error, :too_many_active_requests} = error ->
@@ -143,6 +158,14 @@ defmodule Dialectic.Responses.RequestQueue do
 
         error
     end
+  end
+
+  defp broadcast_pending(graph) do
+    Phoenix.PubSub.broadcast(
+      Dialectic.PubSub,
+      "graph_update:#{graph}",
+      {:other_user_change, self()}
+    )
   end
 
   @doc false

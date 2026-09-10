@@ -1,5 +1,6 @@
 defmodule DialecticWeb.WorkspaceBarComp do
   use DialecticWeb, :html
+  alias DialecticWeb.ColUtils
 
   attr :id, :string, default: "workspace-bar"
   attr :mode, :atom, required: true
@@ -294,13 +295,18 @@ defmodule DialecticWeb.WorkspaceBarComp do
 
   defp highlights_button_classes(true) do
     [
-      "relative inline-flex h-8 w-8 shrink-0 items-center justify-center gap-1.5 overflow-visible rounded-lg border border-transparent bg-slate-50 text-xs font-semibold text-slate-600 transition duration-150 sm:h-7 sm:w-auto sm:bg-transparent sm:px-2",
-      "hover:bg-slate-100 hover:text-slate-950"
+      "relative inline-flex h-8 w-8 shrink-0 items-center justify-center gap-1.5 overflow-visible rounded-lg border border-transparent text-xs font-semibold transition duration-150 sm:h-7 sm:w-auto sm:px-2",
+      ColUtils.tool_color_class("highlight"),
+      "hover:bg-amber-100 hover:text-amber-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-600"
     ]
   end
 
   defp highlights_button_classes(false) do
-    [action_button_classes(false), "relative overflow-visible"]
+    [
+      "relative inline-flex h-9 w-9 shrink-0 items-center justify-center gap-1.5 overflow-visible rounded-xl border border-transparent text-sm font-semibold transition duration-150 sm:w-auto sm:justify-start sm:px-3",
+      ColUtils.tool_color_class("highlight"),
+      "hover:bg-amber-100 hover:text-amber-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-600"
+    ]
   end
 
   defp action_label_classes(true), do: "hidden"
@@ -309,11 +315,11 @@ defmodule DialecticWeb.WorkspaceBarComp do
   defp highlights_label_classes(false), do: "hidden sm:inline"
 
   defp highlight_count_classes(true) do
-    "absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-slate-900 px-1 text-[10px] font-semibold leading-none text-white ring-2 ring-white sm:static sm:ml-0.5 sm:h-auto sm:min-w-[1.25rem] sm:bg-slate-100 sm:px-2 sm:py-0.5 sm:text-[11px] sm:text-slate-600 sm:ring-1 sm:ring-inset sm:ring-slate-200"
+    "absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-700 px-1 text-[10px] font-semibold leading-none text-white ring-2 ring-white sm:static sm:ml-0.5 sm:h-auto sm:min-w-[1.25rem] sm:bg-amber-100 sm:px-2 sm:py-0.5 sm:text-[11px] sm:text-amber-800 sm:ring-1 sm:ring-inset sm:ring-amber-200"
   end
 
   defp highlight_count_classes(false) do
-    "absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-slate-900 px-1 text-[10px] font-semibold leading-none text-white ring-2 ring-white sm:static sm:ml-1 sm:h-auto sm:min-w-[1.25rem] sm:bg-slate-100 sm:px-2 sm:py-0.5 sm:text-[11px] sm:text-slate-600 sm:ring-1 sm:ring-inset sm:ring-slate-200"
+    "absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-700 px-1 text-[10px] font-semibold leading-none text-white ring-2 ring-white sm:static sm:ml-1 sm:h-auto sm:min-w-[1.25rem] sm:bg-amber-100 sm:px-2 sm:py-0.5 sm:text-[11px] sm:text-amber-800 sm:ring-1 sm:ring-inset sm:ring-amber-200"
   end
 
   defp kbd_classes(true) do

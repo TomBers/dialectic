@@ -84,7 +84,12 @@ defmodule DialecticWeb.InquiryActionsComp do
      |> assign_new(:owner_id, fn -> assigns[:id] end)
      |> assign_new(:advanced_tools_open, fn -> false end)
      |> assign_new(:highlight_only, fn -> false end)
-     |> assign_new(:form, fn -> nil end)
+     |> assign_new(:node, fn -> nil end)
+     |> assign_new(:current_user, fn -> nil end)
+     |> assign_new(:user, fn -> nil end)
+     |> assign_new(:form, fn ->
+       to_form(Dialectic.Graph.Vertex.changeset(%Dialectic.Graph.Vertex{}))
+     end)
      |> assign_new(:prompt_mode, fn -> "university" end)
      |> assign_new(:ask_question, fn -> true end)}
   end
@@ -104,260 +109,230 @@ defmodule DialecticWeb.InquiryActionsComp do
 
     ~H"""
     <div id={"#{@id}-content"} class="min-w-0">
-      <%= if @context == :node do %>
-        <div data-keyboard-composer class="space-y-2.5 scroll-mt-6 scroll-mb-6">
-          <div
-            id={"node-custom-inquiry-#{@node.id}"}
-            phx-click-away={if(@advanced_tools_open, do: "close_advanced_tools")}
-            phx-target={@myself}
-            class="relative rounded-2xl border border-slate-300 bg-white p-2 shadow-sm transition focus-within:border-indigo-400 focus-within:ring-4 focus-within:ring-indigo-100/70"
+      <div data-keyboard-composer class="space-y-2.5 scroll-mt-6 scroll-mb-6">
+        <div
+          :if={!@highlight_only}
+          id={
+            if(@context == :node,
+              do: "node-custom-inquiry-#{@node.id}",
+              else: "selection-custom-inquiry-#{@owner_id}"
+            )
+          }
+          class={[
+            "relative min-w-0",
+            @context == :node &&
+              "rounded-xl border border-slate-300 bg-white p-2 transition focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-100/70"
+          ]}
+        >
+          <.live_component
+            module={DialecticWeb.AskFormComp}
+            id={
+              if(@context == :node, do: "global-chat-form", else: "selection-input-form-#{@owner_id}")
+            }
+            input_id={
+              if(@context == :node,
+                do: "global-chat-input",
+                else: "selection-question-input-#{@owner_id}"
+              )
+            }
+            context={@context}
+            form={@form}
+            graph_id={@graph_id}
+            current_user={@current_user}
+            node={@node}
+            show_context={false}
+            guided_learning?={@context in [:node, :answer]}
+            embedded
+            show_tools
+            tools_open={@advanced_tools_open}
+            tools_target={if(@context == :node, do: @myself)}
+            tools_button_id={advanced_toggle_id(assigns)}
+            tools_menu_id={tools_menu_id(assigns)}
+            query_origin={if(@context == :node, do: "node_action_bar")}
+            disabled={!@can_edit}
           >
-            <.live_component
-              module={DialecticWeb.AskFormComp}
-              id="global-chat-form"
-              form={@form}
-              ask_question={@ask_question}
-              prompt_mode={@prompt_mode}
-              graph_id={@graph_id}
-              current_user={@current_user}
-              node={@node}
-              show_context={false}
-              embedded
-              show_tools
-              tools_open={@advanced_tools_open}
-              tools_target={@myself}
-              tools_button_id={advanced_toggle_id(assigns)}
-              query_origin="node_action_bar"
-              placeholder="Ask anything about this response..."
-              disabled={!@can_edit}
-            />
-
+            <:quick_actions>
+              <%= if @context in [:selection, :answer] do %>
+                <.tool_button
+                  :if={@context == :answer}
+                  id={"answer-action-bookmark-#{@owner_id}"}
+                  icon="hero-bookmark"
+                  label="Bookmark"
+                  tone="highlight"
+                  shortcut="b"
+                  selection_action="bookmark"
+                  pressed={false}
+                  rest={%{"data-answer-bookmark" => "true"}}
+                  disabled={false}
+                  compact
+                />
+                <.tool_button
+                  :if={@context == :selection}
+                  id={"selection-action-highlight-#{@owner_id}"}
+                  icon="hero-bookmark"
+                  label="Highlight"
+                  tone="highlight"
+                  shortcut="h"
+                  selection_action="highlight_only"
+                  disable_if_highlight="true"
+                  disabled={!@can_edit}
+                  compact
+                />
+                <.tool_button
+                  id={"selection-action-explain-#{@owner_id}"}
+                  icon="hero-question-mark-circle"
+                  label="Explain"
+                  tone="question"
+                  shortcut="e"
+                  selection_action="explain"
+                  disable_if_links="explain"
+                  disabled={!@can_edit}
+                  compact
+                />
+                <.tool_button
+                  id={action_id(assigns, "pros-cons")}
+                  icon="hero-scale"
+                  label="Test both sides"
+                  tone="thesis"
+                  shortcut="a"
+                  selection_action="pros_cons"
+                  disable_if_links="pro,con"
+                  disabled={!@can_edit}
+                  compact
+                />
+                <.tool_button
+                  id={action_id(assigns, "related")}
+                  icon="hero-light-bulb"
+                  label="Related ideas"
+                  tone="ideas"
+                  shortcut="r"
+                  selection_action="related_ideas"
+                  disable_if_links="related_idea"
+                  disabled={!@can_edit}
+                  compact
+                />
+              <% else %>
+                <.tool_button
+                  id={action_id(assigns, "pros-cons")}
+                  icon="hero-scale"
+                  label="Test both sides"
+                  tone="thesis"
+                  shortcut="a"
+                  event="node_branch"
+                  node_id={@node.id}
+                  disabled={!@can_edit}
+                  compact
+                />
+                <.tool_button
+                  id={action_id(assigns, "connect")}
+                  icon="hero-arrows-pointing-in"
+                  label="Synthesis"
+                  tone="synthesis"
+                  shortcut="c"
+                  event={
+                    Phoenix.LiveView.JS.dispatch("toggle-panel",
+                      to: "#graph-layout",
+                      detail: %{id: "combine-drawer"}
+                    )
+                    |> Phoenix.LiveView.JS.push("node_combine")
+                  }
+                  node_id={@node.id}
+                  disabled={!@can_edit}
+                  compact
+                />
+                <.tool_button
+                  id={action_id(assigns, "related")}
+                  icon="hero-light-bulb"
+                  label="Related ideas"
+                  tone="ideas"
+                  shortcut="r"
+                  event="node_related_ideas"
+                  node_id={@node.id}
+                  disabled={!@can_edit}
+                  compact
+                />
+                <% noted? = @user in (Map.get(@node, :noted_by) || []) %>
+                <.tool_button
+                  id={"graph-bookmark-node-#{@node.id}"}
+                  icon={if(noted?, do: "hero-bookmark-solid", else: "hero-bookmark")}
+                  label={if(noted?, do: "Bookmarked", else: "Bookmark")}
+                  tone="highlight"
+                  shortcut="b"
+                  event={if(noted?, do: "unnote", else: "note")}
+                  pressed={noted?}
+                  rest={
+                    %{
+                      "phx-value-node" => @node.id,
+                      "aria-label" => if(noted?, do: "Remove bookmark", else: "Bookmark this node"),
+                      "title" => if(noted?, do: "Remove bookmark", else: "Bookmark this node")
+                    }
+                  }
+                  disabled={false}
+                  compact
+                />
+              <% end %>
+            </:quick_actions>
             <div
-              :if={@advanced_tools_open}
-              id={"node-tools-popover-#{@node.id}"}
-              class="absolute inset-x-0 top-full z-30 mt-2 rounded-2xl border border-slate-200 bg-white p-3 shadow-xl ring-1 ring-slate-950/5"
+              id={tools_menu_id(assigns)}
+              role="group"
+              aria-label="Thinking tools"
+              phx-hook={if(@context == :node, do: "ToolsMenu")}
+              phx-update="ignore"
+              hidden={@context in [:selection, :answer] || !@advanced_tools_open}
+              data-open={to_string(@advanced_tools_open)}
+              data-selection-advanced-tools={@context in [:selection, :answer]}
+              data-trigger-id={advanced_toggle_id(assigns)}
+              phx-target={if(@context == :node, do: @myself)}
+              class="min-w-0 pt-1"
             >
               <.advanced_tools
-                context={:node}
+                context={@context}
                 sections={@critical_tool_sections}
                 graph_id={@graph_id}
                 node={@node}
-                can_edit={@can_edit}
-              />
-            </div>
-          </div>
-
-          <div id={"node-suggestions-#{@node.id}"} class="grid grid-cols-3 gap-2 px-1">
-            <.node_chip
-              id={action_id(assigns, "pros-cons")}
-              icon="hero-scale"
-              label="Test both sides"
-              shortcut="a"
-              accent="emerald"
-              event="node_branch"
-              node_id={@node.id}
-              disabled={!@can_edit}
-            />
-            <.node_chip
-              id={action_id(assigns, "connect")}
-              icon="hero-arrows-pointing-in"
-              label="Connect"
-              shortcut="c"
-              accent="violet"
-              event={
-                Phoenix.LiveView.JS.dispatch("toggle-panel",
-                  to: "#graph-layout",
-                  detail: %{id: "combine-drawer"}
-                )
-                |> Phoenix.LiveView.JS.push("node_combine")
-              }
-              node_id={@node.id}
-              disabled={!@can_edit}
-            />
-            <.node_chip
-              id={action_id(assigns, "related")}
-              icon="hero-light-bulb"
-              label="Related ideas"
-              shortcut="r"
-              accent="orange"
-              event="node_related_ideas"
-              node_id={@node.id}
-              disabled={!@can_edit}
-            />
-          </div>
-          <p class="px-1 text-[10px] text-slate-500">
-            Esc to leave the form · Hold Option/Alt + Shift with A / C / R to use tools when not typing
-          </p>
-        </div>
-      <% else %>
-        <div data-keyboard-composer class="space-y-3">
-          <div
-            :if={!@highlight_only}
-            class="relative rounded-2xl border border-slate-300 bg-white p-2 shadow-sm transition focus-within:border-indigo-400 focus-within:ring-4 focus-within:ring-indigo-100/70"
-          >
-            <form
-              id={"selection-input-form-#{@owner_id}"}
-              data-selection-input-form
-              phx-hook="AskFormShortcuts"
-              class="min-w-0"
-            >
-              <textarea
-                name="question"
-                data-selection-input
-                rows="2"
-                phx-hook="AutoExpandTextarea"
-                id={"selection-question-input-#{@owner_id}"}
-                class="max-h-[8rem] min-h-[4.5rem] w-full resize-none border-0 bg-transparent px-2.5 py-2 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:ring-0"
-                placeholder="Ask anything about this passage..."
-                aria-label="Ask about the selected passage"
-                autocomplete="off"
-                disabled={!@can_edit}
-              ></textarea>
-
-              <div class="mt-1 flex flex-col gap-3 border-t border-slate-100 px-1 pb-1 pt-2">
-                <div class="flex min-w-0 items-center gap-1">
-                  <button
-                    id={advanced_toggle_id(assigns)}
-                    type="button"
-                    data-selection-advanced-toggle="true"
-                    aria-expanded="false"
-                    class="inline-flex h-8 shrink-0 items-center gap-1 rounded-full px-2.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300"
-                  >
-                    <.icon name="hero-plus" class="h-3.5 w-3.5" />
-                    <span>Tools</span>
-                  </button>
-
-                  <span
-                    data-selection-question-count
-                    class="hidden rounded-full bg-indigo-50 px-2 py-1 text-[10px] font-medium text-indigo-700 ring-1 ring-indigo-200"
-                  ></span>
-                  <span
-                    data-selection-comment-count
-                    class="hidden rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-medium text-emerald-700 ring-1 ring-emerald-200"
-                  ></span>
-                </div>
-
-                <div class="grid w-full grid-cols-2 gap-3">
-                  <button
-                    id={"selection-submit-comment-#{@owner_id}"}
-                    type="submit"
-                    data-selection-input-submit
-                    data-selection-submit-action="comment"
-                    data-shortcut-action="comment"
-                    disabled={!@can_edit}
-                    class="inline-flex min-h-16 min-w-0 flex-col items-center justify-center gap-2 rounded-xl border border-slate-300 bg-slate-50 px-3 py-3 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-slate-400 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-row sm:justify-between"
-                    title="Add your comment without an AI reply"
-                  >
-                    <span class="inline-flex items-center gap-2">
-                      <.icon name="hero-chat-bubble-left-ellipsis" class="h-4 w-4" />
-                      <span>Comment</span>
-                    </span>
-                    <.shortcut_keycap shift prominent />
-                  </button>
-                  <button
-                    id={"selection-submit-ask-#{@owner_id}"}
-                    type="submit"
-                    data-selection-input-submit
-                    data-selection-submit-action="ask_question"
-                    data-shortcut-action="ask"
-                    disabled={!@can_edit}
-                    class="inline-flex min-h-16 min-w-0 flex-col items-center justify-center gap-2 rounded-xl border border-slate-950 bg-slate-950 px-3 py-3 text-sm font-semibold text-white shadow-md transition hover:border-slate-700 hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-row sm:justify-between"
-                    title="Ask and get an AI response"
-                  >
-                    <span>Ask</span>
-                    <.shortcut_keycap dark prominent />
-                  </button>
-                </div>
-              </div>
-            </form>
-
-            <div
-              data-selection-advanced-tools="true"
-              class="mt-3 hidden rounded-2xl border border-slate-200 bg-slate-50/70 p-3 shadow-inner"
-            >
-              <.advanced_tools
-                context={:selection}
-                sections={@critical_tool_sections}
                 owner_id={@owner_id}
                 can_edit={@can_edit}
               />
+              <button
+                id={"#{tools_menu_id(assigns)}-done"}
+                type="button"
+                data-tools-close
+                class="inquiry-disclosure mt-2 py-1.5 pl-1.5 pr-3"
+              >
+                <span class="inquiry-disclosure-icon">
+                  <.icon name="hero-chevron-up" class="h-4 w-4" />
+                </span>
+                Hide tools
+              </button>
             </div>
-          </div>
-
-          <div class={[
-            "grid gap-2",
-            if(@highlight_only, do: "grid-cols-1", else: "grid-cols-2")
-          ]}>
-            <.action_card
-              :if={!@highlight_only}
-              id={"selection-action-explain-#{@owner_id}"}
-              icon="hero-question-mark-circle"
-              label="Explain"
-              accent="sky"
-              shortcut="e"
-              selection_action="explain"
-              disable_if_links="explain"
-              disabled={!@can_edit}
-            />
-            <.action_card
-              id={"selection-action-highlight-#{@owner_id}"}
-              icon="hero-bookmark"
-              label="Highlight"
-              accent="amber"
-              shortcut="h"
-              selection_action="highlight_only"
-              disable_if_highlight="true"
-              disabled={!@can_edit}
-            />
-            <.action_card
-              :if={!@highlight_only}
-              id={action_id(assigns, "pros-cons")}
-              icon="hero-scale"
-              label="Test both sides"
-              accent="emerald"
-              shortcut="a"
-              selection_action="pros_cons"
-              disable_if_links="pro,con"
-              disabled={!@can_edit}
-            />
-            <.action_card
-              :if={!@highlight_only}
-              id={action_id(assigns, "related")}
-              icon="hero-light-bulb"
-              label="Related ideas"
-              accent="orange"
-              shortcut="r"
-              selection_action="related_ideas"
-              disable_if_links="related_idea"
-              disabled={!@can_edit}
-            />
-          </div>
+          </.live_component>
         </div>
-      <% end %>
+        <div :if={@highlight_only}>
+          <.tool_button
+            id={"selection-action-highlight-#{@owner_id}"}
+            icon="hero-bookmark"
+            label="Highlight"
+            tone="highlight"
+            description="Save this passage without an AI reply."
+            shortcut="h"
+            selection_action="highlight_only"
+            disable_if_highlight="true"
+            disabled={!@can_edit}
+          />
+        </div>
+        <p :if={!@highlight_only} class="hidden px-1 text-[10px] text-slate-500 md:block">
+          <%= if @context in [:selection, :answer] do %>
+            / to write · T for tools · Esc to leave the form, then close · Option/Alt + Shift + A / R / E / {if(
+              @context == :answer,
+              do: "B",
+              else: "H"
+            )} to use tools when not typing
+          <% else %>
+            T for tools · Esc to leave the form · Option/Alt + Shift + A / C / R / B to use tools when not typing
+          <% end %>
+        </p>
+      </div>
     </div>
-    """
-  end
-
-  defp node_chip(assigns) do
-    ~H"""
-    <button
-      id={@id}
-      type="button"
-      phx-click={@event}
-      data-reader-shortcut={@shortcut}
-      aria-keyshortcuts={"Alt+Shift+#{String.upcase(@shortcut)}"}
-      title={"#{@label} (Option/Alt+Shift+#{String.upcase(@shortcut)} when not typing)"}
-      phx-value-id={@node_id}
-      disabled={@disabled}
-      class={[
-        "inline-flex min-h-9 w-full min-w-0 items-center justify-center gap-1.5 rounded-xl border px-2 py-1.5 text-center text-xs font-semibold leading-tight shadow-sm transition focus-visible:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50",
-        node_chip_class(@accent)
-      ]}
-    >
-      <.icon name={@icon} class="h-3.5 w-3.5 shrink-0" />
-      <span>{@label}</span>
-      <.shortcut_keycap key={@shortcut} modifier="alt" shift />
-    </button>
     """
   end
 
@@ -367,114 +342,91 @@ defmodule DialecticWeb.InquiryActionsComp do
     ~H"""
     <div class="space-y-3">
       <div :for={section <- @sections} class="space-y-1.5">
-        <h4 class="px-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+        <h4 class="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
           {section.title}
         </h4>
-        <div class={[
-          "grid min-w-0 grid-cols-2 gap-1.5",
-          @context == :selection && "sm:grid-cols-3"
-        ]}>
-          <button
+        <div class="inquiry-tools-toolbar grid min-w-0 grid-cols-2 gap-1.5">
+          <.tool_button
             :for={tool <- section.tools}
             id={tool_id(assigns, tool.key)}
-            type="button"
-            phx-click={if(@context == :node, do: "node_#{tool.key}")}
-            phx-value-id={if(@context == :node, do: @node.id)}
-            data-selection-action={if(@context == :selection, do: tool.key)}
-            data-disable-if-links={if(@context == :selection, do: tool.key)}
+            event={if(@context == :node, do: "node_#{tool.key}")}
+            node_id={if(@context == :node, do: @node.id)}
+            selection_action={if(@context in [:selection, :answer], do: tool.key)}
+            disable_if_links={if(@context in [:selection, :answer], do: tool.key)}
+            icon={tool.icon}
+            label={tool.label}
+            tone={tool.key}
+            rest={%{"title" => tool.blurb}}
             disabled={!@can_edit}
-            class={[
-              "group flex min-w-0 cursor-pointer items-center gap-2 rounded-lg px-2 py-2 text-left shadow-sm transition hover:-translate-y-px hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 disabled:cursor-not-allowed disabled:opacity-50",
-              ColUtils.advanced_tool_surface_class(tool.key)
-            ]}
-          >
-            <span class={[
-              "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg shadow-sm ring-1 ring-inset ring-black/5",
-              ColUtils.advanced_tool_icon_class(tool.key)
-            ]}>
-              <.icon name={tool.icon} class="h-4 w-4" />
-            </span>
-            <span class="min-w-0">
-              <span class="block text-xs font-semibold leading-4 text-slate-900">
-                {tool.label}
-              </span>
-            </span>
-          </button>
+            compact
+          />
         </div>
       </div>
     </div>
     """
   end
 
-  defp action_card(assigns) do
+  defp tool_button(assigns) do
     assigns =
       assigns
       |> assign_new(:shortcut, fn -> nil end)
       |> assign_new(:selection_action, fn -> nil end)
       |> assign_new(:disable_if_links, fn -> nil end)
       |> assign_new(:disable_if_highlight, fn -> nil end)
+      |> assign_new(:event, fn -> nil end)
+      |> assign_new(:node_id, fn -> nil end)
+      |> assign_new(:description, fn -> nil end)
+      |> assign_new(:compact, fn -> false end)
+      |> assign_new(:pressed, fn -> nil end)
+      |> assign_new(:rest, fn -> %{} end)
 
     ~H"""
     <button
       id={@id}
       type="button"
+      phx-click={@event}
+      phx-value-id={@node_id}
+      aria-pressed={if(is_boolean(@pressed), do: to_string(@pressed))}
       aria-keyshortcuts={@shortcut && "Alt+Shift+#{String.upcase(@shortcut)}"}
       data-selection-action={@selection_action}
       data-reader-shortcut={@shortcut}
       data-disable-if-links={@disable_if_links}
       data-disable-if-highlight={@disable_if_highlight}
       disabled={@disabled}
+      {@rest}
       class={[
-        "group flex min-h-11 w-full min-w-0 cursor-pointer items-center gap-2 rounded-xl border px-3 py-2.5 text-left shadow-sm transition hover:-translate-y-px hover:shadow-md focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50",
-        action_surface_class(@accent)
+        "group/tool flex min-h-11 min-w-0 rounded-xl border bg-white text-left text-slate-700 transition duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-500 disabled:cursor-not-allowed disabled:opacity-50",
+        if(@compact,
+          do:
+            "inquiry-tool-compact aria-pressed:border-amber-300 aria-pressed:bg-amber-50 items-center gap-2 border-slate-200/80 py-1.5 pl-1.5 pr-3 shadow-sm shadow-slate-900/[0.03] hover:border-slate-300 hover:bg-slate-50",
+          else:
+            "w-full items-start gap-3 border-transparent p-2.5 hover:border-slate-200 hover:shadow-sm"
+        )
       ]}
     >
       <span class={[
-        "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg shadow-sm ring-1 ring-inset",
-        action_icon_class(@accent)
+        "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg",
+        ColUtils.tool_color_class(@tone)
       ]}>
-        <.icon name={@icon} class="h-[18px] w-[18px]" />
+        <.icon name={@icon} class="h-4 w-4" />
       </span>
-      <span class="min-w-0">
-        <span class="block text-sm font-semibold leading-5">{@label}</span>
+      <span class={[
+        "min-w-0 flex-1",
+        @compact && "flex items-center justify-between gap-2"
+      ]}>
+        <span data-tool-label class="block min-w-0 text-[13px] font-medium leading-5">{@label}</span>
+        <.shortcut_keycap
+          :if={@compact && @shortcut}
+          key={@shortcut}
+          modifier="alt"
+          shift
+        />
+        <span :if={@description} class="mt-0.5 block text-xs leading-4 text-slate-500">{@description}</span>
       </span>
-      <.shortcut_keycap :if={@shortcut} key={@shortcut} modifier="alt" shift />
+      <.shortcut_keycap :if={!@compact && @shortcut} key={@shortcut} modifier="alt" shift quiet />
     </button>
     """
   end
-
-  defp action_surface_class("sky"),
-    do:
-      "border-sky-200 bg-sky-50 text-sky-800 hover:border-sky-300 hover:bg-sky-100 focus-visible:ring-sky-300"
-
-  defp action_surface_class("amber"),
-    do:
-      "border-amber-200 bg-amber-50 text-amber-800 hover:border-amber-300 hover:bg-amber-100 focus-visible:ring-amber-300"
-
-  defp action_surface_class("emerald"),
-    do:
-      "border-emerald-200 bg-emerald-50 text-emerald-800 hover:border-emerald-300 hover:bg-emerald-100 focus-visible:ring-emerald-300"
-
-  defp action_surface_class("orange"),
-    do:
-      "border-orange-200 bg-orange-50 text-orange-800 hover:border-orange-300 hover:bg-orange-100 focus-visible:ring-orange-300"
-
-  defp action_icon_class("sky"), do: "bg-sky-100 text-sky-800 ring-sky-300/80"
-  defp action_icon_class("amber"), do: "bg-amber-100 text-amber-800 ring-amber-300/80"
-  defp action_icon_class("emerald"), do: "bg-emerald-100 text-emerald-800 ring-emerald-300/80"
-  defp action_icon_class("orange"), do: "bg-orange-100 text-orange-800 ring-orange-300/80"
-
-  defp node_chip_class("emerald"),
-    do:
-      "border-emerald-200 bg-emerald-50 text-emerald-800 hover:border-emerald-300 hover:bg-emerald-100 focus-visible:ring-emerald-300"
-
-  defp node_chip_class("violet"),
-    do:
-      "border-violet-200 bg-violet-50 text-violet-800 hover:border-violet-300 hover:bg-violet-100 focus-visible:ring-violet-300"
-
-  defp node_chip_class("orange"),
-    do:
-      "border-orange-200 bg-orange-50 text-orange-800 hover:border-orange-300 hover:bg-orange-100 focus-visible:ring-orange-300"
 
   defp action_id(%{context: :node, graph_id: graph_id, node: node}, action),
     do: "node-tool-#{action}-#{graph_id}-#{node.id}"
@@ -484,6 +436,9 @@ defmodule DialecticWeb.InquiryActionsComp do
 
   defp action_id(%{owner_id: owner_id}, "related"),
     do: "selection-action-related-#{owner_id}"
+
+  defp tools_menu_id(%{context: :node, node: node}), do: "node-tools-popover-#{node.id}"
+  defp tools_menu_id(%{owner_id: owner_id}), do: "selection-tools-popover-#{owner_id}"
 
   defp advanced_toggle_id(%{context: :node, graph_id: graph_id, node: node}),
     do: "node-tools-more-#{graph_id}-#{node.id}"

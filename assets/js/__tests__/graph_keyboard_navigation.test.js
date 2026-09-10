@@ -2,6 +2,7 @@ import { beforeEach, afterEach, it, expect, vi } from "vitest";
 import GraphKeyboardNavigation from "../graph_keyboard_navigation.js";
 let hook, grid, reader, input;
 beforeEach(() => {
+  vi.spyOn(navigator, "platform", "get").mockReturnValue("MacIntel");
   document.body.innerHTML = `<div id="workspace"><div id="cy-inner" tabindex="0"></div><div id="side-drawer-scroll" tabindex="0"><form phx-hook="AskFormShortcuts"><textarea></textarea></form></div></div>`;
   hook = { ...GraphKeyboardNavigation, el: document.querySelector("#workspace") };
   grid = document.querySelector("#cy-inner");
@@ -88,7 +89,7 @@ it("reveals the full composer and tools when focusing with slash", () => {
   expect(composer.scrollIntoView).toHaveBeenCalledWith({ block: "center", behavior: "instant" });
 });
 
-it.each(["a", "c", "r"])("activates %s only outside typing and respects disabled tools", (shortcut) => {
+it.each(["a", "c", "r", "b"])("activates %s only outside typing and respects disabled tools", (shortcut) => {
   const button = document.createElement("button");
   button.dataset.readerShortcut = shortcut;
   button.scrollIntoView = vi.fn();
@@ -100,6 +101,7 @@ it.each(["a", "c", "r"])("activates %s only outside typing and respects disabled
   expect(click).not.toHaveBeenCalled();
   key("Escape");
   expect(key(shortcut).defaultPrevented).toBe(false);
+  expect(key(shortcut, { metaKey: true }).defaultPrevented).toBe(false);
   expect(click).not.toHaveBeenCalled();
   key(shortcut, { altKey: true, shiftKey: true });
   expect(click).toHaveBeenCalledTimes(1);

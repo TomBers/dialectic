@@ -5,6 +5,7 @@ defmodule DialecticWeb.PathActionCardComp do
   attr :patch, :string, required: true
   attr :title, :string, required: true
   attr :node_class, :string, required: true
+  attr :loading, :boolean, default: false
   attr :action_label, :string, default: "Read this path"
 
   def path_action_card(assigns) do
@@ -30,6 +31,14 @@ defmodule DialecticWeb.PathActionCardComp do
         >
           {@title}
         </p>
+        <span
+          :if={@loading}
+          id={"#{@id}-loading"}
+          role="status"
+          class="mt-3 inline-flex items-center gap-2 text-sm font-medium text-indigo-700"
+        >
+          Generating response <DialecticWeb.GenerationComponents.thinking_dots />
+        </span>
       </div>
 
       <div

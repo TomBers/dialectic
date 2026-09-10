@@ -133,7 +133,10 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_params(params, _uri, socket) do
-    {:noreply, assign_reader_path(socket, params["path"])}
+    {:noreply,
+     socket
+     |> assign(:mobile_inquiry?, params["focus"] == "ask")
+     |> assign_reader_path(params["path"])}
   end
 
   @impl true
@@ -172,7 +175,7 @@ defmodule DialecticWeb.GraphLive do
           |> assign(token: params["token"])
           |> handle_initial_highlight(initial_highlight_id)
 
-        {:ok, socket}
+        {:ok, assign(socket, mobile_inquiry?: params["focus"] == "ask"), layout: false}
 
       {:error, error_message} ->
         socket =
@@ -1162,23 +1165,33 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  def handle_event("answer", %{"vertex" => %{"content" => ""}}, socket), do: {:noreply, socket}
+  def handle_event("validate_inquiry", %{"vertex" => %{"content" => content}} = params, socket) do
+    form =
+      %Vertex{}
+      |> Vertex.changeset(%{
+        "content" => content,
+        "guided_learning" => guided_learning_enabled?(params)
+      })
+      |> to_form()
+
+    {:noreply, assign(socket, form: form)}
+  end
 
   def handle_event("answer", %{"vertex" => %{"content" => answer}}, socket) do
     case GraphHelpers.handle_answer(socket, answer) do
       {:ok, graph_result, operation} ->
-        socket
-        |> push_event("analytics", %{event: "claim_added", params: %{entry_method: "post"}})
-        |> update_graph(graph_result, operation)
+        finish_posting_thought(socket, graph_result, operation)
 
       {:error, :locked} ->
         {:noreply, socket |> put_flash(:error, "This graph is locked")}
+
+      {:error, :invalid_comment_target} ->
+        {:noreply, put_flash(socket, :error, "Choose a response to add your comment.")}
+
+      {:error, :empty_content} ->
+        {:noreply, put_flash(socket, :error, "Write a comment or question first.")}
     end
   end
-
-  # Ignore empty submissions for both Ask (AI) and Post (comment-only) paths
-  def handle_event("reply-and-answer", %{"vertex" => %{"content" => ""}}, socket),
-    do: {:noreply, socket}
 
   def handle_event(
         "reply-and-answer",
@@ -1187,12 +1200,16 @@ defmodule DialecticWeb.GraphLive do
       ) do
     case GraphHelpers.handle_answer(socket, answer) do
       {:ok, graph_result, operation} ->
-        socket
-        |> push_event("analytics", %{event: "claim_added", params: %{entry_method: "post"}})
-        |> update_graph(graph_result, operation)
+        finish_posting_thought(socket, graph_result, operation)
 
       {:error, :locked} ->
         {:noreply, socket |> put_flash(:error, "This graph is locked")}
+
+      {:error, :invalid_comment_target} ->
+        {:noreply, put_flash(socket, :error, "Choose a response to add your comment.")}
+
+      {:error, :empty_content} ->
+        {:noreply, put_flash(socket, :error, "Write a comment or question first.")}
     end
   end
 
@@ -1225,6 +1242,12 @@ defmodule DialecticWeb.GraphLive do
 
         {:error, :locked} ->
           {:noreply, socket |> put_flash(:error, "This graph is locked")}
+
+        {:error, :empty_content} ->
+          {:noreply, put_flash(socket, :error, "Write a comment or question first.")}
+
+        {:error, :invalid_question_target} ->
+          {:noreply, put_flash(socket, :error, "Choose an existing response to ask about.")}
       end
     end
   end
@@ -1252,6 +1275,12 @@ defmodule DialecticWeb.GraphLive do
 
         {:error, :locked} ->
           {:noreply, socket |> put_flash(:error, "This graph is locked")}
+
+        {:error, :empty_content} ->
+          {:noreply, put_flash(socket, :error, "Write a comment or question first.")}
+
+        {:error, :invalid_question_target} ->
+          {:noreply, put_flash(socket, :error, "Choose an existing response to ask about.")}
       end
     end
   end
@@ -1693,27 +1722,40 @@ defmodule DialecticWeb.GraphLive do
   # Handle selection action messages from SelectionActionsComp
   @impl true
   def handle_info({:selection_action, params}, socket) do
-    case GraphHelpers.check_selection_action_allowed(socket) do
-      {:error, :locked} ->
-        {:noreply, socket |> put_flash(:error, "This graph is locked")}
+    socket = clear_flash(socket, :error)
 
-      {:error, :unauthenticated} ->
-        {:noreply, assign(socket, show_login_modal: true)}
+    result =
+      case GraphHelpers.check_selection_action_allowed(socket) do
+        {:error, :locked} ->
+          {:noreply, socket |> put_flash(:error, "This graph is locked")}
 
-      :ok ->
-        {action, selected_text, node_id, offsets, existing_highlight, extra} =
-          GraphHelpers.unpack_selection_action(params)
+        {:error, :unauthenticated} ->
+          {:noreply,
+           socket
+           |> assign(show_login_modal: true)
+           |> put_flash(:error, "Sign in to use passage actions. Your draft will stay here.")}
 
-        handle_selection_action(
-          action,
-          selected_text,
-          node_id,
-          offsets,
-          existing_highlight,
-          extra,
-          socket
-        )
-    end
+        :ok ->
+          case DialecticWeb.SelectionActions.perform(socket, params) do
+            {:ok, %{kind: :highlight}} ->
+              {:noreply, socket}
+
+            {:ok, %{kind: :comment, node: node}} ->
+              socket
+              |> put_flash(:info, "Your thought was added to the discussion.")
+              |> update_graph({nil, node}, "comment")
+
+            {:ok, %{kind: :generation} = result} ->
+              begin_background_generations(socket, result.nodes, result.operation, result.label,
+                target_node_id: result.target_node_id
+              )
+
+            {:error, message} ->
+              {:noreply, put_flash(socket, :error, message)}
+          end
+      end
+
+    GraphHelpers.acknowledge_selection(result, params)
   end
 
   def handle_info(:close_share_modal, socket) do
@@ -1781,9 +1823,13 @@ defmodule DialecticWeb.GraphLive do
           mark_background_generation_complete(socket, node_id)
       end
 
-    # Don't broadcast or call update_graph - the streaming already updated the node content
-    # and we don't want to cause a flash/rerender for the user watching the stream
-    # Other users will see the node when it was created, not when it completes
+    PubSub.broadcast_from(
+      Dialectic.PubSub,
+      self(),
+      socket.assigns.graph_topic,
+      {:other_user_change, self()}
+    )
+
     {:noreply, socket}
   end
 
@@ -1834,257 +1880,6 @@ defmodule DialecticWeb.GraphLive do
       {:noreply, socket}
     else
       {:noreply, socket}
-    end
-  end
-
-  defp handle_selection_action(
-         :explain,
-         selected_text,
-         node_id,
-         offsets,
-         existing_highlight,
-         _params,
-         socket
-       ) do
-    case GraphActions.find_node(socket.assigns.graph_id, node_id) do
-      nil ->
-        {:noreply, put_flash(socket, :error, "Node not found")}
-
-      parent_node ->
-        highlight =
-          existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
-
-        graph_result =
-          GraphActions.ask_and_answer(
-            graph_action_params(socket, parent_node),
-            "Please explain: #{selected_text}",
-            minimal_context: true,
-            source_text: selected_text
-          )
-
-        {_graph, answer_node} = graph_result
-
-        if highlight && answer_node do
-          Highlights.add_link(highlight.id, answer_node.id, "explain")
-        end
-
-        begin_background_generation(
-          socket,
-          answer_node,
-          "explain",
-          "Explaining #{quoted_selection(selected_text)}"
-        )
-    end
-  end
-
-  defp handle_selection_action(
-         :highlight_only,
-         selected_text,
-         node_id,
-         offsets,
-         existing_highlight,
-         _params,
-         socket
-       ) do
-    if existing_highlight do
-      # Highlight already exists, just close modal
-      {:noreply, socket}
-    else
-      # Create new highlight without any linked nodes
-      _highlight = create_highlight(socket, node_id, offsets, selected_text)
-      {:noreply, socket}
-    end
-  end
-
-  defp handle_selection_action(
-         :pros_cons,
-         selected_text,
-         node_id,
-         offsets,
-         existing_highlight,
-         _params,
-         socket
-       ) do
-    highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
-    parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
-    nodes = create_branch_nodes(socket, parent_node, content_override: selected_text)
-
-    if highlight do
-      Enum.each(nodes, fn node ->
-        link_type = if node.class == "thesis", do: "pro", else: "con"
-        Highlights.add_link(highlight.id, node.id, link_type)
-      end)
-    end
-
-    begin_background_generations(
-      socket,
-      nodes,
-      "branch",
-      "Testing both sides of #{quoted_selection(selected_text)}",
-      target_node_id: parent_node.id
-    )
-  end
-
-  defp handle_selection_action(
-         :related_ideas,
-         selected_text,
-         node_id,
-         offsets,
-         existing_highlight,
-         _params,
-         socket
-       ) do
-    highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
-
-    if highlight do
-      # Create related ideas node
-      parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
-
-      ideas_node =
-        GraphActions.related_ideas(graph_action_params(socket, parent_node),
-          content_override: selected_text
-        )
-
-      # Link highlight to the ideas node
-      if ideas_node do
-        Highlights.add_link(highlight.id, ideas_node.id, "related_idea")
-      end
-
-      begin_background_generation(
-        socket,
-        ideas_node,
-        "ideas",
-        "Finding related ideas for #{quoted_selection(selected_text)}"
-      )
-    else
-      # If highlight creation fails, still create the ideas node
-      parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
-
-      ideas_node =
-        GraphActions.related_ideas(graph_action_params(socket, parent_node),
-          content_override: selected_text
-        )
-
-      begin_background_generation(
-        socket,
-        ideas_node,
-        "ideas",
-        "Finding related ideas for #{quoted_selection(selected_text)}"
-      )
-    end
-  end
-
-  defp handle_selection_action(
-         :ask_question,
-         selected_text,
-         node_id,
-         offsets,
-         existing_highlight,
-         %{question: question_text},
-         socket
-       ) do
-    case GraphActions.find_node(socket.assigns.graph_id, node_id) do
-      nil ->
-        {:noreply, put_flash(socket, :error, "Node not found")}
-
-      parent_node ->
-        highlight =
-          existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
-
-        graph_result =
-          GraphActions.ask_about_selection(
-            graph_action_params(socket, parent_node),
-            question_text,
-            selected_text
-          )
-
-        {_graph, answer_node} = graph_result
-
-        if highlight && answer_node do
-          Highlights.add_link(highlight.id, answer_node.id, "question")
-        end
-
-        begin_background_generation(
-          socket,
-          answer_node,
-          "selection_question",
-          "Answering your question about #{quoted_selection(selected_text)}"
-        )
-    end
-  end
-
-  defp handle_selection_action(
-         :comment,
-         selected_text,
-         node_id,
-         offsets,
-         existing_highlight,
-         %{comment: comment_text},
-         socket
-       ) do
-    highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
-    parent_node = GraphActions.find_node(socket.assigns.graph_id, node_id)
-
-    full_comment = "#{comment_text}\n\nRegarding: \"#{selected_text}\""
-
-    comment_node =
-      GraphActions.comment(
-        graph_action_params(socket, parent_node),
-        full_comment,
-        "",
-        fields: %{source_text: selected_text}
-      )
-
-    if comment_node do
-      if highlight do
-        Highlights.add_link(highlight.id, comment_node.id, "comment")
-      end
-    end
-
-    update_graph(socket, {nil, comment_node}, "user")
-  end
-
-  # Advanced Critical Thinking Tools for Text Selection
-
-  # =========================================================================
-  # Critical Thinking Tools - Text Selection Actions (Generic)
-  # =========================================================================
-
-  for {tool_name, _config} <- @critical_thinking_tools do
-    defp handle_selection_action(
-           unquote(tool_name),
-           selected_text,
-           node_id,
-           offsets,
-           existing_highlight,
-           _extra,
-           socket
-         ) do
-      apply_critical_thinking_tool_to_text(
-        unquote(tool_name),
-        selected_text,
-        node_id,
-        offsets,
-        existing_highlight,
-        socket
-      )
-    end
-  end
-
-  defp create_highlight(socket, node_id, offsets, selected_text) do
-    highlight_attrs = %{
-      mudg_id: socket.assigns.graph_id,
-      node_id: node_id,
-      text_source_type: "node",
-      selection_start: offsets["start"],
-      selection_end: offsets["end"],
-      selected_text_snapshot: selected_text,
-      created_by_user_id: socket.assigns.current_user.id
-    }
-
-    case Highlights.create_highlight(highlight_attrs) do
-      {:ok, highlight} -> highlight
-      {:error, _changeset} -> nil
     end
   end
 
@@ -2471,73 +2266,6 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  # Applies a critical thinking tool to selected text with proper error handling.
-  #
-  # ## Parameters
-  # - tool: Atom representing the tool (e.g., :clarify, :assumptions)
-  # - selected_text: String of text to analyze
-  # - node_id: String ID of the parent node
-  # - offsets: Map with text selection offsets
-  # - existing_highlight: Existing highlight struct or nil
-  # - socket: LiveView socket
-  #
-  # ## Returns
-  # - Updated socket with new node and highlight links
-  #
-  # ## Validation
-  # - Validates selected_text is non-empty
-  # - Checks if tool supports text selection
-  # - Creates highlight and links to new node
-  defp apply_critical_thinking_tool_to_text(
-         tool,
-         selected_text,
-         node_id,
-         offsets,
-         existing_highlight,
-         socket
-       ) do
-    with :ok <- validate_can_edit(socket),
-         :ok <- validate_selected_text(selected_text),
-         {:ok, node} <- find_node_safe(socket.assigns.graph_id, node_id),
-         {:ok, tool_config} <- get_tool_config(tool),
-         :ok <- validate_tool_supports_text(tool_config),
-         {:ok, result_node} <-
-           apply_text_graph_action(tool_config, socket, node, selected_text) do
-      highlight = existing_highlight || create_highlight(socket, node_id, offsets, selected_text)
-
-      if result_node && highlight do
-        Highlights.add_link(highlight.id, result_node.id, Atom.to_string(tool))
-      end
-
-      begin_background_generation(
-        socket,
-        result_node,
-        Atom.to_string(tool),
-        "Applying #{tool |> Atom.to_string() |> String.replace("_", " ")} to #{quoted_selection(selected_text)}"
-      )
-    else
-      {:error, :locked} ->
-        {:noreply, put_flash(socket, :error, "This graph is locked")}
-
-      {:error, :empty_text} ->
-        {:noreply, put_flash(socket, :error, "Please select some text")}
-
-      {:error, :node_not_found} ->
-        {:noreply, put_flash(socket, :error, "Node not found")}
-
-      {:error, :tool_not_found} ->
-        {:noreply, put_flash(socket, :error, "Unknown tool")}
-
-      {:error, :text_not_supported} ->
-        {:noreply, put_flash(socket, :error, "This tool does not support text selection")}
-
-      {:error, :action_failed} ->
-        {:noreply, put_flash(socket, :error, "Failed to apply tool to text")}
-    end
-  end
-
-  # Validation helpers
-
   defp validate_can_edit(%{assigns: %{can_edit: true}}), do: :ok
   defp validate_can_edit(_socket), do: {:error, :locked}
 
@@ -2573,12 +2301,6 @@ defmodule DialecticWeb.GraphLive do
     )
   end
 
-  defp validate_selected_text(text) when is_binary(text) and byte_size(text) > 0, do: :ok
-  defp validate_selected_text(_), do: {:error, :empty_text}
-
-  defp validate_tool_supports_text(%{supports_text: true}), do: :ok
-  defp validate_tool_supports_text(_), do: {:error, :text_not_supported}
-
   defp find_node_safe(graph_id, node_id) do
     case GraphActions.find_node(graph_id, node_id) do
       nil -> {:error, :node_not_found}
@@ -2595,15 +2317,6 @@ defmodule DialecticWeb.GraphLive do
 
   defp apply_graph_action(%{function: func}, socket, node) do
     result = apply(GraphActions, func, [graph_action_params(socket, node)])
-
-    case result do
-      nil -> {:error, :action_failed}
-      node -> {:ok, node}
-    end
-  end
-
-  defp apply_text_graph_action(%{text_function: text_func}, socket, node, selected_text) do
-    result = apply(GraphActions, text_func, [graph_action_params(socket, node), selected_text])
 
     case result do
       nil -> {:error, :action_failed}
@@ -2869,6 +2582,31 @@ defmodule DialecticWeb.GraphLive do
     GraphManager.ensure_main_group(graph_id)
   end
 
+  defp finish_posting_thought(socket, graph_result, operation) do
+    {:noreply, socket} =
+      socket
+      |> push_event("analytics", %{event: "claim_added", params: %{entry_method: "post"}})
+      |> update_graph(graph_result, operation)
+
+    socket = put_flash(socket, :info, "Your thought was added to the discussion.")
+
+    socket =
+      if socket.assigns.mobile_inquiry? do
+        push_navigate(socket,
+          to:
+            graph_path(
+              socket.assigns.graph_struct,
+              socket.assigns.node.id,
+              if(socket.assigns.token, do: [token: socket.assigns.token], else: [])
+            )
+        )
+      else
+        socket
+      end
+
+    {:noreply, socket}
+  end
+
   def update_graph(socket, {_graph, node}, operation) do
     # Changeset needs to be a new node
     new_node = GraphActions.create_new_node(socket.assigns.user)
@@ -2898,7 +2636,7 @@ defmodule DialecticWeb.GraphLive do
             GraphManager.format_graph_json(socket.assigns.graph_id)
           end,
         form:
-          if operation in ["llm_request_complete"] do
+          if operation in ["llm_request_complete", "note", "unnote"] do
             socket.assigns.form
           else
             to_form(changeset, id: new_node.id)
@@ -2937,7 +2675,7 @@ defmodule DialecticWeb.GraphLive do
         # Reset the side-drawer scroll position when navigating to a
         # different node.  Skip streaming updates — those append content
         # to the current node and shouldn't jump the user back to top.
-        if operation not in ["llm_request_complete"] do
+        if operation not in ["llm_request_complete", "note", "unnote"] do
           push_event(s, "scroll_to_top", %{})
         else
           s

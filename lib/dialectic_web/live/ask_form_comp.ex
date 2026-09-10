@@ -39,6 +39,8 @@ defmodule DialecticWeb.AskFormComp do
       |> assign_new(:show_hint, fn -> true end)
       |> assign_new(:prompt_mode, fn -> "structured" end)
       |> assign_new(:node, fn -> nil end)
+      |> assign_new(:context, fn -> :node end)
+      |> assign_new(:guided_learning?, fn -> true end)
       |> assign_new(:current_user, fn -> nil end)
       |> assign_new(:show_context, fn -> true end)
       |> assign_new(:embedded, fn -> false end)
@@ -46,6 +48,9 @@ defmodule DialecticWeb.AskFormComp do
       |> assign_new(:tools_open, fn -> false end)
       |> assign_new(:tools_target, fn -> nil end)
       |> assign_new(:tools_button_id, fn -> nil end)
+      |> assign_new(:tools_menu_id, fn -> nil end)
+      |> assign_new(:inner_block, fn -> [] end)
+      |> assign_new(:quick_actions, fn -> [] end)
       |> assign_new(:query_origin, fn -> nil end)
       |> assign_new(:disabled, fn -> false end)
       |> then(fn s ->
@@ -57,7 +62,7 @@ defmodule DialecticWeb.AskFormComp do
             assign(s, :placeholder, "Choose an existing response to continue the grid...")
 
           true ->
-            assign(s, :placeholder, "Write a comment or ask AI to continue...")
+            assign(s, :placeholder, "Ask a question or share a thought…")
         end
       end)
 
@@ -70,7 +75,10 @@ defmodule DialecticWeb.AskFormComp do
     <div class="w-full min-w-0" data-role="ask-form-container">
       <.form
         for={@form}
-        phx-submit={@submit_event || "reply-and-answer"}
+        phx-submit={if(@context == :node, do: @submit_event || "reply-and-answer")}
+        phx-change={if(@context == :node, do: "validate_inquiry")}
+        data-selection-input-form={@context in [:selection, :answer]}
+        data-composer-context={@context}
         id={@id}
         class="group/shortcuts w-full min-w-0"
         aria-disabled={@disabled}
@@ -85,140 +93,141 @@ defmodule DialecticWeb.AskFormComp do
         />
         <%!-- Compact Replying-to indicator --%>
         <%= if @show_context && @node && @node.id do %>
-          <button
-            type="button"
-            phx-click="node_clicked"
-            phx-value-id={@node.id}
-            class="flex items-center gap-1.5 mb-1 text-left group"
-            title="Click to focus this node on the graph"
+          <div
+            id={"#{@id}-context"}
+            class="mb-2 rounded-lg bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-600"
           >
-            <span class="text-[10px] text-gray-400">↩</span>
-            <span class={"inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium " <> DialecticWeb.ColUtils.badge_class(@node.class || "")}>
-              {DialecticWeb.ColUtils.node_type_label(@node.class || "")}
-            </span>
-            <span class="text-[11px] text-gray-600 group-hover:text-indigo-600 whitespace-normal break-words">
-              {NodeTitleHelper.extract_node_title(@node, max_length: :infinity)}
-            </span>
-          </button>
+            <span class="block font-semibold text-slate-800">Responding to</span>
+            <p class="break-words">{NodeTitleHelper.extract_node_title(@node, max_length: 180)}</p>
+          </div>
         <% end %>
 
         <div class="flex items-center gap-2 w-full">
           <%!-- Input Field --%>
           <div class="relative min-w-0 flex-1">
-            <textarea
-              name={@form[:content].name}
+            <.input
+              field={@form[:content]}
               id={@input_id}
+              type="textarea"
+              aria-label="Your thought or question"
+              aria-describedby={if(@embedded, do: "#{@id}-sharing-hint")}
+              data-selection-input={@context in [:selection, :answer]}
               rows="1"
               placeholder={@placeholder}
               phx-hook="AutoExpandTextarea"
+              phx-debounce="300"
               disabled={@disabled}
-              class={[
-                "box-border w-full text-sm focus:outline-none focus:ring-0 resize-none",
-                if(@embedded,
-                  do: "min-h-[4.5rem] border-0 bg-transparent px-2.5 py-2 pr-2.5",
-                  else: "h-10 min-h-[2.5rem] rounded-3xl border py-2.5 pl-4 pr-[17rem]"
-                ),
-                if(@disabled,
-                  do:
-                    "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-500 placeholder:text-slate-400",
-                  else:
+              class={
+                Enum.join(
+                  [
+                    "box-border w-full text-base sm:text-sm focus:outline-none focus:ring-0 resize-none",
                     if(@embedded,
-                      do: "text-slate-800 placeholder:text-slate-400",
-                      else: "border-gray-300 bg-white focus:border-indigo-500"
+                      do: "min-h-[4.5rem] border-0 bg-transparent px-1 py-2",
+                      else: "h-10 min-h-[2.5rem] rounded-3xl border py-2.5 pl-4 pr-[17rem]"
+                    ),
+                    if(@disabled,
+                      do:
+                        "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-500 placeholder:text-slate-400",
+                      else:
+                        if(@embedded,
+                          do: "text-slate-800 placeholder:text-slate-400",
+                          else: "border-gray-300 bg-white focus:border-indigo-500"
+                        )
                     )
+                  ],
+                  " "
                 )
-              ]}
-            >{Phoenix.HTML.Form.normalize_value("text", @form[:content].value)}</textarea>
+              }
+            />
+
+            <div
+              :if={@embedded && !@disabled && @guided_learning?}
+              id={"#{@id}-learning-options"}
+              class="mt-1"
+            >
+              <%= if @current_user do %>
+                <.input
+                  type="checkbox"
+                  id={"#{@id}-guided-learning"}
+                  name="guided_learning"
+                  value={Map.get(@form.params, "guided_learning", false)}
+                  variant="learning_plan"
+                  label="Add a learning plan"
+                />
+              <% else %>
+                <.link
+                  :if={@context == :answer}
+                  id={"#{@id}-guided-learning-login"}
+                  href={~p"/users/log_in"}
+                  class="inline-flex min-h-11 items-center rounded-lg px-1 text-xs font-semibold text-indigo-700 underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-500"
+                >
+                  Sign in for a learning plan
+                </.link>
+                <button
+                  :if={@context == :node}
+                  id={"#{@id}-guided-learning-signup"}
+                  type="button"
+                  phx-click="show_login_required"
+                  class="inline-flex min-h-11 items-center gap-2 rounded-lg px-1 text-left text-xs font-semibold text-indigo-700 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2"
+                >
+                  <.icon name="hero-sparkles" class="h-4 w-4" /> Sign in for a learning plan
+                </button>
+              <% end %>
+
+              <button
+                :if={@context == :node}
+                id="mobile-inquiry-settings"
+                type="button"
+                phx-click={
+                  Phoenix.LiveView.JS.dispatch("toggle-panel",
+                    to: "#graph-layout",
+                    detail: %{id: "right-panel"}
+                  )
+                  |> Phoenix.LiveView.JS.push("open_prompt_settings")
+                }
+                class="mt-2 inline-flex min-h-11 items-center gap-2 rounded-lg border border-slate-200 px-3 text-xs font-semibold text-slate-700 md:hidden"
+              >
+                Answer settings
+              </button>
+            </div>
 
             <%!-- Two submit buttons inside the input --%>
             <div class={[
-              "flex",
+              "relative flex items-center gap-1.5",
               if(@embedded,
-                do: "mt-1 items-center gap-2 border-t border-slate-100 pb-1 pt-2",
+                do:
+                  "mt-1 flex-wrap items-center gap-2 border-t border-slate-100 pb-1 pt-2 md:flex-nowrap",
                 else: "absolute right-1.5 top-0 bottom-1.5 items-center gap-1.5 justify-end"
               )
             ]}>
-              <div :if={@show_tools} class="flex shrink-0 items-center gap-1">
-                <button
-                  id={@tools_button_id}
-                  type="button"
-                  phx-click="toggle_advanced_tools"
-                  phx-target={@tools_target}
-                  aria-expanded={to_string(@tools_open)}
-                  class={[
-                    "inline-flex shrink-0 items-center gap-1 rounded-lg text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300",
-                    if(@embedded, do: "h-10 px-1.5", else: "h-8 px-2.5"),
-                    if(@tools_open,
-                      do: "bg-indigo-100 text-indigo-800",
-                      else: "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-                    )
-                  ]}
-                >
-                  <.icon name="hero-plus" class="h-3.5 w-3.5" />
-                  <span>Tools</span>
-                </button>
-              </div>
-
               <div class={
                 if(@embedded,
-                  do: "ml-auto flex min-w-0 flex-1 items-center gap-2",
+                  do: "ml-auto flex w-full min-w-0 items-center gap-2 md:w-auto md:flex-1",
                   else: "ml-auto flex items-center gap-1"
                 )
               }>
-                <%!-- Post button — adds submit_action=post to form params --%>
-                <button
-                  type="submit"
-                  id={"#{@id}-comment"}
-                  data-shortcut-action="comment"
-                  aria-keyshortcuts="Control+Shift+Enter Meta+Shift+Enter"
-                  name="submit_action"
-                  value="post"
-                  disabled={@disabled}
-                  class={[
-                    "inline-flex items-center font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
-                    if(@embedded,
-                      do:
-                        "h-10 min-w-0 flex-auto justify-center gap-1 whitespace-nowrap rounded-lg border border-slate-300 bg-slate-50 px-2 text-xs shadow-sm hover:border-slate-400",
-                      else: "h-8 gap-1 rounded-full px-2.5 text-xs leading-none"
-                    ),
-                    if(@disabled,
-                      do: "bg-slate-100 text-slate-400",
-                      else: "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-                    )
-                  ]}
-                  title={
-                    if(@disabled,
-                      do: "Choose an existing response to continue",
-                      else: "Add your comment without an AI reply"
-                    )
-                  }
-                >
-                  <span class="inline-flex items-center gap-2">
-                    <.icon
-                      name="hero-chat-bubble-left-ellipsis"
-                      class={if(@embedded, do: "hidden", else: "h-3.5 w-3.5")}
-                    />
-                    <span>Comment</span>
-                  </span>
-                  <.shortcut_keycap shift />
-                </button>
                 <%!-- Ask button — default submit (no name, so no submit_action param) --%>
                 <button
                   id={"#{@id}-ask"}
                   data-shortcut-action="ask"
+                  data-selection-input-submit={@context in [:selection, :answer]}
+                  data-selection-submit-action={
+                    if(@context in [:selection, :answer], do: "ask_question")
+                  }
                   aria-keyshortcuts="Control+Enter Meta+Enter"
+                  phx-disable-with="Asking AI…"
                   type="submit"
                   disabled={@disabled}
                   class={[
                     "inline-flex items-center font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
                     if(@embedded,
                       do:
-                        "h-10 min-w-0 flex-auto justify-center gap-1 whitespace-nowrap rounded-lg border border-slate-950 px-2 text-xs shadow-md",
+                        "h-11 min-w-0 flex-auto justify-center gap-1 whitespace-nowrap rounded-lg border border-sky-700 px-3 text-sm md:h-10 md:text-xs",
                       else: "h-8 gap-1 rounded-full px-3 text-xs leading-none shadow-sm"
                     ),
                     if(@disabled,
                       do: "bg-slate-300 text-white shadow-none",
-                      else: "bg-slate-950 text-white hover:bg-slate-800 hover:shadow-md"
+                      else: "bg-sky-700 text-white hover:bg-sky-800"
                     )
                   ]}
                   title={
@@ -228,50 +237,117 @@ defmodule DialecticWeb.AskFormComp do
                     )
                   }
                 >
-                  <span>Ask</span>
+                  <span>Ask AI</span>
                   <.shortcut_keycap dark />
+                </button>
+                <%!-- Post button — adds submit_action=post to form params --%>
+                <button
+                  id={"#{@id}-comment"}
+                  type="submit"
+                  data-shortcut-action="comment"
+                  data-selection-input-submit={@context in [:selection, :answer]}
+                  data-selection-submit-action={if(@context in [:selection, :answer], do: "comment")}
+                  aria-keyshortcuts="Control+Shift+Enter Meta+Shift+Enter"
+                  name="submit_action"
+                  value="post"
+                  phx-disable-with="Posting…"
+                  disabled={@disabled || DialecticWeb.GraphHelpers.origin_node?(@node)}
+                  class={[
+                    "inline-flex items-center font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+                    if(@embedded,
+                      do:
+                        "h-11 min-w-0 flex-auto justify-center gap-1 whitespace-nowrap rounded-lg border border-slate-300 px-3 text-sm md:h-10 md:text-xs",
+                      else: "h-8 gap-1 rounded-full px-2.5 text-xs leading-none"
+                    ),
+                    if(@disabled,
+                      do: "bg-slate-100 text-slate-400",
+                      else: "bg-white text-slate-700 hover:bg-slate-100"
+                    )
+                  ]}
+                  title={
+                    if(@disabled,
+                      do: "Choose an existing response to continue",
+                      else: "Post your thought to the shared discussion"
+                    )
+                  }
+                >
+                  <span class="inline-flex items-center gap-2">
+                    <.icon
+                      name="hero-chat-bubble-left-ellipsis"
+                      class={if(@embedded, do: "hidden", else: "h-3.5 w-3.5")}
+                    />
+                    <span>Post thought</span>
+                  </span>
+                  <.shortcut_keycap shift />
                 </button>
               </div>
             </div>
           </div>
         </div>
 
-        <div :if={@embedded && !@disabled} class="mt-2 px-1">
-          <%= if @current_user do %>
-            <.input
-              type="checkbox"
-              id={"#{@id}-guided-learning"}
-              name="guided_learning"
-              value="false"
-              variant="learning_plan"
-              label="Guide my learning"
-              description="On adds ranked next actions and tailored exploration paths."
-              badge="Learning plan"
-            />
-          <% else %>
-            <button
-              id={"#{@id}-guided-learning-signup"}
-              type="button"
-              phx-click="show_login_required"
-              class="flex w-full items-center gap-2.5 rounded-xl border border-indigo-200 bg-indigo-50/70 px-3 py-2 text-left transition hover:border-indigo-300 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2"
-            >
-              <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-indigo-700 text-white shadow-sm">
-                <.icon name="hero-sparkles" class="h-3.5 w-3.5" />
-              </span>
-              <span class="min-w-0 flex-1">
-                <span class="block text-xs font-semibold text-indigo-950">
-                  Get a personal learning plan
-                </span>
-                <span class="block text-[11px] leading-4 text-indigo-700">
-                  Create a free account to unlock next actions and exploration paths.
-                </span>
-              </span>
-              <span class="shrink-0 rounded-full bg-white px-2 py-1 text-[10px] font-bold text-indigo-700 ring-1 ring-indigo-200">
-                Free
-              </span>
-            </button>
-          <% end %>
+        <p
+          :if={@embedded}
+          id={"#{@id}-sharing-hint"}
+          class="mt-1 px-1 text-xs leading-5 text-slate-500"
+        >
+          Shared with everyone in this discussion.
+        </p>
+        <p
+          :if={@context in [:selection, :answer]}
+          id={"#{@id}-status"}
+          data-selection-status
+          role="status"
+          aria-live="polite"
+          class="mt-2 px-1 text-sm text-slate-700 empty:hidden"
+        >
+        </p>
+        <div
+          :if={@show_tools}
+          id={"#{@id}-tools-toolbar"}
+          class="inquiry-tools-toolbar mt-2 grid min-w-0 max-w-full grid-cols-2 items-stretch gap-1.5 border-t border-slate-100 pt-2"
+        >
+          {render_slot(@quick_actions)}
         </div>
+        <div :if={@show_tools} id={"#{@id}-more-tools-row"} class="mt-1 flex">
+          <button
+            id={@tools_button_id}
+            type="button"
+            phx-click={if(@context == :node, do: "toggle_advanced_tools")}
+            data-selection-advanced-toggle={@context in [:selection, :answer]}
+            data-reader-shortcut="t"
+            data-reader-shortcut-modifier="none"
+            aria-keyshortcuts="T"
+            phx-target={@tools_target}
+            aria-expanded={to_string(@tools_open)}
+            aria-controls={@tools_menu_id}
+            class={[
+              "inquiry-disclosure py-1.5 pl-1.5 pr-3",
+              !@embedded && "min-h-8 text-xs"
+            ]}
+          >
+            <span
+              data-tools-closed
+              class={["inline-flex items-center gap-2.5", @tools_open && "hidden"]}
+            >
+              <span class="inquiry-disclosure-icon">
+                <.icon name="hero-plus" class="h-4 w-4" />
+              </span>
+              More tools
+            </span>
+            <span
+              data-tools-open
+              class={["inline-flex items-center gap-2.5", !@tools_open && "hidden"]}
+            >
+              <span class="inquiry-disclosure-icon">
+                <.icon name="hero-chevron-up" class="h-4 w-4" />
+              </span>
+              Hide tools
+            </span>
+            <.shortcut_keycap key="T" modifier="none" />
+          </button>
+        </div>
+
+        {render_slot(@inner_block)}
       </.form>
     </div>
     """
