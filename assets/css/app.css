@@ -15,21 +15,34 @@
     display: none;
 }
 
-.tools-menu-popover {
-    position: fixed;
-    inset: auto;
-    margin: 0;
-    padding: 0;
-    flex-direction: column;
-    z-index: 1100;
-}
+@layer components {
+    .inquiry-disclosure {
+        @apply inline-flex min-h-11 max-w-full items-center gap-2.5 rounded-xl border border-slate-200 bg-white text-[13px] font-semibold text-slate-700 shadow-sm shadow-slate-900/[0.03] transition-colors duration-150;
+    }
 
-.tools-menu-popover:popover-open {
-    display: flex;
-}
+    .inquiry-disclosure:hover {
+        @apply border-slate-300 bg-slate-50 text-slate-950;
+    }
 
-.tools-menu-popover[data-tools-floating-open="true"] {
-    display: flex;
+    .inquiry-disclosure[aria-expanded="true"] {
+        @apply border-teal-300 text-teal-950;
+    }
+
+    .inquiry-disclosure:focus-visible {
+        @apply outline outline-2 outline-offset-2 outline-teal-600;
+    }
+
+    .inquiry-disclosure:disabled {
+        @apply cursor-wait opacity-60;
+    }
+
+    .inquiry-disclosure-icon {
+        @apply inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-teal-50 text-teal-700 transition-colors duration-150;
+    }
+
+    .inquiry-disclosure[aria-expanded="true"] .inquiry-disclosure-icon {
+        @apply bg-teal-600 text-white;
+    }
 }
 
 .inquiry-tools-toolbar {

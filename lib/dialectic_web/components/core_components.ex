@@ -307,12 +307,12 @@ defmodule DialecticWeb.CoreComponents do
     ~H"""
     <div class={[
       @variant == "learning_plan" &&
-        "rounded-xl border border-gray-200 bg-white px-3 py-2.5 shadow-sm"
+        "px-1"
     ]}>
       <label class={[
         @variant == "default" && "flex items-center gap-4 text-sm leading-6 text-zinc-600",
         @variant == "learning_plan" &&
-          "flex cursor-pointer items-center justify-between gap-3"
+          "flex min-h-11 cursor-pointer items-center justify-between gap-3"
       ]}>
         <input type="hidden" name={@name} value="false" disabled={@rest[:disabled]} />
         <%= if @variant == "learning_plan" do %>

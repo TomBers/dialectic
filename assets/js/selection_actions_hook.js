@@ -210,7 +210,7 @@ const SelectionActionsHook = {
     syncInquiryShortcutLabels(this.el);
     this.modalEl.classList.remove("hidden");
     this.modalEl.setAttribute("aria-hidden", "false");
-    if (!this.drawerContext()) this.modalEl.querySelector("[data-selection-dialog]")?.focus({ preventScroll: true });
+    this.modalEl.querySelector("[data-selection-dialog]")?.focus({ preventScroll: true });
   },
 
   closeModal() {
@@ -316,7 +316,6 @@ const SelectionActionsHook = {
       this.modalEl.querySelector("[data-selection-input]")?.focus();
       return;
     }
-    this.toolsMenu?.close();
     this.saveDraft();
     const requestId = crypto.randomUUID();
     this.pendingRequest = { id: requestId, action, draftKey: this.draftKey() };

@@ -36,6 +36,8 @@ function mountHook(context = "selection", presentation = "modal") {
             <button
               type="button"
               data-selection-advanced-toggle
+              data-reader-shortcut="t"
+              data-reader-shortcut-modifier="none"
               aria-expanded="false"
             ><span data-tools-closed>Thinking tools</span><span data-tools-open class="hidden">Hide tools</span></button>
             <button
@@ -49,7 +51,7 @@ function mountHook(context = "selection", presentation = "modal") {
               data-selection-submit-action="ask_question" data-shortcut-action="ask"
             >Ask</button>
           </form>
-          <div data-selection-advanced-tools hidden>Advanced tools<button data-tools-close>Close tools</button></div><p data-selection-status></p>
+          <div data-selection-advanced-tools hidden><button type="button" data-selection-action="clarify">Clarify</button><button data-tools-close>Hide tools</button></div><p data-selection-status></p>
           <button type="button" data-selection-close>Close</button>
         </div>
       </div>
@@ -58,9 +60,11 @@ function mountHook(context = "selection", presentation = "modal") {
 
   hook = Object.create(SelectionActionsHook);
   hook.el = document.querySelector("#selection-actions-hook");
+  hook.el.querySelector("[data-selection-advanced-toggle]").scrollIntoView = vi.fn();
   hook.pushEventTo = vi.fn();
   hook.pushEvent = vi.fn();
   hook.handleEvent = vi.fn((name, callback) => { hook.resultHandler = callback; });
+  if (presentation === "drawer") document.getElementById("answer-trigger").focus();
   hook.mounted();
   return hook;
 }
@@ -259,6 +263,48 @@ describe("SelectionActionsHook", () => {
     expect(instance.modalEl.classList.contains("hidden")).toBe(false);
     expect(input.value).toBe("My draft");
     expect(instance.pushEventTo).not.toHaveBeenCalled();
+  });
+
+  it.each(["selection", "answer"])("toggles %s tools repeatedly with T without submitting the draft", (context) => {
+    const instance = mountHook(context, context === "answer" ? "drawer" : "modal");
+    if (context === "selection") showSelection();
+    const toggle = instance.modalEl.querySelector("[data-selection-advanced-toggle]");
+    const tools = instance.modalEl.querySelector("[data-selection-advanced-tools]");
+    const input = instance.modalEl.querySelector("textarea");
+    input.value = "Keep my thinking";
+    for (const expanded of [true, false, true]) {
+      const event = new KeyboardEvent("keydown", {key: "t", code: "KeyT", bubbles: true, cancelable: true});
+      document.activeElement.dispatchEvent(event);
+      expect(event.defaultPrevented).toBe(true);
+      expect(tools.hidden).toBe(!expanded);
+      expect(toggle.getAttribute("aria-expanded")).toBe(String(expanded));
+      expect(document.activeElement).toBe(toggle);
+    }
+    expect(input.value).toBe("Keep my thinking");
+    expect(instance.pushEventTo).not.toHaveBeenCalled();
+  });
+
+  it.each(["selection", "answer"])("keeps %s tools expanded after a failed action and scopes Escape to the tools", (context) => {
+    const instance = mountHook(context, context === "answer" ? "drawer" : "modal");
+    if (context === "selection") showSelection();
+    const toggle = instance.modalEl.querySelector("[data-selection-advanced-toggle]");
+    const tools = instance.modalEl.querySelector("[data-selection-advanced-tools]");
+    const input = instance.modalEl.querySelector("textarea");
+    input.value = "Keep my draft";
+    toggle.click();
+    const action = tools.querySelector('[data-selection-action="clarify"]');
+    action.focus();
+    action.click();
+    expect(instance.pendingRequest?.action).toBe("clarify");
+    expect(tools.hidden).toBe(false);
+    instance.resultHandler({request_id: instance.pendingRequest.id, status: "error", message: "Try again"});
+    expect(document.activeElement).toBe(action);
+    expect(tools.hidden).toBe(false);
+    action.dispatchEvent(new KeyboardEvent("keydown", {key: "Escape", bubbles: true, cancelable: true}));
+    expect(tools.hidden).toBe(true);
+    expect(instance.modalEl.classList.contains("hidden")).toBe(false);
+    expect(document.activeElement).toBe(toggle);
+    expect(input.value).toBe("Keep my draft");
   });
 
   it("disables highlighting when the exact selection is already cached", () => {
@@ -577,11 +623,12 @@ it("closes the answer modal back to its trigger without losing the draft", () =>
   expect(instance.el.querySelector("textarea").value).toBe("A draft");
 });
 
-it("opens a drawer for its answer without moving keyboard focus into a modal", () => {
+it("focuses the response region when the drawer opens without focusing the text input", () => {
   const instance = mountHook("answer", "drawer");
   expect(instance.selectionData).toEqual({nodeId: "2"});
   expect(instance.modalEl.classList.contains("hidden")).toBe(false);
-  expect(instance.modalEl.contains(document.activeElement)).toBe(false);
+  expect(document.activeElement).toBe(instance.modalEl.querySelector("[data-selection-dialog]"));
+  expect(document.activeElement).not.toBe(instance.modalEl.querySelector("textarea"));
   expect(instance.pushEventTo).not.toHaveBeenCalled();
 });
 

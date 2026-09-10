@@ -55,6 +55,15 @@ defmodule DialecticWeb.SharedComposerTest do
       assert has_element?(view, "##{id}-ask[data-shortcut-action='ask']", "Ask AI")
       assert has_element?(view, "##{id} [aria-controls][aria-expanded]")
       assert has_element?(view, "##{id}-sharing-hint")
+
+      for platform <- ~w(mac other) do
+        keycap =
+          "##{id} button[data-reader-shortcut='t'][aria-keyshortcuts='T'] kbd [data-shortcut-label='#{platform}']"
+
+        assert has_element?(view, keycap, "T")
+        refute has_element?(view, keycap, "⌘")
+        refute has_element?(view, keycap, "Ctrl")
+      end
     end
 
     assert has_element?(
@@ -213,7 +222,12 @@ defmodule DialecticWeb.SharedComposerTest do
 
       assert has_element?(
                view,
-               "#selection-advanced-tools-toggle-selection-actions[aria-haspopup='dialog']"
+               "#selection-advanced-tools-toggle-selection-actions[aria-expanded='false'][aria-controls='selection-tools-popover-selection-actions']:not([aria-haspopup])"
+             )
+
+      assert has_element?(
+               view,
+               "#selection-input-form-selection-actions #selection-tools-popover-selection-actions[role='group'][hidden]:not([popover])"
              )
 
       for action <- ~w(highlight explain pros-cons related) do

@@ -681,39 +681,21 @@
                           aria-label={
                             if(drawer_open?, do: "Hide response form", else: response_label)
                           }
-                          aria-describedby={"outline-reading-node-#{reading_node.id}-respond-hint"}
-                          class={[
-                            "group col-span-full mt-2 flex min-h-14 w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600",
-                            if(drawer_open?,
-                              do: "border-teal-300 bg-teal-50 text-teal-950",
-                              else:
-                                "border-teal-200 bg-white text-teal-900 hover:border-teal-300 hover:bg-teal-50"
-                            )
-                          ]}
+                          class="inquiry-disclosure group col-span-full mt-2 w-full py-1.5 pl-1.5 pr-3 text-left"
                         >
-                          <.icon
-                            name="hero-chat-bubble-left-right"
-                            class="h-5 w-5 shrink-0 text-teal-700"
-                          />
+                          <span class="inquiry-disclosure-icon">
+                            <.icon name="hero-chat-bubble-left-right" class="h-4 w-4" />
+                          </span>
                           <span class="min-w-0 flex-1">
                             <span class="block text-sm font-semibold">
                               {if(drawer_open?, do: "Hide response form", else: response_label)}
-                            </span>
-                            <span
-                              id={"outline-reading-node-#{reading_node.id}-respond-hint"}
-                              class="mt-0.5 block text-xs leading-5 text-slate-600"
-                            >
-                              {if(drawer_open?,
-                                do: "Your draft is kept when you hide this.",
-                                else: "Ask a question or share your view."
-                              )}
                             </span>
                           </span>
                           <.icon
                             name="hero-chevron-down"
                             class={[
-                              "h-4 w-4 shrink-0 text-teal-700 transition-transform motion-reduce:transition-none",
-                              drawer_open? && "rotate-180"
+                              "h-4 w-4 shrink-0 text-slate-400 transition-transform group-hover:text-teal-700 motion-reduce:transition-none",
+                              drawer_open? && "rotate-180 text-teal-700"
                             ]}
                           />
                         </button>

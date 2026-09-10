@@ -118,7 +118,11 @@ defmodule DialecticWeb.InquiryActionsComp do
               else: "selection-custom-inquiry-#{@owner_id}"
             )
           }
-          class="relative rounded-2xl border border-slate-300 bg-white p-2 shadow-sm transition focus-within:border-indigo-400 focus-within:ring-4 focus-within:ring-indigo-100/70"
+          class={[
+            "relative min-w-0",
+            @context == :node &&
+              "rounded-xl border border-slate-300 bg-white p-2 transition focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-100/70"
+          ]}
         >
           <.live_component
             module={DialecticWeb.AskFormComp}
@@ -136,7 +140,7 @@ defmodule DialecticWeb.InquiryActionsComp do
             graph_id={@graph_id}
             current_user={@current_user}
             node={@node}
-            show_context={@context == :node}
+            show_context={false}
             guided_learning?={@context in [:node, :answer]}
             embedded
             show_tools
@@ -270,9 +274,8 @@ defmodule DialecticWeb.InquiryActionsComp do
             </:quick_actions>
             <div
               id={tools_menu_id(assigns)}
-              role="dialog"
+              role="group"
               aria-label="Thinking tools"
-              popover="manual"
               phx-hook={if(@context == :node, do: "ToolsMenu")}
               phx-update="ignore"
               hidden={@context in [:selection, :answer] || !@advanced_tools_open}
@@ -280,53 +283,27 @@ defmodule DialecticWeb.InquiryActionsComp do
               data-selection-advanced-tools={@context in [:selection, :answer]}
               data-trigger-id={advanced_toggle_id(assigns)}
               phx-target={if(@context == :node, do: @myself)}
-              class="tools-menu-popover overflow-hidden rounded-xl border border-slate-200 bg-slate-50 shadow-xl shadow-slate-900/15"
+              class="min-w-0 pt-1"
             >
-              <div class="flex shrink-0 items-start justify-between gap-3 border-b border-slate-200 px-3 py-2.5">
-                <div>
-                  <p class="text-sm font-semibold text-slate-800">Thinking tools</p>
-                  <p class="mt-0.5 text-xs leading-5 text-slate-500">
-                    Explore {if(@context == :selection, do: "this passage", else: "this answer")} with AI.
-                  </p>
-                </div>
-                <button
-                  id={"#{tools_menu_id(assigns)}-close"}
-                  type="button"
-                  data-tools-close
-                  aria-label="Close tools"
-                  class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-200 hover:text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-slate-500"
-                >
-                  <.icon name="hero-x-mark" class="h-4 w-4" />
-                </button>
-              </div>
-              <div data-tools-scroll class="min-h-0 flex-1 space-y-3 overflow-y-auto p-2">
-                <.advanced_tools
-                  context={@context}
-                  sections={@critical_tool_sections}
-                  graph_id={@graph_id}
-                  node={@node}
-                  owner_id={@owner_id}
-                  can_edit={@can_edit}
-                />
-              </div>
-              <div class="shrink-0 border-t border-slate-200 bg-slate-50 p-2">
-                <p
-                  id={"#{tools_menu_id(assigns)}-scroll-hint"}
-                  data-tools-scroll-hint
-                  hidden
-                  class="mb-2 flex items-center justify-center gap-1.5 py-1 text-xs font-medium text-slate-600"
-                >
-                  <.icon name="hero-arrow-down" class="h-3.5 w-3.5" /> Scroll for more tools
-                </p>
-                <button
-                  id={"#{tools_menu_id(assigns)}-done"}
-                  type="button"
-                  data-tools-close
-                  class="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-slate-500"
-                >
-                  <.icon name="hero-chevron-up" class="h-4 w-4" /> Close tools
-                </button>
-              </div>
+              <.advanced_tools
+                context={@context}
+                sections={@critical_tool_sections}
+                graph_id={@graph_id}
+                node={@node}
+                owner_id={@owner_id}
+                can_edit={@can_edit}
+              />
+              <button
+                id={"#{tools_menu_id(assigns)}-done"}
+                type="button"
+                data-tools-close
+                class="inquiry-disclosure mt-2 py-1.5 pl-1.5 pr-3"
+              >
+                <span class="inquiry-disclosure-icon">
+                  <.icon name="hero-chevron-up" class="h-4 w-4" />
+                </span>
+                Hide tools
+              </button>
             </div>
           </.live_component>
         </div>
@@ -345,13 +322,13 @@ defmodule DialecticWeb.InquiryActionsComp do
         </div>
         <p :if={!@highlight_only} class="hidden px-1 text-[10px] text-slate-500 md:block">
           <%= if @context in [:selection, :answer] do %>
-            / to write · Esc to leave the form, then close · Command/Ctrl + A / R / E / {if(
+            / to write · T for tools · Esc to leave the form, then close · Command/Ctrl + A / R / E / {if(
               @context == :answer,
               do: "B",
               else: "H"
             )} to use tools when not typing
           <% else %>
-            Esc to leave the form · Command/Ctrl + A / C / R / B to use tools when not typing
+            T for tools · Esc to leave the form · Command/Ctrl + A / C / R / B to use tools when not typing
           <% end %>
         </p>
       </div>
@@ -368,7 +345,7 @@ defmodule DialecticWeb.InquiryActionsComp do
         <h4 class="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
           {section.title}
         </h4>
-        <div class="grid min-w-0 grid-cols-1 gap-1 sm:grid-cols-2">
+        <div class="inquiry-tools-toolbar grid min-w-0 grid-cols-2 gap-1.5">
           <.tool_button
             :for={tool <- section.tools}
             id={tool_id(assigns, tool.key)}
@@ -379,8 +356,9 @@ defmodule DialecticWeb.InquiryActionsComp do
             icon={tool.icon}
             label={tool.label}
             tone={tool.key}
-            description={tool.blurb}
+            rest={%{"title" => tool.blurb}}
             disabled={!@can_edit}
+            compact
           />
         </div>
       </div>

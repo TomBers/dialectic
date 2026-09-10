@@ -184,7 +184,7 @@ defmodule DialecticWeb.SelectionActionsComp do
         :if={@presentation == :drawer}
         id={"selection-actions-modal-#{@id}"}
         phx-update="ignore"
-        class="hidden rounded-xl border border-teal-200 bg-white shadow-sm"
+        class="hidden rounded-xl border border-teal-200 bg-white transition focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-100/70"
         aria-hidden="true"
       >
         <div
@@ -203,12 +203,12 @@ defmodule DialecticWeb.SelectionActionsComp do
 
   defp action_content(assigns) do
     ~H"""
-    <div class="relative overflow-y-auto px-4 pb-5 pt-4 sm:px-5 sm:pb-5 sm:pt-5">
-      <div class="flex items-start gap-3">
+    <div class={[
+      "relative",
+      if(@presentation == :drawer, do: "p-2 sm:p-3", else: "overflow-y-auto p-3 sm:p-5")
+    ]}>
+      <div :if={@presentation == :modal} class="flex items-start gap-3">
         <div class="min-w-0 flex-1">
-          <p :if={@context == :answer} class="mb-1 text-xs font-semibold text-slate-500">
-            Responding to
-          </p>
           <blockquote
             id={"selection-actions-passage-#{@id}"}
             data-selection-text
@@ -259,7 +259,7 @@ defmodule DialecticWeb.SelectionActionsComp do
         <.link href={~p"/users/log_in"} class="font-semibold text-indigo-700 underline">Sign in</.link>
         to use passage actions. Your draft is kept in this tab.
       </p>
-      <div class="mt-2 flex gap-2 text-xs text-slate-500">
+      <div :if={@context == :selection} class="mt-2 flex gap-2 text-xs text-slate-500">
         <span data-selection-question-count class="hidden"></span>
         <span data-selection-comment-count class="hidden"></span>
       </div>
@@ -271,7 +271,7 @@ defmodule DialecticWeb.SelectionActionsComp do
         class="mt-2 text-sm text-slate-700"
       >
       </p>
-      <div class="mt-4 border-t border-slate-100 pt-4">
+      <div class={@presentation == :modal && "mt-3 border-t border-slate-100 pt-3"}>
         <.live_component
           module={DialecticWeb.InquiryActionsComp}
           id={"selection-inquiry-actions-#{@id}"}

@@ -2,7 +2,7 @@ defmodule DialecticWeb.KeyboardComponents do
   use DialecticWeb, :html
 
   attr :key, :string, default: "Enter"
-  attr :modifier, :string, values: ["primary", "alt"], default: "primary"
+  attr :modifier, :string, values: ["primary", "alt", "none"], default: "primary"
   attr :shift, :boolean, default: false
   attr :dark, :boolean, default: false
   attr :prominent, :boolean, default: false
@@ -17,7 +17,11 @@ defmodule DialecticWeb.KeyboardComponents do
         Enum.join(
           Enum.reject(
             [
-              if(assigns.modifier == "alt", do: "⌥", else: "⌘"),
+              case assigns.modifier do
+                "primary" -> "⌘"
+                "alt" -> "⌥"
+                "none" -> nil
+              end,
               if(assigns.shift, do: "⇧"),
               if(assigns.key == "Enter", do: "↵", else: String.upcase(assigns.key))
             ],
@@ -31,7 +35,11 @@ defmodule DialecticWeb.KeyboardComponents do
         Enum.join(
           Enum.reject(
             [
-              if(assigns.modifier == "alt", do: "Alt", else: "Ctrl"),
+              case assigns.modifier do
+                "primary" -> "Ctrl"
+                "alt" -> "Alt"
+                "none" -> nil
+              end,
               if(assigns.shift, do: "Shift"),
               if(assigns.key == "Enter", do: "Enter", else: String.upcase(assigns.key))
             ],

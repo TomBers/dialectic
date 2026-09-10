@@ -558,7 +558,10 @@ defmodule DialecticWeb.GraphLiveTest do
       |> element("#global-chat-form [id^='node-tools-more-']")
       |> render_click()
 
-      assert has_element?(view, "#node-tools-popover-2[data-open='true']")
+      assert has_element?(
+               view,
+               "#global-chat-form #node-tools-popover-2[data-open='true'][role='group']:not([popover])"
+             )
 
       view
       |> element("#global-chat-form [id^='node-tools-more-']")
@@ -722,7 +725,7 @@ defmodule DialecticWeb.GraphLiveTest do
       assert has_element?(
                view,
                "#global-chat-form-guided-learning-signup",
-               "Create a free account"
+               "Sign in for a learning plan"
              )
 
       view
