@@ -1792,38 +1792,32 @@ button[type="submit"]:active {
         Georgia, "Times New Roman", serif;
     --rg-read-font-family: var(--rg-read-font-family-serif);
     --rg-read-heading-font-family: var(--rg-read-font-family-serif);
-    --rg-read-font-size: 1.0625rem;
-    --rg-read-line-height: 1.68;
+    --rg-read-font-size: 1.125rem;
+    --rg-read-line-height: 1.7;
     --rg-read-max-width: 62ch;
-    --rg-read-para-margin: 0.96em;
-    --rg-read-lead-size: 1.06em;
-    --rg-read-lead-line-height: 1.62;
-    --rg-read-letter-spacing: -0.0025em;
+    --rg-read-para-margin: 1em;
+    --rg-read-letter-spacing: normal;
     --rg-read-word-spacing: 0.02em;
 }
 
 .reading-appearance[data-reading-density="compact"] {
     --rg-read-font-size: 1rem;
-    --rg-read-line-height: 1.58;
+    --rg-read-line-height: 1.6;
     --rg-read-max-width: 66ch;
-    --rg-read-para-margin: 0.72em;
-    --rg-read-lead-size: 1em;
-    --rg-read-lead-line-height: 1.58;
+    --rg-read-para-margin: 0.8em;
 }
 
 .reading-appearance[data-reading-density="large"] {
-    --rg-read-font-size: 1.1875rem;
-    --rg-read-line-height: 1.72;
-    --rg-read-max-width: 58ch;
-    --rg-read-para-margin: 1em;
-    --rg-read-lead-size: 1.06em;
-    --rg-read-lead-line-height: 1.62;
+    --rg-read-font-size: 1.375rem;
+    --rg-read-line-height: 1.75;
+    --rg-read-max-width: 55ch;
+    --rg-read-para-margin: 1.25em;
 }
 
 .reading-appearance[data-reading-font="serif"] {
     --rg-read-font-family: var(--rg-read-font-family-serif);
     --rg-read-heading-font-family: var(--rg-read-font-family-serif);
-    --rg-read-letter-spacing: -0.001em;
+    --rg-read-letter-spacing: normal;
     --rg-read-word-spacing: 0.01em;
 }
 
@@ -1904,19 +1898,16 @@ button[type="submit"]:active {
     font-family: var(--rg-read-font-family);
     font-size: var(--rg-read-font-size, 1.02rem);
     font-variant-numeric: lining-nums;
-    letter-spacing: var(--rg-read-letter-spacing, -0.0025em);
+    overflow-wrap: anywhere;
+    text-align: start;
+    letter-spacing: var(--rg-read-letter-spacing, normal);
     line-height: var(--rg-read-line-height, 1.7);
     text-rendering: optimizeLegibility;
     word-spacing: var(--rg-read-word-spacing, 0.02em);
 }
 
-.reader-prose.reader-prose-wide {
-    width: 100%;
-    max-width: none;
-}
-
 .reader-prose
-    [phx-hook="Markdown"][data-body-only="true"]
+    :is([phx-hook="Markdown"][data-body-only="true"], [data-reader-body])
     :where(p) {
     margin-block: var(--rg-read-para-margin, 0.88em);
     color: #334155;
@@ -1924,17 +1915,14 @@ button[type="submit"]:active {
 }
 
 .reader-prose
-    [phx-hook="Markdown"][data-body-only="true"]
+    :is([phx-hook="Markdown"][data-body-only="true"], [data-reader-body])
     > p:first-of-type {
     margin-top: 0;
     color: #0f172a;
-    font-size: var(--rg-read-lead-size, 1.06em);
-    font-weight: 450;
-    line-height: var(--rg-read-lead-line-height, 1.62);
 }
 
 .reader-prose
-    [phx-hook="Markdown"][data-body-only="true"]
+    :is([phx-hook="Markdown"][data-body-only="true"], [data-reader-body])
     :where(h2) {
     margin-top: 1.9em;
     margin-bottom: 0.65em;
@@ -1948,13 +1936,13 @@ button[type="submit"]:active {
 }
 
 .reader-prose
-    [phx-hook="Markdown"][data-body-only="true"]
+    :is([phx-hook="Markdown"][data-body-only="true"], [data-reader-body])
     > :where(h2, h3):first-child {
     margin-top: 0;
 }
 
 .reader-prose
-    [phx-hook="Markdown"][data-body-only="true"]
+    :is([phx-hook="Markdown"][data-body-only="true"], [data-reader-body])
     :where(h3) {
     margin-top: 1.65em;
     margin-bottom: 0.55em;
@@ -1966,35 +1954,35 @@ button[type="submit"]:active {
 }
 
 .reader-prose
-    [phx-hook="Markdown"][data-body-only="true"]
+    :is([phx-hook="Markdown"][data-body-only="true"], [data-reader-body])
     :where(ul, ol) {
     margin-block: 1em;
 }
 
 .reader-prose
-    [phx-hook="Markdown"][data-body-only="true"]
+    :is([phx-hook="Markdown"][data-body-only="true"], [data-reader-body])
     :where(li) {
     margin-block: 0.48em;
     color: #334155;
-    line-height: 1.62;
+    line-height: inherit;
 }
 
 .reader-prose
-    [phx-hook="Markdown"][data-body-only="true"]
+    :is([phx-hook="Markdown"][data-body-only="true"], [data-reader-body])
     :where(li)::marker {
     color: #64748b;
     font-weight: 600;
 }
 
 .reader-prose
-    [phx-hook="Markdown"][data-body-only="true"]
+    :is([phx-hook="Markdown"][data-body-only="true"], [data-reader-body])
     :where(strong) {
     color: #0f172a;
     font-weight: 700;
 }
 
 .reader-prose
-    [phx-hook="Markdown"][data-body-only="true"]
+    :is([phx-hook="Markdown"][data-body-only="true"], [data-reader-body])
     :where(a) {
     color: #0f766e;
     font-weight: 550;
@@ -2004,7 +1992,7 @@ button[type="submit"]:active {
 }
 
 .reader-prose
-    [phx-hook="Markdown"][data-body-only="true"]
+    :is([phx-hook="Markdown"][data-body-only="true"], [data-reader-body])
     :where(blockquote) {
     border-color: #cbd5e1;
     color: #475569;
@@ -2015,35 +2003,35 @@ button[type="submit"]:active {
 }
 
 .reader-prose.reader-prose-dark
-    [phx-hook="Markdown"][data-body-only="true"]
+    :is([phx-hook="Markdown"][data-body-only="true"], [data-reader-body])
     :where(p, li) {
     color: #cbd5e1;
 }
 
 .reader-prose.reader-prose-dark
-    [phx-hook="Markdown"][data-body-only="true"]
+    :is([phx-hook="Markdown"][data-body-only="true"], [data-reader-body])
     > p:first-of-type,
 .reader-prose.reader-prose-dark
-    [phx-hook="Markdown"][data-body-only="true"]
+    :is([phx-hook="Markdown"][data-body-only="true"], [data-reader-body])
     :where(h2, h3, strong) {
     color: #f8fafc;
 }
 
 .reader-prose.reader-prose-dark
-    [phx-hook="Markdown"][data-body-only="true"]
+    :is([phx-hook="Markdown"][data-body-only="true"], [data-reader-body])
     :where(li)::marker {
     color: #94a3b8;
 }
 
 .reader-prose.reader-prose-dark
-    [phx-hook="Markdown"][data-body-only="true"]
+    :is([phx-hook="Markdown"][data-body-only="true"], [data-reader-body])
     :where(a) {
     color: #5eead4;
     text-decoration-color: #2dd4bf;
 }
 
 .reader-prose.reader-prose-dark
-    [phx-hook="Markdown"][data-body-only="true"]
+    :is([phx-hook="Markdown"][data-body-only="true"], [data-reader-body])
     :where(blockquote) {
     border-color: #64748b;
     color: #cbd5e1;

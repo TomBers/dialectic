@@ -175,8 +175,8 @@ defmodule DialecticWeb.UserSettingsLiveTest do
 
       assert has_element?(view, "#user-settings-appearance-section")
       assert has_element?(view, "#appearance-form")
-      assert has_element?(view, "#user_reading_density")
-      assert has_element?(view, "#user_reading_font")
+      assert has_element?(view, "#user_reading_style")
+      refute has_element?(view, "#custom-reading-settings")
       assert has_element?(view, "#user_graph_view_mode")
       assert has_element?(view, "#user_graph_direction")
       assert has_element?(view, "#user_reduce_motion")
@@ -189,7 +189,7 @@ defmodule DialecticWeb.UserSettingsLiveTest do
 
       view
       |> form("#appearance-form", %{
-        "user" => %{"reading_density" => "large", "reading_font" => "sans"}
+        "user" => %{"reading_style" => "large_print"}
       })
       |> render_change()
 
@@ -202,12 +202,64 @@ defmodule DialecticWeb.UserSettingsLiveTest do
       assert Accounts.get_user!(user.id).reading_density == user.reading_density
     end
 
+    test "presets save both font and size and are recognised after reopening", %{
+      conn: conn,
+      user: user
+    } do
+      for {style, font, density} <- [
+            {"screen", "sans", "comfortable"},
+            {"large_print", "sans", "large"},
+            {"book", "serif", "comfortable"}
+          ] do
+        {:ok, view, _html} = live(conn, ~p"/users/settings")
+
+        view
+        |> form("#appearance-form", %{"user" => %{"reading_style" => style}})
+        |> render_submit()
+
+        updated = Accounts.get_user!(user.id)
+        assert updated.reading_font == font
+        assert updated.reading_density == density
+        {:ok, reopened, _html} = live(conn, ~p"/users/settings")
+        assert has_element?(reopened, "#user_reading_style option[value='#{style}'][selected]")
+      end
+    end
+
+    test "custom keeps the current preset values and existing combinations", %{
+      conn: conn,
+      user: user
+    } do
+      {:ok, _} =
+        Accounts.update_user_appearance(user, %{reading_font: "serif", reading_density: "compact"})
+
+      {:ok, view, _html} = live(conn, ~p"/users/settings")
+      assert has_element?(view, "#user_reading_style option[value='custom'][selected]")
+      assert has_element?(view, "#custom-reading-settings")
+      assert has_element?(view, "#user_reading_density option[value='compact'][selected]")
+
+      view
+      |> form("#appearance-form", %{"user" => %{"reading_style" => "large_print"}})
+      |> render_change()
+
+      view
+      |> form("#appearance-form", %{"user" => %{"reading_style" => "custom"}})
+      |> render_change()
+
+      assert has_element?(view, "#user_reading_font option[value='sans'][selected]")
+      assert has_element?(view, "#user_reading_density option[value='large'][selected]")
+    end
+
     test "saves appearance preferences", %{conn: conn, user: user} do
       {:ok, view, _html} = live(conn, ~p"/users/settings")
 
       view
+      |> form("#appearance-form", %{"user" => %{"reading_style" => "custom"}})
+      |> render_change()
+
+      view
       |> form("#appearance-form", %{
         "user" => %{
+          "reading_style" => "custom",
           "reading_density" => "large",
           "reading_font" => "serif",
           "graph_view_mode" => "compact",

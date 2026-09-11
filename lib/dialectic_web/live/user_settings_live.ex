@@ -561,26 +561,46 @@ defmodule DialecticWeb.UserSettingsLive do
                   phx-change="validate_appearance"
                   phx-submit="update_appearance"
                 >
+                  <.input
+                    id="user_reading_style"
+                    name="user[reading_style]"
+                    type="select"
+                    label="Reading style"
+                    value={@reading_style}
+                    options={[
+                      {"Book — serif with comfortable spacing", "book"},
+                      {"Screen — sans with comfortable spacing", "screen"},
+                      {"Large print — larger sans text with more spacing", "large_print"},
+                      {"Custom — choose your own font and size", "custom"}
+                    ]}
+                  />
+                  <%= if @reading_style == "custom" do %>
+                    <div id="custom-reading-settings" class="grid gap-5 sm:grid-cols-2">
+                      <.input
+                        field={@appearance_form[:reading_density]}
+                        type="select"
+                        label="Text size & spacing"
+                        options={[
+                          {"Compact", "compact"},
+                          {"Comfortable", "comfortable"},
+                          {"Large", "large"}
+                        ]}
+                      />
+                      <.input
+                        field={@appearance_form[:reading_font]}
+                        type="select"
+                        label="Reading font"
+                        options={[
+                          {"Sans — simple letter shapes", "sans"},
+                          {"Serif — book-style lettering", "serif"}
+                        ]}
+                      />
+                    </div>
+                  <% else %>
+                    <.input field={@appearance_form[:reading_density]} type="hidden" />
+                    <.input field={@appearance_form[:reading_font]} type="hidden" />
+                  <% end %>
                   <div class="grid gap-5 sm:grid-cols-2">
-                    <.input
-                      field={@appearance_form[:reading_density]}
-                      type="select"
-                      label="Text size & spacing"
-                      options={[
-                        {"Compact", "compact"},
-                        {"Comfortable", "comfortable"},
-                        {"Large", "large"}
-                      ]}
-                    />
-                    <.input
-                      field={@appearance_form[:reading_font]}
-                      type="select"
-                      label="Reading font"
-                      options={[
-                        {"Sans — simple letter shapes", "sans"},
-                        {"Serif — book-style lettering", "serif"}
-                      ]}
-                    />
                     <.input
                       field={@appearance_form[:graph_view_mode]}
                       type="select"
@@ -619,15 +639,25 @@ defmodule DialecticWeb.UserSettingsLive do
                     <p class="mb-4 text-xs font-medium uppercase tracking-wide text-zinc-500">
                       Reading preview · changes apply after saving
                     </p>
-                    <article class="reader-prose mx-auto">
-                      <h3 class="reader-heading mb-3 text-xl font-semibold">Room to think</h3>
-                      <p>
-                        A useful question gives you space to explore. Follow one idea at a time,
-                        pause when you need to, and return to the details that matter to you.
-                      </p>
-                      <p class="mt-4">
-                        Try a different font or text size to find what feels comfortable to read.
-                      </p>
+                    <article class="reader-prose prose prose-slate mx-auto">
+                      <div data-reader-body>
+                        <h3>Room to think</h3>
+                        <p>
+                          A useful question gives you space to explore. Follow one idea at a time,
+                          pause when you need to, and return to the details that matter to you.
+                        </p>
+                        <p>
+                          Try a reading style, or choose Custom to adjust the font and text size.
+                          Larger text means fewer words on screen and more scrolling.
+                        </p>
+                        <ul>
+                          <li>Book uses serif lettering for a familiar page-like feel.</li>
+                          <li>Screen uses your device’s sans-serif font.</li>
+                          <li>
+                            Large print pairs larger letters with shorter lines and more spacing.
+                          </li>
+                        </ul>
+                      </div>
                     </article>
                   </div>
 
@@ -847,6 +877,7 @@ defmodule DialecticWeb.UserSettingsLive do
       |> assign(:password_form, to_form(password_changeset))
       |> assign(:profile_form, to_form(profile_changeset))
       |> assign(:appearance_form, to_form(appearance_changeset))
+      |> assign(:reading_style, reading_style(user))
       |> assign(:trigger_submit, false)
       |> assign(:effective_username, effective_username)
       |> assign(:avatar_preview_url, user.avatar_path)
@@ -862,16 +893,21 @@ defmodule DialecticWeb.UserSettingsLive do
   end
 
   def handle_event("validate_appearance", %{"user" => appearance_params}, socket) do
+    {style, appearance_params} = apply_reading_style(appearance_params)
+
     appearance_form =
       socket.assigns.current_user
       |> Accounts.change_user_appearance(appearance_params)
       |> Map.put(:action, :validate)
       |> to_form()
 
-    {:noreply, assign(socket, :appearance_form, appearance_form)}
+    {:noreply, assign(socket, appearance_form: appearance_form, reading_style: style)}
   end
 
   def handle_event("update_appearance", %{"user" => appearance_params}, socket) do
+    {style, appearance_params} = apply_reading_style(appearance_params)
+    socket = assign(socket, :reading_style, style)
+
     case Accounts.update_user_appearance(socket.assigns.current_user, appearance_params) do
       {:ok, updated_user} ->
         {:noreply,
@@ -1201,4 +1237,32 @@ defmodule DialecticWeb.UserSettingsLive do
 
   defp parse_index(index) when is_integer(index), do: index
   defp parse_index(_), do: 0
+
+  defp reading_style(user) do
+    case {user.reading_font, user.reading_density} do
+      {"serif", "comfortable"} -> "book"
+      {"sans", "comfortable"} -> "screen"
+      {"sans", "large"} -> "large_print"
+      _ -> "custom"
+    end
+  end
+
+  defp apply_reading_style(params) do
+    case params["reading_style"] do
+      "book" ->
+        {"book",
+         Map.merge(params, %{"reading_font" => "serif", "reading_density" => "comfortable"})}
+
+      "screen" ->
+        {"screen",
+         Map.merge(params, %{"reading_font" => "sans", "reading_density" => "comfortable"})}
+
+      "large_print" ->
+        {"large_print",
+         Map.merge(params, %{"reading_font" => "sans", "reading_density" => "large"})}
+
+      _ ->
+        {"custom", params}
+    end
+  end
 end
