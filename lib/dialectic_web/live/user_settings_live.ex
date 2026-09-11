@@ -2,6 +2,7 @@ defmodule DialecticWeb.UserSettingsLive do
   use DialecticWeb, :live_view
 
   alias Dialectic.Accounts
+  import DialecticWeb.ReadingStyles
   alias Dialectic.Accounts.User
   alias Dialectic.Accounts.ProfileBanner
   alias Dialectic.Accounts.ProfileLinks
@@ -561,23 +562,23 @@ defmodule DialecticWeb.UserSettingsLive do
                   phx-change="validate_appearance"
                   phx-submit="update_appearance"
                 >
+                  <.input
+                    id="user_reading_style"
+                    name="user[reading_style]"
+                    type="select"
+                    label="Reading style"
+                    value={@reading_style}
+                    prompt={if @reading_style == "custom", do: "Choose a style", else: nil}
+                    options={[
+                      {"Book — serif with comfortable spacing", "book"},
+                      {"Screen — sans with comfortable spacing", "screen"},
+                      {"Large print — larger sans text with more spacing", "large_print"},
+                      {"Compact — smaller sans text with tighter spacing", "compact"}
+                    ]}
+                  />
+                  <.input field={@appearance_form[:reading_density]} type="hidden" />
+                  <.input field={@appearance_form[:reading_font]} type="hidden" />
                   <div class="grid gap-5 sm:grid-cols-2">
-                    <.input
-                      field={@appearance_form[:reading_density]}
-                      type="select"
-                      label="Text size & spacing"
-                      options={[
-                        {"Compact", "compact"},
-                        {"Comfortable", "comfortable"},
-                        {"Large", "large"}
-                      ]}
-                    />
-                    <.input
-                      field={@appearance_form[:reading_font]}
-                      type="select"
-                      label="Reading font"
-                      options={[{"Sans", "sans"}, {"Serif", "serif"}]}
-                    />
                     <.input
                       field={@appearance_form[:graph_view_mode]}
                       type="select"
@@ -604,6 +605,41 @@ defmodule DialecticWeb.UserSettingsLive do
                         Minimises grid movement and interface animation.
                       </p>
                     </div>
+                  </div>
+
+                  <div
+                    id="reading-preview"
+                    class="reading-appearance rounded-xl border border-zinc-200 bg-white p-5 sm:p-6"
+                    data-reading-font={@appearance_form[:reading_font].value}
+                    data-reading-density={@appearance_form[:reading_density].value}
+                    aria-label="Reading preview"
+                  >
+                    <p class="mb-4 text-xs font-medium uppercase tracking-wide text-zinc-500">
+                      Reading preview · changes apply after saving
+                    </p>
+                    <article class="reader-prose prose prose-slate mx-auto">
+                      <div data-reader-body>
+                        <h3>Room to think</h3>
+                        <p>
+                          A useful question gives you space to explore. Follow one idea at a time,
+                          pause when you need to, and return to the details that matter to you.
+                        </p>
+                        <p>
+                          Choose a reading style to preview its font, text size and spacing.
+                          Larger text means fewer words on screen and more scrolling.
+                        </p>
+                        <ul>
+                          <li>Book uses serif lettering for a familiar page-like feel.</li>
+                          <li>Screen uses your device’s sans-serif font.</li>
+                          <li>
+                            Compact fits more text on screen with smaller sans lettering and tighter spacing.
+                          </li>
+                          <li>
+                            Large print pairs larger letters with shorter lines and more spacing.
+                          </li>
+                        </ul>
+                      </div>
+                    </article>
                   </div>
 
                   <details class="group rounded-xl border border-zinc-200 bg-white">
@@ -822,6 +858,7 @@ defmodule DialecticWeb.UserSettingsLive do
       |> assign(:password_form, to_form(password_changeset))
       |> assign(:profile_form, to_form(profile_changeset))
       |> assign(:appearance_form, to_form(appearance_changeset))
+      |> assign(:reading_style, reading_style(user))
       |> assign(:trigger_submit, false)
       |> assign(:effective_username, effective_username)
       |> assign(:avatar_preview_url, user.avatar_path)
@@ -837,16 +874,21 @@ defmodule DialecticWeb.UserSettingsLive do
   end
 
   def handle_event("validate_appearance", %{"user" => appearance_params}, socket) do
+    {style, appearance_params} = apply_reading_style(appearance_params)
+
     appearance_form =
       socket.assigns.current_user
       |> Accounts.change_user_appearance(appearance_params)
       |> Map.put(:action, :validate)
       |> to_form()
 
-    {:noreply, assign(socket, :appearance_form, appearance_form)}
+    {:noreply, assign(socket, appearance_form: appearance_form, reading_style: style)}
   end
 
   def handle_event("update_appearance", %{"user" => appearance_params}, socket) do
+    {style, appearance_params} = apply_reading_style(appearance_params)
+    socket = assign(socket, :reading_style, style)
+
     case Accounts.update_user_appearance(socket.assigns.current_user, appearance_params) do
       {:ok, updated_user} ->
         {:noreply,

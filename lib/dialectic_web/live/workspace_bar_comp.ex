@@ -6,7 +6,6 @@ defmodule DialecticWeb.WorkspaceBarComp do
   attr :mode, :atom, required: true
   attr :graph_struct, :map, required: true
   attr :node_id, :string, default: nil
-  attr :ask_node_id, :string, default: nil
   attr :nav_params, :list, default: []
   attr :show_search, :boolean, default: false
   attr :search_click, :any, default: nil
@@ -29,22 +28,12 @@ defmodule DialecticWeb.WorkspaceBarComp do
 
   def workspace_bar(assigns) do
     node_id = normalize_node_id(assigns.node_id)
-    ask_node_id = normalize_node_id(assigns.ask_node_id) || node_id
 
     assigns =
       assigns
       |> assign(:node_id, node_id)
-      |> assign(:ask_node_id, ask_node_id)
       |> assign(:reader_path, graph_path(assigns.graph_struct, node_id, assigns.nav_params))
       |> assign(:graph_path, graph_editor_path(assigns.graph_struct, node_id, assigns.nav_params))
-      |> assign(
-        :ask_path,
-        graph_editor_path(
-          assigns.graph_struct,
-          ask_node_id,
-          [{"focus", "ask"} | assigns.nav_params]
-        )
-      )
 
     ~H"""
     <div id={@id} class={bar_classes(@compact)}>
@@ -101,22 +90,6 @@ defmodule DialecticWeb.WorkspaceBarComp do
       <div class={divider_classes(@compact)}></div>
 
       <div class="ml-auto flex flex-wrap items-center gap-1 sm:ml-0">
-        <.link
-          :if={@mode == :reader and is_binary(@ask_node_id) and @ask_node_id != ""}
-          id={"#{@id}-ask-question"}
-          navigate={@ask_path}
-          data-view-transition="mode-switch"
-          data-view-transition-direction="graph"
-          class={ask_question_link_classes(@compact)}
-          title="Ask a question from this point"
-        >
-          <.icon name="hero-question-mark-circle" class="h-4 w-4 text-slate-500" />
-          <span>Ask a question</span>
-          <span class="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-teal-600 text-white transition group-hover:translate-x-0.5 group-hover:bg-teal-700">
-            <.icon name="hero-arrow-right-solid" class="h-3.5 w-3.5" />
-          </span>
-        </.link>
-
         <button
           :if={@mobile_aux_click && @mobile_aux_label}
           id={@mobile_aux_id}
@@ -124,7 +97,7 @@ defmodule DialecticWeb.WorkspaceBarComp do
           phx-click={@mobile_aux_click}
           class={[
             action_button_classes(@compact),
-            "sm:hidden",
+            "lg:hidden",
             @mobile_aux_open && "border-slate-300 bg-slate-100 text-slate-950"
           ]}
           title={@mobile_aux_title || @mobile_aux_label}
@@ -141,12 +114,12 @@ defmodule DialecticWeb.WorkspaceBarComp do
           id={"#{@id}-search"}
           type="button"
           phx-click={@search_click}
-          class={action_button_classes(@compact)}
+          class={search_button_classes(@compact)}
           title={search_button_label(@mode)}
           aria-label={search_button_label(@mode)}
         >
           <.icon name="hero-magnifying-glass" class="h-4 w-4" />
-          <span class={action_label_classes(@compact)}>Search</span>
+          <span class="hidden sm:inline">Search</span>
           <kbd class={kbd_classes(@compact)}>
             ⌘K
           </kbd>
@@ -254,20 +227,6 @@ defmodule DialecticWeb.WorkspaceBarComp do
     ]
   end
 
-  defp ask_question_link_classes(true) do
-    [
-      "group hidden h-8 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 transition md:inline-flex",
-      "hover:border-teal-400 hover:bg-teal-50 hover:text-teal-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600"
-    ]
-  end
-
-  defp ask_question_link_classes(false) do
-    [
-      "group hidden h-9 shrink-0 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3.5 text-sm font-semibold text-slate-700 transition md:inline-flex",
-      "hover:border-teal-400 hover:bg-teal-50 hover:text-teal-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600"
-    ]
-  end
-
   defp mode_label_classes(true), do: "hidden lg:inline"
   defp mode_label_classes(false), do: "inline"
 
@@ -278,6 +237,12 @@ defmodule DialecticWeb.WorkspaceBarComp do
   defp divider_classes(false) do
     "hidden h-6 w-px bg-slate-300 sm:block"
   end
+
+  defp search_button_classes(true) do
+    "inline-flex h-8 w-8 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-transparent bg-slate-50 text-xs font-semibold text-slate-600 transition duration-150 hover:bg-slate-100 hover:text-slate-950 sm:h-7 sm:w-auto sm:bg-transparent sm:px-2"
+  end
+
+  defp search_button_classes(false), do: action_button_classes(false)
 
   defp action_button_classes(true) do
     [

@@ -2,7 +2,7 @@
   <div
     id="outline-layout"
     phx-hook="GraphLayout"
-    class="flex w-full flex-col overflow-hidden bg-slate-50"
+    class="reading-appearance flex w-full flex-col overflow-hidden bg-slate-50"
     style="height: calc(100vh - 2.5rem); height: calc(100dvh - 2.5rem);"
     data-graph-id={@graph_id}
     data-reading-density={@appearance_preferences.reading_density}
@@ -11,6 +11,15 @@
     data-graph-direction={@appearance_preferences.graph_direction}
     data-reduce-motion={if(@appearance_preferences.reduce_motion, do: "true", else: "false")}
   >
+    <a
+      :if={@selected_node_id}
+      id="reader-skip-to-response"
+      href={"#reading-node-#{@selected_node_id}"}
+      class="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-12 focus:z-[10001] focus:rounded-lg focus:bg-white focus:px-4 focus:py-3 focus:text-slate-950 focus:outline-2 focus:outline-teal-700"
+    >
+      Skip to current response
+    </a>
+
     <.login_required_modal id="reader-login-modal" show={@show_login_modal} />
 
     <div id="reader-new-thoughts-status" aria-live="polite" aria-atomic="true" class="shrink-0">
@@ -37,7 +46,7 @@
           </span>
         </div>
 
-        <div class="px-4 py-2 sm:px-5 sm:py-2.5 lg:px-6">
+        <div class="px-4 py-1.5 sm:px-5 sm:py-2.5 lg:px-6">
           <div class="grid gap-2.5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-4">
             <div class="min-w-0">
               <div class="flex min-w-0 items-center gap-1.5 sm:flex-wrap sm:gap-2 lg:min-h-[38px]">
@@ -45,20 +54,20 @@
                   <.icon name="hero-document-text" class="h-3 w-3" /> Reader
                 </span>
 
-                <h1 class="min-w-0 truncate text-base font-semibold leading-tight tracking-tight text-slate-950 sm:text-lg">
+                <h1 class="min-w-0 truncate text-sm font-semibold leading-tight tracking-tight text-slate-950 sm:text-lg">
                   {@graph_struct.title}
                 </h1>
               </div>
             </div>
 
-            <div class="flex min-w-0 flex-nowrap items-center gap-2 lg:justify-self-end">
+            <div class="hidden min-w-0 flex-wrap items-center gap-2 sm:flex lg:justify-self-end">
               <DialecticWeb.WorkspaceBarComp.workspace_bar
                 id="reader-workspace-bar"
                 mode={:reader}
                 graph_struct={@graph_struct}
                 node_id={@selected_node_id}
                 nav_params={reader_nav_params(@nav_params, @path_focus_ids)}
-                mobile_aux_id="reader-workspace-bar-outline"
+                mobile_aux_id="reader-workspace-bar-outline-desktop"
                 mobile_aux_click={JS.dispatch("toggle-mobile-outline", to: "#outline-layout")}
                 mobile_aux_label="Conversation outline"
                 mobile_aux_title="Show conversation outline"
@@ -77,6 +86,16 @@
                 share_click="open_share_modal"
                 compact
               />
+
+              <button
+                id="reader-appearance-toggle"
+                type="button"
+                popovertarget="reader-appearance-panel"
+                class="inline-flex h-8 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-medium text-slate-600 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 [anchor-name:--reader-style]"
+              >
+                <span>Style</span>
+                <.icon name="hero-chevron-down" class="h-3.5 w-3.5" aria-hidden="true" />
+              </button>
 
               <%= if @current_user do %>
                 <button
@@ -133,6 +152,45 @@
       </div>
     </div>
 
+    <DialecticWeb.ReaderMobileNavComp.reader_mobile_nav
+      reader_style={@reader_style}
+      highlights_count={length(@visible_highlights)}
+      current_user={@current_user}
+      following_graph?={@following_graph?}
+    />
+
+    <section
+      id="reader-appearance-panel"
+      popover
+      aria-label="Reading style"
+      class="fixed inset-auto right-4 top-20 m-0 w-64 max-w-[calc(100vw-2rem)] rounded-xl border border-slate-200 bg-white p-1.5 text-slate-900 shadow-lg [position-anchor:--reader-style] [top:anchor(bottom,5rem)] [right:anchor(right,1rem)] [margin-top:0.5rem]"
+    >
+      <button
+        :for={
+          {label, description, style} <- [
+            {"Book", "Serif · comfortable spacing", "book"},
+            {"Screen", "Sans · comfortable spacing", "screen"},
+            {"Large print", "Larger sans text · more spacing", "large_print"},
+            {"Compact", "Smaller sans text · tighter spacing", "compact"}
+          ]
+        }
+        id={"reader-style-#{style}"}
+        type="button"
+        aria-pressed={to_string(@reader_style == style)}
+        phx-click="save_reader_appearance"
+        phx-value-style={style}
+        popovertarget="reader-appearance-panel"
+        popovertargetaction="hide"
+        class="block w-full rounded-lg px-3 py-2 text-left hover:bg-slate-50 aria-pressed:bg-teal-50 aria-pressed:text-teal-900 focus-visible:outline-2 focus-visible:outline-teal-700"
+      >
+        <span class="block text-sm font-semibold">{label}</span>
+        <span class="block text-xs leading-5 text-slate-600">{description}</span>
+      </button>
+    </section>
+    <p id="reader-appearance-status" role="status" class="sr-only">
+      {@reader_appearance_status}
+    </p>
+
     <div
       id="outline-scroll-shell"
       class="relative flex flex-1 min-h-0 flex-col overflow-x-hidden overflow-y-auto lg:grid lg:grid-cols-[20rem_minmax(0,1fr)] lg:overflow-clip xl:grid-cols-[22rem_minmax(0,1fr)]"
@@ -166,7 +224,7 @@
             This graph does not have any visible nodes yet.
           </div>
         <% else %>
-          <nav class="space-y-1 px-2 py-3">
+          <nav aria-label="Conversation outline" class="space-y-1 px-2 py-3">
             <%= for row <- @visible_outline_nodes do %>
               <% selected? = @selected_node_id == row.id %>
               <% in_path? = MapSet.member?(@selected_path_ids, row.id) %>
@@ -180,6 +238,7 @@
                     reader_nav_params(@nav_params, @path_focus_ids)
                   )
                 }
+                aria-current={if(selected?, do: "location")}
                 data-outline-selected={to_string(selected?)}
                 style={outline_indent_style(row.indent)}
                 class={[
@@ -248,7 +307,7 @@
                 id="outline-choose-path"
                 type="button"
                 phx-click="choose_path"
-                class="mt-1 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-teal-600 bg-teal-600 px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:border-teal-700 hover:bg-teal-700"
+                class="mt-1 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-teal-700 bg-teal-700 px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:border-teal-800 hover:bg-teal-800"
               >
                 <.icon name="hero-map" class="h-3.5 w-3.5" /> Choose this path
               </button>
@@ -257,7 +316,8 @@
         <% end %>
       </aside>
 
-      <main
+      <section
+        aria-label="Conversation reader"
         id="outline-detail"
         class="order-1 min-h-0 min-w-0 overflow-visible lg:order-none lg:overflow-y-auto"
         phx-hook="ReaderScroll"
@@ -265,25 +325,40 @@
         data-selected-reader-node-id={@selected_node_id}
       >
         <%= if @node do %>
-          <div class="mx-auto max-w-4xl space-y-8 px-5 pb-8 pt-3 sm:px-8 lg:px-10">
-            <section id="outline-mobile-nav" class="lg:hidden">
+          <div class="mx-auto max-w-4xl space-y-4 px-4 pb-4 sm:space-y-8 sm:px-8 sm:pb-8 sm:pt-3 lg:px-10">
+            <section id="outline-mobile-nav" class="contents lg:hidden">
               <div
                 id="outline-mobile-nav-panel"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="outline-mobile-nav-title"
                 class="fixed inset-x-0 bottom-0 top-[4.75rem] z-40 hidden overflow-y-auto border-y border-slate-200 bg-white opacity-0 shadow-[0_14px_24px_-20px_rgba(15,23,42,0.25)] transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] translate-x-8 pointer-events-none"
               >
-                <div class="border-b border-slate-200 bg-slate-50/75 px-5 py-3">
+                <div class="sticky top-0 z-10 border-b border-slate-200 bg-slate-50 px-5 py-3">
                   <div class="flex items-start justify-between gap-3">
                     <div>
                       <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
                         Browse
                       </p>
-                      <h2 class="mt-1 text-sm font-semibold text-slate-900">
+                      <h2
+                        id="outline-mobile-nav-title"
+                        class="mt-1 text-sm font-semibold text-slate-900"
+                      >
                         Conversation Outline
                       </h2>
                       <p class="mt-1 text-xs text-slate-500">
                         Jump to another point in the conversation.
                       </p>
                     </div>
+                    <button
+                      id="outline-mobile-nav-close"
+                      type="button"
+                      aria-label="Close conversation outline"
+                      phx-click={JS.dispatch("close-mobile-outline", to: "#outline-layout")}
+                      class="shrink-0 rounded-lg p-2 text-slate-600 focus-visible:outline-2 focus-visible:outline-teal-700"
+                    >
+                      <.icon name="hero-x-mark" class="h-5 w-5" />
+                    </button>
                     <button
                       :if={@paths_filtered?}
                       id="outline-mobile-show-all-paths"
@@ -302,7 +377,7 @@
                       This graph does not have any visible nodes yet.
                     </div>
                   <% else %>
-                    <nav class="space-y-1">
+                    <nav aria-label="Conversation outline" class="space-y-1">
                       <%= for row <- @visible_outline_nodes do %>
                         <% selected? = @selected_node_id == row.id %>
                         <% in_path? = MapSet.member?(@selected_path_ids, row.id) %>
@@ -317,6 +392,7 @@
                             )
                           }
                           phx-click={JS.dispatch("close-mobile-outline", to: "#outline-layout")}
+                          aria-current={if(selected?, do: "location")}
                           data-outline-selected={to_string(selected?)}
                           style={outline_indent_style(row.indent, 0.35)}
                           class={[
@@ -385,7 +461,7 @@
                           id="outline-mobile-choose-path"
                           type="button"
                           phx-click="choose_path"
-                          class="mt-1 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-teal-600 bg-teal-600 px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:border-teal-700 hover:bg-teal-700"
+                          class="mt-1 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-teal-700 bg-teal-700 px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:border-teal-800 hover:bg-teal-800"
                         >
                           <.icon name="hero-map" class="h-3.5 w-3.5" /> Choose this path
                         </button>
@@ -398,7 +474,12 @@
 
             <section
               id="outline-reading-flow"
-              class="-mx-5 overflow-hidden border-y border-slate-200 bg-white shadow-sm sm:mx-0 sm:rounded-[2rem] sm:border"
+              phx-hook="SearchHighlights"
+              data-search-node-id={@search_highlight && @search_highlight.node_id}
+              data-search-terms={
+                Jason.encode!(if(@search_highlight, do: @search_highlight.terms, else: []))
+              }
+              class="-mx-4 overflow-hidden border-y border-slate-200 bg-white shadow-sm sm:mx-0 sm:rounded-[2rem] sm:border"
             >
               <%= for {reading_node, index} <- Enum.with_index(@visible_reading_chain) do %>
                 <% reading_response_level = Map.get(reading_node, :response_level) %>
@@ -408,29 +489,50 @@
                 <% node_highlight_count = length(node_highlights) %>
                 <article
                   id={"reading-node-#{reading_node.id}"}
+                  tabindex="-1"
+                  aria-labelledby={"reading-title-#{reading_node.id}"}
                   data-reading-selected={to_string(selected_reading_node?)}
                   class={[
                     if(index == 0,
-                      do: "bg-slate-950 px-5 py-6 text-white sm:px-12 sm:py-8",
-                      else: "bg-white px-5 sm:px-12"
+                      do: "bg-slate-950 px-4 py-4 text-white sm:px-12 sm:py-8",
+                      else: "bg-white px-4 sm:px-12"
                     ),
                     index > 0 &&
                       if(String.trim(reading_node.body_content || "") == "",
-                        do: "py-6 sm:py-9",
-                        else: "py-8 sm:py-12"
+                        do: "py-4 sm:py-9",
+                        else: "py-5 sm:py-12"
                       ),
                     index > 0 && "border-t border-slate-200",
                     selected_reading_node? && index > 0 && "bg-teal-50/50"
                   ]}
                 >
                   <% bookmarked? = MapSet.member?(@bookmarked_node_ids, reading_node.id) %>
+                  <div
+                    :if={@search_highlight && @search_highlight.node_id == reading_node.id}
+                    id="reader-search-match-notice"
+                    role="status"
+                    class="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950"
+                  >
+                    <span>Search matches: “{@search_highlight.query}”</span>
+                    <button
+                      id="reader-clear-search-matches"
+                      type="button"
+                      phx-click="clear_search_highlight"
+                      class="min-h-11 rounded-md px-2 font-semibold underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-amber-800"
+                    >
+                      Clear
+                    </button>
+                  </div>
                   <%= if index == 0 do %>
                     <div class="max-w-[68ch]">
                       <div class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-teal-200">
                         <img src={~p"/images/favicon-32.png"} alt="" class="h-5 w-5" />
                         Starting question
                       </div>
-                      <h2 class="reader-heading mt-3 text-balance text-[1.7rem] font-semibold leading-[1.12] tracking-tight text-white sm:text-[2.1rem]">
+                      <h2
+                        id={"reading-title-#{reading_node.id}"}
+                        class="reader-heading reader-title reader-title-origin mt-3 break-words font-semibold leading-[1.12] tracking-tight text-white"
+                      >
                         {reading_node.full_title || reading_node.title}
                       </h2>
                       <%= if String.trim(reading_node.body_content || "") != "" do %>
@@ -492,7 +594,10 @@
                           {response_level_label(reading_response_level)} level
                         </span>
                       </div>
-                      <h2 class="reader-heading mt-3 max-w-[78ch] text-balance text-[1.28rem] font-semibold leading-[1.15] tracking-tight text-slate-950 sm:text-[1.6rem]">
+                      <h2
+                        id={"reading-title-#{reading_node.id}"}
+                        class="reader-heading reader-title mt-3 break-words font-semibold leading-[1.15] tracking-tight text-slate-950"
+                      >
                         {reading_node.full_title || reading_node.title}
                       </h2>
                     </div>
@@ -532,7 +637,7 @@
                             data-mudg-id={@graph_id}
                             data-highlights-only="false"
                           >
-                            <article class="reader-prose reader-prose-wide prose prose-slate max-w-none prose-headings:tracking-tight prose-a:break-words">
+                            <article class="reader-prose prose prose-slate max-w-none prose-headings:tracking-tight prose-a:break-words">
                               <div
                                 phx-hook="Markdown"
                                 id={"outline-markdown-body-#{reading_node.id}"}
@@ -866,7 +971,7 @@
             </div>
           </div>
         <% end %>
-      </main>
+      </section>
 
       <div
         id="highlights-drawer"
@@ -942,14 +1047,18 @@
           class="fixed inset-0 z-[9990] border-0 bg-black/20 p-0"
           phx-click="close_search_overlay"
           aria-label="Close search overlay"
+          tabindex="-1"
+          aria-hidden="true"
         ></button>
 
         <div
           id="outline-quick-search-panel"
-          class="fixed left-1/2 top-24 z-[9991] w-full max-w-md -translate-x-1/2 px-4"
+          class="fixed left-1/2 top-12 z-[9991] max-h-[calc(100dvh-4rem)] w-full max-w-md -translate-x-1/2 overflow-y-auto px-2 sm:top-24 sm:max-h-[calc(100dvh-7rem)] sm:px-4"
           phx-window-keydown="close_search_overlay"
           phx-key="Escape"
           phx-hook="SearchNav"
+          data-focus-result-prefix="reading-node-"
+          data-return-focus-id="reader-workspace-bar-search"
         >
           <div
             class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl"
@@ -961,27 +1070,55 @@
               <.icon name="hero-magnifying-glass" class="h-5 w-5 shrink-0 text-gray-400" />
               <h2 id="outline-quick-search-title" class="sr-only">Search topics</h2>
 
-              <form id="outline-quick-search-form" phx-change="search_nodes" class="flex-1">
-                <input
+              <.form
+                for={@reader_search_form}
+                id="outline-quick-search-form"
+                phx-change="search_nodes"
+                phx-submit="search_nodes"
+                class="min-w-0 flex-1"
+              >
+                <label for="outline-quick-search-input" class="sr-only">Search topics</label>
+                <.input
                   type="text"
-                  name="search_term"
+                  field={@reader_search_form[:search_term]}
                   id="outline-quick-search-input"
-                  value={@search_term || ""}
-                  placeholder="Search topics..."
-                  class="w-full border-0 bg-transparent p-0 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-0"
+                  placeholder="Search this conversation…"
+                  class="w-full border-0 bg-transparent p-0 text-base text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-0 sm:text-sm"
                   autocomplete="off"
-                  autofocus
                   phx-debounce="200"
                 />
-              </form>
+              </.form>
 
-              <kbd class="hidden items-center gap-1 rounded border border-gray-200 bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-400 sm:inline-flex">
-                esc
-              </kbd>
+              <button
+                id="outline-quick-search-close"
+                type="button"
+                phx-click="close_search_overlay"
+                aria-label="Close search"
+                class="inline-flex min-h-11 min-w-11 items-center justify-center shrink-0 rounded-lg p-2 text-slate-600 focus-visible:outline-2 focus-visible:outline-teal-700"
+              >
+                <.icon name="hero-x-mark" class="h-5 w-5" />
+              </button>
             </div>
 
+            <p
+              id="outline-search-status"
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+              class="px-4 pt-2 text-xs leading-5 text-slate-600"
+            >
+              <%= if @search_term != "" do %>
+                {@search_result_count} {if(@search_result_count == 1,
+                  do: "topic",
+                  else: "topics"
+                )} found for {@search_term}.
+                <span :if={@search_result_count > length(@search_results)}>
+                  Showing {length(@search_results)}.
+                </span>
+              <% end %>
+            </p>
             <%= if (@search_term || "") != "" do %>
-              <div class="max-h-72 overflow-y-auto">
+              <div class="max-h-[55dvh] overflow-y-auto overscroll-contain sm:max-h-72">
                 <%= if @search_results != [] do %>
                   <ul class="py-1">
                     <%= for node <- @search_results do %>
@@ -1012,7 +1149,7 @@
                             </span>
                           </div>
 
-                          <div class="mt-0.5 text-sm text-gray-900 truncate">
+                          <div class="mt-0.5 break-words text-sm font-medium text-gray-900">
                             {Map.get(node, :full_title) || Map.get(node, :title)}
                           </div>
 
@@ -1030,15 +1167,29 @@
                       </li>
                     <% end %>
                   </ul>
+                  <button
+                    :if={length(@search_results) < @search_result_count}
+                    id="outline-search-more"
+                    type="button"
+                    phx-click="show_more_search_results"
+                    class="min-h-11 w-full border-t border-slate-200 px-4 py-3 text-sm font-semibold text-teal-800 hover:bg-teal-50 focus-visible:outline-2 focus-visible:outline-teal-700"
+                  >
+                    Show more results
+                  </button>
                 <% else %>
                   <div class="px-4 py-6 text-center">
                     <p class="text-sm text-gray-500">No topics found for "{@search_term}"</p>
+                    <p class="mt-2 text-sm text-slate-600">
+                      Try fewer words or a different term.
+                    </p>
                   </div>
                 <% end %>
               </div>
             <% else %>
               <div class="px-4 py-4 text-center">
-                <p class="text-xs text-gray-400">Type to search across all topics</p>
+                <p class="text-xs text-gray-400">
+                  Search titles, responses and source passages in this conversation. Words can appear in any order.
+                </p>
               </div>
             <% end %>
           </div>

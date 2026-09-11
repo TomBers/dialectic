@@ -1,6 +1,14 @@
+let pendingHistoryFocus = null;
+
 const ReaderScrollHook = {
   mounted() {
     this.storageKey = this.el.dataset.readerScrollKey;
+    const historyFocus = window.history.state?.readerReturnFocus;
+    const selectedNodeId = new URL(window.location.href).searchParams.get("node") || this.el.dataset.selectedReaderNodeId;
+    if (historyFocus?.key === this.storageKey && historyFocus?.nodeId === selectedNodeId) {
+      pendingHistoryFocus = historyFocus;
+    }
+
     this.savedScrollTop = this.el.scrollTop;
     this.savedScrollLeft = this.el.scrollLeft;
     this.activeNodeId = null;
@@ -25,6 +33,31 @@ const ReaderScrollHook = {
 
       this.storeReaderPosition();
     };
+    this.onReaderNavigation = (event) => {
+      const link = event.target.closest('a[data-phx-link="patch"]');
+      if (!link || !link.closest("#outline-layout") || event.detail !== 0) return;
+      const target = new URL(link.href, window.location.origin);
+      if (!target.searchParams.get("node")) return;
+      this.keyboardTarget = target.searchParams.get("node");
+      const readerReturnFocus = {
+        key: this.storageKey,
+        id: link.id,
+        nodeId: new URL(window.location.href).searchParams.get("node") || this.el.dataset.selectedReaderNodeId,
+      };
+      window.history.replaceState({...window.history.state, readerReturnFocus}, "", window.location.href);
+    };
+    this.onHistoryNavigation = (event) => {
+      pendingHistoryFocus = event.state?.readerReturnFocus || null;
+      this.keyboardTarget = null;
+      if (pendingHistoryFocus && pendingHistoryFocus.key === this.storageKey) {
+        this.setRestoringScroll(true);
+        requestAnimationFrame(() => requestAnimationFrame(() => this.restoreKeyboardFocus()));
+      }
+    };
+    if (this.storageKey) {
+      document.addEventListener("click", this.onReaderNavigation, true);
+      window.addEventListener("popstate", this.onHistoryNavigation, true);
+    }
     this.onScroll = () => {
       if (
         this.restoringScroll ||
@@ -51,6 +84,9 @@ const ReaderScrollHook = {
         requestAnimationFrame(() => this.scrollToNode(id));
       });
     });
+    if (pendingHistoryFocus && pendingHistoryFocus.key === this.storageKey) {
+      requestAnimationFrame(() => requestAnimationFrame(() => this.restoreKeyboardFocus()));
+    }
     const restoredPosition = this.restoreReaderPosition();
     const requestedNodeId = this.el.dataset.selectedReaderNodeId;
 
@@ -79,6 +115,10 @@ const ReaderScrollHook = {
     );
     if (this.storageKey)
       document.removeEventListener("click", this.onGraphNavigation, true);
+    if (this.storageKey) {
+      document.removeEventListener("click", this.onReaderNavigation, true);
+      window.removeEventListener("popstate", this.onHistoryNavigation, true);
+    }
     if (this.scrollFrame !== null) cancelAnimationFrame(this.scrollFrame);
   },
 
@@ -191,6 +231,7 @@ const ReaderScrollHook = {
           this.el.scrollLeft = left;
           requestAnimationFrame(() => {
             this.setRestoringScroll(false);
+            this.restoreKeyboardFocus();
           });
           return;
         }
@@ -200,8 +241,27 @@ const ReaderScrollHook = {
       this.el.scrollLeft = left;
       requestAnimationFrame(() => {
         this.setRestoringScroll(false);
+        this.restoreKeyboardFocus();
       });
     });
+  },
+
+  restoreKeyboardFocus() {
+    const target = pendingHistoryFocus;
+    if (!target || !this.storageKey || target.key !== this.storageKey) return;
+    if (this.el.dataset.selectedReaderNodeId && this.el.dataset.selectedReaderNodeId !== target.nodeId) return;
+    const source = document.getElementById(target.id);
+    if (!source) return;
+    this.keyboardTarget = null;
+    if (target.nodeId) this.scrollToNode(target.nodeId);
+    const mobileOutline = source.closest("#outline-mobile-nav-panel");
+    const desktopOutlineButton = document.getElementById("reader-workspace-bar-outline-desktop");
+    const outlineButton = desktopOutlineButton?.getClientRects().length
+      ? desktopOutlineButton
+      : document.getElementById("reader-workspace-bar-outline");
+    const focusTarget = mobileOutline?.classList.contains("hidden") ? outlineButton : source;
+    focusTarget?.focus({ preventScroll: !!source.closest("#outline-tree") });
+    pendingHistoryFocus = null;
   },
 
   scrollToNode(nodeId) {
@@ -216,6 +276,10 @@ const ReaderScrollHook = {
     this.setRestoringScroll(true);
     this.el.scrollTop = targetTop;
     this.savedScrollTop = targetTop;
+    if (this.keyboardTarget === String(nodeId)) {
+      section.focus({ preventScroll: true });
+      this.keyboardTarget = null;
+    }
 
     requestAnimationFrame(() => {
       this.setRestoringScroll(false);
@@ -228,6 +292,7 @@ const ReaderScrollHook = {
   },
 
   syncViewedSection() {
+    if (pendingHistoryFocus) return;
     const nodeId = this.viewedNodeId();
     if (!nodeId || nodeId === this.activeNodeId) return;
 

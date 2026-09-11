@@ -27,6 +27,7 @@ import storyReadabilityHook from "./story_readability_hook.js";
 import listDetectionHook from "./list_detection_hook.js";
 import ScrollResetHook from "./scroll_reset_hook.js";
 import ReaderScrollHook from "./reader_scroll_hook.js";
+import SearchHighlights from "./search_highlights.js";
 import OutlineNavHook from "./outline_nav_hook.js";
 
 import MarkdownHook from "./markdown_hook.js";
@@ -37,6 +38,7 @@ import AskFormShortcuts from "./ask_form_shortcuts.js";
 import ToolsMenuHook from "./tools_menu_hook.js";
 import AutoExpandTextareaHook from "./auto_expand_textarea_hook.js";
 import SearchNav from "./search_nav_hook.js";
+import { containModalFocus } from "./modal_focus.js";
 import PresentationHook, {
   PresentationSetupHook,
 } from "./presentation_hook.js";
@@ -72,6 +74,7 @@ hooks.StoryReadability = storyReadabilityHook;
 hooks.ListDetection = listDetectionHook;
 hooks.ScrollReset = ScrollResetHook;
 hooks.ReaderScroll = ReaderScrollHook;
+hooks.SearchHighlights = SearchHighlights;
 hooks.OutlineNav = OutlineNavHook;
 
 hooks.Markdown = MarkdownHook;
@@ -94,6 +97,11 @@ hooks.GenerationStatus = GenerationStatusHook;
 hooks.ProofCarousel = ProofCarouselHook;
 hooks.GlobalModalLayer = {
   mounted() {
+    this.opener = document.activeElement;
+    this.modalFocus = containModalFocus(this.el, {
+      onEscape: () => this.el.querySelector("[data-modal-close]")?.click(),
+    });
+    this.focusFrame = requestAnimationFrame(() => this.modalFocus.focusFirst());
     const header = document.getElementById("userHeader");
     if (!header) return;
 
@@ -110,7 +118,20 @@ hooks.GlobalModalLayer = {
     }
   },
 
+  updated() {
+    this.modalFocus.refresh();
+  },
+
   destroyed() {
+    cancelAnimationFrame(this.focusFrame);
+    this.modalFocus.destroy();
+    const opener = this.opener;
+    const fallback = this.el.dataset.returnFocusId;
+    requestAnimationFrame(() => {
+      const target = opener?.isConnected && opener.matches('a[href],button,input,[tabindex]')
+        ? opener : document.getElementById(fallback);
+      target?.focus({ preventScroll: true });
+    });
     const header = document.getElementById("userHeader");
     if (!header) return;
 
@@ -252,14 +273,10 @@ hooks.GraphLayout = {
       this._syncOutlineDetailForPanel(this.activePanelId);
     };
     const graphId = this.el.dataset.graphId;
-    const appearance = syncGraphAppearanceStorage(this.el.dataset);
+    syncGraphAppearanceStorage(this.el.dataset);
 
     this.sideDrawerOpen = true;
-    this.readingDensity = appearance.readingDensity;
-    this.readingFont = appearance.readingFont;
     this._redirectMobileGraphToReader();
-    this._applyReadingDensity(this.readingDensity);
-    this._applyReadingFont(this.readingFont);
     this._closeAllPanels();
     this._syncOutlineDetailForPanel(null);
     window.addEventListener("resize", this._handleMobileGraphResize);
@@ -652,6 +669,7 @@ hooks.GraphLayout = {
     this._focusAskInputFromUrl();
   },
   destroyed() {
+    this._mobileOutlineFocus?.destroy();
     if (this._mobileOutlineCloseTimer) {
       clearTimeout(this._mobileOutlineCloseTimer);
       this._mobileOutlineCloseTimer = null;
@@ -736,7 +754,9 @@ hooks.GraphLayout = {
   },
   _applyMobileOutlineState(shouldOpen) {
     const panel = document.getElementById("outline-mobile-nav-panel");
-    const button = document.getElementById("reader-workspace-bar-outline");
+    const mobileButton = document.getElementById("reader-workspace-bar-outline");
+    const desktopButton = document.getElementById("reader-workspace-bar-outline-desktop");
+    const button = mobileButton?.getClientRects().length ? mobileButton : desktopButton;
 
     if (!panel || !button) return;
 
@@ -746,13 +766,25 @@ hooks.GraphLayout = {
     }
 
     if (shouldOpen) {
+      panel.inert = false;
+      panel.removeAttribute("aria-hidden");
       panel.classList.remove("hidden", "pointer-events-none", "opacity-0", "translate-x-8");
+      if (!this._mobileOutlineFocus) {
+        this._mobileOutlineFocus = containModalFocus(panel, {onEscape: () => this._applyMobileOutlineState(false)});
+        this._mobileOutlineFocus.focusFirst();
+      }
 
       requestAnimationFrame(() => {
         panel.classList.remove("opacity-0", "translate-x-8");
         panel.classList.add("opacity-100", "translate-x-0");
       });
     } else {
+      const returnFocus = panel.contains(document.activeElement);
+      this._mobileOutlineFocus?.destroy();
+      this._mobileOutlineFocus = null;
+      panel.inert = true;
+      panel.setAttribute("aria-hidden", "true");
+      if (returnFocus) button.focus({preventScroll: true});
       panel.classList.remove("opacity-100", "translate-x-0");
       panel.classList.add("opacity-0", "translate-x-8", "pointer-events-none");
 
@@ -777,13 +809,6 @@ hooks.GraphLayout = {
   },
   restoreState() {
     this._applyMobileOutlineState(false);
-
-    if (this.readingDensity) {
-      this._applyReadingDensity(this.readingDensity);
-    }
-    if (this.readingFont) {
-      this._applyReadingFont(this.readingFont);
-    }
 
     const presentationDrawer = document.getElementById("presentation-drawer");
     const combineDrawer = document.getElementById("combine-drawer");
@@ -862,38 +887,6 @@ hooks.GraphLayout = {
         btn.classList.add("ring-2", "ring-offset-1", "ring-white", "scale-110");
       }
     }
-  },
-  _applyReadingDensity(value) {
-    const validReadingDensities = ["compact", "comfortable", "large"];
-    const nextDensity = validReadingDensities.includes(value)
-      ? value
-      : "comfortable";
-
-    this.readingDensity = nextDensity;
-    this.el.setAttribute("data-reading-density", nextDensity);
-    this._syncReadingDensityButtons();
-  },
-  _syncReadingDensityButtons() {
-    const buttons = this.el.querySelectorAll("[data-reading-density-option]");
-    buttons.forEach((btn) => {
-      const selected = btn.dataset.readingDensityOption === this.readingDensity;
-      btn.setAttribute("aria-pressed", selected ? "true" : "false");
-    });
-  },
-  _applyReadingFont(value) {
-    const validReadingFonts = ["sans", "serif"];
-    const nextFont = validReadingFonts.includes(value) ? value : "serif";
-
-    this.readingFont = nextFont;
-    this.el.setAttribute("data-reading-font", nextFont);
-    this._syncReadingFontButtons();
-  },
-  _syncReadingFontButtons() {
-    const buttons = this.el.querySelectorAll("[data-reading-font-option]");
-    buttons.forEach((btn) => {
-      const selected = btn.dataset.readingFontOption === this.readingFont;
-      btn.setAttribute("aria-pressed", selected ? "true" : "false");
-    });
   },
 };
 

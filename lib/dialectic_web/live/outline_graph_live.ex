@@ -3,7 +3,9 @@ defmodule DialecticWeb.OutlineGraphLive do
 
   import Ecto.Query, only: [from: 2]
 
+  alias Dialectic.Accounts
   alias Dialectic.Accounts.User
+  import DialecticWeb.ReadingStyles
   alias Dialectic.Repo
   alias Dialectic.Responses.RequestQueue
   alias Dialectic.DbActions.Notes
@@ -88,6 +90,14 @@ defmodule DialecticWeb.OutlineGraphLive do
 
     previous_node_id = socket.assigns.selected_node_id
 
+    socket =
+      if socket.assigns.search_highlight &&
+           (!selected_node || socket.assigns.search_highlight.node_id != selected_node.id) do
+        assign(socket, :search_highlight, nil)
+      else
+        socket
+      end
+
     highlight_id = Map.get(params, "highlight")
 
     share_highlight =
@@ -117,6 +127,75 @@ defmodule DialecticWeb.OutlineGraphLive do
       |> assign_share_metadata(share_highlight)
 
     {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("preview_reader_appearance", %{"user" => params}, socket) do
+    {style, params} = apply_reading_style(params)
+    params = Map.take(params, ["reading_font", "reading_density"])
+    user = struct(User, socket.assigns.appearance_preferences)
+    changeset = Accounts.change_user_appearance(user, params)
+
+    socket =
+      assign(socket,
+        reader_style: style,
+        reader_appearance_form: to_form(Map.put(changeset, :action, :validate)),
+        reader_appearance_status: nil
+      )
+
+    socket =
+      if changeset.valid? do
+        assign(
+          socket,
+          :appearance_preferences,
+          User.appearance_preferences(Ecto.Changeset.apply_changes(changeset))
+        )
+      else
+        socket
+      end
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("save_reader_appearance", %{"style" => style}, socket)
+      when style in ["book", "screen", "large_print", "compact"] do
+    handle_event("save_reader_appearance", %{"user" => %{"reading_style" => style}}, socket)
+  end
+
+  def handle_event("save_reader_appearance", %{"user" => params}, socket) do
+    {style, params} = apply_reading_style(params)
+    params = Map.take(params, ["reading_font", "reading_density"])
+    user = socket.assigns.current_user || struct(User, socket.assigns.appearance_preferences)
+
+    result =
+      if socket.assigns.current_user do
+        Accounts.update_user_appearance(user, params)
+      else
+        user |> Accounts.change_user_appearance(params) |> Ecto.Changeset.apply_action(:update)
+      end
+
+    case result do
+      {:ok, updated} ->
+        socket =
+          if socket.assigns.current_user, do: assign(socket, :current_user, updated), else: socket
+
+        {:noreply,
+         assign(socket,
+           reader_style: style,
+           reader_appearance_form: to_form(Accounts.change_user_appearance(updated)),
+           appearance_preferences: User.appearance_preferences(updated),
+           reader_appearance_status:
+             if(socket.assigns.current_user,
+               do: "Reading style saved for all grids.",
+               else: "Reading style applied for this visit."
+             )
+         )}
+
+      {:error, changeset} ->
+        {:noreply,
+         assign(socket, reader_style: style, reader_appearance_form: to_form(changeset))}
+    end
   end
 
   @impl true
@@ -419,10 +498,32 @@ defmodule DialecticWeb.OutlineGraphLive do
       |> to_string()
       |> String.trim()
 
+    {results, count} = search_reader_nodes(socket.assigns.graph_id, search_term, 10)
+
     {:noreply,
      socket
-     |> assign(search_term: search_term)
-     |> assign(search_results: search_reader_nodes(socket.assigns.graph_id, search_term))}
+     |> assign(
+       search_term: search_term,
+       search_result_count: count,
+       search_result_limit: 10,
+       reader_search_form: to_form(%{"search_term" => search_term})
+     )
+     |> assign(search_results: results)}
+  end
+
+  @impl true
+  def handle_event("show_more_search_results", _params, socket) do
+    limit = socket.assigns.search_result_limit + 10
+
+    {results, count} =
+      search_reader_nodes(socket.assigns.graph_id, socket.assigns.search_term, limit)
+
+    {:noreply,
+     assign(socket,
+       search_results: results,
+       search_result_count: count,
+       search_result_limit: limit
+     )}
   end
 
   @impl true
@@ -449,10 +550,23 @@ defmodule DialecticWeb.OutlineGraphLive do
   end
 
   @impl true
+  def handle_event("clear_search_highlight", _params, socket) do
+    {:noreply, assign(socket, :search_highlight, nil)}
+  end
+
+  @impl true
   def handle_event("search_result_clicked", %{"id" => node_id}, socket) do
+    query = socket.assigns.search_term
+
+    highlight =
+      if query != "",
+        do: %{node_id: node_id, query: query, terms: Dialectic.Search.Query.terms(query)},
+        else: nil
+
     socket =
       socket
       |> clear_reader_search()
+      |> assign(:search_highlight, highlight)
       |> then(fn current_socket ->
         if current_socket.assigns.selected_node_id == node_id,
           do: current_socket,
@@ -559,6 +673,10 @@ defmodule DialecticWeb.OutlineGraphLive do
         |> Notes.list_noted_node_ids(socket.assigns[:current_user])
         |> MapSet.new(),
       appearance_preferences: User.appearance_preferences(socket.assigns[:current_user]),
+      reader_appearance_form:
+        to_form(Accounts.change_user_appearance(socket.assigns[:current_user] || %User{})),
+      reader_style: reading_style(socket.assigns[:current_user] || %User{}),
+      reader_appearance_status: nil,
       token: token_param,
       nav_params: token_params(token_param),
       can_edit: !graph_db.is_locked,
@@ -586,8 +704,12 @@ defmodule DialecticWeb.OutlineGraphLive do
       selected_share_highlight: nil,
       show_login_modal: false,
       show_search_overlay: false,
+      search_highlight: nil,
       search_term: "",
+      reader_search_form: to_form(%{"search_term" => ""}),
       search_results: [],
+      search_result_count: 0,
+      search_result_limit: 10,
       following_graph?: following_graph?(socket.assigns[:current_user], graph_db),
       highlights: highlights,
       visible_highlights: highlights,
@@ -915,12 +1037,19 @@ defmodule DialecticWeb.OutlineGraphLive do
   end
 
   defp clear_reader_search(socket) do
-    assign(socket, show_search_overlay: false, search_term: "", search_results: [])
+    assign(socket,
+      show_search_overlay: false,
+      search_term: "",
+      search_results: [],
+      search_result_count: 0,
+      search_result_limit: 10,
+      reader_search_form: to_form(%{"search_term" => ""})
+    )
   end
 
-  defp search_reader_nodes(_graph_id, ""), do: []
+  defp search_reader_nodes(_graph_id, "", _limit), do: {[], 0}
 
-  defp search_reader_nodes(graph_id, search_term) do
+  defp search_reader_nodes(graph_id, search_term, limit) do
     try do
       graph_id
       |> GraphManager.vertices()
@@ -945,11 +1074,11 @@ defmodule DialecticWeb.OutlineGraphLive do
       end)
       |> Enum.sort_by(fn {rank, sort_id, _node} -> {rank, sort_id} end)
       |> Enum.map(fn {_rank, _sort_id, node} -> node end)
-      |> Enum.take(10)
+      |> then(fn results -> {Enum.take(results, limit), length(results)} end)
     rescue
-      _ -> []
+      _ -> {[], 0}
     catch
-      :exit, _reason -> []
+      :exit, _reason -> {[], 0}
     end
   end
 

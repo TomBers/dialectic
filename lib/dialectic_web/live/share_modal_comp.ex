@@ -122,6 +122,12 @@ defmodule DialecticWeb.ShareModalComp do
         <div
           id={"share-modal-layer-#{@id}"}
           phx-hook="GlobalModalLayer"
+          data-return-focus-id={
+            if(@share_target == :reader,
+              do: "reader-workspace-bar-share",
+              else: "graph-workspace-bar-share"
+            )
+          }
           class="fixed inset-x-0 bottom-0 -top-9 z-[10020] overflow-y-auto"
           aria-labelledby="modal-title"
           role="dialog"
@@ -143,6 +149,7 @@ defmodule DialecticWeb.ShareModalComp do
               <div class="absolute top-0 right-0 pt-4 pr-4">
                 <button
                   type="button"
+                  data-modal-close
                   phx-click="close"
                   phx-target={@myself}
                   class="text-gray-400 bg-white rounded-md hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"

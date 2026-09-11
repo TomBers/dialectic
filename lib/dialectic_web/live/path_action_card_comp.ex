@@ -15,7 +15,7 @@ defmodule DialecticWeb.PathActionCardComp do
       patch={@patch}
       aria-label={"#{@action_label}: #{@title}"}
       data-path-action-card
-      class="group flex h-full flex-col rounded-[1.35rem] border border-sky-200/80 bg-gradient-to-br from-white via-white to-sky-50/80 p-4 shadow-sm ring-1 ring-sky-950/[0.035] transition duration-200 active:scale-[0.995] hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-[0_20px_38px_-24px_rgba(14,116,144,0.3)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 sm:rounded-2xl sm:p-5"
+      class="group flex h-full min-w-0 flex-col rounded-xl border border-slate-200 bg-slate-50/60 p-4 transition-colors hover:border-teal-300 hover:bg-teal-50/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 sm:p-5"
     >
       <div class="min-w-0 flex-1">
         <span class={[
@@ -27,7 +27,7 @@ defmodule DialecticWeb.PathActionCardComp do
 
         <p
           data-path-title
-          class="mt-4 font-serif text-xl font-semibold leading-6 tracking-tight text-slate-950 transition group-hover:text-sky-950"
+          class="reader-heading mt-3 text-[length:var(--rg-read-font-size)] font-semibold leading-snug text-slate-900 [overflow-wrap:anywhere]"
         >
           {@title}
         </p>
@@ -43,10 +43,10 @@ defmodule DialecticWeb.PathActionCardComp do
 
       <div
         data-path-action
-        class="mt-5 flex items-center justify-between rounded-xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white shadow-sm transition group-hover:bg-sky-800 group-hover:shadow-md"
+        class="mt-4 flex items-center justify-between gap-3 border-t border-slate-200 pt-3 text-sm font-medium text-teal-800"
       >
         <span>{@action_label}</span>
-        <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/10 text-white transition group-hover:translate-x-0.5 group-hover:bg-white/15">
+        <span class="inline-flex h-6 w-6 shrink-0 items-center justify-center text-teal-700">
           <.icon name="hero-arrow-right" class="h-4 w-4" />
         </span>
       </div>

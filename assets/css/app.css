@@ -1783,52 +1783,47 @@ button[type="submit"]:active {
 }
 
 /* Shared reading preferences for graph and outline content. */
-#graph-layout,
-#outline-layout {
+.reading-appearance {
     --rg-read-font-family-sans:
         ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
         sans-serif;
     --rg-read-font-family-serif:
         "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua",
         Georgia, "Times New Roman", serif;
-    --rg-read-font-family: var(--rg-read-font-family-sans);
-    --rg-read-heading-font-family: var(--rg-read-font-family-sans);
-    --rg-read-font-size: 1.0625rem;
-    --rg-read-line-height: 1.68;
+    --rg-read-font-family: var(--rg-read-font-family-serif);
+    --rg-read-heading-font-family: var(--rg-read-font-family-serif);
+    --rg-read-font-size: 1.125rem;
+    --rg-read-line-height: 1.7;
     --rg-read-max-width: 62ch;
-    --rg-read-para-margin: 0.96em;
-    --rg-read-lead-size: 1.06em;
-    --rg-read-lead-line-height: 1.62;
-    --rg-read-letter-spacing: -0.0025em;
+    --rg-read-para-margin: 1em;
+    --rg-read-letter-spacing: normal;
     --rg-read-word-spacing: 0.02em;
 }
 
-#graph-layout[data-reading-density="compact"],
-#outline-layout[data-reading-density="compact"] {
+.reading-appearance[data-reading-density="compact"] {
     --rg-read-font-size: 1rem;
-    --rg-read-line-height: 1.58;
+    --rg-read-line-height: 1.6;
     --rg-read-max-width: 66ch;
-    --rg-read-para-margin: 0.72em;
-    --rg-read-lead-size: 1em;
-    --rg-read-lead-line-height: 1.58;
+    --rg-read-para-margin: 0.8em;
 }
 
-#graph-layout[data-reading-density="large"],
-#outline-layout[data-reading-density="large"] {
-    --rg-read-font-size: 1.1875rem;
-    --rg-read-line-height: 1.72;
-    --rg-read-max-width: 58ch;
-    --rg-read-para-margin: 1em;
-    --rg-read-lead-size: 1.06em;
-    --rg-read-lead-line-height: 1.62;
+.reading-appearance[data-reading-density="large"] {
+    --rg-read-font-size: 1.375rem;
+    --rg-read-line-height: 1.75;
+    --rg-read-max-width: 55ch;
+    --rg-read-para-margin: 1.25em;
 }
 
-#graph-layout[data-reading-font="serif"],
-#outline-layout[data-reading-font="serif"] {
+.reading-appearance[data-reading-font="serif"] {
     --rg-read-font-family: var(--rg-read-font-family-serif);
     --rg-read-heading-font-family: var(--rg-read-font-family-serif);
-    --rg-read-letter-spacing: -0.001em;
+    --rg-read-letter-spacing: normal;
     --rg-read-word-spacing: 0.01em;
+}
+
+.reading-appearance[data-reading-font="sans"] {
+    --rg-read-font-family: var(--rg-read-font-family-sans);
+    --rg-read-heading-font-family: var(--rg-read-font-family-sans);
 }
 
 #graph-layout[data-reduce-motion="true"],
@@ -1896,50 +1891,71 @@ button[type="submit"]:active {
     font-family: var(--rg-read-heading-font-family);
 }
 
+.reading-appearance .reader-title {
+    font-size: calc(var(--rg-read-font-size, 1.125rem) * 1.42);
+}
+
+.reading-appearance .reader-title-origin {
+    font-size: calc(var(--rg-read-font-size, 1.125rem) * 1.5);
+}
+
+@media (min-width: 640px) {
+    .reading-appearance .reader-title-origin {
+        font-size: calc(var(--rg-read-font-size, 1.125rem) * 1.87);
+    }
+}
+
 .reader-prose {
     width: min(100%, var(--rg-read-max-width, 62ch));
     max-width: var(--rg-read-max-width, 62ch);
     color: #1e293b;
     font-family: var(--rg-read-font-family);
-    font-size: var(--rg-read-font-size, 1.02rem);
+    font-size: var(--rg-read-font-size, 1.125rem);
     font-variant-numeric: lining-nums;
-    letter-spacing: var(--rg-read-letter-spacing, -0.0025em);
+    overflow-wrap: anywhere;
+    text-align: start;
+    letter-spacing: var(--rg-read-letter-spacing, normal);
     line-height: var(--rg-read-line-height, 1.7);
     text-rendering: optimizeLegibility;
     word-spacing: var(--rg-read-word-spacing, 0.02em);
 }
 
-.reader-prose.reader-prose-wide {
-    width: 100%;
-    max-width: none;
-}
-
 .reader-prose
-    [phx-hook="Markdown"][data-body-only="true"]
+    :is([phx-hook="Markdown"][data-body-only="true"], [data-reader-body])
     :where(p) {
+    font-size: inherit;
     margin-block: var(--rg-read-para-margin, 0.88em);
     color: #334155;
     line-height: inherit;
 }
 
 .reader-prose
-    [phx-hook="Markdown"][data-body-only="true"]
+    :is([phx-hook="Markdown"][data-body-only="true"], [data-reader-body])
     > p:first-of-type {
     margin-top: 0;
     color: #0f172a;
-    font-size: var(--rg-read-lead-size, 1.06em);
-    font-weight: 450;
-    line-height: var(--rg-read-lead-line-height, 1.62);
 }
 
 .reader-prose
-    [phx-hook="Markdown"][data-body-only="true"]
+    :is([phx-hook="Markdown"][data-body-only="true"], [data-reader-body])
+    :where(h1) {
+    font-size: calc(var(--rg-read-font-size, 1.125rem) * 1.42);
+}
+
+.reader-prose
+    :is([phx-hook="Markdown"][data-body-only="true"], [data-reader-body])
+    :where(h4, h5, h6) {
+    font-size: var(--rg-read-font-size, 1.125rem);
+}
+
+.reader-prose
+    :is([phx-hook="Markdown"][data-body-only="true"], [data-reader-body])
     :where(h2) {
     margin-top: 1.9em;
     margin-bottom: 0.65em;
     color: #0f172a;
     font-family: var(--rg-read-heading-font-family);
-    font-size: 1.28em;
+    font-size: calc(var(--rg-read-font-size, 1.125rem) * 1.28);
     font-weight: 650;
     line-height: 1.25;
     border-left: 0;
@@ -1947,53 +1963,53 @@ button[type="submit"]:active {
 }
 
 .reader-prose
-    [phx-hook="Markdown"][data-body-only="true"]
+    :is([phx-hook="Markdown"][data-body-only="true"], [data-reader-body])
     > :where(h2, h3):first-child {
     margin-top: 0;
 }
 
 .reader-prose
-    [phx-hook="Markdown"][data-body-only="true"]
+    :is([phx-hook="Markdown"][data-body-only="true"], [data-reader-body])
     :where(h3) {
     margin-top: 1.65em;
     margin-bottom: 0.55em;
     color: #0f172a;
     font-family: var(--rg-read-heading-font-family);
-    font-size: 1.15em;
+    font-size: calc(var(--rg-read-font-size, 1.125rem) * 1.15);
     font-weight: 650;
     line-height: 1.3;
 }
 
 .reader-prose
-    [phx-hook="Markdown"][data-body-only="true"]
+    :is([phx-hook="Markdown"][data-body-only="true"], [data-reader-body])
     :where(ul, ol) {
     margin-block: 1em;
 }
 
 .reader-prose
-    [phx-hook="Markdown"][data-body-only="true"]
+    :is([phx-hook="Markdown"][data-body-only="true"], [data-reader-body])
     :where(li) {
     margin-block: 0.48em;
     color: #334155;
-    line-height: 1.62;
+    line-height: inherit;
 }
 
 .reader-prose
-    [phx-hook="Markdown"][data-body-only="true"]
+    :is([phx-hook="Markdown"][data-body-only="true"], [data-reader-body])
     :where(li)::marker {
     color: #64748b;
     font-weight: 600;
 }
 
 .reader-prose
-    [phx-hook="Markdown"][data-body-only="true"]
+    :is([phx-hook="Markdown"][data-body-only="true"], [data-reader-body])
     :where(strong) {
     color: #0f172a;
     font-weight: 700;
 }
 
 .reader-prose
-    [phx-hook="Markdown"][data-body-only="true"]
+    :is([phx-hook="Markdown"][data-body-only="true"], [data-reader-body])
     :where(a) {
     color: #0f766e;
     font-weight: 550;
@@ -2003,7 +2019,7 @@ button[type="submit"]:active {
 }
 
 .reader-prose
-    [phx-hook="Markdown"][data-body-only="true"]
+    :is([phx-hook="Markdown"][data-body-only="true"], [data-reader-body])
     :where(blockquote) {
     border-color: #cbd5e1;
     color: #475569;
@@ -2014,35 +2030,35 @@ button[type="submit"]:active {
 }
 
 .reader-prose.reader-prose-dark
-    [phx-hook="Markdown"][data-body-only="true"]
+    :is([phx-hook="Markdown"][data-body-only="true"], [data-reader-body])
     :where(p, li) {
     color: #cbd5e1;
 }
 
 .reader-prose.reader-prose-dark
-    [phx-hook="Markdown"][data-body-only="true"]
+    :is([phx-hook="Markdown"][data-body-only="true"], [data-reader-body])
     > p:first-of-type,
 .reader-prose.reader-prose-dark
-    [phx-hook="Markdown"][data-body-only="true"]
+    :is([phx-hook="Markdown"][data-body-only="true"], [data-reader-body])
     :where(h2, h3, strong) {
     color: #f8fafc;
 }
 
 .reader-prose.reader-prose-dark
-    [phx-hook="Markdown"][data-body-only="true"]
+    :is([phx-hook="Markdown"][data-body-only="true"], [data-reader-body])
     :where(li)::marker {
     color: #94a3b8;
 }
 
 .reader-prose.reader-prose-dark
-    [phx-hook="Markdown"][data-body-only="true"]
+    :is([phx-hook="Markdown"][data-body-only="true"], [data-reader-body])
     :where(a) {
     color: #5eead4;
     text-decoration-color: #2dd4bf;
 }
 
 .reader-prose.reader-prose-dark
-    [phx-hook="Markdown"][data-body-only="true"]
+    :is([phx-hook="Markdown"][data-body-only="true"], [data-reader-body])
     :where(blockquote) {
     border-color: #64748b;
     color: #cbd5e1;
@@ -2075,15 +2091,6 @@ button[type="submit"]:active {
     ); /* optimal measure: ~60-75 characters per line */
     width: min(100%, var(--rg-read-max-width, 68ch));
     margin-inline: auto;
-}
-
-/* Linear view defaults to the serif reading face for long-form scanning */
-#linear-main-content .selection-content {
-    font-family:
-        "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua",
-        Georgia, "Times New Roman", serif;
-    letter-spacing: -0.001em;
-    word-spacing: 0.01em;
 }
 
 /* Bold text — subtle visual lift for key terms */
@@ -2736,4 +2743,114 @@ button[type="submit"]:active {
   body:has(#graph-layout, #outline-layout) #userHeader [data-secondary-navigation] {
     display: none;
   }
+}
+
+.reader-mobile-toolbar,
+.reader-mobile-menu {
+    display: none;
+}
+
+@media (max-width: 639px) {
+    .reader-mobile-toolbar {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        order: 1;
+        flex-shrink: 0;
+        gap: 0.25rem;
+        padding: 0.25rem max(0.5rem, env(safe-area-inset-right))
+            max(0.25rem, env(safe-area-inset-bottom))
+            max(0.5rem, env(safe-area-inset-left));
+        border-top: 1px solid #cbd5e1;
+        background: #f1f5f9;
+        box-shadow: 0 -3px 12px rgb(15 23 42 / 4%);
+    }
+
+    .reader-mobile-toolbar > :is(a, button) {
+        display: flex;
+        min-height: 3.25rem;
+        min-width: 0;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.25rem;
+        border-radius: 0.75rem;
+        color: #334155;
+        font-size: 0.75rem;
+        font-weight: 600;
+        line-height: 1.25;
+    }
+
+    #reader-mobile-highlights {
+        border: 1px solid #fde68a;
+        background: #fffbeb;
+        color: #92400e;
+    }
+
+    .reader-mobile-toolbar > :is(a, button):active {
+        background: #f0fdfa;
+        color: #115e59;
+    }
+
+    .reader-mobile-toolbar > :is(a, button):focus-visible,
+    .reader-mobile-menu :is(a, button):focus-visible {
+        outline: 2px solid #0f766e;
+        outline-offset: -2px;
+    }
+
+    .reader-mobile-menu:popover-open {
+        display: block;
+        position: fixed;
+        inset: auto 0 0;
+        width: 100%;
+        max-width: none;
+        max-height: calc(100dvh - 3rem);
+        margin: 0;
+        padding: 0 0 env(safe-area-inset-bottom);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        border: 1px solid #cbd5e1;
+        border-bottom: 0;
+        border-radius: 1.25rem 1.25rem 0 0;
+        background: #fff;
+        color: #0f172a;
+        box-shadow: 0 -12px 40px rgb(15 23 42 / 15%);
+    }
+
+    .reader-mobile-menu::backdrop {
+        background: rgb(15 23 42 / 25%);
+    }
+
+    .reader-mobile-menu-action {
+        display: flex;
+        min-height: 2.75rem;
+        align-items: center;
+        gap: 0.75rem;
+        border-radius: 0.75rem;
+        padding: 0.625rem 0.75rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        text-align: start;
+    }
+
+    .reader-mobile-menu-action:active {
+        background: #f1f5f9;
+    }
+
+    #outline-mobile-nav-panel {
+        top: 2.5rem;
+        padding-bottom: env(safe-area-inset-bottom);
+        overscroll-behavior: contain;
+    }
+
+    #outline-mobile-nav-close {
+        min-width: 2.75rem;
+        min-height: 2.75rem;
+    }
+}
+
+::highlight(reader-search-matches) {
+    background-color: #fde68a;
+    color: #451a03;
+    text-decoration: underline;
+    text-decoration-color: #b45309;
 }

@@ -3,6 +3,7 @@
     id="graph-layout"
     phx-hook="GraphLayout"
     class={[
+      "reading-appearance",
       "relative flex flex-col overflow-hidden",
       @presentation_mode == :presenting && "h-screen"
     ]}
@@ -30,7 +31,9 @@
       )
     }
   >
-    <h1 :if={@presentation_mode != :presenting} class="sr-only">{@graph_struct.title}</h1>
+    <h1 :if={@presentation_mode != :presenting} class="sr-only">
+      {@graph_struct.title}
+    </h1>
     <% slides = slides(@graph_id, @presentation_slide_ids) %>
     <% active_slide = active_slide(slides, @node) %>
     <% active_slide_id = if active_slide, do: active_slide.id, else: nil %>
@@ -104,6 +107,9 @@
     <%= if @show_help_modal do %>
       <div
         id="graph-help-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="graph-help-modal-title"
         phx-hook="GlobalModalLayer"
         class="fixed inset-0 z-[10020] flex items-start justify-center overflow-y-auto p-3 pt-6 sm:items-center sm:p-5"
       >
@@ -112,13 +118,21 @@
           phx-click="close_help_modal"
           class="absolute inset-0 bg-gray-900/55 backdrop-blur-[1px]"
           aria-label="Close how-to guide"
+          tabindex="-1"
+          aria-hidden="true"
         ></button>
 
         <div class="relative z-10 flex max-h-[calc(100dvh-1.5rem)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-gray-200 sm:max-h-[calc(100dvh-2.5rem)]">
           <div class="flex items-center justify-between border-b border-gray-200 px-4 py-3">
-            <h2 class="text-sm font-semibold text-gray-900 sm:text-base">Quick help</h2>
+            <h2
+              id="graph-help-modal-title"
+              class="text-sm font-semibold text-gray-900 sm:text-base"
+            >
+              Quick help
+            </h2>
             <button
               type="button"
+              data-modal-close
               phx-click="close_help_modal"
               class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 text-gray-600 transition hover:bg-gray-50"
               aria-label="Close how-to guide"
@@ -260,6 +274,7 @@
               module={NodeComp}
               id="node-comp"
               node={@node}
+              search_highlight={@search_highlight}
               user={@user}
               form={@form}
               streaming={@node && MapSet.member?(@streaming_nodes, @node.id)}

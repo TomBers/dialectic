@@ -289,7 +289,7 @@ defmodule Dialectic.Accounts.User do
     %{
       reading_density:
         valid_or_default(user.reading_density, ~w(compact comfortable large), "comfortable"),
-      reading_font: valid_or_default(user.reading_font, ~w(sans serif), "sans"),
+      reading_font: valid_or_default(user.reading_font, ~w(sans serif), "serif"),
       graph_view_mode: valid_or_default(user.graph_view_mode, ~w(spaced compact), "spaced"),
       graph_direction: valid_or_default(user.graph_direction, ~w(TB BT LR RL), "TB"),
       reduce_motion: user.reduce_motion == true,

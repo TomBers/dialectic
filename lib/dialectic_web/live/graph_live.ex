@@ -991,7 +991,24 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
+  def handle_event("clear_search_highlight", _params, socket) do
+    {:noreply, assign(socket, :search_highlight, nil)}
+  end
+
   def handle_event("node_clicked", %{"id" => id} = params, socket) do
+    query = socket.assigns.search_term
+
+    socket =
+      if params["from-search"] == "true" and query != "" do
+        assign(socket, :search_highlight, %{
+          node_id: id,
+          query: query,
+          terms: Dialectic.Search.Query.terms(query)
+        })
+      else
+        assign(socket, :search_highlight, nil)
+      end
+
     # When in combine setup mode, clicking a node toggles it in the selection
     cond do
       socket.assigns.combine_mode == :setup ->
@@ -2608,6 +2625,14 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def update_graph(socket, {_graph, node}, operation) do
+    socket =
+      if socket.assigns[:search_highlight] &&
+           (!node || socket.assigns.search_highlight.node_id != node.id) do
+        assign(socket, :search_highlight, nil)
+      else
+        socket
+      end
+
     # Changeset needs to be a new node
     new_node = GraphActions.create_new_node(socket.assigns.user)
     changeset = Vertex.changeset(new_node)
@@ -2880,6 +2905,7 @@ defmodule DialecticWeb.GraphLive do
       graph_operation: "",
       ask_question: true,
       group_states: %{},
+      search_highlight: nil,
       search_term: "",
       search_results: [],
       show_search_overlay: false,
