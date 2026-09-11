@@ -150,6 +150,11 @@ defmodule DialecticWeb.OutlineGraphLive do
   end
 
   @impl true
+  def handle_event("save_reader_appearance", %{"style" => style}, socket)
+      when style in ["book", "screen", "large_print"] do
+    handle_event("save_reader_appearance", %{"user" => %{"reading_style" => style}}, socket)
+  end
+
   def handle_event("save_reader_appearance", %{"user" => params}, socket) do
     {style, params} = apply_reading_style(params)
     params = Map.take(params, ["reading_font", "reading_density"])
@@ -487,7 +492,10 @@ defmodule DialecticWeb.OutlineGraphLive do
 
     {:noreply,
      socket
-     |> assign(search_term: search_term)
+     |> assign(
+       search_term: search_term,
+       reader_search_form: to_form(%{"search_term" => search_term})
+     )
      |> assign(search_results: search_reader_nodes(socket.assigns.graph_id, search_term))}
   end
 
@@ -657,6 +665,7 @@ defmodule DialecticWeb.OutlineGraphLive do
       show_login_modal: false,
       show_search_overlay: false,
       search_term: "",
+      reader_search_form: to_form(%{"search_term" => ""}),
       search_results: [],
       following_graph?: following_graph?(socket.assigns[:current_user], graph_db),
       highlights: highlights,
@@ -985,7 +994,12 @@ defmodule DialecticWeb.OutlineGraphLive do
   end
 
   defp clear_reader_search(socket) do
-    assign(socket, show_search_overlay: false, search_term: "", search_results: [])
+    assign(socket,
+      show_search_overlay: false,
+      search_term: "",
+      search_results: [],
+      reader_search_form: to_form(%{"search_term" => ""})
+    )
   end
 
   defp search_reader_nodes(_graph_id, ""), do: []

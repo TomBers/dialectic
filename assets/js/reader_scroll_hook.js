@@ -1,6 +1,13 @@
+let pendingHistoryFocus = null;
+
 const ReaderScrollHook = {
   mounted() {
     this.storageKey = this.el.dataset.readerScrollKey;
+    const historyFocus = window.history.state?.readerReturnFocus;
+    if (historyFocus?.key === this.storageKey && historyFocus?.nodeId === new URL(window.location.href).searchParams.get("node")) {
+      pendingHistoryFocus = historyFocus;
+    }
+
     this.savedScrollTop = this.el.scrollTop;
     this.savedScrollLeft = this.el.scrollLeft;
     this.activeNodeId = null;
@@ -31,11 +38,19 @@ const ReaderScrollHook = {
       const target = new URL(link.href, window.location.origin);
       if (!target.searchParams.get("node")) return;
       this.keyboardTarget = target.searchParams.get("node");
-      this.returnFocus = { id: link.id, url: window.location.href };
+      const readerReturnFocus = {
+        key: this.storageKey,
+        id: link.id,
+        nodeId: new URL(window.location.href).searchParams.get("node"),
+      };
+      window.history.replaceState({...window.history.state, readerReturnFocus}, "", window.location.href);
     };
-    this.onHistoryNavigation = () => {
-      if (this.returnFocus?.url === window.location.href) {
-        sessionStorage.setItem(`${this.storageKey}:focus-return`, JSON.stringify(this.returnFocus));
+    this.onHistoryNavigation = (event) => {
+      pendingHistoryFocus = event.state?.readerReturnFocus || null;
+      this.keyboardTarget = null;
+      if (pendingHistoryFocus && pendingHistoryFocus.key === this.storageKey) {
+        this.setRestoringScroll(true);
+        requestAnimationFrame(() => requestAnimationFrame(() => this.restoreKeyboardFocus()));
       }
     };
     if (this.storageKey) {
@@ -68,7 +83,7 @@ const ReaderScrollHook = {
         requestAnimationFrame(() => this.scrollToNode(id));
       });
     });
-    if (this.storageKey && sessionStorage.getItem(`${this.storageKey}:focus-return`)) {
+    if (pendingHistoryFocus && pendingHistoryFocus.key === this.storageKey) {
       requestAnimationFrame(() => requestAnimationFrame(() => this.restoreKeyboardFocus()));
     }
     const restoredPosition = this.restoreReaderPosition();
@@ -231,18 +246,19 @@ const ReaderScrollHook = {
   },
 
   restoreKeyboardFocus() {
-    if (!this.storageKey) return;
-    const raw = sessionStorage.getItem(`${this.storageKey}:focus-return`);
-    if (!raw) return;
-    let target;
-    try { target = JSON.parse(raw); } catch { return; }
+    const target = pendingHistoryFocus;
+    if (!target || !this.storageKey || target.key !== this.storageKey) return;
+    if (this.el.dataset.selectedReaderNodeId && this.el.dataset.selectedReaderNodeId !== target.nodeId) return;
     const source = document.getElementById(target.id);
     if (!source) return;
-    sessionStorage.removeItem(`${this.storageKey}:focus-return`);
     this.keyboardTarget = null;
-    const nodeId = new URL(target.url).searchParams.get("node");
-    if (nodeId) this.scrollToNode(nodeId);
-    source.focus({ preventScroll: true });
+    if (target.nodeId) this.scrollToNode(target.nodeId);
+    const mobileOutline = source.closest("#outline-mobile-nav-panel");
+    const focusTarget = mobileOutline?.classList.contains("hidden")
+      ? document.getElementById("reader-workspace-bar-outline")
+      : source;
+    focusTarget?.focus({ preventScroll: !!source.closest("#outline-tree") });
+    pendingHistoryFocus = null;
   },
 
   scrollToNode(nodeId) {
@@ -262,7 +278,6 @@ const ReaderScrollHook = {
       this.keyboardTarget = null;
     }
 
-
     requestAnimationFrame(() => {
       this.setRestoringScroll(false);
     });
@@ -274,6 +289,7 @@ const ReaderScrollHook = {
   },
 
   syncViewedSection() {
+    if (pendingHistoryFocus) return;
     const nodeId = this.viewedNodeId();
     if (!nodeId || nodeId === this.activeNodeId) return;
 

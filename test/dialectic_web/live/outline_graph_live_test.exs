@@ -427,7 +427,7 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert has_element?(other_view, "#reader-source-status-5[data-source-status='no_links']")
   end
 
-  test "reader controls preview without saving and persist only reading fields", %{conn: conn} do
+  test "reader style dropdown saves presets without changing other preferences", %{conn: conn} do
     graph = create_graph()
     user = user_fixture()
     {:ok, view, _} = conn |> log_in_user(user) |> live(~p"/g/#{graph.slug}")
@@ -437,63 +437,37 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
              "#reader-appearance-toggle[popovertarget='reader-appearance-panel']"
            )
 
-    view
-    |> form("#reader-appearance-form", %{"user" => %{"reading_style" => "large_print"}})
-    |> render_change()
+    refute has_element?(view, "#reader-style-custom")
+    view |> element("#reader-style-large_print") |> render_click()
 
     assert has_element?(
              view,
              "#outline-layout[data-reading-font='sans'][data-reading-density='large']"
            )
 
-    assert Dialectic.Accounts.get_user!(user.id).reading_density == user.reading_density
-
-    view |> element("#next-choice-3") |> render_click()
-    assert has_element?(view, "#outline-layout[data-reading-density='large']")
-
-    view
-    |> form("#reader-appearance-form", %{"user" => %{"reading_style" => "large_print"}})
-    |> render_submit()
-
+    assert has_element?(view, "#reader-style-large_print[aria-pressed='true']")
     updated = Dialectic.Accounts.get_user!(user.id)
     assert updated.reading_font == "sans"
     assert updated.reading_density == "large"
     assert updated.graph_direction == user.graph_direction
     assert has_element?(view, "#reader-appearance-status", "saved")
+    view |> element("#next-choice-3") |> render_click()
+    assert has_element?(view, "#outline-layout[data-reading-density='large']")
   end
 
-  test "guest reader controls support custom preferences and reject invalid fonts", %{conn: conn} do
+  test "guest reader style dropdown applies presets for this visit", %{conn: conn} do
     graph = create_graph()
     {:ok, view, _} = live(conn, ~p"/g/#{graph.slug}")
-
-    view
-    |> form("#reader-appearance-form", %{"user" => %{"reading_style" => "custom"}})
-    |> render_change()
-
-    assert has_element?(view, "#reader-custom-settings")
-
-    view
-    |> form("#reader-appearance-form", %{
-      "user" => %{
-        "reading_style" => "custom",
-        "reading_font" => "sans",
-        "reading_density" => "compact"
-      }
-    })
-    |> render_submit()
+    view |> element("#reader-style-screen") |> render_click()
 
     assert has_element?(
              view,
-             "#outline-layout[data-reading-font='sans'][data-reading-density='compact']"
+             "#outline-layout[data-reading-font='sans'][data-reading-density='comfortable']"
            )
 
     assert has_element?(view, "#reader-appearance-status", "this visit")
-
-    render_change(view, "preview_reader_appearance", %{
-      "user" => %{"reading_style" => "custom", "reading_font" => "invalid"}
-    })
-
-    assert has_element?(view, "#outline-layout[data-reading-font='sans']")
+    view |> element("#reader-style-book") |> render_click()
+    assert has_element?(view, "#outline-layout[data-reading-font='serif']")
   end
 
   test "retains saved reading preferences when choosing a path", %{conn: conn} do
@@ -909,6 +883,42 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
              view,
              ~s(#quote-share-preview[data-share-card-canvas][data-card-text="Meaning is use."])
            )
+  end
+
+  test "reader exposes skip links and identifies the current outline item", %{conn: conn} do
+    graph = create_graph()
+    {:ok, view, _} = live(conn, ~p"/g/#{graph.slug}?node=2")
+    assert has_element?(view, "#main-content[tabindex='-1']")
+    assert has_element?(view, "#reader-skip-to-response[href='#reading-node-2']")
+    assert has_element?(view, "#outline-node-2[aria-current='location']")
+    assert has_element?(view, "#outline-mobile-node-2[aria-current='location']")
+    refute has_element?(view, "#outline-node-1[aria-current]")
+    view |> element("#outline-node-3") |> render_click()
+    assert has_element?(view, "#reader-skip-to-response[href='#reading-node-3']")
+    assert has_element?(view, "#outline-node-3[aria-current='location']")
+    refute has_element?(view, "#outline-node-2[aria-current]")
+  end
+
+  test "search announces result counts and no matches", %{conn: conn} do
+    graph = create_graph()
+    {:ok, view, _} = live(conn, ~p"/g/#{graph.slug}")
+    view |> element("#reader-workspace-bar-search") |> render_click()
+    assert has_element?(view, "#outline-search-status[role='status'][aria-atomic='true']")
+    assert has_element?(view, "label[for='outline-quick-search-input']")
+
+    view
+    |> form("#outline-quick-search-form", %{"search_term" => "biologically"})
+    |> render_change()
+
+    assert has_element?(view, "#outline-search-status", "1 topic found")
+
+    view
+    |> form("#outline-quick-search-form", %{"search_term" => "zzznomatch"})
+    |> render_change()
+
+    assert has_element?(view, "#outline-search-status", "0 topics found")
+    view |> element("#outline-quick-search-close") |> render_click()
+    refute has_element?(view, "#outline-quick-search-panel")
   end
 
   test "reader search opens from the top bar and patches to the selected result", %{conn: conn} do

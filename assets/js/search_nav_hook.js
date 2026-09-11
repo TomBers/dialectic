@@ -13,80 +13,71 @@
  * is handled here we call `stopImmediatePropagation()` to prevent
  * any other listeners at the same level from firing.
  */
+import { containModalFocus } from "./modal_focus.js";
+
 const SearchNav = {
   mounted() {
-    this.focusInput = ({ force = false } = {}) => {
-      const active = document.activeElement;
-      if (!force && active && this.el.contains(active)) return;
-
-      const input = this.el.querySelector(
-        'input[type="text"], input:not([type]), textarea',
-      );
-      if (!input) return;
-
-      const focus = () => {
-        input.focus({ preventScroll: true });
-        if (typeof input.select === "function") {
-          input.select();
-        }
-      };
-
-      requestAnimationFrame(focus);
-      window.setTimeout(focus, 0);
+    this.opener = !this.el.contains(document.activeElement) && document.activeElement?.matches('a[href], button, input, select, textarea, [tabindex]')
+      ? document.activeElement : null;
+    this.modal = !!this.el.querySelector('[aria-modal="true"]');
+    this.modalFocus = this.modal ? containModalFocus(this.el) : null;
+    this.focusInput = () => {
+      if (this.el.contains(document.activeElement)) return;
+      cancelAnimationFrame(this.focusFrame);
+      this.focusFrame = requestAnimationFrame(() => {
+        if (!this.el.isConnected) return;
+        this.el.querySelector('input[type="text"], input:not([type]), textarea')?.focus({ preventScroll: true });
+      });
     };
-
-    this._onKeydown = (e) => {
-      if (e.key !== "ArrowDown" && e.key !== "ArrowUp" && e.key !== "Enter") {
-        return;
+    this._onResultClick = (event) => {
+      const result = event.target.closest('button[phx-click="search_result_clicked"]');
+      if (result && this.el.dataset.focusResultPrefix) {
+        this.resultId = this.el.dataset.focusResultPrefix + result.getAttribute("phx-value-id");
       }
-
-      const buttons = Array.from(
-        this.el.querySelectorAll("ul button[phx-click]"),
-      );
+    };
+    this._onKeydown = (event) => {
+      if (!this.el.contains(document.activeElement)) return;
+      if (!["ArrowDown", "ArrowUp", "Enter"].includes(event.key)) return;
+      const buttons = Array.from(this.el.querySelectorAll("ul button[phx-click]"));
       if (buttons.length === 0) return;
-
-      const active = document.activeElement;
-      const currentIndex = buttons.indexOf(active);
-
-      if (e.key === "ArrowDown") {
-        e.preventDefault();
-        e.stopImmediatePropagation();
-        const next =
-          currentIndex < 0 || currentIndex >= buttons.length - 1
-            ? buttons[0]
-            : buttons[currentIndex + 1];
-        next.focus();
-      } else if (e.key === "ArrowUp") {
-        e.preventDefault();
-        e.stopImmediatePropagation();
-        const prev =
-          currentIndex <= 0
-            ? buttons[buttons.length - 1]
-            : buttons[currentIndex - 1];
-        prev.focus();
-      } else if (e.key === "Enter" && currentIndex >= 0) {
-        // When a result button is focused, Enter should activate it.
-        // The browser default will submit the surrounding <form> if
-        // focus is in the input, so we only intercept when a result
-        // button is focused.
-        e.preventDefault();
-        e.stopImmediatePropagation();
-        active.click();
+      const index = buttons.indexOf(document.activeElement);
+      if (event.key === "Enter") {
+        if (index < 0) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        buttons[index].click();
+      } else {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        const next = event.key === "ArrowDown"
+          ? (index + 1) % buttons.length
+          : (index <= 0 ? buttons.length - 1 : index - 1);
+        buttons[next].focus();
       }
     };
-
-    // Capture phase ensures we fire before draw_graph.js's document-level
-    // bubble-phase handler, so arrow keys stay inside the search overlay.
+    this.el.addEventListener("click", this._onResultClick, true);
     document.addEventListener("keydown", this._onKeydown, true);
-    this.focusInput({ force: true });
+    this.focusInput();
   },
 
   updated() {
+    this.modalFocus?.refresh();
     this.focusInput();
   },
 
   destroyed() {
+    cancelAnimationFrame(this.focusFrame);
+    this.el.removeEventListener("click", this._onResultClick, true);
     document.removeEventListener("keydown", this._onKeydown, true);
+    this.modalFocus?.destroy();
+    const opener = this.opener;
+    const fallbackId = this.el.dataset.returnFocusId;
+    const resultId = this.resultId;
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const result = resultId && document.getElementById(resultId);
+      const target = result || (opener?.isConnected ? opener : document.getElementById(fallbackId));
+      target?.focus({ preventScroll: !result });
+    }));
   },
 };
 

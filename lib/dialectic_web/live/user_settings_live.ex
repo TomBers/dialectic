@@ -568,39 +568,15 @@ defmodule DialecticWeb.UserSettingsLive do
                     type="select"
                     label="Reading style"
                     value={@reading_style}
+                    prompt={if @reading_style == "custom", do: "Choose a style", else: nil}
                     options={[
                       {"Book — serif with comfortable spacing", "book"},
                       {"Screen — sans with comfortable spacing", "screen"},
-                      {"Large print — larger sans text with more spacing", "large_print"},
-                      {"Custom — choose your own font and size", "custom"}
+                      {"Large print — larger sans text with more spacing", "large_print"}
                     ]}
                   />
-                  <%= if @reading_style == "custom" do %>
-                    <div id="custom-reading-settings" class="grid gap-5 sm:grid-cols-2">
-                      <.input
-                        field={@appearance_form[:reading_density]}
-                        type="select"
-                        label="Text size & spacing"
-                        options={[
-                          {"Compact", "compact"},
-                          {"Comfortable", "comfortable"},
-                          {"Large", "large"}
-                        ]}
-                      />
-                      <.input
-                        field={@appearance_form[:reading_font]}
-                        type="select"
-                        label="Reading font"
-                        options={[
-                          {"Sans — simple letter shapes", "sans"},
-                          {"Serif — book-style lettering", "serif"}
-                        ]}
-                      />
-                    </div>
-                  <% else %>
-                    <.input field={@appearance_form[:reading_density]} type="hidden" />
-                    <.input field={@appearance_form[:reading_font]} type="hidden" />
-                  <% end %>
+                  <.input field={@appearance_form[:reading_density]} type="hidden" />
+                  <.input field={@appearance_form[:reading_font]} type="hidden" />
                   <div class="grid gap-5 sm:grid-cols-2">
                     <.input
                       field={@appearance_form[:graph_view_mode]}
@@ -648,7 +624,7 @@ defmodule DialecticWeb.UserSettingsLive do
                           pause when you need to, and return to the details that matter to you.
                         </p>
                         <p>
-                          Try a reading style, or choose Custom to adjust the font and text size.
+                          Choose a reading style to preview its font, text size and spacing.
                           Larger text means fewer words on screen and more scrolling.
                         </p>
                         <ul>

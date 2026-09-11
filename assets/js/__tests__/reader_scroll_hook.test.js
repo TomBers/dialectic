@@ -104,10 +104,25 @@ describe("ReaderScrollHook", () => {
     link.dispatchEvent(new MouseEvent("click", {bubbles: true, cancelable: true, detail: 0}));
     hook.scrollToNode("2");
     expect(document.activeElement.id).toBe("reading-node-2");
-    window.dispatchEvent(new PopStateEvent("popstate"));
+    window.dispatchEvent(new PopStateEvent("popstate", {state: window.history.state}));
     hook.beforeUpdate();
     hook.updated();
     expect(document.activeElement).toBe(link);
+    hook.destroyed();
+  });
+
+  it("restores focus from the history entry when Back remounts the reader", () => {
+    window.history.replaceState({readerReturnFocus: {key: "reader-position:test", id: "return-link", nodeId: "2"}}, "", "/?node=2");
+    document.body.innerHTML = `<div id="outline-tree"><a href="/?node=3" id="return-link">Path</a></div>
+      <main id="reader" data-reader-scroll-key="reader-position:test" data-selected-reader-node-id="2">
+        <article id="reading-node-2" tabindex="-1"></article>
+      </main>`;
+    const frames = [];
+    vi.stubGlobal("requestAnimationFrame", (callback) => { frames.push(callback); return frames.length; });
+    const hook = {...ReaderScrollHook, el: document.getElementById("reader")};
+    hook.mounted();
+    while (frames.length) frames.shift()();
+    expect(document.activeElement.id).toBe("return-link");
     hook.destroyed();
   });
 

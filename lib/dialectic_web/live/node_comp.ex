@@ -376,7 +376,7 @@ defmodule DialecticWeb.NodeComp do
                         )}
                       </p>
                       <h2 class={[
-                        "reader-heading text-balance font-semibold leading-[1.15] tracking-tight",
+                        "reader-heading break-words font-semibold leading-[1.15] tracking-tight",
                         if(origin_meta?, do: "text-white", else: "text-slate-950"),
                         node_title_size_class(@node)
                       ]}>

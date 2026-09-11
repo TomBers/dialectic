@@ -11,6 +11,15 @@
     data-graph-direction={@appearance_preferences.graph_direction}
     data-reduce-motion={if(@appearance_preferences.reduce_motion, do: "true", else: "false")}
   >
+    <a
+      :if={@selected_node_id}
+      id="reader-skip-to-response"
+      href={"#reading-node-#{@selected_node_id}"}
+      class="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-12 focus:z-[10001] focus:rounded-lg focus:bg-white focus:px-4 focus:py-3 focus:text-slate-950 focus:outline-2 focus:outline-teal-700"
+    >
+      Skip to current response
+    </a>
+
     <.login_required_modal id="reader-login-modal" show={@show_login_modal} />
 
     <div id="reader-new-thoughts-status" aria-live="polite" aria-atomic="true" class="shrink-0">
@@ -82,9 +91,10 @@
                 id="reader-appearance-toggle"
                 type="button"
                 popovertarget="reader-appearance-panel"
-                class="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"
+                class="inline-flex h-8 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-medium text-slate-600 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 [anchor-name:--reader-style]"
               >
-                <.icon name="hero-adjustments-horizontal" class="h-4 w-4" /> Reading style
+                <span>Style</span>
+                <.icon name="hero-chevron-down" class="h-3.5 w-3.5" aria-hidden="true" />
               </button>
 
               <%= if @current_user do %>
@@ -145,89 +155,33 @@
     <section
       id="reader-appearance-panel"
       popover
-      aria-labelledby="reader-appearance-title"
-      class="m-auto max-h-[calc(100dvh-2rem)] w-[min(28rem,calc(100vw-2rem))] overflow-y-auto rounded-2xl border border-slate-300 bg-white p-4 text-slate-900 shadow-xl [overflow-wrap:anywhere]"
+      aria-label="Reading style"
+      class="fixed inset-auto right-4 top-20 m-0 w-64 max-w-[calc(100vw-2rem)] rounded-xl border border-slate-200 bg-white p-1.5 text-slate-900 shadow-lg [position-anchor:--reader-style] [top:anchor(bottom,5rem)] [right:anchor(right,1rem)] [margin-top:0.5rem]"
     >
-      <div class="mb-4 flex items-start justify-between gap-3">
-        <h2 id="reader-appearance-title" class="min-w-0 text-lg font-semibold">Reading style</h2>
-        <button
-          id="reader-appearance-close"
-          type="button"
-          popovertarget="reader-appearance-panel"
-          popovertargetaction="hide"
-          aria-label="Close reading settings"
-          class="shrink-0 rounded-lg p-2 focus-visible:outline-2 focus-visible:outline-teal-700"
-        >
-          <.icon name="hero-x-mark" class="h-5 w-5" />
-        </button>
-      </div>
-      <p id="reader-appearance-help" class="mb-4 text-sm leading-6 text-slate-600">
-        Preview changes in this reader. {if(@current_user,
-          do: "Save to use them in every grid.",
-          else: "Changes last for this visit. Sign in to save your preferences."
-        )}
-      </p>
-      <.form
-        for={@reader_appearance_form}
-        id="reader-appearance-form"
-        phx-change="preview_reader_appearance"
-        phx-submit="save_reader_appearance"
-        class="space-y-4"
+      <button
+        :for={
+          {label, description, style} <- [
+            {"Book", "Serif · comfortable spacing", "book"},
+            {"Screen", "Sans · comfortable spacing", "screen"},
+            {"Large print", "Larger sans text · more spacing", "large_print"}
+          ]
+        }
+        id={"reader-style-#{style}"}
+        type="button"
+        aria-pressed={to_string(@reader_style == style)}
+        phx-click="save_reader_appearance"
+        phx-value-style={style}
+        popovertarget="reader-appearance-panel"
+        popovertargetaction="hide"
+        class="block w-full rounded-lg px-3 py-2 text-left hover:bg-slate-50 aria-pressed:bg-teal-50 aria-pressed:text-teal-900 focus-visible:outline-2 focus-visible:outline-teal-700"
       >
-        <.input
-          id="reader-reading-style"
-          name="user[reading_style]"
-          type="select"
-          label="Reading style"
-          value={@reader_style}
-          options={[
-            {"Book — serif, comfortable", "book"},
-            {"Screen — sans, comfortable", "screen"},
-            {"Large print — larger sans text", "large_print"},
-            {"Custom — your font and size", "custom"}
-          ]}
-        />
-        <%= if @reader_style == "custom" do %>
-          <div id="reader-custom-settings" class="space-y-4">
-            <.input
-              field={@reader_appearance_form[:reading_font]}
-              id="reader-reading-font"
-              type="select"
-              label="Font"
-              options={[{"Serif", "serif"}, {"Sans", "sans"}]}
-            />
-            <.input
-              field={@reader_appearance_form[:reading_density]}
-              id="reader-reading-density"
-              type="select"
-              label="Text size and spacing"
-              options={[
-                {"Compact", "compact"},
-                {"Comfortable", "comfortable"},
-                {"Large", "large"}
-              ]}
-            />
-          </div>
-        <% else %>
-          <.input
-            field={@reader_appearance_form[:reading_font]}
-            id="reader-reading-font"
-            type="hidden"
-          />
-          <.input
-            field={@reader_appearance_form[:reading_density]}
-            id="reader-reading-density"
-            type="hidden"
-          />
-        <% end %>
-        <.button id="reader-appearance-save" phx-disable-with="Applying…">
-          {if(@current_user, do: "Save reading style", else: "Apply for this visit")}
-        </.button>
-      </.form>
-      <p id="reader-appearance-status" role="status" class="mt-3 text-sm text-teal-800">
-        {@reader_appearance_status}
-      </p>
+        <span class="block text-sm font-semibold">{label}</span>
+        <span class="block text-xs leading-5 text-slate-600">{description}</span>
+      </button>
     </section>
+    <p id="reader-appearance-status" role="status" class="sr-only">
+      {@reader_appearance_status}
+    </p>
 
     <div
       id="outline-scroll-shell"
@@ -276,6 +230,7 @@
                     reader_nav_params(@nav_params, @path_focus_ids)
                   )
                 }
+                aria-current={if(selected?, do: "location")}
                 data-outline-selected={to_string(selected?)}
                 style={outline_indent_style(row.indent)}
                 class={[
@@ -366,6 +321,9 @@
             <section id="outline-mobile-nav" class="lg:hidden">
               <div
                 id="outline-mobile-nav-panel"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="outline-mobile-nav-title"
                 class="fixed inset-x-0 bottom-0 top-[4.75rem] z-40 hidden overflow-y-auto border-y border-slate-200 bg-white opacity-0 shadow-[0_14px_24px_-20px_rgba(15,23,42,0.25)] transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] translate-x-8 pointer-events-none"
               >
                 <div class="border-b border-slate-200 bg-slate-50/75 px-5 py-3">
@@ -374,13 +332,25 @@
                       <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
                         Browse
                       </p>
-                      <h2 class="mt-1 text-sm font-semibold text-slate-900">
+                      <h2
+                        id="outline-mobile-nav-title"
+                        class="mt-1 text-sm font-semibold text-slate-900"
+                      >
                         Conversation Outline
                       </h2>
                       <p class="mt-1 text-xs text-slate-500">
                         Jump to another point in the conversation.
                       </p>
                     </div>
+                    <button
+                      id="outline-mobile-nav-close"
+                      type="button"
+                      aria-label="Close conversation outline"
+                      phx-click={JS.dispatch("close-mobile-outline", to: "#outline-layout")}
+                      class="shrink-0 rounded-lg p-2 text-slate-600 focus-visible:outline-2 focus-visible:outline-teal-700"
+                    >
+                      <.icon name="hero-x-mark" class="h-5 w-5" />
+                    </button>
                     <button
                       :if={@paths_filtered?}
                       id="outline-mobile-show-all-paths"
@@ -399,7 +369,7 @@
                       This graph does not have any visible nodes yet.
                     </div>
                   <% else %>
-                    <nav class="space-y-1">
+                    <nav aria-label="Conversation outline" class="space-y-1">
                       <%= for row <- @visible_outline_nodes do %>
                         <% selected? = @selected_node_id == row.id %>
                         <% in_path? = MapSet.member?(@selected_path_ids, row.id) %>
@@ -414,6 +384,7 @@
                             )
                           }
                           phx-click={JS.dispatch("close-mobile-outline", to: "#outline-layout")}
+                          aria-current={if(selected?, do: "location")}
                           data-outline-selected={to_string(selected?)}
                           style={outline_indent_style(row.indent, 0.35)}
                           class={[
@@ -531,7 +502,7 @@
                       </div>
                       <h2
                         id={"reading-title-#{reading_node.id}"}
-                        class="reader-heading mt-3 text-balance text-[1.7rem] font-semibold leading-[1.12] tracking-tight text-white sm:text-[2.1rem]"
+                        class="reader-heading mt-3 break-words text-[1.7rem] font-semibold leading-[1.12] tracking-tight text-white sm:text-[2.1rem]"
                       >
                         {reading_node.full_title || reading_node.title}
                       </h2>
@@ -596,7 +567,7 @@
                       </div>
                       <h2
                         id={"reading-title-#{reading_node.id}"}
-                        class="reader-heading mt-3 max-w-[78ch] text-balance text-[1.28rem] font-semibold leading-[1.15] tracking-tight text-slate-950 sm:text-[1.6rem]"
+                        class="reader-heading mt-3 break-words text-[1.28rem] font-semibold leading-[1.15] tracking-tight text-slate-950 sm:text-[1.6rem]"
                       >
                         {reading_node.full_title || reading_node.title}
                       </h2>
@@ -1047,6 +1018,8 @@
           class="fixed inset-0 z-[9990] border-0 bg-black/20 p-0"
           phx-click="close_search_overlay"
           aria-label="Close search overlay"
+          tabindex="-1"
+          aria-hidden="true"
         ></button>
 
         <div
@@ -1055,6 +1028,8 @@
           phx-window-keydown="close_search_overlay"
           phx-key="Escape"
           phx-hook="SearchNav"
+          data-focus-result-prefix="reading-node-"
+          data-return-focus-id="reader-workspace-bar-search"
         >
           <div
             class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl"
@@ -1066,25 +1041,50 @@
               <.icon name="hero-magnifying-glass" class="h-5 w-5 shrink-0 text-gray-400" />
               <h2 id="outline-quick-search-title" class="sr-only">Search topics</h2>
 
-              <form id="outline-quick-search-form" phx-change="search_nodes" class="flex-1">
-                <input
+              <.form
+                for={@reader_search_form}
+                id="outline-quick-search-form"
+                phx-change="search_nodes"
+                phx-submit="search_nodes"
+                class="min-w-0 flex-1"
+              >
+                <label for="outline-quick-search-input" class="sr-only">Search topics</label>
+                <.input
                   type="text"
-                  name="search_term"
+                  field={@reader_search_form[:search_term]}
                   id="outline-quick-search-input"
-                  value={@search_term || ""}
                   placeholder="Search topics..."
                   class="w-full border-0 bg-transparent p-0 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-0"
                   autocomplete="off"
-                  autofocus
                   phx-debounce="200"
                 />
-              </form>
+              </.form>
 
-              <kbd class="hidden items-center gap-1 rounded border border-gray-200 bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-400 sm:inline-flex">
-                esc
-              </kbd>
+              <button
+                id="outline-quick-search-close"
+                type="button"
+                phx-click="close_search_overlay"
+                aria-label="Close search"
+                class="shrink-0 rounded-lg p-2 text-slate-600 focus-visible:outline-2 focus-visible:outline-teal-700"
+              >
+                <.icon name="hero-x-mark" class="h-5 w-5" />
+              </button>
             </div>
 
+            <p
+              id="outline-search-status"
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+              class="sr-only"
+            >
+              <%= if @search_term != "" do %>
+                {length(@search_results)} {if(length(@search_results) == 1,
+                  do: "topic",
+                  else: "topics"
+                )} found for {@search_term}.
+              <% end %>
+            </p>
             <%= if (@search_term || "") != "" do %>
               <div class="max-h-72 overflow-y-auto">
                 <%= if @search_results != [] do %>

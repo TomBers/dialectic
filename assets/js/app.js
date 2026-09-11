@@ -37,6 +37,7 @@ import AskFormShortcuts from "./ask_form_shortcuts.js";
 import ToolsMenuHook from "./tools_menu_hook.js";
 import AutoExpandTextareaHook from "./auto_expand_textarea_hook.js";
 import SearchNav from "./search_nav_hook.js";
+import { containModalFocus } from "./modal_focus.js";
 import PresentationHook, {
   PresentationSetupHook,
 } from "./presentation_hook.js";
@@ -94,6 +95,11 @@ hooks.GenerationStatus = GenerationStatusHook;
 hooks.ProofCarousel = ProofCarouselHook;
 hooks.GlobalModalLayer = {
   mounted() {
+    this.opener = document.activeElement;
+    this.modalFocus = containModalFocus(this.el, {
+      onEscape: () => this.el.querySelector("[data-modal-close]")?.click(),
+    });
+    this.focusFrame = requestAnimationFrame(() => this.modalFocus.focusFirst());
     const header = document.getElementById("userHeader");
     if (!header) return;
 
@@ -110,7 +116,20 @@ hooks.GlobalModalLayer = {
     }
   },
 
+  updated() {
+    this.modalFocus.refresh();
+  },
+
   destroyed() {
+    cancelAnimationFrame(this.focusFrame);
+    this.modalFocus.destroy();
+    const opener = this.opener;
+    const fallback = this.el.dataset.returnFocusId;
+    requestAnimationFrame(() => {
+      const target = opener?.isConnected && opener.matches('a[href],button,input,[tabindex]')
+        ? opener : document.getElementById(fallback);
+      target?.focus({ preventScroll: true });
+    });
     const header = document.getElementById("userHeader");
     if (!header) return;
 
@@ -648,6 +667,7 @@ hooks.GraphLayout = {
     this._focusAskInputFromUrl();
   },
   destroyed() {
+    this._mobileOutlineFocus?.destroy();
     if (this._mobileOutlineCloseTimer) {
       clearTimeout(this._mobileOutlineCloseTimer);
       this._mobileOutlineCloseTimer = null;
@@ -742,13 +762,25 @@ hooks.GraphLayout = {
     }
 
     if (shouldOpen) {
+      panel.inert = false;
+      panel.removeAttribute("aria-hidden");
       panel.classList.remove("hidden", "pointer-events-none", "opacity-0", "translate-x-8");
+      if (!this._mobileOutlineFocus) {
+        this._mobileOutlineFocus = containModalFocus(panel, {onEscape: () => this._applyMobileOutlineState(false)});
+        this._mobileOutlineFocus.focusFirst();
+      }
 
       requestAnimationFrame(() => {
         panel.classList.remove("opacity-0", "translate-x-8");
         panel.classList.add("opacity-100", "translate-x-0");
       });
     } else {
+      const returnFocus = panel.contains(document.activeElement);
+      this._mobileOutlineFocus?.destroy();
+      this._mobileOutlineFocus = null;
+      panel.inert = true;
+      panel.setAttribute("aria-hidden", "true");
+      if (returnFocus) button.focus({preventScroll: true});
       panel.classList.remove("opacity-100", "translate-x-0");
       panel.classList.add("opacity-0", "translate-x-8", "pointer-events-none");
 

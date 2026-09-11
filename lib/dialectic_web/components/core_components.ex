@@ -670,6 +670,7 @@ defmodule DialecticWeb.CoreComponents do
 
   def show_modal(js \\ %JS{}, id) when is_binary(id) do
     js
+    |> JS.push_focus()
     |> JS.show(to: "##{id}")
     |> JS.show(
       to: "##{id}-bg",

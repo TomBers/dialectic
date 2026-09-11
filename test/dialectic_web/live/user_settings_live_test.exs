@@ -225,7 +225,7 @@ defmodule DialecticWeb.UserSettingsLiveTest do
       end
     end
 
-    test "custom keeps the current preset values and existing combinations", %{
+    test "existing custom preferences remain intact while custom controls are hidden", %{
       conn: conn,
       user: user
     } do
@@ -233,35 +233,27 @@ defmodule DialecticWeb.UserSettingsLiveTest do
         Accounts.update_user_appearance(user, %{reading_font: "serif", reading_density: "compact"})
 
       {:ok, view, _html} = live(conn, ~p"/users/settings")
-      assert has_element?(view, "#user_reading_style option[value='custom'][selected]")
-      assert has_element?(view, "#custom-reading-settings")
-      assert has_element?(view, "#user_reading_density option[value='compact'][selected]")
+      refute has_element?(view, "#user_reading_style option[value='custom']")
+      refute has_element?(view, "#custom-reading-settings")
+      assert has_element?(view, "#user_reading_density[type='hidden'][value='compact']")
+      view |> form("#appearance-form") |> render_submit()
+      assert Accounts.get_user!(user.id).reading_density == "compact"
 
       view
       |> form("#appearance-form", %{"user" => %{"reading_style" => "large_print"}})
-      |> render_change()
+      |> render_submit()
 
-      view
-      |> form("#appearance-form", %{"user" => %{"reading_style" => "custom"}})
-      |> render_change()
-
-      assert has_element?(view, "#user_reading_font option[value='sans'][selected]")
-      assert has_element?(view, "#user_reading_density option[value='large'][selected]")
+      assert Accounts.get_user!(user.id).reading_density == "large"
+      assert Accounts.get_user!(user.id).reading_font == "sans"
     end
 
     test "saves appearance preferences", %{conn: conn, user: user} do
       {:ok, view, _html} = live(conn, ~p"/users/settings")
 
       view
-      |> form("#appearance-form", %{"user" => %{"reading_style" => "custom"}})
-      |> render_change()
-
-      view
       |> form("#appearance-form", %{
         "user" => %{
-          "reading_style" => "custom",
-          "reading_density" => "large",
-          "reading_font" => "serif",
+          "reading_style" => "large_print",
           "graph_view_mode" => "compact",
           "graph_direction" => "RL",
           "reduce_motion" => "true",
@@ -272,7 +264,7 @@ defmodule DialecticWeb.UserSettingsLiveTest do
 
       updated = Accounts.get_user!(user.id)
       assert updated.reading_density == "large"
-      assert updated.reading_font == "serif"
+      assert updated.reading_font == "sans"
       assert updated.graph_view_mode == "compact"
       assert updated.graph_direction == "RL"
       assert updated.reduce_motion
