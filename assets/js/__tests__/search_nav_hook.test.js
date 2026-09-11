@@ -54,4 +54,19 @@ describe("SearchNav modal focus", () => {
     hook = null;
     expect(document.activeElement.id).toBe("reading-node-2");
   });
+  it("waits for a selected response that arrives after the search closes", async () => {
+    mount();
+    document.getElementById("reading-node-2").remove();
+    key("ArrowDown");
+    key("Enter");
+    hook.destroyed();
+    hook = null;
+    const response = document.createElement("article");
+    response.id = "reading-node-2";
+    response.tabIndex = -1;
+    document.getElementById("background").append(response);
+    await Promise.resolve();
+    expect(document.activeElement).toBe(response);
+  });
+
 });

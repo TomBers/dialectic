@@ -90,6 +90,14 @@ defmodule DialecticWeb.OutlineGraphLive do
 
     previous_node_id = socket.assigns.selected_node_id
 
+    socket =
+      if socket.assigns.search_highlight &&
+           (!selected_node || socket.assigns.search_highlight.node_id != selected_node.id) do
+        assign(socket, :search_highlight, nil)
+      else
+        socket
+      end
+
     highlight_id = Map.get(params, "highlight")
 
     share_highlight =
@@ -490,13 +498,32 @@ defmodule DialecticWeb.OutlineGraphLive do
       |> to_string()
       |> String.trim()
 
+    {results, count} = search_reader_nodes(socket.assigns.graph_id, search_term, 10)
+
     {:noreply,
      socket
      |> assign(
        search_term: search_term,
+       search_result_count: count,
+       search_result_limit: 10,
        reader_search_form: to_form(%{"search_term" => search_term})
      )
-     |> assign(search_results: search_reader_nodes(socket.assigns.graph_id, search_term))}
+     |> assign(search_results: results)}
+  end
+
+  @impl true
+  def handle_event("show_more_search_results", _params, socket) do
+    limit = socket.assigns.search_result_limit + 10
+
+    {results, count} =
+      search_reader_nodes(socket.assigns.graph_id, socket.assigns.search_term, limit)
+
+    {:noreply,
+     assign(socket,
+       search_results: results,
+       search_result_count: count,
+       search_result_limit: limit
+     )}
   end
 
   @impl true
@@ -523,10 +550,23 @@ defmodule DialecticWeb.OutlineGraphLive do
   end
 
   @impl true
+  def handle_event("clear_search_highlight", _params, socket) do
+    {:noreply, assign(socket, :search_highlight, nil)}
+  end
+
+  @impl true
   def handle_event("search_result_clicked", %{"id" => node_id}, socket) do
+    query = socket.assigns.search_term
+
+    highlight =
+      if query != "",
+        do: %{node_id: node_id, query: query, terms: Dialectic.Search.Query.terms(query)},
+        else: nil
+
     socket =
       socket
       |> clear_reader_search()
+      |> assign(:search_highlight, highlight)
       |> then(fn current_socket ->
         if current_socket.assigns.selected_node_id == node_id,
           do: current_socket,
@@ -664,9 +704,12 @@ defmodule DialecticWeb.OutlineGraphLive do
       selected_share_highlight: nil,
       show_login_modal: false,
       show_search_overlay: false,
+      search_highlight: nil,
       search_term: "",
       reader_search_form: to_form(%{"search_term" => ""}),
       search_results: [],
+      search_result_count: 0,
+      search_result_limit: 10,
       following_graph?: following_graph?(socket.assigns[:current_user], graph_db),
       highlights: highlights,
       visible_highlights: highlights,
@@ -998,13 +1041,15 @@ defmodule DialecticWeb.OutlineGraphLive do
       show_search_overlay: false,
       search_term: "",
       search_results: [],
+      search_result_count: 0,
+      search_result_limit: 10,
       reader_search_form: to_form(%{"search_term" => ""})
     )
   end
 
-  defp search_reader_nodes(_graph_id, ""), do: []
+  defp search_reader_nodes(_graph_id, "", _limit), do: {[], 0}
 
-  defp search_reader_nodes(graph_id, search_term) do
+  defp search_reader_nodes(graph_id, search_term, limit) do
     try do
       graph_id
       |> GraphManager.vertices()
@@ -1029,11 +1074,11 @@ defmodule DialecticWeb.OutlineGraphLive do
       end)
       |> Enum.sort_by(fn {rank, sort_id, _node} -> {rank, sort_id} end)
       |> Enum.map(fn {_rank, _sort_id, node} -> node end)
-      |> Enum.take(10)
+      |> then(fn results -> {Enum.take(results, limit), length(results)} end)
     rescue
-      _ -> []
+      _ -> {[], 0}
     catch
-      :exit, _reason -> []
+      :exit, _reason -> {[], 0}
     end
   end
 

@@ -15,8 +15,11 @@
  */
 import { containModalFocus } from "./modal_focus.js";
 
+let cancelPendingResultFocus = () => {};
+
 const SearchNav = {
   mounted() {
+    cancelPendingResultFocus();
     this.opener = !this.el.contains(document.activeElement) && document.activeElement?.matches('a[href], button, input, select, textarea, [tabindex]')
       ? document.activeElement : null;
     this.modal = !!this.el.querySelector('[aria-modal="true"]');
@@ -74,9 +77,34 @@ const SearchNav = {
     const fallbackId = this.el.dataset.returnFocusId;
     const resultId = this.resultId;
     requestAnimationFrame(() => requestAnimationFrame(() => {
-      const result = resultId && document.getElementById(resultId);
-      const target = result || (opener?.isConnected ? opener : document.getElementById(fallbackId));
-      target?.focus({ preventScroll: !result });
+      const fallback = () => {
+        const target = opener?.isConnected ? opener : document.getElementById(fallbackId);
+        target?.focus({ preventScroll: true });
+      };
+      if (!resultId) {
+        fallback();
+        return;
+      }
+      const focusResult = () => {
+        const result = document.getElementById(resultId);
+        if (!result) return false;
+        result.focus();
+        return true;
+      };
+      if (focusResult()) return;
+      const observer = new MutationObserver(() => {
+        if (focusResult()) cancelPendingResultFocus();
+      });
+      const timeout = setTimeout(() => {
+        cancelPendingResultFocus();
+        fallback();
+      }, 2000);
+      cancelPendingResultFocus = () => {
+        observer.disconnect();
+        clearTimeout(timeout);
+        cancelPendingResultFocus = () => {};
+      };
+      observer.observe(document.body, {childList: true, subtree: true});
     }));
   },
 };

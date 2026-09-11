@@ -29,6 +29,7 @@ defmodule DialecticWeb.NodeComp do
     {:ok,
      assign(socket,
        node_id: node_id,
+       search_highlight: Map.get(assigns, :search_highlight),
        node: node,
        user: Map.get(assigns, :user),
        form: Map.get(assigns, :form),
@@ -297,7 +298,14 @@ defmodule DialecticWeb.NodeComp do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="h-full min-h-0">
+    <div
+      id={"node-search-content-#{@node.id}"}
+      phx-hook="SearchHighlights"
+      data-search-node-id={@search_highlight && @search_highlight.node_id}
+      data-search-target-id={"node-content-#{@node.id}"}
+      data-search-terms={Jason.encode!(if(@search_highlight, do: @search_highlight.terms, else: []))}
+      class="h-full min-h-0"
+    >
       <div
         id={"node-menu-" <> @node_id}
         class="relative flex h-full min-h-0 flex-col"
@@ -325,6 +333,22 @@ defmodule DialecticWeb.NodeComp do
             >
               <div id={"node-content-#{@node.id}"}>
                 <div id={"node-content-inner-#{@node.id}"}>
+                  <div
+                    :if={@search_highlight && @search_highlight.node_id == @node.id}
+                    id="graph-search-match-notice"
+                    role="status"
+                    class="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950"
+                  >
+                    <span>Search matches: “{@search_highlight.query}”</span>
+                    <button
+                      id="graph-clear-search-matches"
+                      type="button"
+                      phx-click="clear_search_highlight"
+                      class="min-h-11 rounded-md px-2 font-semibold underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-amber-800"
+                    >
+                      Clear
+                    </button>
+                  </div>
                   <% origin_meta? =
                     GraphHelpers.origin_branching_disabled?(@node) && is_map(@graph_struct) %>
                   <header

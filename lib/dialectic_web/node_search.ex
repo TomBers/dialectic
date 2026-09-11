@@ -1,6 +1,7 @@
 defmodule DialecticWeb.NodeSearch do
   @moduledoc false
 
+  alias Dialectic.Search.Query
   alias DialecticWeb.ColUtils
   alias DialecticWeb.Utils.NodeTitleHelper
 
@@ -54,9 +55,9 @@ defmodule DialecticWeb.NodeSearch do
   end
 
   defp best_match(node, normalized_term) do
-    node
-    |> search_fields()
-    |> Enum.reduce(nil, fn field, best ->
+    fields = search_fields(node)
+
+    Enum.reduce(fields, nil, fn field, best ->
       case field_match_rank(field.text, normalized_term) do
         nil ->
           best
@@ -71,6 +72,25 @@ defmodule DialecticWeb.NodeSearch do
           end
       end
     end)
+    |> case do
+      nil -> keyword_match(fields, normalized_term)
+      match -> match
+    end
+  end
+
+  defp keyword_match(fields, normalized_term) do
+    terms = Query.terms(normalized_term)
+    searchable = Enum.map_join(fields, " ", &normalize_search_term(&1.text))
+
+    if Query.matches?(searchable, terms) do
+      field =
+        Enum.max_by(fields, fn field ->
+          text = normalize_search_term(field.text)
+          Enum.count(terms, &Query.matches?(text, [&1]))
+        end)
+
+      %{field: field, rank: {3, field.priority}}
+    end
   end
 
   defp search_fields(node) do
@@ -104,15 +124,27 @@ defmodule DialecticWeb.NodeSearch do
   defp field_match_rank(text, normalized_term) do
     searchable_text =
       text
-      |> sanitize_preview_text()
-      |> String.downcase()
+      |> normalize_search_term()
 
     cond do
-      searchable_text == "" -> nil
-      searchable_text == normalized_term -> 0
-      String.starts_with?(searchable_text, normalized_term) -> 1
-      String.contains?(searchable_text, normalized_term) -> 2
-      true -> nil
+      searchable_text == "" ->
+        nil
+
+      String.length(normalized_term) < 3 and
+          not Query.matches?(searchable_text, [normalized_term]) ->
+        nil
+
+      searchable_text == normalized_term ->
+        0
+
+      String.starts_with?(searchable_text, normalized_term) ->
+        1
+
+      String.contains?(searchable_text, normalized_term) ->
+        2
+
+      true ->
+        nil
     end
   end
 
@@ -157,27 +189,24 @@ defmodule DialecticWeb.NodeSearch do
   end
 
   defp snippet_from_match(cleaned_text, normalized_term, limit) do
-    context_window = max(div(limit, 2) - String.length(normalized_term), 28)
+    normalized_text = normalize_search_term(cleaned_text)
 
-    regex =
-      Regex.compile!(
-        "(.{0,#{context_window}}#{Regex.escape(normalized_term)}.{0,#{context_window}})",
-        "iu"
-      )
+    terms = [
+      normalized_term | Enum.sort_by(Query.terms(normalized_term), &String.length/1, :desc)
+    ]
 
-    case Regex.run(regex, cleaned_text, capture: :all_but_first) do
-      [snippet] ->
-        snippet = String.trim(snippet)
+    term = Enum.find(terms, &String.contains?(normalized_text, &1))
 
-        [
-          if(String.starts_with?(cleaned_text, snippet), do: "", else: "…"),
-          snippet,
-          if(String.ends_with?(cleaned_text, snippet), do: "", else: "…")
-        ]
-        |> Enum.join()
-
-      _ ->
-        truncate_preview(cleaned_text, limit)
+    if term do
+      {byte_offset, _} = :binary.match(normalized_text, term)
+      offset = normalized_text |> binary_part(0, byte_offset) |> String.length()
+      start = max(offset - 40, 0)
+      snippet = cleaned_text |> String.slice(start, limit) |> String.trim()
+      prefix = if start > 0, do: "…", else: ""
+      suffix = if start + limit < String.length(cleaned_text), do: "…", else: ""
+      prefix <> snippet <> suffix
+    else
+      truncate_preview(cleaned_text, limit)
     end
   end
 
@@ -193,6 +222,8 @@ defmodule DialecticWeb.NodeSearch do
     search_term
     |> sanitize_preview_text()
     |> String.downcase()
+    |> String.normalize(:nfd)
+    |> String.replace(~r/\p{Mn}/u, "")
   end
 
   defp node_body_content(node) do

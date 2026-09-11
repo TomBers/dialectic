@@ -427,15 +427,18 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert has_element?(other_view, "#reader-source-status-5[data-source-status='no_links']")
   end
 
-  test "mobile reader actions preserve the selected path and apply styles", %{conn: conn} do
+  test "mobile reader actions apply styles without a standalone ask flow", %{conn: conn} do
     graph = create_graph()
     {:ok, view, _} = live(conn, ~p"/g/#{graph.slug}?node=2&path=4")
     assert has_element?(view, "#reader-mobile-toolbar[aria-label='Reader actions']")
 
     assert has_element?(
              view,
-             ~s(#reader-mobile-ask[href="/g/#{graph.slug}/graph?node=2&focus=ask&path=4"])
+             "#reader-mobile-toolbar #reader-mobile-highlights[aria-controls='highlights-drawer']"
            )
+
+    refute has_element?(view, "#reader-mobile-ask")
+    refute has_element?(view, "#reader-workspace-bar-ask-question")
 
     assert has_element?(view, "#reader-mobile-more[popovertarget='reader-mobile-menu']")
     view |> element("#reader-mobile-style-compact") |> render_click()
@@ -926,6 +929,78 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert has_element?(view, "#reader-skip-to-response[href='#reading-node-3']")
     assert has_element?(view, "#outline-node-3[aria-current='location']")
     refute has_element?(view, "#outline-node-2[aria-current]")
+  end
+
+  test "search matches persist on the chosen response and can be cleared", %{conn: conn} do
+    graph = create_graph()
+    {:ok, view, _} = live(conn, ~p"/g/#{graph.slug}?node=2")
+    view |> element("#reader-mobile-search") |> render_click()
+
+    view
+    |> form("#outline-quick-search-form", %{"search_term" => "biologically"})
+    |> render_change()
+
+    view |> element("#outline-search-result-4") |> render_click()
+    assert has_element?(view, "#outline-reading-flow[data-search-node-id='4']")
+    assert has_element?(view, "#reading-node-4 #reader-search-match-notice", "biologically")
+    view |> element("#reader-clear-search-matches") |> render_click()
+    refute has_element?(view, "#reader-search-match-notice")
+    refute has_element?(view, "#outline-reading-flow[data-search-node-id]")
+  end
+
+  test "search matches clear when navigating to another response", %{conn: conn} do
+    graph = create_graph()
+    {:ok, view, _} = live(conn, ~p"/g/#{graph.slug}?node=2")
+    view |> element("#reader-mobile-search") |> render_click()
+
+    view
+    |> form("#outline-quick-search-form", %{"search_term" => "biologically"})
+    |> render_change()
+
+    view |> element("#outline-search-result-4") |> render_click()
+    assert has_element?(view, "#reader-search-match-notice")
+    view |> element("#outline-node-2") |> render_click()
+    refute has_element?(view, "#reader-search-match-notice")
+  end
+
+  test "search exposes every match through show more and resets on a new query", %{conn: conn} do
+    template = sample_graph_data()["nodes"] |> hd()
+
+    nodes =
+      for id <- 1..12,
+          do: Map.merge(template, %{"id" => to_string(id), "content" => "# Needle topic #{id}"})
+
+    edges =
+      for id <- 2..12,
+          do: %{"data" => %{"id" => "1_#{id}", "source" => "1", "target" => to_string(id)}}
+
+    graph = create_graph(%{"nodes" => nodes, "edges" => edges})
+    {:ok, view, _} = live(conn, ~p"/g/#{graph.slug}?node=1")
+    view |> element("#reader-mobile-search") |> render_click()
+    view |> form("#outline-quick-search-form", %{"search_term" => "needle"}) |> render_change()
+    assert has_element?(view, "#outline-search-status", "12 topics found")
+    assert has_element?(view, "#outline-search-status", "Showing 10")
+    refute has_element?(view, "#outline-search-result-12")
+    view |> element("#outline-search-more") |> render_click()
+    assert has_element?(view, "#outline-search-result-12")
+    refute has_element?(view, "#outline-search-more")
+    view |> form("#outline-quick-search-form", %{"search_term" => "unmatched"}) |> render_change()
+    assert has_element?(view, "#outline-search-status", "0 topics found")
+    refute has_element?(view, "#outline-search-result-12")
+  end
+
+  test "search finds reordered words outside the selected path", %{conn: conn} do
+    graph = create_graph()
+    {:ok, view, _} = live(conn, ~p"/g/#{graph.slug}?node=3&path=3")
+    view |> element("#reader-mobile-search") |> render_click()
+
+    view
+    |> form("#outline-quick-search-form", %{"search_term" => "biologically archetypes"})
+    |> render_change()
+
+    view |> element("#outline-search-result-4") |> render_click()
+    assert has_element?(view, "#reading-node-4[data-reading-selected='true']")
+    refute has_element?(view, "#outline-quick-search-panel")
   end
 
   test "search announces result counts and no matches", %{conn: conn} do

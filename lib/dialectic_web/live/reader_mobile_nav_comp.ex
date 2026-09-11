@@ -1,9 +1,6 @@
 defmodule DialecticWeb.ReaderMobileNavComp do
   use DialecticWeb, :html
 
-  attr :graph_struct, :map, required: true
-  attr :node_id, :string, default: nil
-  attr :nav_params, :list, default: []
   attr :reader_style, :string, required: true
   attr :highlights_count, :integer, default: 0
   attr :current_user, :any, default: nil
@@ -31,14 +28,30 @@ defmodule DialecticWeb.ReaderMobileNavComp do
         <.icon name="hero-magnifying-glass" class="h-5 w-5" />
         <span>Search</span>
       </button>
-      <.link
-        id="reader-mobile-ask"
-        navigate={graph_editor_path(@graph_struct, @node_id, [{"focus", "ask"} | @nav_params])}
-        aria-label="Ask a question from this point"
+      <button
+        id="reader-mobile-highlights"
+        type="button"
+        phx-click={
+          JS.focus()
+          |> JS.dispatch("toggle-panel", to: "#outline-layout", detail: %{id: "highlights-drawer"})
+        }
+        data-panel-toggle="highlights-drawer"
+        aria-controls="highlights-drawer"
+        aria-label={"Highlights. #{@highlights_count} saved highlights"}
       >
-        <.icon name="hero-question-mark-circle" class="h-5 w-5" />
-        <span>Ask</span>
-      </.link>
+        <span class="relative inline-flex">
+          <.icon name="hero-pencil" class="h-5 w-5" />
+          <span
+            :if={@highlights_count > 0}
+            id="reader-mobile-highlights-count"
+            aria-hidden="true"
+            class="absolute -right-3 -top-1 inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-amber-700 px-1 text-[10px] font-semibold leading-none text-white ring-2 ring-amber-50"
+          >
+            {@highlights_count}
+          </span>
+        </span>
+        <span>Highlights</span>
+      </button>
       <button id="reader-mobile-more" type="button" popovertarget="reader-mobile-menu">
         <.icon name="hero-ellipsis-horizontal" class="h-5 w-5" />
         <span>More</span>
@@ -93,22 +106,6 @@ defmodule DialecticWeb.ReaderMobileNavComp do
           </div>
         </fieldset>
         <div class="grid gap-1">
-          <button
-            id="reader-mobile-highlights"
-            type="button"
-            phx-click={
-              JS.focus(to: "#reader-mobile-more")
-              |> JS.dispatch("toggle-panel",
-                to: "#outline-layout",
-                detail: %{id: "highlights-drawer"}
-              )
-            }
-            popovertarget="reader-mobile-menu"
-            popovertargetaction="hide"
-            class="reader-mobile-menu-action"
-          >
-            <.icon name="hero-pencil" class="h-5 w-5" /> Highlights ({@highlights_count})
-          </button>
           <button
             id="reader-mobile-share"
             type="button"

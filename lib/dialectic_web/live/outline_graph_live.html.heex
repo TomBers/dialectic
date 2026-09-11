@@ -153,9 +153,6 @@
     </div>
 
     <DialecticWeb.ReaderMobileNavComp.reader_mobile_nav
-      graph_struct={@graph_struct}
-      node_id={@selected_node_id}
-      nav_params={reader_nav_params(@nav_params, @path_focus_ids)}
       reader_style={@reader_style}
       highlights_count={length(@visible_highlights)}
       current_user={@current_user}
@@ -477,6 +474,11 @@
 
             <section
               id="outline-reading-flow"
+              phx-hook="SearchHighlights"
+              data-search-node-id={@search_highlight && @search_highlight.node_id}
+              data-search-terms={
+                Jason.encode!(if(@search_highlight, do: @search_highlight.terms, else: []))
+              }
               class="-mx-4 overflow-hidden border-y border-slate-200 bg-white shadow-sm sm:mx-0 sm:rounded-[2rem] sm:border"
             >
               <%= for {reading_node, index} <- Enum.with_index(@visible_reading_chain) do %>
@@ -505,6 +507,22 @@
                   ]}
                 >
                   <% bookmarked? = MapSet.member?(@bookmarked_node_ids, reading_node.id) %>
+                  <div
+                    :if={@search_highlight && @search_highlight.node_id == reading_node.id}
+                    id="reader-search-match-notice"
+                    role="status"
+                    class="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950"
+                  >
+                    <span>Search matches: “{@search_highlight.query}”</span>
+                    <button
+                      id="reader-clear-search-matches"
+                      type="button"
+                      phx-click="clear_search_highlight"
+                      class="min-h-11 rounded-md px-2 font-semibold underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-amber-800"
+                    >
+                      Clear
+                    </button>
+                  </div>
                   <%= if index == 0 do %>
                     <div class="max-w-[68ch]">
                       <div class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-teal-200">
@@ -1035,7 +1053,7 @@
 
         <div
           id="outline-quick-search-panel"
-          class="fixed left-1/2 top-24 z-[9991] w-full max-w-md -translate-x-1/2 px-4"
+          class="fixed left-1/2 top-12 z-[9991] max-h-[calc(100dvh-4rem)] w-full max-w-md -translate-x-1/2 overflow-y-auto px-2 sm:top-24 sm:max-h-[calc(100dvh-7rem)] sm:px-4"
           phx-window-keydown="close_search_overlay"
           phx-key="Escape"
           phx-hook="SearchNav"
@@ -1064,8 +1082,8 @@
                   type="text"
                   field={@reader_search_form[:search_term]}
                   id="outline-quick-search-input"
-                  placeholder="Search topics..."
-                  class="w-full border-0 bg-transparent p-0 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-0"
+                  placeholder="Search this conversation…"
+                  class="w-full border-0 bg-transparent p-0 text-base text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-0 sm:text-sm"
                   autocomplete="off"
                   phx-debounce="200"
                 />
@@ -1076,7 +1094,7 @@
                 type="button"
                 phx-click="close_search_overlay"
                 aria-label="Close search"
-                class="shrink-0 rounded-lg p-2 text-slate-600 focus-visible:outline-2 focus-visible:outline-teal-700"
+                class="inline-flex min-h-11 min-w-11 items-center justify-center shrink-0 rounded-lg p-2 text-slate-600 focus-visible:outline-2 focus-visible:outline-teal-700"
               >
                 <.icon name="hero-x-mark" class="h-5 w-5" />
               </button>
@@ -1087,17 +1105,20 @@
               role="status"
               aria-live="polite"
               aria-atomic="true"
-              class="sr-only"
+              class="px-4 pt-2 text-xs leading-5 text-slate-600"
             >
               <%= if @search_term != "" do %>
-                {length(@search_results)} {if(length(@search_results) == 1,
+                {@search_result_count} {if(@search_result_count == 1,
                   do: "topic",
                   else: "topics"
                 )} found for {@search_term}.
+                <span :if={@search_result_count > length(@search_results)}>
+                  Showing {length(@search_results)}.
+                </span>
               <% end %>
             </p>
             <%= if (@search_term || "") != "" do %>
-              <div class="max-h-72 overflow-y-auto">
+              <div class="max-h-[55dvh] overflow-y-auto overscroll-contain sm:max-h-72">
                 <%= if @search_results != [] do %>
                   <ul class="py-1">
                     <%= for node <- @search_results do %>
@@ -1128,7 +1149,7 @@
                             </span>
                           </div>
 
-                          <div class="mt-0.5 text-sm text-gray-900 truncate">
+                          <div class="mt-0.5 break-words text-sm font-medium text-gray-900">
                             {Map.get(node, :full_title) || Map.get(node, :title)}
                           </div>
 
@@ -1146,15 +1167,29 @@
                       </li>
                     <% end %>
                   </ul>
+                  <button
+                    :if={length(@search_results) < @search_result_count}
+                    id="outline-search-more"
+                    type="button"
+                    phx-click="show_more_search_results"
+                    class="min-h-11 w-full border-t border-slate-200 px-4 py-3 text-sm font-semibold text-teal-800 hover:bg-teal-50 focus-visible:outline-2 focus-visible:outline-teal-700"
+                  >
+                    Show more results
+                  </button>
                 <% else %>
                   <div class="px-4 py-6 text-center">
                     <p class="text-sm text-gray-500">No topics found for "{@search_term}"</p>
+                    <p class="mt-2 text-sm text-slate-600">
+                      Try fewer words or a different term.
+                    </p>
                   </div>
                 <% end %>
               </div>
             <% else %>
               <div class="px-4 py-4 text-center">
-                <p class="text-xs text-gray-400">Type to search across all topics</p>
+                <p class="text-xs text-gray-400">
+                  Search titles, responses and source passages in this conversation. Words can appear in any order.
+                </p>
               </div>
             <% end %>
           </div>

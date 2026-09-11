@@ -27,6 +27,7 @@ import storyReadabilityHook from "./story_readability_hook.js";
 import listDetectionHook from "./list_detection_hook.js";
 import ScrollResetHook from "./scroll_reset_hook.js";
 import ReaderScrollHook from "./reader_scroll_hook.js";
+import SearchHighlights from "./search_highlights.js";
 import OutlineNavHook from "./outline_nav_hook.js";
 
 import MarkdownHook from "./markdown_hook.js";
@@ -73,6 +74,7 @@ hooks.StoryReadability = storyReadabilityHook;
 hooks.ListDetection = listDetectionHook;
 hooks.ScrollReset = ScrollResetHook;
 hooks.ReaderScroll = ReaderScrollHook;
+hooks.SearchHighlights = SearchHighlights;
 hooks.OutlineNav = OutlineNavHook;
 
 hooks.Markdown = MarkdownHook;

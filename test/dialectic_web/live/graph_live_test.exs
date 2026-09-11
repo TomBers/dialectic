@@ -1717,6 +1717,25 @@ defmodule DialecticWeb.GraphLiveTest do
                "#graph-search-result-2",
                "synaptic tagging and epigenetic priming"
              )
+
+      view |> element("#graph-search-result-2") |> render_click()
+
+      assert has_element?(
+               view,
+               "#node-search-content-2[data-search-node-id='2'][data-search-target-id='node-content-2']"
+             )
+
+      assert has_element?(view, "#graph-search-match-notice", "synaptic")
+      view |> element("#graph-clear-search-matches") |> render_click()
+      refute has_element?(view, "#graph-search-match-notice")
+      refute has_element?(view, "#node-search-content-2[data-search-node-id]")
+
+      view |> element("#graph-workspace-bar-search") |> render_click()
+      view |> element("#quick-search-form") |> render_change(%{"search_term" => "synaptic"})
+      view |> element("#graph-search-result-2") |> render_click()
+      assert has_element?(view, "#graph-search-match-notice")
+      render_click(view, "node_clicked", %{"id" => "1"})
+      refute has_element?(view, "#graph-search-match-notice")
     end
   end
 
