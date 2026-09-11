@@ -25,6 +25,23 @@ const ReaderScrollHook = {
 
       this.storeReaderPosition();
     };
+    this.onReaderNavigation = (event) => {
+      const link = event.target.closest('a[data-phx-link="patch"]');
+      if (!link || !link.closest("#outline-layout") || event.detail !== 0) return;
+      const target = new URL(link.href, window.location.origin);
+      if (!target.searchParams.get("node")) return;
+      this.keyboardTarget = target.searchParams.get("node");
+      this.returnFocus = { id: link.id, url: window.location.href };
+    };
+    this.onHistoryNavigation = () => {
+      if (this.returnFocus?.url === window.location.href) {
+        sessionStorage.setItem(`${this.storageKey}:focus-return`, JSON.stringify(this.returnFocus));
+      }
+    };
+    if (this.storageKey) {
+      document.addEventListener("click", this.onReaderNavigation, true);
+      window.addEventListener("popstate", this.onHistoryNavigation, true);
+    }
     this.onScroll = () => {
       if (
         this.restoringScroll ||
@@ -51,6 +68,9 @@ const ReaderScrollHook = {
         requestAnimationFrame(() => this.scrollToNode(id));
       });
     });
+    if (this.storageKey && sessionStorage.getItem(`${this.storageKey}:focus-return`)) {
+      requestAnimationFrame(() => requestAnimationFrame(() => this.restoreKeyboardFocus()));
+    }
     const restoredPosition = this.restoreReaderPosition();
     const requestedNodeId = this.el.dataset.selectedReaderNodeId;
 
@@ -79,6 +99,10 @@ const ReaderScrollHook = {
     );
     if (this.storageKey)
       document.removeEventListener("click", this.onGraphNavigation, true);
+    if (this.storageKey) {
+      document.removeEventListener("click", this.onReaderNavigation, true);
+      window.removeEventListener("popstate", this.onHistoryNavigation, true);
+    }
     if (this.scrollFrame !== null) cancelAnimationFrame(this.scrollFrame);
   },
 
@@ -191,6 +215,7 @@ const ReaderScrollHook = {
           this.el.scrollLeft = left;
           requestAnimationFrame(() => {
             this.setRestoringScroll(false);
+            this.restoreKeyboardFocus();
           });
           return;
         }
@@ -200,8 +225,24 @@ const ReaderScrollHook = {
       this.el.scrollLeft = left;
       requestAnimationFrame(() => {
         this.setRestoringScroll(false);
+        this.restoreKeyboardFocus();
       });
     });
+  },
+
+  restoreKeyboardFocus() {
+    if (!this.storageKey) return;
+    const raw = sessionStorage.getItem(`${this.storageKey}:focus-return`);
+    if (!raw) return;
+    let target;
+    try { target = JSON.parse(raw); } catch { return; }
+    const source = document.getElementById(target.id);
+    if (!source) return;
+    sessionStorage.removeItem(`${this.storageKey}:focus-return`);
+    this.keyboardTarget = null;
+    const nodeId = new URL(target.url).searchParams.get("node");
+    if (nodeId) this.scrollToNode(nodeId);
+    source.focus({ preventScroll: true });
   },
 
   scrollToNode(nodeId) {
@@ -216,6 +257,11 @@ const ReaderScrollHook = {
     this.setRestoringScroll(true);
     this.el.scrollTop = targetTop;
     this.savedScrollTop = targetTop;
+    if (this.keyboardTarget === String(nodeId)) {
+      section.focus({ preventScroll: true });
+      this.keyboardTarget = null;
+    }
+
 
     requestAnimationFrame(() => {
       this.setRestoringScroll(false);

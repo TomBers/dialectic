@@ -427,6 +427,75 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert has_element?(other_view, "#reader-source-status-5[data-source-status='no_links']")
   end
 
+  test "reader controls preview without saving and persist only reading fields", %{conn: conn} do
+    graph = create_graph()
+    user = user_fixture()
+    {:ok, view, _} = conn |> log_in_user(user) |> live(~p"/g/#{graph.slug}")
+
+    assert has_element?(
+             view,
+             "#reader-appearance-toggle[popovertarget='reader-appearance-panel']"
+           )
+
+    view
+    |> form("#reader-appearance-form", %{"user" => %{"reading_style" => "large_print"}})
+    |> render_change()
+
+    assert has_element?(
+             view,
+             "#outline-layout[data-reading-font='sans'][data-reading-density='large']"
+           )
+
+    assert Dialectic.Accounts.get_user!(user.id).reading_density == user.reading_density
+
+    view |> element("#next-choice-3") |> render_click()
+    assert has_element?(view, "#outline-layout[data-reading-density='large']")
+
+    view
+    |> form("#reader-appearance-form", %{"user" => %{"reading_style" => "large_print"}})
+    |> render_submit()
+
+    updated = Dialectic.Accounts.get_user!(user.id)
+    assert updated.reading_font == "sans"
+    assert updated.reading_density == "large"
+    assert updated.graph_direction == user.graph_direction
+    assert has_element?(view, "#reader-appearance-status", "saved")
+  end
+
+  test "guest reader controls support custom preferences and reject invalid fonts", %{conn: conn} do
+    graph = create_graph()
+    {:ok, view, _} = live(conn, ~p"/g/#{graph.slug}")
+
+    view
+    |> form("#reader-appearance-form", %{"user" => %{"reading_style" => "custom"}})
+    |> render_change()
+
+    assert has_element?(view, "#reader-custom-settings")
+
+    view
+    |> form("#reader-appearance-form", %{
+      "user" => %{
+        "reading_style" => "custom",
+        "reading_font" => "sans",
+        "reading_density" => "compact"
+      }
+    })
+    |> render_submit()
+
+    assert has_element?(
+             view,
+             "#outline-layout[data-reading-font='sans'][data-reading-density='compact']"
+           )
+
+    assert has_element?(view, "#reader-appearance-status", "this visit")
+
+    render_change(view, "preview_reader_appearance", %{
+      "user" => %{"reading_style" => "custom", "reading_font" => "invalid"}
+    })
+
+    assert has_element?(view, "#outline-layout[data-reading-font='sans']")
+  end
+
   test "retains saved reading preferences when choosing a path", %{conn: conn} do
     graph = create_graph()
     user = user_fixture()

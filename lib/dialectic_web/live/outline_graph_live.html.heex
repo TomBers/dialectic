@@ -51,7 +51,7 @@
               </div>
             </div>
 
-            <div class="flex min-w-0 flex-nowrap items-center gap-2 lg:justify-self-end">
+            <div class="flex min-w-0 flex-wrap items-center gap-2 lg:justify-self-end">
               <DialecticWeb.WorkspaceBarComp.workspace_bar
                 id="reader-workspace-bar"
                 mode={:reader}
@@ -77,6 +77,15 @@
                 share_click="open_share_modal"
                 compact
               />
+
+              <button
+                id="reader-appearance-toggle"
+                type="button"
+                popovertarget="reader-appearance-panel"
+                class="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"
+              >
+                <.icon name="hero-adjustments-horizontal" class="h-4 w-4" /> Reading style
+              </button>
 
               <%= if @current_user do %>
                 <button
@@ -133,6 +142,93 @@
       </div>
     </div>
 
+    <section
+      id="reader-appearance-panel"
+      popover
+      aria-labelledby="reader-appearance-title"
+      class="m-auto max-h-[calc(100dvh-2rem)] w-[min(28rem,calc(100vw-2rem))] overflow-y-auto rounded-2xl border border-slate-300 bg-white p-4 text-slate-900 shadow-xl [overflow-wrap:anywhere]"
+    >
+      <div class="mb-4 flex items-start justify-between gap-3">
+        <h2 id="reader-appearance-title" class="min-w-0 text-lg font-semibold">Reading style</h2>
+        <button
+          id="reader-appearance-close"
+          type="button"
+          popovertarget="reader-appearance-panel"
+          popovertargetaction="hide"
+          aria-label="Close reading settings"
+          class="shrink-0 rounded-lg p-2 focus-visible:outline-2 focus-visible:outline-teal-700"
+        >
+          <.icon name="hero-x-mark" class="h-5 w-5" />
+        </button>
+      </div>
+      <p id="reader-appearance-help" class="mb-4 text-sm leading-6 text-slate-600">
+        Preview changes in this reader. {if(@current_user,
+          do: "Save to use them in every grid.",
+          else: "Changes last for this visit. Sign in to save your preferences."
+        )}
+      </p>
+      <.form
+        for={@reader_appearance_form}
+        id="reader-appearance-form"
+        phx-change="preview_reader_appearance"
+        phx-submit="save_reader_appearance"
+        class="space-y-4"
+      >
+        <.input
+          id="reader-reading-style"
+          name="user[reading_style]"
+          type="select"
+          label="Reading style"
+          value={@reader_style}
+          options={[
+            {"Book — serif, comfortable", "book"},
+            {"Screen — sans, comfortable", "screen"},
+            {"Large print — larger sans text", "large_print"},
+            {"Custom — your font and size", "custom"}
+          ]}
+        />
+        <%= if @reader_style == "custom" do %>
+          <div id="reader-custom-settings" class="space-y-4">
+            <.input
+              field={@reader_appearance_form[:reading_font]}
+              id="reader-reading-font"
+              type="select"
+              label="Font"
+              options={[{"Serif", "serif"}, {"Sans", "sans"}]}
+            />
+            <.input
+              field={@reader_appearance_form[:reading_density]}
+              id="reader-reading-density"
+              type="select"
+              label="Text size and spacing"
+              options={[
+                {"Compact", "compact"},
+                {"Comfortable", "comfortable"},
+                {"Large", "large"}
+              ]}
+            />
+          </div>
+        <% else %>
+          <.input
+            field={@reader_appearance_form[:reading_font]}
+            id="reader-reading-font"
+            type="hidden"
+          />
+          <.input
+            field={@reader_appearance_form[:reading_density]}
+            id="reader-reading-density"
+            type="hidden"
+          />
+        <% end %>
+        <.button id="reader-appearance-save" phx-disable-with="Applying…">
+          {if(@current_user, do: "Save reading style", else: "Apply for this visit")}
+        </.button>
+      </.form>
+      <p id="reader-appearance-status" role="status" class="mt-3 text-sm text-teal-800">
+        {@reader_appearance_status}
+      </p>
+    </section>
+
     <div
       id="outline-scroll-shell"
       class="relative flex flex-1 min-h-0 flex-col overflow-x-hidden overflow-y-auto lg:grid lg:grid-cols-[20rem_minmax(0,1fr)] lg:overflow-clip xl:grid-cols-[22rem_minmax(0,1fr)]"
@@ -166,7 +262,7 @@
             This graph does not have any visible nodes yet.
           </div>
         <% else %>
-          <nav class="space-y-1 px-2 py-3">
+          <nav aria-label="Conversation outline" class="space-y-1 px-2 py-3">
             <%= for row <- @visible_outline_nodes do %>
               <% selected? = @selected_node_id == row.id %>
               <% in_path? = MapSet.member?(@selected_path_ids, row.id) %>
@@ -248,7 +344,7 @@
                 id="outline-choose-path"
                 type="button"
                 phx-click="choose_path"
-                class="mt-1 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-teal-600 bg-teal-600 px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:border-teal-700 hover:bg-teal-700"
+                class="mt-1 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-teal-700 bg-teal-700 px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:border-teal-800 hover:bg-teal-800"
               >
                 <.icon name="hero-map" class="h-3.5 w-3.5" /> Choose this path
               </button>
@@ -257,7 +353,8 @@
         <% end %>
       </aside>
 
-      <main
+      <section
+        aria-label="Conversation reader"
         id="outline-detail"
         class="order-1 min-h-0 min-w-0 overflow-visible lg:order-none lg:overflow-y-auto"
         phx-hook="ReaderScroll"
@@ -385,7 +482,7 @@
                           id="outline-mobile-choose-path"
                           type="button"
                           phx-click="choose_path"
-                          class="mt-1 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-teal-600 bg-teal-600 px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:border-teal-700 hover:bg-teal-700"
+                          class="mt-1 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-teal-700 bg-teal-700 px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:border-teal-800 hover:bg-teal-800"
                         >
                           <.icon name="hero-map" class="h-3.5 w-3.5" /> Choose this path
                         </button>
@@ -408,6 +505,8 @@
                 <% node_highlight_count = length(node_highlights) %>
                 <article
                   id={"reading-node-#{reading_node.id}"}
+                  tabindex="-1"
+                  aria-labelledby={"reading-title-#{reading_node.id}"}
                   data-reading-selected={to_string(selected_reading_node?)}
                   class={[
                     if(index == 0,
@@ -430,7 +529,10 @@
                         <img src={~p"/images/favicon-32.png"} alt="" class="h-5 w-5" />
                         Starting question
                       </div>
-                      <h2 class="reader-heading mt-3 text-balance text-[1.7rem] font-semibold leading-[1.12] tracking-tight text-white sm:text-[2.1rem]">
+                      <h2
+                        id={"reading-title-#{reading_node.id}"}
+                        class="reader-heading mt-3 text-balance text-[1.7rem] font-semibold leading-[1.12] tracking-tight text-white sm:text-[2.1rem]"
+                      >
                         {reading_node.full_title || reading_node.title}
                       </h2>
                       <%= if String.trim(reading_node.body_content || "") != "" do %>
@@ -492,7 +594,10 @@
                           {response_level_label(reading_response_level)} level
                         </span>
                       </div>
-                      <h2 class="reader-heading mt-3 max-w-[78ch] text-balance text-[1.28rem] font-semibold leading-[1.15] tracking-tight text-slate-950 sm:text-[1.6rem]">
+                      <h2
+                        id={"reading-title-#{reading_node.id}"}
+                        class="reader-heading mt-3 max-w-[78ch] text-balance text-[1.28rem] font-semibold leading-[1.15] tracking-tight text-slate-950 sm:text-[1.6rem]"
+                      >
                         {reading_node.full_title || reading_node.title}
                       </h2>
                     </div>
@@ -866,7 +971,7 @@
             </div>
           </div>
         <% end %>
-      </main>
+      </section>
 
       <div
         id="highlights-drawer"

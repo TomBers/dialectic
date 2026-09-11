@@ -3,7 +3,9 @@ defmodule DialecticWeb.OutlineGraphLive do
 
   import Ecto.Query, only: [from: 2]
 
+  alias Dialectic.Accounts
   alias Dialectic.Accounts.User
+  import DialecticWeb.ReadingStyles
   alias Dialectic.Repo
   alias Dialectic.Responses.RequestQueue
   alias Dialectic.DbActions.Notes
@@ -117,6 +119,70 @@ defmodule DialecticWeb.OutlineGraphLive do
       |> assign_share_metadata(share_highlight)
 
     {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("preview_reader_appearance", %{"user" => params}, socket) do
+    {style, params} = apply_reading_style(params)
+    params = Map.take(params, ["reading_font", "reading_density"])
+    user = struct(User, socket.assigns.appearance_preferences)
+    changeset = Accounts.change_user_appearance(user, params)
+
+    socket =
+      assign(socket,
+        reader_style: style,
+        reader_appearance_form: to_form(Map.put(changeset, :action, :validate)),
+        reader_appearance_status: nil
+      )
+
+    socket =
+      if changeset.valid? do
+        assign(
+          socket,
+          :appearance_preferences,
+          User.appearance_preferences(Ecto.Changeset.apply_changes(changeset))
+        )
+      else
+        socket
+      end
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("save_reader_appearance", %{"user" => params}, socket) do
+    {style, params} = apply_reading_style(params)
+    params = Map.take(params, ["reading_font", "reading_density"])
+    user = socket.assigns.current_user || struct(User, socket.assigns.appearance_preferences)
+
+    result =
+      if socket.assigns.current_user do
+        Accounts.update_user_appearance(user, params)
+      else
+        user |> Accounts.change_user_appearance(params) |> Ecto.Changeset.apply_action(:update)
+      end
+
+    case result do
+      {:ok, updated} ->
+        socket =
+          if socket.assigns.current_user, do: assign(socket, :current_user, updated), else: socket
+
+        {:noreply,
+         assign(socket,
+           reader_style: style,
+           reader_appearance_form: to_form(Accounts.change_user_appearance(updated)),
+           appearance_preferences: User.appearance_preferences(updated),
+           reader_appearance_status:
+             if(socket.assigns.current_user,
+               do: "Reading style saved for all grids.",
+               else: "Reading style applied for this visit."
+             )
+         )}
+
+      {:error, changeset} ->
+        {:noreply,
+         assign(socket, reader_style: style, reader_appearance_form: to_form(changeset))}
+    end
   end
 
   @impl true
@@ -559,6 +625,10 @@ defmodule DialecticWeb.OutlineGraphLive do
         |> Notes.list_noted_node_ids(socket.assigns[:current_user])
         |> MapSet.new(),
       appearance_preferences: User.appearance_preferences(socket.assigns[:current_user]),
+      reader_appearance_form:
+        to_form(Accounts.change_user_appearance(socket.assigns[:current_user] || %User{})),
+      reader_style: reading_style(socket.assigns[:current_user] || %User{}),
+      reader_appearance_status: nil,
       token: token_param,
       nav_params: token_params(token_param),
       can_edit: !graph_db.is_locked,

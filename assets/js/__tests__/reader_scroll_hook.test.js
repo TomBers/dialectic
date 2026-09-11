@@ -84,6 +84,33 @@ describe("ReaderScrollHook", () => {
     expect(hook.activeNodeId).toBe("2");
   });
 
+  it("moves focus for keyboard path navigation but leaves pointer focus alone", () => {
+    document.body.innerHTML = `
+      <div id="outline-layout">
+        <a id="path-choice" data-phx-link="patch" href="/?node=2">Read this path</a>
+        <main id="reader" data-reader-scroll-key="reader-position:test">
+          <article id="reading-node-2" tabindex="-1"></article>
+        </main>
+      </div>`;
+    vi.stubGlobal("requestAnimationFrame", (callback) => { callback(); return 1; });
+    const hook = {...ReaderScrollHook, el: document.getElementById("reader")};
+    hook.mounted();
+    const link = document.getElementById("path-choice");
+    link.addEventListener("click", (event) => event.preventDefault());
+    link.focus();
+    link.dispatchEvent(new MouseEvent("click", {bubbles: true, cancelable: true, detail: 1}));
+    hook.scrollToNode("2");
+    expect(document.activeElement).toBe(link);
+    link.dispatchEvent(new MouseEvent("click", {bubbles: true, cancelable: true, detail: 0}));
+    hook.scrollToNode("2");
+    expect(document.activeElement.id).toBe("reading-node-2");
+    window.dispatchEvent(new PopStateEvent("popstate"));
+    hook.beforeUpdate();
+    hook.updated();
+    expect(document.activeElement).toBe(link);
+    hook.destroyed();
+  });
+
   it("opens at the node requested by the URL on a fresh page load", () => {
     document.body.innerHTML = `
       <main id="reader" data-reader-scroll-key="reader-position:example" data-selected-reader-node-id="9">

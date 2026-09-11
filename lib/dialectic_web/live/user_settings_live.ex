@@ -2,6 +2,7 @@ defmodule DialecticWeb.UserSettingsLive do
   use DialecticWeb, :live_view
 
   alias Dialectic.Accounts
+  import DialecticWeb.ReadingStyles
   alias Dialectic.Accounts.User
   alias Dialectic.Accounts.ProfileBanner
   alias Dialectic.Accounts.ProfileLinks
@@ -1237,32 +1238,4 @@ defmodule DialecticWeb.UserSettingsLive do
 
   defp parse_index(index) when is_integer(index), do: index
   defp parse_index(_), do: 0
-
-  defp reading_style(user) do
-    case {user.reading_font, user.reading_density} do
-      {"serif", "comfortable"} -> "book"
-      {"sans", "comfortable"} -> "screen"
-      {"sans", "large"} -> "large_print"
-      _ -> "custom"
-    end
-  end
-
-  defp apply_reading_style(params) do
-    case params["reading_style"] do
-      "book" ->
-        {"book",
-         Map.merge(params, %{"reading_font" => "serif", "reading_density" => "comfortable"})}
-
-      "screen" ->
-        {"screen",
-         Map.merge(params, %{"reading_font" => "sans", "reading_density" => "comfortable"})}
-
-      "large_print" ->
-        {"large_print",
-         Map.merge(params, %{"reading_font" => "sans", "reading_density" => "large"})}
-
-      _ ->
-        {"custom", params}
-    end
-  end
 end
