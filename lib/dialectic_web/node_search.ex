@@ -130,8 +130,7 @@ defmodule DialecticWeb.NodeSearch do
       searchable_text == "" ->
         nil
 
-      String.length(normalized_term) < 3 and
-          not Query.matches?(searchable_text, [normalized_term]) ->
+      not Query.matches?(searchable_text, Query.terms(normalized_term)) ->
         nil
 
       searchable_text == normalized_term ->

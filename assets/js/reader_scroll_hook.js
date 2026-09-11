@@ -4,7 +4,8 @@ const ReaderScrollHook = {
   mounted() {
     this.storageKey = this.el.dataset.readerScrollKey;
     const historyFocus = window.history.state?.readerReturnFocus;
-    if (historyFocus?.key === this.storageKey && historyFocus?.nodeId === new URL(window.location.href).searchParams.get("node")) {
+    const selectedNodeId = new URL(window.location.href).searchParams.get("node") || this.el.dataset.selectedReaderNodeId;
+    if (historyFocus?.key === this.storageKey && historyFocus?.nodeId === selectedNodeId) {
       pendingHistoryFocus = historyFocus;
     }
 
@@ -41,7 +42,7 @@ const ReaderScrollHook = {
       const readerReturnFocus = {
         key: this.storageKey,
         id: link.id,
-        nodeId: new URL(window.location.href).searchParams.get("node"),
+        nodeId: new URL(window.location.href).searchParams.get("node") || this.el.dataset.selectedReaderNodeId,
       };
       window.history.replaceState({...window.history.state, readerReturnFocus}, "", window.location.href);
     };

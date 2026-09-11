@@ -88,7 +88,7 @@ describe("ReaderScrollHook", () => {
     document.body.innerHTML = `
       <div id="outline-layout">
         <a id="path-choice" data-phx-link="patch" href="/?node=2">Read this path</a>
-        <main id="reader" data-reader-scroll-key="reader-position:test">
+        <main id="reader" data-reader-scroll-key="reader-position:test" data-selected-reader-node-id="2">
           <article id="reading-node-2" tabindex="-1"></article>
         </main>
       </div>`;
@@ -102,6 +102,7 @@ describe("ReaderScrollHook", () => {
     hook.scrollToNode("2");
     expect(document.activeElement).toBe(link);
     link.dispatchEvent(new MouseEvent("click", {bubbles: true, cancelable: true, detail: 0}));
+    expect(window.history.state.readerReturnFocus.nodeId).toBe("2");
     hook.scrollToNode("2");
     expect(document.activeElement.id).toBe("reading-node-2");
     window.dispatchEvent(new PopStateEvent("popstate", {state: window.history.state}));
@@ -111,8 +112,8 @@ describe("ReaderScrollHook", () => {
     hook.destroyed();
   });
 
-  it("restores focus from the history entry when Back remounts the reader", () => {
-    window.history.replaceState({readerReturnFocus: {key: "reader-position:test", id: "return-link", nodeId: "2"}}, "", "/?node=2");
+  it.each(["/?node=2", "/g/example"])("restores focus when Back remounts the reader at %s", (url) => {
+    window.history.replaceState({readerReturnFocus: {key: "reader-position:test", id: "return-link", nodeId: "2"}}, "", url);
     document.body.innerHTML = `<div id="outline-tree"><a href="/?node=3" id="return-link">Path</a></div>
       <main id="reader" data-reader-scroll-key="reader-position:test" data-selected-reader-node-id="2">
         <article id="reading-node-2" tabindex="-1"></article>

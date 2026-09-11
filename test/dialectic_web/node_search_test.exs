@@ -65,6 +65,18 @@ defmodule DialecticWeb.NodeSearchTest do
     refute NodeSearch.annotate_result(%{content: "# Any topic"}, "  ")
   end
 
+  test "short terms keep word boundaries inside multiword queries" do
+    refute NodeSearch.annotate_result(%{content: "# Thai systems"}, "AI systems")
+
+    refute NodeSearch.annotate_result(
+             %{content: "# Planning\nThai systems are useful."},
+             "AI systems"
+           )
+
+    assert NodeSearch.annotate_result(%{content: "# AI systems"}, "AI systems")
+    assert NodeSearch.annotate_result(%{content: "# Systems using AI"}, "AI systems")
+  end
+
   test "long literal queries produce bounded previews" do
     query = String.duplicate("word ", 100) |> String.trim()
     result = NodeSearch.annotate_result(%{content: "# " <> query}, query)

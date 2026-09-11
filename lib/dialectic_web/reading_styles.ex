@@ -2,7 +2,9 @@ defmodule DialecticWeb.ReadingStyles do
   @moduledoc false
 
   def reading_style(user) do
-    case {user.reading_font, user.reading_density} do
+    preferences = Dialectic.Accounts.User.appearance_preferences(user)
+
+    case {preferences.reading_font, preferences.reading_density} do
       {"serif", "comfortable"} -> "book"
       {"sans", "comfortable"} -> "screen"
       {"sans", "large"} -> "large_print"
