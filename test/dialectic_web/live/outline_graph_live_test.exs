@@ -427,6 +427,32 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert has_element?(other_view, "#reader-source-status-5[data-source-status='no_links']")
   end
 
+  test "retains saved reading preferences when choosing a path", %{conn: conn} do
+    graph = create_graph()
+    user = user_fixture()
+
+    {:ok, user} =
+      Dialectic.Accounts.update_user_appearance(user, %{
+        reading_font: "sans",
+        reading_density: "large"
+      })
+
+    {:ok, view, _html} = conn |> log_in_user(user) |> live(~p"/g/#{graph.slug}")
+
+    assert has_element?(
+             view,
+             "#outline-layout[data-reading-font='sans'][data-reading-density='large']"
+           )
+
+    view |> element("#next-choice-3") |> render_click()
+    assert has_element?(view, "#reading-node-3")
+
+    assert has_element?(
+             view,
+             "#outline-layout[data-reading-font='sans'][data-reading-density='large']"
+           )
+  end
+
   test "mounts the reader at the start of the graph and renders through the next split", %{
     conn: conn
   } do

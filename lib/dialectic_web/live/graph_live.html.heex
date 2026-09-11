@@ -3,6 +3,7 @@
     id="graph-layout"
     phx-hook="GraphLayout"
     class={[
+      "reading-appearance",
       "relative flex flex-col overflow-hidden",
       @presentation_mode == :presenting && "h-screen"
     ]}
@@ -30,7 +31,9 @@
       )
     }
   >
-    <h1 :if={@presentation_mode != :presenting} class="sr-only">{@graph_struct.title}</h1>
+    <h1 :if={@presentation_mode != :presenting} class="sr-only">
+      {@graph_struct.title}
+    </h1>
     <% slides = slides(@graph_id, @presentation_slide_ids) %>
     <% active_slide = active_slide(slides, @node) %>
     <% active_slide_id = if active_slide, do: active_slide.id, else: nil %>

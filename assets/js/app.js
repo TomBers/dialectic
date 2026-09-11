@@ -252,14 +252,10 @@ hooks.GraphLayout = {
       this._syncOutlineDetailForPanel(this.activePanelId);
     };
     const graphId = this.el.dataset.graphId;
-    const appearance = syncGraphAppearanceStorage(this.el.dataset);
+    syncGraphAppearanceStorage(this.el.dataset);
 
     this.sideDrawerOpen = true;
-    this.readingDensity = appearance.readingDensity;
-    this.readingFont = appearance.readingFont;
     this._redirectMobileGraphToReader();
-    this._applyReadingDensity(this.readingDensity);
-    this._applyReadingFont(this.readingFont);
     this._closeAllPanels();
     this._syncOutlineDetailForPanel(null);
     window.addEventListener("resize", this._handleMobileGraphResize);
@@ -778,13 +774,6 @@ hooks.GraphLayout = {
   restoreState() {
     this._applyMobileOutlineState(false);
 
-    if (this.readingDensity) {
-      this._applyReadingDensity(this.readingDensity);
-    }
-    if (this.readingFont) {
-      this._applyReadingFont(this.readingFont);
-    }
-
     const presentationDrawer = document.getElementById("presentation-drawer");
     const combineDrawer = document.getElementById("combine-drawer");
     const shouldReopenAfterPresentation =
@@ -862,38 +851,6 @@ hooks.GraphLayout = {
         btn.classList.add("ring-2", "ring-offset-1", "ring-white", "scale-110");
       }
     }
-  },
-  _applyReadingDensity(value) {
-    const validReadingDensities = ["compact", "comfortable", "large"];
-    const nextDensity = validReadingDensities.includes(value)
-      ? value
-      : "comfortable";
-
-    this.readingDensity = nextDensity;
-    this.el.setAttribute("data-reading-density", nextDensity);
-    this._syncReadingDensityButtons();
-  },
-  _syncReadingDensityButtons() {
-    const buttons = this.el.querySelectorAll("[data-reading-density-option]");
-    buttons.forEach((btn) => {
-      const selected = btn.dataset.readingDensityOption === this.readingDensity;
-      btn.setAttribute("aria-pressed", selected ? "true" : "false");
-    });
-  },
-  _applyReadingFont(value) {
-    const validReadingFonts = ["sans", "serif"];
-    const nextFont = validReadingFonts.includes(value) ? value : "serif";
-
-    this.readingFont = nextFont;
-    this.el.setAttribute("data-reading-font", nextFont);
-    this._syncReadingFontButtons();
-  },
-  _syncReadingFontButtons() {
-    const buttons = this.el.querySelectorAll("[data-reading-font-option]");
-    buttons.forEach((btn) => {
-      const selected = btn.dataset.readingFontOption === this.readingFont;
-      btn.setAttribute("aria-pressed", selected ? "true" : "false");
-    });
   },
 };
 

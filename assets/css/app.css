@@ -1783,16 +1783,15 @@ button[type="submit"]:active {
 }
 
 /* Shared reading preferences for graph and outline content. */
-#graph-layout,
-#outline-layout {
+.reading-appearance {
     --rg-read-font-family-sans:
         ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
         sans-serif;
     --rg-read-font-family-serif:
         "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua",
         Georgia, "Times New Roman", serif;
-    --rg-read-font-family: var(--rg-read-font-family-sans);
-    --rg-read-heading-font-family: var(--rg-read-font-family-sans);
+    --rg-read-font-family: var(--rg-read-font-family-serif);
+    --rg-read-heading-font-family: var(--rg-read-font-family-serif);
     --rg-read-font-size: 1.0625rem;
     --rg-read-line-height: 1.68;
     --rg-read-max-width: 62ch;
@@ -1803,8 +1802,7 @@ button[type="submit"]:active {
     --rg-read-word-spacing: 0.02em;
 }
 
-#graph-layout[data-reading-density="compact"],
-#outline-layout[data-reading-density="compact"] {
+.reading-appearance[data-reading-density="compact"] {
     --rg-read-font-size: 1rem;
     --rg-read-line-height: 1.58;
     --rg-read-max-width: 66ch;
@@ -1813,8 +1811,7 @@ button[type="submit"]:active {
     --rg-read-lead-line-height: 1.58;
 }
 
-#graph-layout[data-reading-density="large"],
-#outline-layout[data-reading-density="large"] {
+.reading-appearance[data-reading-density="large"] {
     --rg-read-font-size: 1.1875rem;
     --rg-read-line-height: 1.72;
     --rg-read-max-width: 58ch;
@@ -1823,12 +1820,16 @@ button[type="submit"]:active {
     --rg-read-lead-line-height: 1.62;
 }
 
-#graph-layout[data-reading-font="serif"],
-#outline-layout[data-reading-font="serif"] {
+.reading-appearance[data-reading-font="serif"] {
     --rg-read-font-family: var(--rg-read-font-family-serif);
     --rg-read-heading-font-family: var(--rg-read-font-family-serif);
     --rg-read-letter-spacing: -0.001em;
     --rg-read-word-spacing: 0.01em;
+}
+
+.reading-appearance[data-reading-font="sans"] {
+    --rg-read-font-family: var(--rg-read-font-family-sans);
+    --rg-read-heading-font-family: var(--rg-read-font-family-sans);
 }
 
 #graph-layout[data-reduce-motion="true"],
@@ -2075,15 +2076,6 @@ button[type="submit"]:active {
     ); /* optimal measure: ~60-75 characters per line */
     width: min(100%, var(--rg-read-max-width, 68ch));
     margin-inline: auto;
-}
-
-/* Linear view defaults to the serif reading face for long-form scanning */
-#linear-main-content .selection-content {
-    font-family:
-        "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua",
-        Georgia, "Times New Roman", serif;
-    letter-spacing: -0.001em;
-    word-spacing: 0.01em;
 }
 
 /* Bold text — subtle visual lift for key terms */

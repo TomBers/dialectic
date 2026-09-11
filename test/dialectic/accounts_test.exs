@@ -846,6 +846,12 @@ defmodule Dialectic.AccountsTest do
       assert "is invalid" in errors_on(changeset).graph_direction
     end
 
+    test "uses serif for missing or invalid fonts while preserving saved sans" do
+      assert User.appearance_preferences(%User{reading_font: nil}).reading_font == "serif"
+      assert User.appearance_preferences(%User{reading_font: "invalid"}).reading_font == "serif"
+      assert User.appearance_preferences(%User{reading_font: "sans"}).reading_font == "sans"
+    end
+
     test "uses defaults when there is no signed-in user" do
       assert User.appearance_preferences(nil) == %{
                reading_density: "comfortable",

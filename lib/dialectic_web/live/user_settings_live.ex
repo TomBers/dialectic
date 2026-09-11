@@ -576,7 +576,10 @@ defmodule DialecticWeb.UserSettingsLive do
                       field={@appearance_form[:reading_font]}
                       type="select"
                       label="Reading font"
-                      options={[{"Sans", "sans"}, {"Serif", "serif"}]}
+                      options={[
+                        {"Sans — simple letter shapes", "sans"},
+                        {"Serif — book-style lettering", "serif"}
+                      ]}
                     />
                     <.input
                       field={@appearance_form[:graph_view_mode]}
@@ -604,6 +607,28 @@ defmodule DialecticWeb.UserSettingsLive do
                         Minimises grid movement and interface animation.
                       </p>
                     </div>
+                  </div>
+
+                  <div
+                    id="reading-preview"
+                    class="reading-appearance rounded-xl border border-zinc-200 bg-white p-5 sm:p-6"
+                    data-reading-font={@appearance_form[:reading_font].value}
+                    data-reading-density={@appearance_form[:reading_density].value}
+                    aria-label="Reading preview"
+                  >
+                    <p class="mb-4 text-xs font-medium uppercase tracking-wide text-zinc-500">
+                      Reading preview · changes apply after saving
+                    </p>
+                    <article class="reader-prose mx-auto">
+                      <h3 class="reader-heading mb-3 text-xl font-semibold">Room to think</h3>
+                      <p>
+                        A useful question gives you space to explore. Follow one idea at a time,
+                        pause when you need to, and return to the details that matter to you.
+                      </p>
+                      <p class="mt-4">
+                        Try a different font or text size to find what feels comfortable to read.
+                      </p>
+                    </article>
                   </div>
 
                   <details class="group rounded-xl border border-zinc-200 bg-white">

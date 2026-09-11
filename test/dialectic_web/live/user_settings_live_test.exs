@@ -184,6 +184,24 @@ defmodule DialecticWeb.UserSettingsLiveTest do
       assert has_element?(view, "details", "Advanced grid layout")
     end
 
+    test "previews reading changes before saving", %{conn: conn, user: user} do
+      {:ok, view, _html} = live(conn, ~p"/users/settings")
+
+      view
+      |> form("#appearance-form", %{
+        "user" => %{"reading_density" => "large", "reading_font" => "sans"}
+      })
+      |> render_change()
+
+      assert has_element?(
+               view,
+               "#reading-preview[data-reading-font='sans'][data-reading-density='large']"
+             )
+
+      assert Accounts.get_user!(user.id).reading_font == user.reading_font
+      assert Accounts.get_user!(user.id).reading_density == user.reading_density
+    end
+
     test "saves appearance preferences", %{conn: conn, user: user} do
       {:ok, view, _html} = live(conn, ~p"/users/settings")
 
