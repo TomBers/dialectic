@@ -76,30 +76,6 @@ defmodule DialecticWeb.NodeComp do
 
   defp show_regenerate_cta?(_node), do: false
 
-  defp node_title_size_class(%{content: content}) when is_binary(content) do
-    case title_text_length(content) do
-      length when length >= 96 -> "text-[15px] sm:text-base md:text-[1.05rem]"
-      length when length >= 64 -> "text-base sm:text-[1.05rem] md:text-lg"
-      _length -> "text-lg sm:text-[1.15rem] md:text-[1.35rem]"
-    end
-  end
-
-  defp node_title_size_class(_node), do: "text-lg sm:text-[1.15rem] md:text-[1.35rem]"
-
-  defp title_text_length(content) do
-    content
-    |> String.replace(~r/\r\n|\r/, "\n")
-    |> String.trim_leading()
-    |> String.split("\n", parts: 2)
-    |> List.first()
-    |> to_string()
-    |> String.replace(~r/^\s*\#{1,6}\s*/, "")
-    |> String.replace(~r/^\s*title\b\s*:?\s*/i, "")
-    |> String.replace("**", "")
-    |> String.trim()
-    |> String.length()
-  end
-
   defp existing_follow_up_questions_json(%{children: children}) when is_list(children) do
     children
     |> Enum.filter(fn child ->
@@ -376,9 +352,8 @@ defmodule DialecticWeb.NodeComp do
                         )}
                       </p>
                       <h2 class={[
-                        "reader-heading break-words font-semibold leading-[1.15] tracking-tight",
-                        if(origin_meta?, do: "text-white", else: "text-slate-950"),
-                        node_title_size_class(@node)
+                        "reader-heading reader-title break-words font-semibold leading-[1.15] tracking-tight",
+                        if(origin_meta?, do: "reader-title-origin text-white", else: "text-slate-950")
                       ]}>
                         <span
                           phx-hook="Markdown"

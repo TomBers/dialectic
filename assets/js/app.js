@@ -752,7 +752,9 @@ hooks.GraphLayout = {
   },
   _applyMobileOutlineState(shouldOpen) {
     const panel = document.getElementById("outline-mobile-nav-panel");
-    const button = document.getElementById("reader-workspace-bar-outline");
+    const mobileButton = document.getElementById("reader-workspace-bar-outline");
+    const desktopButton = document.getElementById("reader-workspace-bar-outline-desktop");
+    const button = mobileButton?.getClientRects().length ? mobileButton : desktopButton;
 
     if (!panel || !button) return;
 

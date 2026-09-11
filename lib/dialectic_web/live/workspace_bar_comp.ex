@@ -124,7 +124,7 @@ defmodule DialecticWeb.WorkspaceBarComp do
           phx-click={@mobile_aux_click}
           class={[
             action_button_classes(@compact),
-            "sm:hidden",
+            "lg:hidden",
             @mobile_aux_open && "border-slate-300 bg-slate-100 text-slate-950"
           ]}
           title={@mobile_aux_title || @mobile_aux_label}

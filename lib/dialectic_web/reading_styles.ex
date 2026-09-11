@@ -6,6 +6,7 @@ defmodule DialecticWeb.ReadingStyles do
       {"serif", "comfortable"} -> "book"
       {"sans", "comfortable"} -> "screen"
       {"sans", "large"} -> "large_print"
+      {"sans", "compact"} -> "compact"
       _ -> "custom"
     end
   end
@@ -19,6 +20,10 @@ defmodule DialecticWeb.ReadingStyles do
       "screen" ->
         {"screen",
          Map.merge(params, %{"reading_font" => "sans", "reading_density" => "comfortable"})}
+
+      "compact" ->
+        {"compact",
+         Map.merge(params, %{"reading_font" => "sans", "reading_density" => "compact"})}
 
       "large_print" ->
         {"large_print",

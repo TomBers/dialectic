@@ -427,6 +427,27 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert has_element?(other_view, "#reader-source-status-5[data-source-status='no_links']")
   end
 
+  test "mobile reader actions preserve the selected path and apply styles", %{conn: conn} do
+    graph = create_graph()
+    {:ok, view, _} = live(conn, ~p"/g/#{graph.slug}?node=2&path=4")
+    assert has_element?(view, "#reader-mobile-toolbar[aria-label='Reader actions']")
+
+    assert has_element?(
+             view,
+             ~s(#reader-mobile-ask[href="/g/#{graph.slug}/graph?node=2&focus=ask&path=4"])
+           )
+
+    assert has_element?(view, "#reader-mobile-more[popovertarget='reader-mobile-menu']")
+    view |> element("#reader-mobile-style-compact") |> render_click()
+    assert has_element?(view, "#outline-layout[data-reading-density='compact']")
+    assert has_element?(view, "#reader-mobile-style-compact[aria-pressed='true']")
+    view |> element("#reader-mobile-search") |> render_click()
+    assert has_element?(view, "#outline-quick-search-input")
+    view |> element("#outline-quick-search-close") |> render_click()
+    view |> element("#reader-mobile-share") |> render_click()
+    assert has_element?(view, "#share-modal-hook")
+  end
+
   test "reader style dropdown saves presets without changing other preferences", %{conn: conn} do
     graph = create_graph()
     user = user_fixture()
@@ -466,6 +487,14 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
            )
 
     assert has_element?(view, "#reader-appearance-status", "this visit")
+    view |> element("#reader-style-compact") |> render_click()
+
+    assert has_element?(
+             view,
+             "#outline-layout[data-reading-font='sans'][data-reading-density='compact']"
+           )
+
+    assert has_element?(view, "#reader-style-compact[aria-pressed='true']")
     view |> element("#reader-style-book") |> render_click()
     assert has_element?(view, "#outline-layout[data-reading-font='serif']")
   end

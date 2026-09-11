@@ -572,7 +572,8 @@ defmodule DialecticWeb.UserSettingsLive do
                     options={[
                       {"Book — serif with comfortable spacing", "book"},
                       {"Screen — sans with comfortable spacing", "screen"},
-                      {"Large print — larger sans text with more spacing", "large_print"}
+                      {"Large print — larger sans text with more spacing", "large_print"},
+                      {"Compact — smaller sans text with tighter spacing", "compact"}
                     ]}
                   />
                   <.input field={@appearance_form[:reading_density]} type="hidden" />
@@ -630,6 +631,9 @@ defmodule DialecticWeb.UserSettingsLive do
                         <ul>
                           <li>Book uses serif lettering for a familiar page-like feel.</li>
                           <li>Screen uses your device’s sans-serif font.</li>
+                          <li>
+                            Compact fits more text on screen with smaller sans lettering and tighter spacing.
+                          </li>
                           <li>
                             Large print pairs larger letters with shorter lines and more spacing.
                           </li>

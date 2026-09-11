@@ -151,7 +151,7 @@ defmodule DialecticWeb.OutlineGraphLive do
 
   @impl true
   def handle_event("save_reader_appearance", %{"style" => style}, socket)
-      when style in ["book", "screen", "large_print"] do
+      when style in ["book", "screen", "large_print", "compact"] do
     handle_event("save_reader_appearance", %{"user" => %{"reading_style" => style}}, socket)
   end
 

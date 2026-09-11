@@ -209,6 +209,7 @@ defmodule DialecticWeb.UserSettingsLiveTest do
       for {style, font, density} <- [
             {"screen", "sans", "comfortable"},
             {"large_print", "sans", "large"},
+            {"compact", "sans", "compact"},
             {"book", "serif", "comfortable"}
           ] do
         {:ok, view, _html} = live(conn, ~p"/users/settings")
