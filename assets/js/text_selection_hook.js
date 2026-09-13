@@ -428,6 +428,7 @@ const textSelectionHook = {
           selectedText,
           nodeId: this.nodeId,
           offsets: capturedOffsets,
+          touchSelection: event.type === "touchend",
         },
       }),
     );
