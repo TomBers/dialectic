@@ -269,7 +269,8 @@ defmodule DialecticWeb.SelectionActionsComp do
           </h2>
         </div>
         <p class="mt-3 text-sm leading-6 text-slate-700">
-          Save a passage, explore another perspective, or build on an idea with your own questions.
+          <strong class="font-semibold text-teal-800">Accounts are free.</strong>
+          Keep track of your contributions, save highlights and bookmarks, and add personal learning plans.
         </p>
         <p :if={@context == :selection} class="mt-2 text-sm leading-6 text-slate-600">
           Reading and copying text are available without an account.
@@ -287,7 +288,7 @@ defmodule DialecticWeb.SelectionActionsComp do
             href={~p"/users/register"}
             class="inline-flex min-h-11 items-center justify-center rounded-lg border border-stone-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-900 hover:bg-stone-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"
           >
-            Create an account
+            Create a free account
           </.link>
         </div>
         <button

@@ -100,6 +100,7 @@ defmodule DialecticWeb.ReaderContributionsTest do
       "request_id" => "guest-reader-comment"
     })
 
+    render(reader)
     [comment] = new_nodes(graph, before_ids)
     assert comment.class == "user"
     assert comment.user == "anonymous"

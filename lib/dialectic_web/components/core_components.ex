@@ -722,6 +722,10 @@ defmodule DialecticWeb.CoreComponents do
         <p class="mb-6 text-sm leading-6 text-slate-700">
           {@description}
         </p>
+        <p id={"#{@id}-account-benefits"} class="mb-6 text-sm leading-6 text-slate-700">
+          <strong class="font-semibold text-teal-800">Accounts are free.</strong>
+          Keep track of your contributions, save highlights and bookmarks, and add personal learning plans.
+        </p>
         <div class="flex flex-col gap-2 sm:flex-row">
           <.link
             href={~p"/users/log_in"}
@@ -735,7 +739,7 @@ defmodule DialecticWeb.CoreComponents do
             id={"#{@id}-sign-up"}
             class="inline-flex min-h-11 items-center justify-center rounded-lg border border-stone-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-900 hover:bg-stone-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"
           >
-            Create account
+            Create a free account
           </.link>
         </div>
         <button

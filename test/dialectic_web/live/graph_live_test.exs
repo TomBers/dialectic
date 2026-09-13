@@ -732,7 +732,7 @@ defmodule DialecticWeb.GraphLiveTest do
       |> element("#global-chat-form-guided-learning-signup")
       |> render_click()
 
-      assert has_element?(view, "#login-modal", "Create account")
+      assert has_element?(view, "#login-modal-sign-up", "Create a free account")
     end
 
     test "crafted signed-out submissions open the login modal without creating nodes", %{
