@@ -260,6 +260,12 @@ defmodule DialecticWeb.InquiryActionsComp do
                   compact
                 />
                 <% noted? = @user in (Map.get(@node, :noted_by) || []) %>
+                <% bookmark_description =
+                  cond do
+                    !@current_user -> "Log in to bookmark"
+                    noted? -> "Remove bookmark"
+                    true -> "Bookmark this node"
+                  end %>
                 <.tool_button
                   id={"graph-bookmark-node-#{@node.id}"}
                   icon={if(noted?, do: "hero-bookmark-solid", else: "hero-bookmark")}
@@ -277,8 +283,8 @@ defmodule DialecticWeb.InquiryActionsComp do
                   rest={
                     %{
                       "phx-value-node" => @node.id,
-                      "aria-label" => if(noted?, do: "Remove bookmark", else: "Bookmark this node"),
-                      "title" => if(noted?, do: "Remove bookmark", else: "Bookmark this node")
+                      "aria-label" => bookmark_description,
+                      "title" => bookmark_description
                     }
                   }
                   disabled={false}

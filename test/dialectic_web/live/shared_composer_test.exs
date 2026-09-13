@@ -115,6 +115,19 @@ defmodule DialecticWeb.SharedComposerTest do
     refute has_element?(view, "#global-chat-form details #global-chat-form-guided-learning")
   end
 
+  test "guest bookmark label and tooltip explain the login requirement", %{
+    conn: conn,
+    graph: graph
+  } do
+    {:ok, view, _} = live(conn, ~p"/g/#{graph.slug}/graph?node=2")
+
+    assert has_element?(
+             view,
+             "#graph-bookmark-node-2[aria-label='Log in to bookmark'][title='Log in to bookmark']",
+             "Log in to bookmark"
+           )
+  end
+
   for locked? <- [false, true] do
     test "the tool group saves and removes bookmarks without submitting the draft (locked: #{locked?})",
          %{
@@ -138,6 +151,11 @@ defmodule DialecticWeb.SharedComposerTest do
 
       refute has_element?(view, "#node-title-header-2 #graph-bookmark-node-2")
 
+      assert has_element?(
+               view,
+               "#{button}[aria-label='Bookmark this node'][title='Bookmark this node']"
+             )
+
       unless unquote(locked?) do
         view
         |> form("#global-chat-form", %{"vertex" => %{"content" => "Keep this question"}})
@@ -146,6 +164,12 @@ defmodule DialecticWeb.SharedComposerTest do
 
       view |> element(button) |> render_click()
       assert has_element?(view, "#{button}[aria-pressed='true']", "Bookmarked")
+
+      assert has_element?(
+               view,
+               "#{button}[aria-label='Remove bookmark'][title='Remove bookmark']"
+             )
+
       assert has_element?(view, "#{button} .hero-bookmark-solid")
       assert has_element?(view, "#{button} [data-shortcut-label='mac']", "⌥ ⇧ B")
       assert has_element?(view, "#{button} [data-shortcut-label='other']", "Alt+Shift+B")
