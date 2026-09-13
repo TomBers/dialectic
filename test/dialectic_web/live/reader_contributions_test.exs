@@ -52,7 +52,7 @@ defmodule DialecticWeb.ReaderContributionsTest do
     %{graph: graph}
   end
 
-  test "one challenge action opens the shared question interface from the reader", %{
+  test "responding from the reader offers guests questions and comments with account benefits", %{
     conn: conn,
     graph: graph
   } do
@@ -76,16 +76,35 @@ defmodule DialecticWeb.ReaderContributionsTest do
     refute has_element?(reader, "#reader-answer-drawer-2[hidden]")
     refute has_element?(reader, "#reader-answer-drawer-2 [aria-modal='true']")
     assert has_element?(reader, "#answer-actions-2[data-action-context='answer']")
+    refute has_element?(reader, "#selection-sign-in-required-answer-actions-2")
+    assert has_element?(reader, "#selection-input-form-answer-actions-2-guest-access")
     assert has_element?(reader, "#selection-input-form-answer-actions-2-comment")
     assert has_element?(reader, "#selection-input-form-answer-actions-2-ask")
-    assert has_element?(reader, "#answer-action-bookmark-answer-actions-2")
-
-    assert has_element?(
-             reader,
-             "#selection-tools-popover-answer-actions-2 [data-selection-action='counterexample']"
-           )
+    assert has_element?(reader, "#answer-bookmark-login-answer-actions-2[href='/users/log_in']")
+    refute has_element?(reader, "#answer-action-bookmark-answer-actions-2")
 
     refute has_element?(reader, "#answer-actions-2 [data-selection-action='highlight_only']")
+  end
+
+  test "a guest can post a thought directly from the reader", %{conn: conn, graph: graph} do
+    {:ok, reader, _} = live(conn, ~p"/g/#{graph.slug}?node=2")
+    reader |> element("#outline-reading-node-2-ask") |> render_click()
+    before_ids = GraphManager.vertices(graph.title)
+
+    reader
+    |> with_target("#answer-actions-2")
+    |> render_hook("action", %{
+      "action" => "comment",
+      "nodeId" => "2",
+      "input" => "A guest perspective from the reader",
+      "request_id" => "guest-reader-comment"
+    })
+
+    [comment] = new_nodes(graph, before_ids)
+    assert comment.class == "user"
+    assert comment.user == "anonymous"
+    assert has_element?(reader, "#reading-node-#{comment.id}", comment.content)
+    refute_enqueued(worker: Dialectic.Workers.LocalWorker, args: %{graph: graph.title})
   end
 
   test "posting a thought returns a guest to the saved contribution without generating AI", %{

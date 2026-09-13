@@ -19,6 +19,7 @@ import { Socket } from "phoenix";
 import { LiveSocket } from "phoenix_live_view";
 
 import topbar from "../vendor/topbar";
+import { initAuthReturn } from "./auth_return.js";
 import textSelectionHook from "./text_selection_hook.js";
 import SelectionActionsHook from "./selection_actions_hook.js";
 import graphHook from "./graph_hook.js";
@@ -59,6 +60,7 @@ import {
 } from "./analytics.js";
 
 loadGoogleAnalytics();
+initAuthReturn();
 initDelayedAnalytics();
 initAnalyticsEventTracking();
 initProductAnalytics();

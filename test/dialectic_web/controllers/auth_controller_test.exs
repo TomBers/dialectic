@@ -3,7 +3,7 @@ defmodule DialecticWeb.AuthControllerTest do
 
   alias DialecticWeb.AuthController
 
-  test "Google login writes the persistent remember-me cookie", %{conn: conn} do
+  test "Google login writes the persistent cookie and returns to the grid", %{conn: conn} do
     unique = System.unique_integer([:positive])
 
     auth = %{
@@ -16,12 +16,12 @@ defmodule DialecticWeb.AuthControllerTest do
     conn =
       conn
       |> Map.replace!(:secret_key_base, DialecticWeb.Endpoint.config(:secret_key_base))
-      |> init_test_session(%{})
+      |> init_test_session(%{user_return_to: "/g/a-public-grid?node=16"})
       |> Phoenix.Controller.fetch_flash([])
       |> Plug.Conn.assign(:ueberauth_auth, auth)
       |> AuthController.callback(%{})
 
-    assert redirected_to(conn) == ~p"/"
+    assert redirected_to(conn) == "/g/a-public-grid?node=16"
 
     assert %{max_age: 15_552_000} =
              conn.resp_cookies["_dialectic_web_user_remember_me"]

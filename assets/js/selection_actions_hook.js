@@ -208,6 +208,7 @@ const SelectionActionsHook = {
   showModal() {
     if (!this.modalEl) return;
 
+    this.modalEl.dataset.authReturnNode = this.selectionData?.nodeId || "";
     this.clearBrowserSelection();
     this.previousFocus = this.drawerContext()
       ? document.getElementById(this.componentEl.dataset.triggerId)

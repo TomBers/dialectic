@@ -73,6 +73,21 @@ defmodule DialecticWeb.AskFormComp do
   def render(assigns) do
     ~H"""
     <div class="w-full min-w-0" data-role="ask-form-container">
+      <p
+        :if={!@current_user && @context in [:node, :answer]}
+        id={"#{@id}-guest-access"}
+        class="mb-3 rounded-lg border border-teal-200 bg-teal-50 px-3 py-2 text-sm leading-6 text-teal-950"
+      >
+        Try asking a question or posting a thought as a guest.
+        <.link href={~p"/users/log_in"} class="font-semibold underline underline-offset-2">
+          Log in
+        </.link>
+        or
+        <.link href={~p"/users/register"} class="font-semibold underline underline-offset-2">
+          create an account
+        </.link>
+        to save bookmarks, highlight passages, and add personal learning plans.
+      </p>
       <.form
         for={@form}
         phx-submit={if(@context == :node, do: @submit_event || "reply-and-answer")}

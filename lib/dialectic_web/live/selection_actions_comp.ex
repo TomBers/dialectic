@@ -251,15 +251,58 @@ defmodule DialecticWeb.SelectionActionsComp do
         </button>
       </div>
 
-      <p
+      <section
         :if={!@current_user && @context == :selection}
-        id="selection-sign-in-hint"
-        class="mt-3 text-sm text-slate-600"
+        id={"selection-sign-in-required-#{@id}"}
+        aria-labelledby={"selection-sign-in-title-#{@id}"}
+        class="mt-5 rounded-xl border border-stone-300 bg-[#f4f1e9] p-4 sm:p-5"
       >
-        <.link href={~p"/users/log_in"} class="font-semibold text-indigo-700 underline">Sign in</.link>
-        to use passage actions. Your draft is kept in this tab.
-      </p>
-      <div :if={@context == :selection} class="mt-2 flex gap-2 text-xs text-slate-500">
+        <p class="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-teal-800">
+          <.icon name="hero-lock-closed" class="h-4 w-4 shrink-0" /> Continue your thinking
+        </p>
+        <div class="text-slate-950">
+          <h2
+            id={"selection-sign-in-title-#{@id}"}
+            class="font-serif text-2xl font-semibold leading-tight tracking-tight"
+          >
+            You need to be logged in to use this
+          </h2>
+        </div>
+        <p class="mt-3 text-sm leading-6 text-slate-700">
+          Save a passage, explore another perspective, or build on an idea with your own questions.
+        </p>
+        <p :if={@context == :selection} class="mt-2 text-sm leading-6 text-slate-600">
+          Reading and copying text are available without an account.
+        </p>
+        <div class="mt-4 flex flex-col gap-2 sm:flex-row">
+          <.link
+            id={"selection-log-in-#{@id}"}
+            href={~p"/users/log_in"}
+            class="inline-flex min-h-11 items-center justify-center rounded-lg bg-teal-800 px-5 py-2.5 text-sm font-semibold text-white hover:bg-teal-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"
+          >
+            Log in to continue
+          </.link>
+          <.link
+            id={"selection-sign-up-#{@id}"}
+            href={~p"/users/register"}
+            class="inline-flex min-h-11 items-center justify-center rounded-lg border border-stone-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-900 hover:bg-stone-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"
+          >
+            Create an account
+          </.link>
+        </div>
+        <button
+          id={"selection-keep-reading-#{@id}"}
+          type="button"
+          data-selection-close
+          class="mt-2 inline-flex min-h-11 items-center text-sm font-medium text-teal-800 underline decoration-teal-800/30 underline-offset-4 hover:text-teal-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"
+        >
+          Keep reading
+        </button>
+      </section>
+      <div
+        :if={@current_user && @context == :selection}
+        class="mt-2 flex gap-2 text-xs text-slate-500"
+      >
         <span data-selection-question-count class="hidden"></span>
         <span data-selection-comment-count class="hidden"></span>
       </div>
@@ -271,7 +314,10 @@ defmodule DialecticWeb.SelectionActionsComp do
         class="mt-2 text-sm text-slate-700"
       >
       </p>
-      <div class={@presentation == :modal && "mt-3 border-t border-slate-100 pt-3"}>
+      <div
+        :if={@current_user || @context == :answer}
+        class={@presentation == :modal && "mt-3 border-t border-slate-100 pt-3"}
+      >
         <.live_component
           module={DialecticWeb.InquiryActionsComp}
           id={"selection-inquiry-actions-#{@id}"}

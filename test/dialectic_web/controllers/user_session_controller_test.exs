@@ -10,6 +10,60 @@ defmodule DialecticWeb.UserSessionControllerTest do
   end
 
   describe "POST /users/log_in" do
+    test "returns to the selected response after an unsuccessful login and retry", %{
+      conn: conn,
+      user: user
+    } do
+      return_to = "/g/a-public-grid?node=16#reading-node-16"
+      conn = get(conn, ~p"/users/log_in?#{%{return_to: return_to}}")
+      assert get_session(conn, :user_return_to) == return_to
+
+      conn =
+        post(recycle(conn), ~p"/users/log_in", %{
+          "user" => %{"email" => user.email, "password" => "wrong-password"}
+        })
+
+      assert redirected_to(conn) == ~p"/users/log_in"
+      assert get_session(conn, :user_return_to) == return_to
+
+      conn =
+        post(recycle(conn), ~p"/users/log_in", %{
+          "user" => %{"email" => user.email, "password" => valid_user_password()}
+        })
+
+      assert redirected_to(conn) == return_to
+    end
+
+    test "keeps the grid destination when switching from login to registration", %{
+      conn: conn,
+      user: user
+    } do
+      return_to = "/g/a-public-grid/graph?node=16&focus=ask"
+      conn = get(conn, ~p"/users/log_in?#{%{return_to: return_to}}")
+      conn = get(recycle(conn), ~p"/users/register")
+
+      conn =
+        post(recycle(conn), ~p"/users/log_in?_action=registered", %{
+          "user" => %{"email" => user.email, "password" => valid_user_password()}
+        })
+
+      assert redirected_to(conn) == return_to
+    end
+
+    test "ignores unsafe or unrelated return destinations", %{conn: conn} do
+      for return_to <- [
+            "https://example.com/g/grid",
+            "//example.com/g/grid",
+            "/\\example.com",
+            "/users/log_out",
+            "/g/grid\n",
+            "/g/%2f%2fexample.com"
+          ] do
+        result = get(conn, ~p"/users/log_in?#{%{return_to: return_to}}")
+        refute get_session(result, :user_return_to)
+      end
+    end
+
     test "logs the user in", %{conn: conn, user: user} do
       conn =
         post(conn, ~p"/users/log_in", %{

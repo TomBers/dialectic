@@ -389,7 +389,12 @@ defmodule DialecticWeb.SharedComposerTest do
          } do
       {:ok, view, _} = live(conn, selection_path(graph, unquote(mode)))
       before_ids = GraphManager.vertices(graph.title)
-      assert has_element?(view, "#selection-sign-in-hint a[href='/users/log_in']")
+      assert has_element?(view, "#selection-sign-in-required-selection-actions")
+      assert has_element?(view, "#selection-log-in-selection-actions[href='/users/log_in']")
+      assert has_element?(view, "#selection-sign-up-selection-actions[href='/users/register']")
+      assert has_element?(view, "#selection-keep-reading-selection-actions[data-selection-close]")
+      assert has_element?(view, "#selection-actions-copy-selection-actions")
+      refute has_element?(view, "#selection-inquiry-actions-selection-actions-content")
       submit_selection(view, %{"action" => "comment", "input" => "My thought"})
 
       assert_push_event(view, "selection:result", %{

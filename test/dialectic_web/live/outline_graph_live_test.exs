@@ -1263,6 +1263,7 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
   test "reader loads highlight data for rendered nodes", %{conn: conn} do
     graph = create_graph(highlight_graph_data())
     user = user_fixture()
+    conn = log_in_user(conn, user)
 
     {:ok, highlight} =
       Highlights.create_highlight(%{

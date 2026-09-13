@@ -154,7 +154,7 @@ defmodule DialecticWeb.InquiryActionsComp do
             <:quick_actions>
               <%= if @context in [:selection, :answer] do %>
                 <.tool_button
-                  :if={@context == :answer}
+                  :if={@context == :answer && @current_user}
                   id={"answer-action-bookmark-#{@owner_id}"}
                   icon="hero-bookmark"
                   label="Bookmark"
@@ -166,6 +166,14 @@ defmodule DialecticWeb.InquiryActionsComp do
                   disabled={false}
                   compact
                 />
+                <.link
+                  :if={@context == :answer && !@current_user}
+                  id={"answer-bookmark-login-#{@owner_id}"}
+                  href={~p"/users/log_in"}
+                  class="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-stone-300 px-3 py-2 text-xs font-semibold text-teal-800 hover:bg-stone-50"
+                >
+                  <.icon name="hero-lock-closed" class="h-4 w-4" /> Log in to bookmark
+                </.link>
                 <.tool_button
                   :if={@context == :selection}
                   id={"selection-action-highlight-#{@owner_id}"}
@@ -255,7 +263,13 @@ defmodule DialecticWeb.InquiryActionsComp do
                 <.tool_button
                   id={"graph-bookmark-node-#{@node.id}"}
                   icon={if(noted?, do: "hero-bookmark-solid", else: "hero-bookmark")}
-                  label={if(noted?, do: "Bookmarked", else: "Bookmark")}
+                  label={
+                    cond do
+                      !@current_user -> "Log in to bookmark"
+                      noted? -> "Bookmarked"
+                      true -> "Bookmark"
+                    end
+                  }
                   tone="highlight"
                   shortcut="b"
                   event={if(noted?, do: "unnote", else: "note")}

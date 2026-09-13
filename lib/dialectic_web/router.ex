@@ -23,6 +23,7 @@ defmodule DialecticWeb.Router do
   end
 
   pipeline :auth do
+    plug DialecticWeb.Plugs.AuthReturn
     plug DialecticWeb.Plugs.RateLimiter, type: :auth
   end
 
