@@ -8,7 +8,9 @@ defmodule DialecticWeb.UserSessionController do
   @registration_profile_message "Account created successfully! Your profile is your personal thinking homepage — customise it and use it to keep track of your own thinking, including graphs, noted nodes, and highlights."
 
   def create(conn, %{"_action" => "registered"} = params) do
-    create(conn, params, @registration_profile_message, &profile_path/1)
+    create(conn, params, @registration_profile_message, fn user ->
+      get_session(conn, :user_return_to) || profile_path(user)
+    end)
   end
 
   def create(conn, %{"_action" => "password_updated"} = params) do

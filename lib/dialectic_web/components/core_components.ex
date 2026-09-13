@@ -712,30 +712,44 @@ defmodule DialecticWeb.CoreComponents do
   def login_required_modal(assigns) do
     ~H"""
     <.modal :if={@show} id={@id} show on_cancel={JS.push("close_login_modal")}>
-      <div class="p-4 text-center sm:p-6">
-        <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-zinc-100 mb-4">
-          <.icon name="hero-lock-closed" class="h-6 w-6 text-zinc-600" />
+      <div class="rounded-xl border border-stone-300 bg-[#f4f1e9] p-5 sm:p-8">
+        <div class="mb-4 flex h-10 w-10 items-center justify-center rounded-full bg-teal-800/10">
+          <.icon name="hero-lock-closed" class="h-5 w-5 text-teal-800" />
         </div>
-        <h3 class="text-lg font-semibold leading-6 text-zinc-900 mb-2">
+        <h3 class="mb-3 font-serif text-2xl font-semibold leading-tight tracking-tight text-slate-950">
           {@title}
         </h3>
-        <p class="text-sm text-zinc-500 mb-6">
+        <p class="mb-6 text-sm leading-6 text-slate-700">
           {@description}
         </p>
-        <div class="flex flex-col sm:flex-row justify-center gap-3">
+        <p id={"#{@id}-account-benefits"} class="mb-6 text-sm leading-6 text-slate-700">
+          <strong class="font-semibold text-teal-800">Accounts are free.</strong>
+          Keep track of your contributions, save highlights and bookmarks, and add personal learning plans.
+        </p>
+        <div class="flex flex-col gap-2 sm:flex-row">
           <.link
             href={~p"/users/log_in"}
-            class="inline-flex justify-center rounded-lg bg-zinc-900 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-zinc-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900"
+            id={"#{@id}-log-in"}
+            class="inline-flex min-h-11 items-center justify-center rounded-lg bg-teal-800 px-5 py-2.5 text-sm font-semibold text-white hover:bg-teal-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"
           >
-            Sign in
+            Log in to continue
           </.link>
           <.link
             href={~p"/users/register"}
-            class="inline-flex justify-center rounded-lg bg-white px-3 py-2 text-sm font-semibold text-zinc-900 shadow-sm ring-1 ring-inset ring-zinc-300 hover:bg-zinc-50"
+            id={"#{@id}-sign-up"}
+            class="inline-flex min-h-11 items-center justify-center rounded-lg border border-stone-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-900 hover:bg-stone-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"
           >
-            Create account
+            Create a free account
           </.link>
         </div>
+        <button
+          id={"#{@id}-keep-reading"}
+          type="button"
+          phx-click={JS.exec("data-cancel", to: "##{@id}")}
+          class="mt-2 inline-flex min-h-11 items-center text-sm font-medium text-teal-800 underline decoration-teal-800/30 underline-offset-4 hover:text-teal-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"
+        >
+          Keep exploring
+        </button>
       </div>
     </.modal>
     """

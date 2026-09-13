@@ -93,6 +93,34 @@ afterEach(() => {
 });
 
 describe("SelectionActionsHook", () => {
+  it("clears selections restored after a touch gesture while preserving input selection", () => {
+    const instance = mountHook();
+    showSelection({ touchSelection: true });
+    const selection = window.getSelection();
+    const selectModalText = () => {
+      const range = document.createRange();
+      range.selectNodeContents(instance.modalEl.querySelector("[data-selection-text]"));
+      selection.removeAllRanges();
+      selection.addRange(range);
+      document.dispatchEvent(new Event("selectionchange"));
+    };
+
+    selectModalText();
+    expect(selection.rangeCount).toBe(0);
+
+    const input = instance.modalEl.querySelector("textarea");
+    input.value = "My question";
+    input.focus();
+    input.setSelectionRange(0, 2);
+    document.dispatchEvent(new Event("selectionchange"));
+    expect(input.selectionStart).toBe(0);
+    expect(input.selectionEnd).toBe(2);
+
+    instance.closeModal();
+    selectModalText();
+    expect(selection.toString()).toBe("“working memory”");
+  });
+
   it("opens and populates the modal without sending a server event", () => {
     const instance = mountHook();
 
@@ -108,7 +136,20 @@ describe("SelectionActionsHook", () => {
 
   it("sends the captured selection only after an action is chosen", () => {
     const instance = mountHook();
+    const passage = document.createElement("p");
+    passage.textContent = "working memory";
+    document.body.append(passage);
+    const range = document.createRange();
+    range.selectNodeContents(passage);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    expect(window.getSelection().toString()).toBe("working memory");
+
     showSelection();
+
+    expect(window.getSelection().isCollapsed).toBe(true);
+    expect(window.getSelection().toString()).toBe("");
+    expect(instance.modalEl.classList.contains("hidden")).toBe(false);
 
     instance.modalEl
       .querySelector('[data-selection-action="highlight_only"]')

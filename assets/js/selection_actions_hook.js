@@ -11,6 +11,8 @@ const SelectionActionsHook = {
     this.handleKeydown = this.handleKeydown.bind(this);
     this.handleClick = this.handleClick.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
+    this.handleNativeSelectionChange = this.handleNativeSelectionChange.bind(this);
+    document.addEventListener("selectionchange", this.handleNativeSelectionChange);
 
     this.refreshElements();
     this.selectionData = null;
@@ -36,6 +38,7 @@ const SelectionActionsHook = {
   },
 
   destroyed() {
+    document.removeEventListener("selectionchange", this.handleNativeSelectionChange);
     this.saveDraft();
     this.toolsMenu?.destroy();
     this.el.removeEventListener("input", this.onDraftInput);
@@ -88,6 +91,7 @@ const SelectionActionsHook = {
     this.saveDraft();
     this.refreshElements();
     this.selectionData = { selectedText, nodeId, offsets };
+    this.touchSelection = event.detail.touchSelection === true;
     this.populateSelectedText(selectedText);
     this.resetClientControls();
     this.syncCanEditState();
@@ -204,6 +208,8 @@ const SelectionActionsHook = {
   showModal() {
     if (!this.modalEl) return;
 
+    this.modalEl.dataset.authReturnNode = this.selectionData?.nodeId || "";
+    this.clearBrowserSelection();
     this.previousFocus = this.drawerContext()
       ? document.getElementById(this.componentEl.dataset.triggerId)
       : document.activeElement;
@@ -211,6 +217,18 @@ const SelectionActionsHook = {
     this.modalEl.classList.remove("hidden");
     this.modalEl.setAttribute("aria-hidden", "false");
     this.modalEl.querySelector("[data-selection-dialog]")?.focus({ preventScroll: true });
+    this.clearBrowserSelection();
+  },
+
+  handleNativeSelectionChange() {
+    if (!this.touchSelection || this.modalEl?.getAttribute("aria-hidden") !== "false") return;
+
+    const activeElement = document.activeElement;
+    if (this.modalEl.contains(activeElement) &&
+        (activeElement.matches("input, textarea") || activeElement.isContentEditable)) return;
+
+    // Safari can restore the native selection after touchend and dialog focus.
+    this.clearBrowserSelection();
   },
 
   closeModal() {
