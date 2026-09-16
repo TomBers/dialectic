@@ -534,7 +534,7 @@ defmodule DialecticWeb.UserProfileLive do
                 class="h-1.5 w-1.5 shrink-0 rounded-full"
                 style={"background-color: " <> tag_color_hex(tag)}
               ></span>
-              {tag}
+              {tag_label(tag)}
             </span>
           <% end %>
         </div>
@@ -938,7 +938,7 @@ defmodule DialecticWeb.UserProfileLive do
                   </span>
                   <%= for tag <- @common_tags do %>
                     <span class="inline-flex items-center rounded-full bg-white/10 px-2.5 py-0.5 text-xs font-semibold text-white ring-1 ring-white/15">
-                      {tag}
+                      {tag_label(tag)}
                     </span>
                   <% end %>
                 </div>

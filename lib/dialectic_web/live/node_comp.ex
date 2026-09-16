@@ -445,7 +445,7 @@ defmodule DialecticWeb.NodeComp do
                             "inline-flex items-center rounded-md px-2.5 py-1 text-xs font-semibold ring-1 ring-inset",
                             GridCardComp.tag_pill_classes(tag)
                           ]}>
-                            #{tag}
+                            #{tag_label(tag)}
                           </span>
                         <% end %>
                       </div>

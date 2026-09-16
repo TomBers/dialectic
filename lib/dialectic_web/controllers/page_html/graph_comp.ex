@@ -86,7 +86,7 @@ defmodule DialecticWeb.PageHtml.GraphComp do
                 "inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold ring-1 ring-inset transition-all hover:scale-105",
                 tag_color_class(tag, @variant)
               ]}>
-                {tag}
+                {tag_label(tag)}
               </span>
             <% end %>
           <% end %>

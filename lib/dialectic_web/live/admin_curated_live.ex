@@ -225,7 +225,7 @@ defmodule DialecticWeb.AdminCuratedLive do
                     <div class="flex gap-1 mt-1">
                       <%= for tag <- (g.tags || []) do %>
                         <span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">
-                          {tag}
+                          {tag_label(tag)}
                         </span>
                       <% end %>
                     </div>
