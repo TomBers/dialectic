@@ -248,6 +248,120 @@ defmodule Dialectic.DbActions.Graphs do
     Repo.all(query)
   end
 
+  def browse_public_graphs(opts \\ []) do
+    summaries =
+      from g in Graph,
+        where: g.is_published == true and g.is_public == true,
+        where: g.is_deleted == false or is_nil(g.is_deleted),
+        left_join: author in Dialectic.Accounts.User,
+        on: author.id == g.user_id,
+        select: %{
+          title: g.title,
+          slug: g.slug,
+          tags: g.tags,
+          inserted_at: g.inserted_at,
+          updated_at: g.updated_at,
+          author_name: author.username,
+          node_count:
+            fragment(
+              "(SELECT count(*) FROM jsonb_array_elements(CASE WHEN jsonb_typeof(?->'nodes') = 'array' THEN ?->'nodes' ELSE '[]'::jsonb END) AS node WHERE COALESCE(node->>'compound', 'false') != 'true')",
+              g.data,
+              g.data
+            )
+        }
+
+    query = from(g in subquery(summaries))
+    search = opts |> Keyword.get(:search, "") |> String.trim()
+    tag = Keyword.get(opts, :tag)
+
+    query =
+      if search == "" do
+        query
+      else
+        pattern = "%" <> String.replace(search, ~r/[\\%_]/, fn char -> "\\" <> char end) <> "%"
+
+        from g in query,
+          where:
+            ilike(g.title, ^pattern) or
+              fragment(
+                "EXISTS (SELECT 1 FROM unnest(?) AS tag WHERE tag ILIKE ?)",
+                g.tags,
+                ^pattern
+              )
+      end
+
+    query =
+      if is_binary(tag) and tag != "" do
+        from g in query,
+          where:
+            fragment(
+              "EXISTS (SELECT 1 FROM unnest(?) AS tag WHERE lower(btrim(tag)) = ?)",
+              g.tags,
+              ^normalize_tag(tag)
+            )
+      else
+        query
+      end
+
+    query =
+      case Keyword.get(opts, :category) do
+        category when category in ["curated", "partners"] ->
+          section = if category == "curated", do: "curated", else: "featured"
+
+          selected_grids =
+            from c in Dialectic.Accounts.CuratedGrid,
+              where: c.section == ^section,
+              select: c.graph_title
+
+          from g in query, where: g.title in subquery(selected_grids)
+
+        _ ->
+          query
+      end
+
+    query =
+      case Keyword.get(opts, :size) do
+        "large" -> from g in query, where: g.node_count > 20
+        "medium" -> from g in query, where: g.node_count >= 5 and g.node_count <= 20
+        "small" -> from g in query, where: g.node_count < 5
+        _ -> query
+      end
+
+    total_count = Repo.aggregate(query, :count)
+    page_size = Keyword.get(opts, :page_size, 12) |> max(1) |> min(50)
+    page_count = max(1, div(total_count + page_size - 1, page_size))
+    page = Keyword.get(opts, :page, 1) |> max(1) |> min(page_count)
+
+    query =
+      case Keyword.get(opts, :sort, "newest") do
+        "updated" ->
+          from g in query, order_by: [desc: g.updated_at, asc: g.title]
+
+        "largest" ->
+          from g in query, order_by: [desc: g.node_count, desc: g.inserted_at, asc: g.title]
+
+        _ ->
+          from g in query, order_by: [desc: g.inserted_at, asc: g.title]
+      end
+
+    entries =
+      query
+      |> limit(^page_size)
+      |> offset(^((page - 1) * page_size))
+      |> Repo.all()
+      |> Enum.map(fn row ->
+        %{id: row.title, graph: Map.delete(row, :author_name), author_name: row.author_name}
+      end)
+
+    %{
+      entries: entries,
+      total_count: total_count,
+      page: page,
+      page_count: page_count,
+      page_size: page_size
+    }
+  end
+
   @doc """
   Returns every topic used by a public, published grid with its frequency.
 

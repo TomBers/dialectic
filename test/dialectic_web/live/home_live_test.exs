@@ -85,82 +85,57 @@ defmodule DialecticWeb.HomeLiveTest do
   end
 
   test "ignores graph search and filter parameters", %{conn: conn} do
-    unique = System.unique_integer([:positive])
+    graph = insert_graph(%{title: "Always visible partner grid"})
 
-    curated_graph =
-      insert_graph(%{
-        title: "Always Visible Curated Grid #{unique}",
-        slug: "always-visible-curated-grid-#{unique}"
-      })
+    {:ok, _} =
+      Graphs.add_curated_grid(%{graph_title: graph.title, section: "featured", position: 0})
 
-    {:ok, _curated_grid} =
-      Graphs.add_curated_grid(%{
-        graph_title: curated_graph.title,
-        section: "curated",
-        position: 0
-      })
+    {:ok, view, _html} = live(conn, ~p"/?search=missing&tag=unrelated&category=deep_dives")
 
-    {:ok, view, _html} =
-      live(conn, ~p"/?search=missing&tag=unrelated&category=deep_dives")
-
-    assert has_element?(view, "#popular-grids")
-    assert has_element?(view, "#home-curated-#{curated_graph.slug}")
-    assert has_element?(view, "#popular-grids", "See what other people explored.")
+    assert has_element?(view, "#home-partner-#{graph.slug}")
+    assert has_element?(view, "#popular-grids", "Partner grids")
     refute has_element?(view, ~s(#popular-grids input[name="search"]))
-    refute has_element?(view, ~s(#popular-grids a[href*="tag="]))
-    refute has_element?(view, ~s(#popular-grids a[href*="category="]))
-    refute has_element?(view, "#popular-grids", "Results for")
   end
 
-  test "renders three curated grids without partner grids", %{conn: conn} do
-    unique = System.unique_integer([:positive])
-
-    graphs =
+  test "shows the first three partner grids in their curated order", %{conn: conn} do
+    partners =
       for position <- 0..3 do
-        graph =
-          insert_graph(%{
-            title: "Curated Grid #{unique} #{position}",
-            slug: "curated-grid-#{unique}-#{position}"
-          })
+        graph = insert_graph(%{title: "Partner grid #{position}"})
 
-        {:ok, _curated_grid} =
+        {:ok, _} =
           Graphs.add_curated_grid(%{
             graph_title: graph.title,
-            section: "curated",
+            section: "featured",
             position: position
           })
 
         graph
       end
 
-    partner_graph =
-      insert_graph(%{
-        title: "Partner Grid #{unique}",
-        slug: "partner-grid-#{unique}"
-      })
+    curated = insert_graph(%{title: "Separate curated grid"})
 
-    {:ok, _curated_grid} =
-      Graphs.add_curated_grid(%{
-        graph_title: partner_graph.title,
-        section: "featured",
-        position: 0
-      })
+    {:ok, _} =
+      Graphs.add_curated_grid(%{graph_title: curated.title, section: "curated", position: 0})
 
     {:ok, view, _html} = live(conn, ~p"/")
 
-    assert has_element?(view, "#curated")
-    assert has_element?(view, "#popular-grids", "Curated grids")
-    assert has_element?(view, "#home-curated-grids-list")
-    assert has_element?(view, ~s(#home-curated-grids-list [data-role="curated-grid-card"]))
-    assert has_element?(view, "#home-curated-grids-list > :nth-child(3)")
-    refute has_element?(view, "#home-curated-grids-list > :nth-child(4)")
-    refute has_element?(view, ~s(#home-curated-grids-list [data-role="grid-card-badge"]))
-    refute has_element?(view, "#home-curated-#{partner_graph.slug}")
-    refute has_element?(view, "#home-community-grid-list")
+    assert has_element?(view, "#home-partners")
+    assert has_element?(view, ~s(#home-partner-grids-list [data-role="partner-grid-card"]))
+    refute has_element?(view, "#home-partner-grids-list > :nth-child(4)")
+    refute has_element?(view, "#home-partner-#{curated.slug}")
+    refute has_element?(view, "#home-partner-#{Enum.at(partners, 3).slug}")
 
-    assert Enum.any?(graphs, fn graph ->
-             has_element?(view, "#home-curated-#{graph.slug}")
-           end)
+    for {graph, index} <- partners |> Enum.take(3) |> Enum.with_index(1) do
+      assert has_element?(
+               view,
+               "#home-partner-grids-list > #home-partner-#{graph.slug}:nth-child(#{index})"
+             )
+    end
+  end
+
+  test "community grids are easy to reach without signing in", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/")
+    assert has_element?(view, ~s(#home-community-hero-link[href="/community"]), "Community grids")
   end
 
   test "emphasizes the community grid library action", %{conn: conn} do
@@ -285,8 +260,8 @@ defmodule DialecticWeb.HomeLiveTest do
 
     assert has_element?(
              view,
-             ~s(#home-browse-examples-link[href="/community"]),
-             "Browse examples"
+             ~s(#home-community-hero-link[href="/community"]),
+             "Community grids"
            )
 
     refute has_element?(view, "#home-explore-question-link")

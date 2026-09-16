@@ -48,6 +48,7 @@ defmodule DialecticWeb.SitemapController do
         url_entry(base_url <> "/intro/ai", nil, "monthly", "0.5"),
         url_entry(base_url <> "/compare", nil, "monthly", "0.6"),
         url_entry(base_url <> "/community", nil, "daily", "0.7"),
+        url_entry(base_url <> "/community?category=curated", nil, "daily", "0.7"),
         url_entry(
           base_url <> "/questions/does-ai-make-us-better-thinkers",
           "2026-09-07",

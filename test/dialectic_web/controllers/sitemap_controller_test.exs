@@ -38,6 +38,7 @@ defmodule DialecticWeb.SitemapControllerTest do
       assert body =~ "#{base_url}/intro/how"
       assert body =~ "#{base_url}/intro/ai"
       assert body =~ "#{base_url}/community"
+      assert body =~ "<loc>#{base_url}/community?category=curated</loc>"
       assert body =~ "#{base_url}/inspiration"
     end
 

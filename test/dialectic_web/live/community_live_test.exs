@@ -15,7 +15,7 @@ defmodule DialecticWeb.CommunityLiveTest do
   end
 
   describe "community page" do
-    test "shows partner grids without a curated collection", %{conn: conn} do
+    test "partner grids remain available through the format filter", %{conn: conn} do
       unique = System.unique_integer([:positive])
 
       graphs =
@@ -49,30 +49,18 @@ defmodule DialecticWeb.CommunityLiveTest do
           position: 0
         })
 
-      {:ok, view, _html} = live(conn, ~p"/community")
+      {:ok, view, _html} = live(conn, ~p"/community?category=partners")
 
-      assert has_element?(view, "#community-featured-section", "Partner grids")
-      assert has_element?(view, "#community-featured-grids-list > :nth-child(4)")
-
-      assert has_element?(
-               view,
-               ~s(#community-featured-grids-list [data-role="partner-grid-card"])
-             )
-
-      refute has_element?(
-               view,
-               ~s(#community-featured-grids-list [data-role="grid-card-badge"])
-             )
-
-      refute has_element?(view, "#community-curated-section")
-      refute has_element?(view, "#community-featured-#{curated_graph.slug}")
+      assert has_element?(view, ~s(#community-format-partners[aria-current="page"]))
+      refute has_element?(view, "#community-featured-section")
+      refute has_element?(view, "#community-grid-#{curated_graph.slug}")
 
       for graph <- graphs do
-        assert has_element?(view, "#community-featured-#{graph.slug}")
+        assert has_element?(view, "#community-grid-#{graph.slug}")
       end
     end
 
-    test "partner cards show the creation month after later metadata changes", %{conn: conn} do
+    test "partner results show the creation month after later metadata changes", %{conn: conn} do
       graph =
         Dialectic.GraphFixtures.insert_graph(%{
           title: "Dated partner grid #{System.unique_integer([:positive])}",
@@ -91,8 +79,8 @@ defmodule DialecticWeb.CommunityLiveTest do
           position: 0
         })
 
-      {:ok, view, _html} = live(conn, ~p"/community")
-      selector = "#community-featured-#{graph.slug}"
+      {:ok, view, _html} = live(conn, ~p"/community?category=partners")
+      selector = "#community-grid-#{graph.slug}"
 
       assert has_element?(view, selector <> ~s( [aria-label="Created Jan 2024"]))
       refute has_element?(view, selector, "Aug 2026")
@@ -101,18 +89,18 @@ defmodule DialecticWeb.CommunityLiveTest do
     test "mounts and filters by category and search", %{conn: conn} do
       {:ok, view, _html} = live(conn, ~p"/community")
 
-      assert has_element?(view, "#community-page-header", "questions, branches, and sources")
-      assert has_element?(view, "#community-page-header", "question any part")
+      assert has_element?(view, "#community-page-title", "Community grids")
+      assert has_element?(view, "#community-search-form")
       assert has_element?(view, "#community-search")
 
       assert has_element?(
                view,
                "#community-results-heading",
-               "Find a question to explore"
+               "All community grids"
              )
 
       render_patch(view, ~p"/community?category=deep_dives")
-      assert has_element?(view, "#community-results-heading", "Deep dives")
+      assert has_element?(view, "#community-results-heading", "Large grids")
 
       render_patch(view, ~p"/community?search=ethics")
       assert has_element?(view, "#community-results-heading", "Search results for \"ethics\"")

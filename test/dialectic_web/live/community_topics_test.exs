@@ -47,7 +47,7 @@ defmodule DialecticWeb.CommunityTopicsTest do
 
       assert attribute(document, "meta[name=robots]", "content") == ["noindex, nofollow"]
       assert attribute(document, "#community-empty-results", "id") == ["community-empty-results"]
-      assert attribute(document, "#community-grid-list", "id") == []
+      assert attribute(document, "#community-grid-list article", "id") == []
     end
   end
 
@@ -62,12 +62,17 @@ defmodule DialecticWeb.CommunityTopicsTest do
     assert attribute(document, "meta[name=robots]", "content") == []
   end
 
-  test "search and format variants remain noindex", %{conn: conn} do
+  test "search and size variants remain noindex", %{conn: conn} do
     tagged_graph("Search sociology", ["Sociology"])
 
     for path <- [
           ~p"/community?search=sociology",
           ~p"/community?category=deep_dives",
+          ~p"/community?size=small",
+          ~p"/community?size=medium",
+          ~p"/community?size=large",
+          ~p"/community?category=curated&size=small",
+          ~p"/community?tag=sociology&size=small",
           ~p"/community?tag=sociology&search=example"
         ] do
       document = conn |> get(path) |> html_response(200) |> LazyHTML.from_document()
@@ -103,8 +108,12 @@ defmodule DialecticWeb.CommunityTopicsTest do
 
     view |> form("#community-search-form", %{search: other.title}) |> render_change()
 
+    assert has_element?(view, "#community-empty-results")
+    refute has_element?(view, "#community-grid-#{other.slug}")
+    assert has_element?(view, "#community-topic-description", "Sociology")
+
+    render_patch(view, ~p"/community?search=#{other.title}")
     assert has_element?(view, "#community-grid-#{other.slug}")
-    refute has_element?(view, "#community-grid-#{graph.slug}")
     refute has_element?(view, "#community-topic-description")
   end
 

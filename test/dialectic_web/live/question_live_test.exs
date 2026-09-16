@@ -72,11 +72,9 @@ defmodule DialecticWeb.QuestionLiveTest do
     assert_redirect(view, "/search?q=AI")
   end
 
-  test "the pilot is discoverable from home, community and the sitemap", %{conn: conn} do
-    for {route, id} <- [{"/", "home-question-pilot"}, {"/community", "community-question-pilot"}] do
-      {:ok, view, _html} = live(conn, route)
-      assert has_element?(view, "##{id}[href='#{@path}']")
-    end
+  test "the pilot is discoverable from home and the sitemap", %{conn: conn} do
+    {:ok, view, _html} = live(conn, "/")
+    assert has_element?(view, "#home-question-pilot[href='#{@path}']")
 
     xml = conn |> get("/sitemap.xml") |> response(200)
     assert xml =~ "<loc>#{DialecticWeb.Endpoint.url()}#{@path}</loc>"

@@ -18,6 +18,8 @@ defmodule DialecticWeb.SeoControllerTest do
       refute body =~ "Disallow: /*?node="
       refute body =~ "Disallow: /*?tag="
       assert body =~ "Disallow: /*?search="
+      assert body =~ "Allow: /community?category=all"
+      assert body =~ "Allow: /community?category=curated"
       assert body =~ "Disallow: /*?token="
       assert body =~ "Sitemap: https://rationalgrid.ai/sitemap.xml"
     end
