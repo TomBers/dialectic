@@ -161,7 +161,7 @@ defmodule DialecticWeb.SearchLive do
                           <span>{"by @" <> result.author_name}</span>
                           <span aria-hidden="true">·</span>
                         <% end %>
-                        <span :for={tag <- Enum.take(result.graph.tags, 3)}>{tag}</span>
+                        <span :for={tag <- Enum.take(result.graph.tags, 3)}>{tag_label(tag)}</span>
                       </div>
                     </div>
                     <span

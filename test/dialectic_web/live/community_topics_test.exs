@@ -121,7 +121,7 @@ defmodule DialecticWeb.CommunityTopicsTest do
 
     {:ok, view, _} = live(conn, "/community")
 
-    for {term, label} <- [{"%", "100%"}, {"_", "under_score"}, {"\\", "back\\slash"}] do
+    for {term, label} <- [{"%", "100%"}, {"_", "Under_score"}, {"\\", "Back\\slash"}] do
       view |> form("#community-topic-search-form", %{topic_filter: term}) |> render_change()
       assert has_element?(view, "#community-topics > a", label)
       refute has_element?(view, "#community-topics > a:nth-child(2)")

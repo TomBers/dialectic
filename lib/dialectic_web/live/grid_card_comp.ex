@@ -281,7 +281,7 @@ defmodule DialecticWeb.GridCardComp do
                   class="h-1.5 w-1.5 shrink-0 rounded-full"
                   style={"background-color: " <> tag_color(tag)}
                 ></span>
-                {tag}
+                {tag_label(tag)}
               </span>
             <% end %>
           <% end %>
@@ -391,7 +391,7 @@ defmodule DialecticWeb.GridCardComp do
                     class="h-1.5 w-1.5 shrink-0 rounded-full"
                     style={"background-color: " <> tag_color(tag)}
                   ></span>
-                  {tag}
+                  {tag_label(tag)}
                 </span>
               <% end %>
             <% end %>

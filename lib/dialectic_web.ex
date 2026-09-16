@@ -82,6 +82,7 @@ defmodule DialecticWeb do
 
   defp html_helpers do
     quote do
+      import DialecticWeb.Utils.TagHelpers, only: [tag_label: 1]
       alias DialecticWeb.Layouts
       # Translation
       use Gettext, backend: DialecticWeb.Gettext

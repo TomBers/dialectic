@@ -221,7 +221,7 @@ defmodule DialecticWeb.CommunityLive do
                   id="community-page-title"
                   class="mt-2 font-serif text-3xl font-semibold tracking-tight sm:text-4xl"
                 >
-                  {if @active_tag, do: "#{@active_tag} grids", else: "Community grids"}
+                  {if @active_tag, do: "#{tag_label(@active_tag)} grids", else: "Community grids"}
                 </h1>
                 <p
                   :if={@active_tag}
@@ -262,7 +262,7 @@ defmodule DialecticWeb.CommunityLive do
                 phx-debounce="300"
                 placeholder={
                   if @active_tag,
-                    do: "Search within #{@active_tag}…",
+                    do: "Search within #{tag_label(@active_tag)}…",
                     else: "Search questions or topics…"
                 }
                 class="h-12 w-full rounded-md border border-stone-300 bg-white px-4 pr-11 text-base text-slate-950 shadow-sm placeholder:text-slate-400 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-100"
@@ -340,7 +340,7 @@ defmodule DialecticWeb.CommunityLive do
                             else: "text-slate-600 hover:bg-stone-50 hover:text-teal-900"
                           )
                         ]}
-                      ><span class="truncate">{topic.tag}</span><span class="text-xs tabular-nums text-slate-400">{topic.count}</span></.link>
+                      ><span class="truncate">{tag_label(topic.tag)}</span><span class="text-xs tabular-nums text-slate-400">{topic.count}</span></.link>
                     <% end %>
                   </div>
                   <button
@@ -439,7 +439,7 @@ defmodule DialecticWeb.CommunityLive do
                   id="community-clear-topic"
                   href={browse_path(@browse_params, %{"tag" => nil})}
                   class="inline-flex items-center gap-1 rounded-full bg-teal-100 px-3 py-1.5 font-medium text-teal-900"
-                >{@active_tag}<.icon name="hero-x-mark" class="h-3.5 w-3.5" /><span class="sr-only">Remove topic filter</span></.link>
+                >{tag_label(@active_tag)}<.icon name="hero-x-mark" class="h-3.5 w-3.5" /><span class="sr-only">Remove topic filter</span></.link>
                 <.link
                   id="community-clear-filters"
                   href={~p"/community"}
@@ -591,7 +591,7 @@ defmodule DialecticWeb.CommunityLive do
                 class="h-1.5 w-1.5 shrink-0 rounded-full"
                 style={"background-color: " <> tag_color_hex(tag)}
               ></span>
-              {tag}
+              {tag_label(tag)}
             </.link>
           <% end %>
         </div>
@@ -784,7 +784,7 @@ defmodule DialecticWeb.CommunityLive do
   defp results_heading(search, tag, category, size) do
     cond do
       search != "" -> "Search results for \"#{search}\""
-      tag -> "Ideas tagged with \"#{tag}\""
+      tag -> "Ideas tagged with \"#{tag_label(tag)}\""
       category == "curated" -> "Curated grids"
       category == "partners" -> "Partner grids"
       size == "large" -> "Large grids"
@@ -813,7 +813,7 @@ defmodule DialecticWeb.CommunityLive do
   defp page_description(nil), do: "Browse public and partner grids built with RationalGrid."
 
   defp page_description(tag) do
-    "Explore public grids about #{tag}. Follow questions, compare perspectives, and examine sources shared by the RationalGrid community."
+    "Explore public grids about #{tag_label(tag)}. Follow questions, compare perspectives, and examine sources shared by the RationalGrid community."
   end
 
   defp category_class(true),
@@ -871,7 +871,7 @@ defmodule DialecticWeb.CommunityLive do
 
   defp page_title(search, tag, category, size) do
     cond do
-      is_binary(tag) and tag != "" -> "Tagged: #{tag} · Community"
+      is_binary(tag) and tag != "" -> "Tagged: #{tag_label(tag)} · Community"
       category == "curated" -> "Curated Grids · Community"
       category == "partners" -> "Partner Grids · Community"
       is_binary(search) and search != "" -> "Search · Community"
