@@ -42,7 +42,7 @@ defmodule DialecticWeb.StartTutorialComp do
         <ul class="list-disc pl-6 space-y-1 mt-1 text-stone-600">
           <li>
             <span class="font-semibold">Navigate</span>
-            — save nodes for later revision, open the linear reader, or share your graph.
+            — save nodes for later revision, open the reader, or share your graph.
           </li>
           <li>
             <span class="font-semibold">

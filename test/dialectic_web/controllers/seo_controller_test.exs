@@ -13,8 +13,6 @@ defmodule DialecticWeb.SeoControllerTest do
 
       assert get_resp_header(conn, "content-type") |> List.first() =~ "text/plain"
       refute body =~ "Disallow: /g/*/graph"
-      refute body =~ "Disallow: /g/*/linear"
-      refute body =~ "Disallow: /g/*/outline"
       refute body =~ "Disallow: /*?node="
       refute body =~ "Disallow: /*?tag="
       assert body =~ "Disallow: /*?search="

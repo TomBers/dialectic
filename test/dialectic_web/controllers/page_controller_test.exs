@@ -2,20 +2,18 @@ defmodule DialecticWeb.PageControllerTest do
   use DialecticWeb.ConnCase
   import Dialectic.GraphFixtures
 
-  test "legacy linear route redirects to the reader route", %{conn: conn} do
-    graph = insert_graph(%{title: "Legacy Linear Redirect"})
+  test "retired reader routes return 404 while the current reader remains available", %{
+    conn: conn
+  } do
+    graph = insert_graph(%{title: "Current Reader"})
 
-    conn = get(conn, ~p"/g/#{graph.slug}/linear?node_id=3")
+    for view <- ["linear", "outline"] do
+      response = get(conn, "/g/#{graph.slug}/#{view}?node_id=1")
+      assert response.status == 404
+      assert get_resp_header(response, "location") == []
+    end
 
-    assert redirected_to(conn) == ~p"/g/#{graph.slug}?node=3"
-  end
-
-  test "legacy outline route redirects to the reader route and preserves token", %{conn: conn} do
-    graph = insert_graph(%{title: "Legacy Outline Redirect"})
-
-    conn = get(conn, ~p"/g/#{graph.slug}/outline?node_id=2&token=abc123")
-
-    assert redirected_to(conn) == ~p"/g/#{graph.slug}?node=2&token=abc123"
+    assert conn |> get(~p"/g/#{graph.slug}?node=1") |> html_response(200) =~ "Current Reader"
   end
 
   test "guide describes the current workflow and links to the grid form", %{conn: conn} do

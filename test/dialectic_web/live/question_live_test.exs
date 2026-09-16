@@ -76,7 +76,7 @@ defmodule DialecticWeb.QuestionLiveTest do
     {:ok, view, _html} = live(conn, "/")
     assert has_element?(view, "#home-question-pilot[href='#{@path}']")
 
-    xml = conn |> get("/sitemap.xml") |> response(200)
+    xml = conn |> get("/sitemap-pages.xml") |> response(200)
     assert xml =~ "<loc>#{DialecticWeb.Endpoint.url()}#{@path}</loc>"
   end
 end
