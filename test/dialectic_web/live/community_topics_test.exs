@@ -6,6 +6,128 @@ defmodule DialecticWeb.CommunityTopicsTest do
 
   alias Dialectic.Repo
 
+  test "non-scalar query parameters fall back safely in HTTP and LiveView requests", %{conn: conn} do
+    graph = tagged_graph("Malformed query grid", ["Sociology"])
+
+    for key <- ["search", "tag", "category", "size", "sort", "page"],
+        query <- ["#{key}[]=x", "#{key}[nested]=x"] do
+      path = "/community?" <> query
+      document = conn |> get(path) |> html_response(200) |> LazyHTML.from_document()
+
+      assert attribute(document, "link[rel=canonical]", "href") == [
+               DialecticWeb.Endpoint.url() <> "/community"
+             ]
+
+      {:ok, view, _} = live(conn, path)
+      assert has_element?(view, "#community-grid-#{graph.slug}")
+      assert has_element?(view, ~s(#community-search-input[value=""]))
+      refute has_element?(view, "#community-clear-topic")
+    end
+  end
+
+  test "malformed parameters do not discard valid filters", %{conn: conn} do
+    sociology = tagged_graph("Social questions", ["Sociology"])
+    biology = tagged_graph("Biological questions", ["Biology"])
+
+    {:ok, view, _} = live(conn, "/community?tag=sociology&search[]=x")
+    assert has_element?(view, "#community-grid-#{sociology.slug}")
+    refute has_element?(view, "#community-grid-#{biology.slug}")
+    assert has_element?(view, "#community-clear-topic", "Sociology")
+
+    render_patch(view, "/community?tag[nested]=x&search=Biological")
+    assert has_element?(view, "#community-grid-#{biology.slug}")
+    refute has_element?(view, "#community-grid-#{sociology.slug}")
+  end
+
+  test "non-text search event values clear safely", %{conn: conn} do
+    grid = tagged_graph("A browsable grid", ["Sociology"])
+    {:ok, view, _} = live(conn, "/community?search=missing")
+
+    for value <- [["x"], %{"nested" => "x"}, nil, 7] do
+      render_hook(view, "search", %{"search" => value})
+      render_hook(view, "filter_topics", %{"topic_filter" => value})
+      assert has_element?(view, "#community-grid-#{grid.slug}")
+      assert has_element?(view, ~s(#community-topics a[href="/community?tag=sociology"]))
+    end
+  end
+
+  test "topic browsing loads bounded batches and search can reach topics beyond the first batch",
+       %{conn: conn} do
+    tags = for index <- 1..120, do: "Topic " <> String.pad_leading(to_string(index), 3, "0")
+    grid = tagged_graph("Many browsable topics", tags)
+    {:ok, view, _} = live(conn, "/community")
+
+    assert has_element?(view, "#community-topics > a:nth-child(50)")
+    refute has_element?(view, "#community-topics > a:nth-child(51)")
+    assert has_element?(view, "#community-more-topics")
+
+    view |> element("#community-more-topics") |> render_click()
+    assert has_element?(view, "#community-topics > a:nth-child(100)")
+    refute has_element?(view, "#community-topics > a:nth-child(101)")
+
+    view |> element("#community-more-topics") |> render_click()
+    assert has_element?(view, "#community-topics > a:nth-child(120)")
+    refute has_element?(view, "#community-more-topics")
+
+    view |> form("#community-topic-search-form", %{topic_filter: "TOPIC 119"}) |> render_change()
+    assert has_element?(view, ~s(#community-topics a[href="/community?tag=topic+119"]))
+    refute has_element?(view, "#community-topics > a:nth-child(2)")
+    refute has_element?(view, "#community-more-topics")
+    assert has_element?(view, "#community-grid-#{grid.slug}")
+
+    view |> form("#community-topic-search-form", %{topic_filter: ""}) |> render_change()
+    assert has_element?(view, "#community-topics > a:nth-child(50)")
+    refute has_element?(view, "#community-topics > a:nth-child(51)")
+    assert has_element?(view, "#community-more-topics")
+
+    render_patch(view, "/community?tag=TOPIC+119")
+    assert has_element?(view, "#community-page-title", "Topic 119 grids")
+    assert has_element?(view, "#community-grid-#{grid.slug}")
+  end
+
+  test "topic search fetches just one bounded batch from the database", %{conn: conn} do
+    tagged_graph("Topics for query limits", Enum.map(1..120, &"Topic #{&1}"))
+    {:ok, view, _} = live(conn, "/community")
+    handler_id = {__MODULE__, make_ref()}
+
+    :ok =
+      :telemetry.attach(
+        handler_id,
+        [:dialectic, :repo, :query],
+        fn _event, _measurements, metadata, {test_pid, view_pid} ->
+          if self() == view_pid, do: send(test_pid, {:topic_query, metadata.result})
+        end,
+        {self(), view.pid}
+      )
+
+    on_exit(fn -> :telemetry.detach(handler_id) end)
+
+    view |> form("#community-topic-search-form", %{topic_filter: "Topic"}) |> render_change()
+    assert_receive {:topic_query, {:ok, %{num_rows: 51}}}
+    refute_receive {:topic_query, _}
+    assert has_element?(view, "#community-topics > a:nth-child(50)")
+    refute has_element?(view, "#community-topics > a:nth-child(51)")
+  end
+
+  test "topic searches treat SQL wildcard characters literally", %{conn: conn} do
+    tagged_graph("Literal topics", [
+      "100%",
+      "1000",
+      "under_score",
+      "underscore",
+      "back\\slash",
+      "backslash"
+    ])
+
+    {:ok, view, _} = live(conn, "/community")
+
+    for {term, label} <- [{"%", "100%"}, {"_", "under_score"}, {"\\", "back\\slash"}] do
+      view |> form("#community-topic-search-form", %{topic_filter: term}) |> render_change()
+      assert has_element?(view, "#community-topics > a", label)
+      refute has_element?(view, "#community-topics > a:nth-child(2)")
+    end
+  end
+
   test "topic pages render canonical metadata and public content in the initial response", %{
     conn: conn
   } do

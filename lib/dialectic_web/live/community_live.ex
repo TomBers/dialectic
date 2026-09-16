@@ -7,6 +7,7 @@ defmodule DialecticWeb.CommunityLive do
   on_mount {DialecticWeb.UserAuth, :mount_current_user}
 
   @limit 12
+  @topic_limit 50
   @tag_generation_timeout_ms :timer.minutes(6)
 
   @impl true
@@ -49,9 +50,8 @@ defmodule DialecticWeb.CommunityLive do
 
   @impl true
   def handle_params(params, _url, socket) do
-    search = params |> Map.get("search", "") |> String.trim()
-    topics = Graphs.list_all_tags()
-    tag = resolve_tag(Map.get(params, "tag"), topics)
+    search = trimmed_string(params["search"])
+    tag = resolve_tag(params["tag"])
 
     category_param =
       if params["category"] in ["curated", "partners", "all"],
@@ -74,6 +74,7 @@ defmodule DialecticWeb.CommunityLive do
 
     {:noreply,
      socket
+     |> assign_new(:topic_count, &Graphs.count_public_tags/0)
      |> assign(
        search_term: search,
        active_tag: tag,
@@ -87,14 +88,14 @@ defmodule DialecticWeb.CommunityLive do
        size_form: to_form(%{"size" => size})
      )
      |> load_results()
-     |> stream_topics(topics)}
+     |> stream_topics()}
   end
 
   @impl true
   def handle_event("search", %{"search" => term}, socket) do
     {:noreply,
      push_patch(socket,
-       to: browse_path(socket.assigns.browse_params, %{"search" => String.trim(term)})
+       to: browse_path(socket.assigns.browse_params, %{"search" => trimmed_string(term)})
      )}
   end
 
@@ -106,10 +107,20 @@ defmodule DialecticWeb.CommunityLive do
   end
 
   def handle_event("filter_topics", %{"topic_filter" => term}, socket) do
+    term = trimmed_string(term)
+
     {:noreply,
      socket
      |> assign(topic_filter: term, topic_form: to_form(%{"topic_filter" => term}))
-     |> stream_topics(Graphs.list_all_tags())}
+     |> stream_topics()}
+  end
+
+  def handle_event("load_more_topics", _params, socket) do
+    if socket.assigns.more_topics? do
+      {:noreply, stream_topics(socket, reset: false)}
+    else
+      {:noreply, socket}
+    end
   end
 
   def handle_event("filter_size", %{"size" => size}, socket) do
@@ -159,8 +170,9 @@ defmodule DialecticWeb.CommunityLive do
     {:noreply,
      socket
      |> clear_tag_generation(title)
+     |> assign(:topic_count, Graphs.count_public_tags())
      |> load_results(%{title => tags})
-     |> stream_topics(Graphs.list_all_tags())}
+     |> stream_topics()}
   end
 
   def handle_info({:DOWN, monitor_ref, :process, _pid, reason}, socket) do
@@ -331,6 +343,17 @@ defmodule DialecticWeb.CommunityLive do
                       ><span class="truncate">{topic.tag}</span><span class="text-xs tabular-nums text-slate-400">{topic.count}</span></.link>
                     <% end %>
                   </div>
+                  <button
+                    :if={@more_topics?}
+                    id="community-more-topics"
+                    type="button"
+                    phx-click="load_more_topics"
+                    phx-disable-with="Loading…"
+                    aria-controls="community-topics"
+                    class="mt-2 w-full rounded-md px-3 py-2 text-sm font-semibold text-teal-800 hover:bg-teal-50"
+                  >
+                    Show more topics
+                  </button>
                   <p
                     :if={@visible_topic_count == 0}
                     id="community-no-topics"
@@ -712,20 +735,24 @@ defmodule DialecticWeb.CommunityLive do
     |> stream(:graphs, entries, reset: true)
   end
 
-  defp stream_topics(socket, topics) do
-    term = Graphs.normalize_tag(socket.assigns.topic_filter)
+  defp stream_topics(socket, opts \\ []) do
+    reset? = Keyword.get(opts, :reset, true)
+    offset = if reset?, do: 0, else: socket.assigns.visible_topic_count
 
-    visible =
-      Enum.filter(topics, fn {tag, _} -> String.contains?(Graphs.normalize_tag(tag), term) end)
+    result =
+      Graphs.search_public_tags(socket.assigns.topic_filter, limit: @topic_limit, offset: offset)
 
     socket
-    |> assign(topic_count: length(topics), visible_topic_count: length(visible))
+    |> assign(
+      visible_topic_count: offset + length(result.topics),
+      more_topics?: result.has_more?
+    )
     |> stream(
       :topics,
-      Enum.map(visible, fn {tag, count} ->
+      Enum.map(result.topics, fn {tag, count} ->
         %{id: Graphs.normalize_tag(tag), tag: tag, count: count}
       end),
-      reset: true
+      reset: reset?
     )
   end
 
@@ -773,15 +800,13 @@ defmodule DialecticWeb.CommunityLive do
   defp result_count_label(count, page, size),
     do: "#{(page - 1) * size + 1}–#{min(page * size, count)} of #{count} grids"
 
-  defp resolve_tag(nil, _topics), do: nil
+  defp trimmed_string(value) when is_binary(value), do: String.trim(value)
+  defp trimmed_string(_value), do: ""
 
-  defp resolve_tag(tag, topics) do
-    normalized = Graphs.normalize_tag(tag)
-
-    if normalized != "" do
-      Enum.find_value(topics, String.trim(tag), fn {label, _count} ->
-        if Graphs.normalize_tag(label) == normalized, do: label
-      end)
+  defp resolve_tag(value) do
+    case trimmed_string(value) do
+      "" -> nil
+      tag -> Graphs.public_tag_label(tag) || tag
     end
   end
 

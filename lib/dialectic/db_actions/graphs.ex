@@ -226,6 +226,51 @@ defmodule Dialectic.DbActions.Graphs do
   end
 
   def list_popular_tags(limit \\ 10) do
+    query = public_tag_rows_query() |> tag_counts_query()
+    query = if is_integer(limit), do: from(t in query, limit: ^limit), else: query
+    Repo.all(query)
+  end
+
+  def search_public_tags(term, opts \\ []) do
+    term = if is_binary(term), do: normalize_tag(term), else: ""
+    limit = opts |> Keyword.get(:limit, 50) |> max(1) |> min(50)
+    offset = opts |> Keyword.get(:offset, 0) |> max(0)
+    query = public_tag_rows_query()
+
+    query =
+      if term == "" do
+        query
+      else
+        pattern = "%" <> String.replace(term, ~r/[\\%_]/, fn char -> "\\" <> char end) <> "%"
+        from t in query, where: like(fragment("lower(btrim(?))", t.tag), ^pattern)
+      end
+
+    topics =
+      query
+      |> tag_counts_query()
+      |> limit(^(limit + 1))
+      |> offset(^offset)
+      |> Repo.all()
+
+    %{topics: Enum.take(topics, limit), has_more?: length(topics) > limit}
+  end
+
+  def count_public_tags do
+    public_tag_rows_query()
+    |> select([t], fragment("count(DISTINCT lower(btrim(?)))", t.tag))
+    |> Repo.one()
+  end
+
+  def public_tag_label(tag) when is_binary(tag) do
+    normalized = normalize_tag(tag)
+
+    public_tag_rows_query()
+    |> where([t], fragment("lower(btrim(?))", t.tag) == ^normalized)
+    |> select([t], fragment("min(btrim(?))", t.tag))
+    |> Repo.one()
+  end
+
+  defp public_tag_rows_query do
     tags_query =
       from g in Graph,
         where: g.is_published == true,
@@ -233,19 +278,17 @@ defmodule Dialectic.DbActions.Graphs do
         where: g.is_deleted == false or is_nil(g.is_deleted),
         select: %{tag: fragment("unnest(?)", g.tags), graph_title: g.title}
 
-    query =
-      from t in subquery(tags_query),
-        where: fragment("btrim(?) != ''", t.tag),
-        group_by: fragment("lower(btrim(?))", t.tag),
-        order_by: [
-          desc: count(t.graph_title, :distinct),
-          asc: fragment("lower(btrim(?))", t.tag)
-        ],
-        select: {fragment("min(btrim(?))", t.tag), count(t.graph_title, :distinct)}
+    from t in subquery(tags_query), where: fragment("btrim(?) != ''", t.tag)
+  end
 
-    query = if is_integer(limit), do: from(t in query, limit: ^limit), else: query
-
-    Repo.all(query)
+  defp tag_counts_query(query) do
+    from t in query,
+      group_by: fragment("lower(btrim(?))", t.tag),
+      order_by: [
+        desc: count(t.graph_title, :distinct),
+        asc: fragment("lower(btrim(?))", t.tag)
+      ],
+      select: {fragment("min(btrim(?))", t.tag), count(t.graph_title, :distinct)}
   end
 
   def browse_public_graphs(opts \\ []) do
