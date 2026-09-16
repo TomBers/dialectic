@@ -226,22 +226,183 @@ defmodule Dialectic.DbActions.Graphs do
   end
 
   def list_popular_tags(limit \\ 10) do
+    query = public_tag_rows_query() |> tag_counts_query()
+    query = if is_integer(limit), do: from(t in query, limit: ^limit), else: query
+    Repo.all(query)
+  end
+
+  def search_public_tags(term, opts \\ []) do
+    term = if is_binary(term), do: normalize_tag(term), else: ""
+    limit = opts |> Keyword.get(:limit, 50) |> max(1) |> min(50)
+    offset = opts |> Keyword.get(:offset, 0) |> max(0)
+    query = public_tag_rows_query()
+
+    query =
+      if term == "" do
+        query
+      else
+        pattern = "%" <> String.replace(term, ~r/[\\%_]/, fn char -> "\\" <> char end) <> "%"
+        from t in query, where: like(fragment("lower(btrim(?))", t.tag), ^pattern)
+      end
+
+    topics =
+      query
+      |> tag_counts_query()
+      |> limit(^(limit + 1))
+      |> offset(^offset)
+      |> Repo.all()
+
+    %{topics: Enum.take(topics, limit), has_more?: length(topics) > limit}
+  end
+
+  def count_public_tags do
+    public_tag_rows_query()
+    |> select([t], fragment("count(DISTINCT lower(btrim(?)))", t.tag))
+    |> Repo.one()
+  end
+
+  def public_tag_label(tag) when is_binary(tag) do
+    normalized = normalize_tag(tag)
+
+    public_tag_rows_query()
+    |> where([t], fragment("lower(btrim(?))", t.tag) == ^normalized)
+    |> select([t], fragment("min(btrim(?))", t.tag))
+    |> Repo.one()
+  end
+
+  defp public_tag_rows_query do
     tags_query =
       from g in Graph,
         where: g.is_published == true,
         where: g.is_public == true,
         where: g.is_deleted == false or is_nil(g.is_deleted),
-        select: %{tag: fragment("unnest(?)", g.tags)}
+        select: %{tag: fragment("unnest(?)", g.tags), graph_title: g.title}
+
+    from t in subquery(tags_query), where: fragment("btrim(?) != ''", t.tag)
+  end
+
+  defp tag_counts_query(query) do
+    from t in query,
+      group_by: fragment("lower(btrim(?))", t.tag),
+      order_by: [
+        desc: count(t.graph_title, :distinct),
+        asc: fragment("lower(btrim(?))", t.tag)
+      ],
+      select: {fragment("min(btrim(?))", t.tag), count(t.graph_title, :distinct)}
+  end
+
+  def browse_public_graphs(opts \\ []) do
+    summaries =
+      from g in Graph,
+        where: g.is_published == true and g.is_public == true,
+        where: g.is_deleted == false or is_nil(g.is_deleted),
+        left_join: author in Dialectic.Accounts.User,
+        on: author.id == g.user_id,
+        select: %{
+          title: g.title,
+          slug: g.slug,
+          tags: g.tags,
+          inserted_at: g.inserted_at,
+          updated_at: g.updated_at,
+          author_name: author.username,
+          node_count:
+            fragment(
+              "(SELECT count(*) FROM jsonb_array_elements(CASE WHEN jsonb_typeof(?->'nodes') = 'array' THEN ?->'nodes' ELSE '[]'::jsonb END) AS node WHERE COALESCE(node->>'compound', 'false') != 'true')",
+              g.data,
+              g.data
+            )
+        }
+
+    query = from(g in subquery(summaries))
+    search = opts |> Keyword.get(:search, "") |> String.trim()
+    tag = Keyword.get(opts, :tag)
 
     query =
-      from t in subquery(tags_query),
-        group_by: fragment("lower(?)", t.tag),
-        order_by: [desc: count(t.tag)],
-        select: {min(t.tag), count(t.tag)}
+      if search == "" do
+        query
+      else
+        pattern = "%" <> String.replace(search, ~r/[\\%_]/, fn char -> "\\" <> char end) <> "%"
 
-    query = if is_integer(limit), do: from(t in query, limit: ^limit), else: query
+        from g in query,
+          where:
+            ilike(g.title, ^pattern) or
+              fragment(
+                "EXISTS (SELECT 1 FROM unnest(?) AS tag WHERE tag ILIKE ?)",
+                g.tags,
+                ^pattern
+              )
+      end
 
-    Repo.all(query)
+    query =
+      if is_binary(tag) and tag != "" do
+        from g in query,
+          where:
+            fragment(
+              "EXISTS (SELECT 1 FROM unnest(?) AS tag WHERE lower(btrim(tag)) = ?)",
+              g.tags,
+              ^normalize_tag(tag)
+            )
+      else
+        query
+      end
+
+    query =
+      case Keyword.get(opts, :category) do
+        category when category in ["curated", "partners"] ->
+          section = if category == "curated", do: "curated", else: "featured"
+
+          selected_grids =
+            from c in Dialectic.Accounts.CuratedGrid,
+              where: c.section == ^section,
+              select: c.graph_title
+
+          from g in query, where: g.title in subquery(selected_grids)
+
+        _ ->
+          query
+      end
+
+    query =
+      case Keyword.get(opts, :size) do
+        "large" -> from g in query, where: g.node_count > 20
+        "medium" -> from g in query, where: g.node_count >= 5 and g.node_count <= 20
+        "small" -> from g in query, where: g.node_count < 5
+        _ -> query
+      end
+
+    total_count = Repo.aggregate(query, :count)
+    page_size = Keyword.get(opts, :page_size, 12) |> max(1) |> min(50)
+    page_count = max(1, div(total_count + page_size - 1, page_size))
+    page = Keyword.get(opts, :page, 1) |> max(1) |> min(page_count)
+
+    query =
+      case Keyword.get(opts, :sort, "newest") do
+        "updated" ->
+          from g in query, order_by: [desc: g.updated_at, asc: g.title]
+
+        "largest" ->
+          from g in query, order_by: [desc: g.node_count, desc: g.inserted_at, asc: g.title]
+
+        _ ->
+          from g in query, order_by: [desc: g.inserted_at, asc: g.title]
+      end
+
+    entries =
+      query
+      |> limit(^page_size)
+      |> offset(^((page - 1) * page_size))
+      |> Repo.all()
+      |> Enum.map(fn row ->
+        %{id: row.title, graph: Map.delete(row, :author_name), author_name: row.author_name}
+      end)
+
+    %{
+      entries: entries,
+      total_count: total_count,
+      page: page,
+      page_count: page_count,
+      page_size: page_size
+    }
   end
 
   @doc """
@@ -254,6 +415,8 @@ defmodule Dialectic.DbActions.Graphs do
     list_popular_tags(nil)
   end
 
+  def normalize_tag(tag) when is_binary(tag), do: tag |> String.trim() |> String.downcase()
+
   def list_graphs_by_tag(tag, limit \\ 20) do
     query =
       from g in Graph,
@@ -262,9 +425,9 @@ defmodule Dialectic.DbActions.Graphs do
         where: g.is_deleted == false or is_nil(g.is_deleted),
         where:
           fragment(
-            "EXISTS (SELECT 1 FROM unnest(?) AS graph_tag(value) WHERE lower(value) = lower(?))",
+            "EXISTS (SELECT 1 FROM unnest(?) AS graph_tag(value) WHERE lower(btrim(value)) = ?)",
             g.tags,
-            ^tag
+            ^normalize_tag(tag)
           ),
         left_join: author in Dialectic.Accounts.User,
         on: author.id == g.user_id,

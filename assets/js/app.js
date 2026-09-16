@@ -892,61 +892,6 @@ hooks.GraphLayout = {
   },
 };
 
-hooks.LinearView = {
-  mounted() {
-    // Scroll both the main content and the minimap to a given node.
-    // `block` defaults to "nearest" so already-visible nodes don't jump.
-    // Callers that need the node pinned to the top can pass "start".
-    //
-    // Uses a short polling loop to wait for LiveView to finish patching
-    // the DOM before measuring positions — the target element may not
-    // exist yet when the event fires (e.g. after a branch switch).
-    const scrollToNode = (
-      id,
-      { behavior = "smooth", block = "nearest" } = {},
-    ) => {
-      let attempts = 0;
-      const maxAttempts = 10;
-
-      const tryScroll = () => {
-        const el = document.getElementById(`node-${id}`);
-        if (el) {
-          requestAnimationFrame(() => {
-            el.scrollIntoView({ behavior, block });
-
-            // Also scroll the minimap entry into view
-            const mapEntry = document.getElementById(`map-node-${id}`);
-            if (mapEntry) {
-              mapEntry.scrollIntoView({ behavior, block: "nearest" });
-            }
-          });
-        } else if (attempts < maxAttempts) {
-          attempts++;
-          // Retry after a short delay to let LiveView finish patching
-          setTimeout(tryScroll, 50);
-        }
-      };
-
-      tryScroll();
-    };
-
-    this.handleEvent("scroll_to_node", ({ id, block }) => {
-      scrollToNode(id, { block: block || "nearest" });
-    });
-  },
-};
-
-hooks.MobileMinimap = {
-  mounted() {
-    this.el.addEventListener("click", (e) => {
-      const button = e.target.closest("button[id^='map-node-']");
-      if (button && window.innerWidth < 1024) {
-        this.pushEvent("close_minimap", {});
-      }
-    });
-  },
-};
-
 // Chat scroll management hook
 hooks.ChatScroll = {
   mounted() {

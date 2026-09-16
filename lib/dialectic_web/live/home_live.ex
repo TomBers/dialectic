@@ -72,22 +72,29 @@ defmodule DialecticWeb.HomeLive do
        ask_question: true,
        graph_id: nil,
        focus_new_grid: params["focus"] == "grid",
-       preview_seed: home_preview_seed(),
-       curated_grids: [],
+       partner_grids_empty?: true,
        homepage_faqs: @homepage_faqs,
        json_ld: homepage_json_ld(),
        page_description:
          "For questions that matter, compare views, trace claims to sources, and keep your reasoning in a grid you can revisit and share."
-     ), layout: false}
+     )
+     |> stream_configure(:partner_grids,
+       dom_id: fn item ->
+         "home-partner-" <>
+           (item.graph.slug || Base.url_encode64(item.graph.title, padding: false))
+       end
+     )
+     |> stream(:partner_grids, []), layout: false}
   end
 
   @impl true
   def handle_params(_params, _url, socket) do
-    curated_grids =
-      Graphs.list_curated_grids("curated", 20)
-      |> preview_curated_grids(3, socket.assigns.preview_seed)
+    grids = Graphs.list_curated_grids("featured", 3)
 
-    {:noreply, assign(socket, :curated_grids, curated_grids)}
+    {:noreply,
+     socket
+     |> assign(:partner_grids_empty?, grids == [])
+     |> stream(:partner_grids, grids, reset: true)}
   end
 
   @impl true
@@ -462,27 +469,25 @@ defmodule DialecticWeb.HomeLive do
                   Sign up free <.icon name="hero-arrow-right" class="h-4 w-4" />
                 </.link>
               <% end %>
-              <%= if @current_user do %>
-                <.link
-                  id="home-browse-examples-link"
-                  navigate={~p"/community"}
-                  data-analytics-event="community_clicked"
-                  data-analytics-location="home_hero"
-                  class="inline-flex items-center gap-2 border-b border-slate-400 px-1 py-2 text-sm font-semibold text-white transition hover:border-teal-300 hover:text-teal-200"
-                >
-                  Browse examples <.icon name="hero-arrow-right" class="h-4 w-4" />
-                </.link>
-              <% else %>
-                <.link
-                  id="home-explore-question-link"
-                  href="#start-here"
-                  data-analytics-event="explore_question_clicked"
-                  data-analytics-location="home_hero"
-                  class="inline-flex items-center gap-2 border-b border-slate-400 px-1 py-2 text-sm font-semibold text-white transition hover:border-teal-300 hover:text-teal-200"
-                >
-                  Explore a question <.icon name="hero-arrow-down" class="h-4 w-4" />
-                </.link>
-              <% end %>
+              <.link
+                id="home-community-hero-link"
+                navigate={~p"/community"}
+                data-analytics-event="community_clicked"
+                data-analytics-location="home_hero"
+                class="inline-flex items-center gap-2 rounded-md border border-teal-200/60 bg-white/10 px-5 py-3 text-sm font-semibold text-teal-50 transition hover:border-teal-200 hover:bg-white/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-300"
+              >
+                Community grids <.icon name="hero-arrow-right" class="h-4 w-4" />
+              </.link>
+              <.link
+                :if={is_nil(@current_user)}
+                id="home-explore-question-link"
+                href="#start-here"
+                data-analytics-event="explore_question_clicked"
+                data-analytics-location="home_hero"
+                class="inline-flex items-center gap-2 border-b border-slate-400 px-1 py-2 text-sm font-semibold text-white transition hover:border-teal-300 hover:text-teal-200"
+              >
+                Explore a question <.icon name="hero-arrow-down" class="h-4 w-4" />
+              </.link>
               <.link
                 id="home-about-link"
                 navigate={~p"/about"}
@@ -742,7 +747,7 @@ defmodule DialecticWeb.HomeLive do
           <div class="flex flex-col gap-5 border-b border-slate-300 pb-6 sm:flex-row sm:items-end sm:justify-between">
             <div class="max-w-3xl">
               <p class="inline-block border-l-2 border-teal-500 pl-3 text-sm font-bold uppercase tracking-[0.14em] text-teal-900">
-                Curated grids
+                Partner grids
               </p>
               <h2 class="mt-3 font-serif text-4xl font-semibold tracking-tight sm:text-5xl">
                 See what other people explored.
@@ -777,11 +782,26 @@ defmodule DialecticWeb.HomeLive do
             <.icon name="hero-arrow-right" class="h-5 w-5 shrink-0" />
           </.link>
 
-          <%= if @curated_grids != [] do %>
-            <section id="curated" class="mt-8">
-              <.curated_grid_section items={@curated_grids} id_prefix="home-curated" />
-            </section>
-          <% end %>
+          <section :if={!@partner_grids_empty?} id="home-partners" class="mt-8">
+            <div
+              id="home-partner-grids-list"
+              phx-update="stream"
+              class="grid gap-5 md:grid-cols-2 xl:grid-cols-3"
+            >
+              <%= for {id, item} <- @streams.partner_grids do %>
+                <.grid_card
+                  id={id}
+                  graph={item.graph}
+                  author_name={item.author_name}
+                  author_marker="@"
+                  variant={:partner}
+                  label="Partner grid"
+                  show_badge={false}
+                  tag_limit={3}
+                />
+              <% end %>
+            </div>
+          </section>
         </div>
       </section>
 
@@ -1091,26 +1111,6 @@ defmodule DialecticWeb.HomeLive do
     """
   end
 
-  defp curated_grid_section(assigns) do
-    ~H"""
-    <section class="w-full min-w-0">
-      <div id={"#{@id_prefix}-grids-list"} class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-        <%= for item <- @items do %>
-          <.grid_card
-            graph={item.graph}
-            author_name={item.author_name}
-            author_marker="@"
-            id={@id_prefix <> "-" <> (item.graph.slug || "t-" <> Integer.to_string(:erlang.phash2(item.graph.title || "")))}
-            variant={:curated}
-            show_badge={false}
-            tag_limit={3}
-          />
-        <% end %>
-      </div>
-    </section>
-    """
-  end
-
   defp homepage_json_ld do
     base_url = DialecticWeb.Endpoint.url()
     organization_id = base_url <> "/#organization"
@@ -1167,27 +1167,4 @@ defmodule DialecticWeb.HomeLive do
       ]
     })
   end
-
-  defp home_preview_seed do
-    System.unique_integer([:positive])
-  end
-
-  defp preview_curated_grids(items, count, seed) do
-    case items || [] do
-      [] ->
-        []
-
-      grids when length(grids) <= count ->
-        grids
-
-      grids ->
-        grids
-        |> Enum.sort_by(fn item ->
-          :erlang.phash2({seed || "home-preview", preview_key(item)})
-        end)
-        |> Enum.take(count)
-    end
-  end
-
-  defp preview_key(item), do: item.graph.slug || item.graph.title || ""
 end

@@ -54,6 +54,9 @@ defmodule DialecticWeb.Router do
   # Sitemap for search engine discovery (no session/CSRF needed)
   scope "/", DialecticWeb do
     get "/sitemap.xml", SitemapController, :index
+    get "/sitemap-pages.xml", SitemapController, :pages
+    get "/sitemap-grids.xml", SitemapController, :grids
+    get "/sitemap-topics.xml", SitemapController, :topics
   end
 
   scope "/", DialecticWeb do
@@ -85,8 +88,6 @@ defmodule DialecticWeb.Router do
 
     # Slug-based routes
     live "/g/:graph_name/graph", GraphLive
-    get "/g/:graph_name/linear", PageController, :legacy_graph_view
-    get "/g/:graph_name/outline", PageController, :legacy_graph_view
     live "/g/:graph_name", OutlineGraphLive
     get "/api/graphs/md/:graph_name", PageController, :graph_md
     get "/api/graphs/json/:graph_name", PageController, :graph_json_extract

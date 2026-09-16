@@ -13,10 +13,11 @@ defmodule DialecticWeb.SeoControllerTest do
 
       assert get_resp_header(conn, "content-type") |> List.first() =~ "text/plain"
       refute body =~ "Disallow: /g/*/graph"
-      refute body =~ "Disallow: /g/*/linear"
-      refute body =~ "Disallow: /g/*/outline"
       refute body =~ "Disallow: /*?node="
+      refute body =~ "Disallow: /*?tag="
       assert body =~ "Disallow: /*?search="
+      assert body =~ "Allow: /community?category=all"
+      assert body =~ "Allow: /community?category=curated"
       assert body =~ "Disallow: /*?token="
       assert body =~ "Sitemap: https://rationalgrid.ai/sitemap.xml"
     end

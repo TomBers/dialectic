@@ -18,8 +18,9 @@ Disallow: /live/
 
 # Filter and presentation variants do not add indexable topic content.
 Disallow: /*?search=
-Disallow: /*?tag=
 Disallow: /*?category=
+Allow: /community?category=all
+Allow: /community?category=curated
 Disallow: /*?present=
 Disallow: /*?slides=
 Disallow: /*?token=
