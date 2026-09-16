@@ -158,6 +158,54 @@ defmodule DialecticWeb.SitemapControllerTest do
       assert body =~ ~r/<lastmod>\d{4}-\d{2}-\d{2}<\/lastmod>/
     end
 
+    test "includes one canonical URL per nonempty public topic", %{conn: conn} do
+      insert_graph(%{title: "Topic sitemap graph"})
+      |> Ecto.Changeset.change(tags: ["Sociology", " sociology ", "Law & Society", "", " "])
+      |> Repo.update!()
+
+      for {title, attrs} <- [
+            {"PrivateTopic", %{is_public: false}},
+            {"DraftTopic", %{is_published: false}},
+            {"DeletedTopic", %{is_deleted: true}}
+          ] do
+        insert_graph(Map.put(attrs, :title, title))
+        |> Ecto.Changeset.change(tags: [title])
+        |> Repo.update!()
+      end
+
+      body = conn |> get("/sitemap.xml") |> response(200)
+      base_url = DialecticWeb.Endpoint.url()
+
+      assert length(
+               Regex.scan(
+                 ~r/<loc>#{Regex.escape(base_url)}\/community\?tag=sociology<\/loc>/,
+                 body
+               )
+             ) == 1
+
+      assert body =~ "<loc>#{base_url}/community?tag=law+%26+society</loc>"
+      refute body =~ "?tag=Sociology"
+      refute body =~ "?tag=</loc>"
+      refute body =~ "?tag=privatetopic"
+      refute body =~ "?tag=drafttopic"
+      refute body =~ "?tag=deletedtopic"
+    end
+
+    test "topic entries reflect the current database on each request", %{conn: conn} do
+      topic_url = DialecticWeb.Endpoint.url() <> "/community?tag=newtopic"
+      refute conn |> get("/sitemap.xml") |> response(200) =~ topic_url
+
+      graph =
+        insert_graph(%{title: "Newly published topic"})
+        |> Ecto.Changeset.change(tags: ["NewTopic"])
+        |> Repo.update!()
+
+      assert conn |> get("/sitemap.xml") |> response(200) =~ topic_url
+
+      graph |> Ecto.Changeset.change(is_published: false) |> Repo.update!()
+      refute conn |> get("/sitemap.xml") |> response(200) =~ topic_url
+    end
+
     test "does not emit backslash characters in output", %{conn: conn} do
       insert_graph(%{title: "Backslash Check Test", is_public: true, is_published: true})
 

@@ -18,7 +18,6 @@ Disallow: /live/
 
 # Filter and presentation variants do not add indexable topic content.
 Disallow: /*?search=
-Disallow: /*?tag=
 Disallow: /*?category=
 Disallow: /*?present=
 Disallow: /*?slides=

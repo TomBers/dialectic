@@ -231,13 +231,17 @@ defmodule Dialectic.DbActions.Graphs do
         where: g.is_published == true,
         where: g.is_public == true,
         where: g.is_deleted == false or is_nil(g.is_deleted),
-        select: %{tag: fragment("unnest(?)", g.tags)}
+        select: %{tag: fragment("unnest(?)", g.tags), graph_title: g.title}
 
     query =
       from t in subquery(tags_query),
-        group_by: fragment("lower(?)", t.tag),
-        order_by: [desc: count(t.tag)],
-        select: {min(t.tag), count(t.tag)}
+        where: fragment("btrim(?) != ''", t.tag),
+        group_by: fragment("lower(btrim(?))", t.tag),
+        order_by: [
+          desc: count(t.graph_title, :distinct),
+          asc: fragment("lower(btrim(?))", t.tag)
+        ],
+        select: {fragment("min(btrim(?))", t.tag), count(t.graph_title, :distinct)}
 
     query = if is_integer(limit), do: from(t in query, limit: ^limit), else: query
 
@@ -254,6 +258,8 @@ defmodule Dialectic.DbActions.Graphs do
     list_popular_tags(nil)
   end
 
+  def normalize_tag(tag) when is_binary(tag), do: tag |> String.trim() |> String.downcase()
+
   def list_graphs_by_tag(tag, limit \\ 20) do
     query =
       from g in Graph,
@@ -262,9 +268,9 @@ defmodule Dialectic.DbActions.Graphs do
         where: g.is_deleted == false or is_nil(g.is_deleted),
         where:
           fragment(
-            "EXISTS (SELECT 1 FROM unnest(?) AS graph_tag(value) WHERE lower(value) = lower(?))",
+            "EXISTS (SELECT 1 FROM unnest(?) AS graph_tag(value) WHERE lower(btrim(value)) = ?)",
             g.tags,
-            ^tag
+            ^normalize_tag(tag)
           ),
         left_join: author in Dialectic.Accounts.User,
         on: author.id == g.user_id,

@@ -239,6 +239,24 @@ defmodule Dialectic.DbActions.GraphsTest do
   end
 
   describe "list_popular_tags/1" do
+    test "normalizes case and spaces, skips blanks, and counts each grid once" do
+      first = Dialectic.GraphFixtures.insert_graph(%{title: unique_title("normalized-tags-1")})
+      second = Dialectic.GraphFixtures.insert_graph(%{title: unique_title("normalized-tags-2")})
+
+      first
+      |> Ecto.Changeset.change(tags: ["Sociology", "sociology", " Sociology ", "", " "])
+      |> Repo.update!()
+
+      second |> Ecto.Changeset.change(tags: [" sociology "]) |> Repo.update!()
+
+      assert [{label, 2}] = Graphs.list_all_tags()
+      assert Graphs.normalize_tag(label) == "sociology"
+
+      assert Graphs.list_graphs_by_tag(" SOCIOLOGY ", nil)
+             |> Enum.map(fn {graph, _} -> graph.title end)
+             |> Enum.sort() == Enum.sort([first.title, second.title])
+    end
+
     test "returns aggregated tag counts" do
       title1 = unique_title("tags-1")
       title2 = unique_title("tags-2")

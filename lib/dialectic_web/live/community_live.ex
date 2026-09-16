@@ -7,44 +7,60 @@ defmodule DialecticWeb.CommunityLive do
   on_mount {DialecticWeb.UserAuth, :mount_current_user}
 
   @limit 12
-  @tag_limit 30
   @tag_generation_timeout_ms :timer.minutes(6)
 
   @impl true
   def mount(_params, _session, socket) do
     if connected?(socket), do: Phoenix.PubSub.subscribe(Dialectic.PubSub, "graphs")
 
-    {:ok,
-     assign(socket,
-       page_title: "Community Grids",
-       page_description: "Browse public and partner grids built with RationalGrid.",
-       search_term: "",
-       active_tag: nil,
-       active_category: nil,
-       graphs: [],
-       popular_tags: [],
-       featured_grids: [],
-       generating_tags: MapSet.new(),
-       tag_generation_jobs: %{}
-     )}
+    socket =
+      socket
+      |> assign(
+        page_title: "Community Grids",
+        page_description: "Browse public and partner grids built with RationalGrid.",
+        search_term: "",
+        active_tag: nil,
+        active_category: nil,
+        graphs: [],
+        featured_grids: [],
+        generating_tags: MapSet.new(),
+        tag_generation_jobs: %{},
+        search_form: to_form(%{"search" => ""})
+      )
+      |> stream_configure(:topics,
+        dom_id: fn topic -> "community-topic-" <> Base.url_encode64(topic.id, padding: false) end
+      )
+      |> stream(:topics, [])
+
+    {:ok, socket, layout: false}
   end
 
   @impl true
   def handle_params(params, _url, socket) do
     search_term = Map.get(params, "search", "")
-    tag = Map.get(params, "tag")
+    topics = Graphs.list_all_tags()
+    tag = resolve_tag(Map.get(params, "tag"), topics)
     category = Map.get(params, "category")
+    graphs = fetch_graphs(search_term, tag, category)
+
+    canonical_path =
+      if tag, do: ~p"/community?tag=#{Graphs.normalize_tag(tag)}", else: ~p"/community"
 
     {:noreply,
-     assign(socket,
+     socket
+     |> assign(
        search_term: search_term,
        active_tag: tag,
        active_category: category,
-       graphs: fetch_graphs(search_term, tag, category),
-       popular_tags: Graphs.list_popular_tags(@tag_limit),
+       graphs: graphs,
        featured_grids: Graphs.list_curated_grids("featured", 20),
-       page_title: page_title(search_term, tag, category)
-     )}
+       page_title: page_title(search_term, tag, category),
+       page_description: page_description(tag),
+       canonical_url: DialecticWeb.Endpoint.url() <> canonical_path,
+       noindex: search_term != "" or not is_nil(category) or (not is_nil(tag) and graphs == []),
+       search_form: to_form(%{"search" => search_term})
+     )
+     |> stream_topics(topics)}
   end
 
   @impl true
@@ -102,10 +118,9 @@ defmodule DialecticWeb.CommunityLive do
     socket = clear_tag_generation(socket, title)
 
     {:noreply,
-     assign(socket,
-       graphs: graphs,
-       popular_tags: Graphs.list_popular_tags(@tag_limit)
-     )}
+     socket
+     |> assign(graphs: graphs)
+     |> stream_topics(Graphs.list_all_tags())}
   end
 
   def handle_info({:DOWN, monitor_ref, :process, _pid, reason}, socket) do
@@ -139,181 +154,198 @@ defmodule DialecticWeb.CommunityLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="min-h-screen bg-[#f4f1e9] text-slate-950">
-      <div class="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-        <header
-          id="community-page-header"
-          class="mb-6 flex flex-col gap-5 border border-stone-300 border-l-4 border-l-teal-700 bg-white px-5 py-5 shadow-sm sm:px-7 sm:py-6 lg:flex-row lg:items-end lg:justify-between"
-        >
-          <div class="max-w-3xl">
-            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
-              Community
-            </p>
-            <h1 class="mt-2 font-serif text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
-              Explore public grids.
-            </h1>
-            <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-              See the questions, branches, and sources other people thought worth following. Discover unfamiliar ideas, question any part, or take the enquiry in a direction they missed.
-            </p>
-          </div>
-          <div class="flex flex-wrap gap-2">
-            <.link
-              navigate={~p"/?focus=grid#start-here"}
-              class="hidden items-center gap-2 rounded-md bg-slate-950 px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 md:inline-flex"
-            >
-              <.icon name="hero-plus" class="h-4 w-4" /> Create a grid
-            </.link>
-            <.link
-              navigate={~p"/intro/how"}
-              class="inline-flex items-center gap-2 border-b border-slate-500 px-1 py-2 text-sm font-semibold text-slate-800 transition hover:border-teal-700 hover:text-teal-800"
-            >
-              <.icon name="hero-book-open" class="h-4 w-4" /> How it works
-            </.link>
-          </div>
-        </header>
-
-        <.link
-          id="community-question-pilot"
-          navigate={~p"/questions/does-ai-make-us-better-thinkers"}
-          class="mb-6 flex min-h-16 items-center justify-between gap-4 border-y border-stone-300 px-1 py-5 text-teal-900 hover:text-teal-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-700"
-        >
-          <span>
-            <span class="block text-xs font-semibold uppercase tracking-widest">Start with a question</span>
-            <span class="mt-1 block font-serif text-xl">Does AI make us better thinkers?</span>
-            <span class="mt-1 block text-sm text-slate-600">Read the evidence, examine an objection, test your reasoning.</span>
-          </span>
-          <.icon name="hero-arrow-right" class="h-5 w-5 shrink-0" />
-        </.link>
-
-        <div class="space-y-5">
-          <%= if @featured_grids != [] do %>
-            <.curated_grid_section
-              items={@featured_grids}
-              title="Partner grids"
-              id_prefix="community-featured"
-            />
-          <% end %>
-
-          <section
-            id="community-search"
-            class="overflow-hidden border border-stone-300 bg-white shadow-sm"
+    <Layouts.app flash={@flash}>
+      <div class="min-h-screen bg-[#f4f1e9] text-slate-950">
+        <div class="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+          <header
+            id="community-page-header"
+            class="mb-6 flex flex-col gap-5 border border-stone-300 border-l-4 border-l-teal-700 bg-white px-5 py-5 shadow-sm sm:px-7 sm:py-6 lg:flex-row lg:items-end lg:justify-between"
           >
-            <div class="h-1 bg-teal-700"></div>
-            <div class="bg-slate-950 p-5 text-white sm:p-7">
-              <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-                <div>
-                  <p class="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">
-                    Community library
-                  </p>
-                  <h2 id="community-results-heading" class="mt-2 text-2xl font-semibold sm:text-3xl">
-                    <%= cond do %>
-                      <% @active_tag -> %>
-                        Ideas tagged with "{@active_tag}"
-                      <% @active_category == "deep_dives" -> %>
-                        Deep dives
-                      <% @active_category == "seedlings" -> %>
-                        Seedlings
-                      <% @search_term != "" -> %>
-                        Search results for "{@search_term}"
-                      <% true -> %>
-                        Find a question to explore
-                    <% end %>
-                  </h2>
-                  <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
-                    Search by question or topic.
-                  </p>
-                </div>
-                <form
-                  id="community-search-form"
-                  phx-change="search"
-                  phx-submit="search"
-                  class="relative w-full lg:w-80"
-                  onsubmit="return false;"
-                >
-                  <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
-                    <.icon name="hero-magnifying-glass" class="h-4 w-4" />
-                  </span>
-                  <input
-                    type="text"
-                    name="search"
-                    value={@search_term}
-                    phx-debounce="300"
-                    placeholder="Search by question or topic..."
-                    class="h-11 w-full rounded-md border border-white/60 bg-white px-10 pr-4 text-sm text-slate-900 placeholder:text-slate-500 shadow-sm focus:border-teal-300 focus:outline-none focus:ring-2 focus:ring-teal-200"
-                    autocomplete="off"
-                  />
-                </form>
-              </div>
+            <div class="max-w-3xl">
+              <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
+                Community
+              </p>
+              <h1
+                id="community-page-title"
+                class="mt-2 font-serif text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl"
+              >
+                {if @active_tag, do: "Explore #{@active_tag}.", else: "Explore public grids."}
+              </h1>
+              <p
+                :if={@active_tag}
+                id="community-topic-description"
+                class="mt-3 max-w-2xl text-sm leading-6 text-slate-600"
+              >
+                {@page_description}
+              </p>
+              <p :if={!@active_tag} class="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+                See the questions, branches, and sources other people thought worth following. Discover unfamiliar ideas, question any part, or take the enquiry in a direction they missed.
+              </p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <.link
+                navigate={~p"/?focus=grid#start-here"}
+                class="hidden items-center gap-2 rounded-md bg-slate-950 px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 md:inline-flex"
+              >
+                <.icon name="hero-plus" class="h-4 w-4" /> Create a grid
+              </.link>
+              <.link
+                navigate={~p"/intro/how"}
+                class="inline-flex items-center gap-2 border-b border-slate-500 px-1 py-2 text-sm font-semibold text-slate-800 transition hover:border-teal-700 hover:text-teal-800"
+              >
+                <.icon name="hero-book-open" class="h-4 w-4" /> How it works
+              </.link>
+            </div>
+          </header>
 
-              <div class="mt-5">
-                <p class="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/60">
-                  Filter by format or topic
-                </p>
-                <div class="flex flex-wrap gap-2">
-                  <.link
-                    patch={~p"/community"}
-                    class={category_class(!@active_category && !@active_tag && @search_term == "")}
+          <.link
+            id="community-question-pilot"
+            navigate={~p"/questions/does-ai-make-us-better-thinkers"}
+            class="mb-6 flex min-h-16 items-center justify-between gap-4 border-y border-stone-300 px-1 py-5 text-teal-900 hover:text-teal-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-700"
+          >
+            <span>
+              <span class="block text-xs font-semibold uppercase tracking-widest">Start with a question</span>
+              <span class="mt-1 block font-serif text-xl">Does AI make us better thinkers?</span>
+              <span class="mt-1 block text-sm text-slate-600">Read the evidence, examine an objection, test your reasoning.</span>
+            </span>
+            <.icon name="hero-arrow-right" class="h-5 w-5 shrink-0" />
+          </.link>
+
+          <div class="space-y-5">
+            <%= if @featured_grids != [] and is_nil(@active_tag) do %>
+              <.curated_grid_section
+                items={@featured_grids}
+                title="Partner grids"
+                id_prefix="community-featured"
+              />
+            <% end %>
+
+            <section
+              id="community-search"
+              class="overflow-hidden border border-stone-300 bg-white shadow-sm"
+            >
+              <div class="h-1 bg-teal-700"></div>
+              <div class="bg-slate-950 p-5 text-white sm:p-7">
+                <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                  <div>
+                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">
+                      Community library
+                    </p>
+                    <h2 id="community-results-heading" class="mt-2 text-2xl font-semibold sm:text-3xl">
+                      <%= cond do %>
+                        <% @active_tag -> %>
+                          Ideas tagged with "{@active_tag}"
+                        <% @active_category == "deep_dives" -> %>
+                          Deep dives
+                        <% @active_category == "seedlings" -> %>
+                          Seedlings
+                        <% @search_term != "" -> %>
+                          Search results for "{@search_term}"
+                        <% true -> %>
+                          Find a question to explore
+                      <% end %>
+                    </h2>
+                    <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
+                      Search by question or topic.
+                    </p>
+                  </div>
+                  <.form
+                    for={@search_form}
+                    id="community-search-form"
+                    phx-change="search"
+                    phx-submit="search"
+                    class="relative w-full lg:w-80"
                   >
-                    Most recent
-                  </.link>
-                  <.link
-                    patch={~p"/community?category=deep_dives"}
-                    class={category_class(@active_category == "deep_dives")}
-                  >
-                    Deep dives
-                  </.link>
-                  <.link
-                    patch={~p"/community?category=seedlings"}
-                    class={category_class(@active_category == "seedlings")}
-                  >
-                    Seedlings
-                  </.link>
+                    <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                      <.icon name="hero-magnifying-glass" class="h-4 w-4" />
+                    </span>
+                    <.input
+                      id="community-search-input"
+                      field={@search_form[:search]}
+                      type="text"
+                      phx-debounce="300"
+                      placeholder="Search by question or topic..."
+                      class="h-11 w-full rounded-md border border-white/60 bg-white px-10 pr-4 text-sm text-slate-900 placeholder:text-slate-500 shadow-sm focus:border-teal-300 focus:outline-none focus:ring-2 focus:ring-teal-200"
+                      autocomplete="off"
+                    />
+                  </.form>
                 </div>
-                <div class="mt-3 max-h-36 overflow-y-auto border border-white/15 bg-black/10 p-2">
-                  <p class="px-2 pb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/50">
-                    Topics
+
+                <div class="mt-5">
+                  <p class="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/60">
+                    Filter by format or topic
                   </p>
                   <div class="flex flex-wrap gap-2">
-                    <%= for %{tag: tag, count: count} <- display_popular_tags(@popular_tags, :all) do %>
-                      <.link
-                        patch={~p"/community?tag=#{tag}"}
-                        class={category_class(@active_tag == tag)}
-                      >
-                        #{tag} <span class="text-[10px] opacity-70">{count}</span>
-                      </.link>
-                    <% end %>
+                    <.link
+                      id="community-recent-link"
+                      href={~p"/community"}
+                      class={category_class(!@active_category && !@active_tag && @search_term == "")}
+                    >
+                      Most recent
+                    </.link>
+                    <.link
+                      patch={~p"/community?category=deep_dives"}
+                      class={category_class(@active_category == "deep_dives")}
+                    >
+                      Deep dives
+                    </.link>
+                    <.link
+                      patch={~p"/community?category=seedlings"}
+                      class={category_class(@active_category == "seedlings")}
+                    >
+                      Seedlings
+                    </.link>
+                  </div>
+                  <div class="mt-3 max-h-36 overflow-y-auto border border-white/15 bg-black/10 p-2">
+                    <p class="px-2 pb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/50">
+                      Topics
+                    </p>
+                    <div id="community-topics" phx-update="stream" class="flex flex-wrap gap-2">
+                      <%= for {id, topic} <- @streams.topics do %>
+                        <.link
+                          id={id}
+                          href={~p"/community?tag=#{topic.id}"}
+                          class={category_class(@active_tag == topic.tag)}
+                        >
+                          #{topic.tag} <span class="text-[10px] opacity-70">{topic.count}</span>
+                        </.link>
+                      <% end %>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div class="bg-slate-50/70 p-4 sm:p-5">
-              <%= if @graphs == [] do %>
-                <div class="border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-600">
-                  No grids found. Try a broader search or another topic.
-                </div>
-              <% else %>
-                <div
-                  id="community-grid-list"
-                  class="divide-y divide-slate-200 overflow-hidden border border-slate-200 bg-white"
-                >
-                  <%= for {graph, _count, author_username} <- @graphs do %>
-                    <.community_grid_row
-                      graph={graph}
-                      author_name={author_username}
-                      selected_tag={@active_tag}
-                      can_generate_tags={admin?(@current_user)}
-                      generating_tags={@generating_tags}
-                      id={graph_dom_id(graph, "community-grid")}
-                    />
-                  <% end %>
-                </div>
-              <% end %>
-            </div>
-          </section>
+              <div class="bg-slate-50/70 p-4 sm:p-5">
+                <%= if @graphs == [] do %>
+                  <div
+                    id="community-empty-results"
+                    class="border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-600"
+                  >
+                    No grids found. Try a broader search or another topic.
+                  </div>
+                <% else %>
+                  <div
+                    id="community-grid-list"
+                    class="divide-y divide-slate-200 overflow-hidden border border-slate-200 bg-white"
+                  >
+                    <%= for {graph, _count, author_username} <- @graphs do %>
+                      <.community_grid_row
+                        graph={graph}
+                        author_name={author_username}
+                        selected_tag={@active_tag}
+                        can_generate_tags={admin?(@current_user)}
+                        generating_tags={@generating_tags}
+                        id={graph_dom_id(graph, "community-grid")}
+                      />
+                    <% end %>
+                  </div>
+                <% end %>
+              </div>
+            </section>
+          </div>
         </div>
       </div>
-    </div>
+    </Layouts.app>
     """
   end
 
@@ -428,8 +460,9 @@ defmodule DialecticWeb.CommunityLive do
               {if(@generating_tags?, do: "Generating...", else: "Generate tags")}
             </button>
           <% else %>
-            <span
+            <.link
               :for={tag <- @tags}
+              href={~p"/community?tag=#{Graphs.normalize_tag(tag)}"}
               class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600"
             >
               <span
@@ -438,7 +471,7 @@ defmodule DialecticWeb.CommunityLive do
                 style={"background-color: " <> tag_color_hex(tag)}
               ></span>
               {tag}
-            </span>
+            </.link>
           <% end %>
         </div>
       </div>
@@ -504,10 +537,14 @@ defmodule DialecticWeb.CommunityLive do
   defp tagged?(_graph), do: false
 
   defp visible_tags(graph, selected_tag) do
-    tags = Map.get(graph, :tags, []) || []
+    tags =
+      (Map.get(graph, :tags, []) || [])
+      |> Enum.map(&String.trim/1)
+      |> Enum.reject(&(&1 == ""))
+      |> Enum.uniq_by(&Graphs.normalize_tag/1)
 
     case Enum.find(tags, fn tag ->
-           selected_tag && String.downcase(tag) == String.downcase(selected_tag)
+           selected_tag && Graphs.normalize_tag(tag) == Graphs.normalize_tag(selected_tag)
          end) do
       nil -> Enum.take(tags, 3)
       matching_tag -> [matching_tag | Enum.reject(tags, &(&1 == matching_tag))] |> Enum.take(3)
@@ -531,18 +568,33 @@ defmodule DialecticWeb.CommunityLive do
     end
   end
 
-  defp display_popular_tags(tags, limit) do
-    tags
-    |> Enum.reduce(%{}, fn {tag, count}, acc ->
-      key = tag |> to_string() |> String.downcase()
+  defp stream_topics(socket, topics) do
+    stream(
+      socket,
+      :topics,
+      Enum.map(topics, fn {tag, count} ->
+        %{id: Graphs.normalize_tag(tag), tag: tag, count: count}
+      end),
+      reset: true
+    )
+  end
 
-      Map.update(acc, key, %{tag: to_string(tag), count: count}, fn existing ->
-        %{existing | count: existing.count + count}
+  defp resolve_tag(nil, _topics), do: nil
+
+  defp resolve_tag(tag, topics) do
+    normalized = Graphs.normalize_tag(tag)
+
+    if normalized != "" do
+      Enum.find_value(topics, String.trim(tag), fn {label, _count} ->
+        if Graphs.normalize_tag(label) == normalized, do: label
       end)
-    end)
-    |> Map.values()
-    |> Enum.sort_by(fn item -> {-item.count, String.downcase(item.tag)} end)
-    |> then(fn topics -> if limit == :all, do: topics, else: Enum.take(topics, limit) end)
+    end
+  end
+
+  defp page_description(nil), do: "Browse public and partner grids built with RationalGrid."
+
+  defp page_description(tag) do
+    "Explore public grids about #{tag}. Follow questions, compare perspectives, and examine sources shared by the RationalGrid community."
   end
 
   defp category_class(true),

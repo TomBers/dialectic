@@ -9,6 +9,7 @@ defmodule DialecticWeb.SitemapController do
 
   alias Dialectic.Repo
   alias Dialectic.Accounts.Graph
+  alias Dialectic.DbActions.Graphs
   alias DialecticWeb.ComparisonController
 
   import Ecto.Query
@@ -29,7 +30,7 @@ defmodule DialecticWeb.SitemapController do
       )
       |> Repo.all()
 
-    xml = build_sitemap_xml(base_url, graphs)
+    xml = build_sitemap_xml(base_url, graphs, Graphs.list_all_tags())
 
     conn
     |> put_resp_content_type("application/xml")
@@ -37,7 +38,7 @@ defmodule DialecticWeb.SitemapController do
     |> send_resp(200, xml)
   end
 
-  defp build_sitemap_xml(base_url, graphs) do
+  defp build_sitemap_xml(base_url, graphs, topics) do
     urls =
       [
         # Static pages
@@ -58,6 +59,14 @@ defmodule DialecticWeb.SitemapController do
       ] ++
         Enum.map(ComparisonController.slugs(), fn slug ->
           url_entry(base_url <> "/compare/#{slug}", nil, "monthly", "0.5")
+        end) ++
+        Enum.map(topics, fn {tag, _count} ->
+          url_entry(
+            base_url <> ~p"/community?tag=#{Graphs.normalize_tag(tag)}",
+            nil,
+            "daily",
+            "0.6"
+          )
         end) ++
         Enum.map(graphs, fn graph ->
           lastmod =
