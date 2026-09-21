@@ -13,6 +13,61 @@ defmodule DialecticWeb.GraphAccessTest do
     %{owner: owner, graph: graph}
   end
 
+  test "owner can reach visibility and protection from the title bar", %{
+    conn: conn,
+    owner: owner,
+    graph: graph
+  } do
+    {:ok, view, _html} = live(log_in_user(conn, owner), ~p"/g/#{graph.slug}/graph")
+
+    assert has_element?(view, "#graph-header > #graph-title")
+    assert has_element?(view, "#graph-header #graph-workspace-bar")
+
+    assert has_element?(
+             view,
+             "#graph-header #graph-access-settings[title='Access controls: Public · Editable']"
+           )
+
+    refute has_element?(view, "#details-workspace[open]")
+
+    view |> element("#graph-access-settings") |> render_click()
+    assert has_element?(view, "#details-workspace[open]")
+
+    view |> element("#toggle_public_graph") |> render_click()
+    refute Repo.reload!(graph).is_public
+
+    assert has_element?(
+             view,
+             "#graph-access-settings[title='Access controls: Private · Editable']"
+           )
+
+    refute has_element?(view, "#toggle_public_graph[checked]")
+
+    view |> element("#toggle_public_graph") |> render_click()
+    assert Repo.reload!(graph).is_public
+    assert has_element?(view, "#toggle_public_graph[checked]")
+
+    view |> element("#toggle_lock_graph") |> render_click()
+    assert Repo.reload!(graph).is_locked
+
+    assert has_element?(
+             view,
+             "#graph-access-settings[title='Access controls: Public · Protected']"
+           )
+
+    refute has_element?(view, "#toggle_lock_graph[checked]")
+
+    view |> element("#toggle_lock_graph") |> render_click()
+    refute Repo.reload!(graph).is_locked
+
+    assert has_element?(
+             view,
+             "#graph-access-settings[title='Access controls: Public · Editable']"
+           )
+
+    assert has_element?(view, "#toggle_lock_graph[checked]")
+  end
+
   test "forged access-setting events cannot change another user's grid", %{
     conn: conn,
     graph: graph
@@ -21,6 +76,9 @@ defmodule DialecticWeb.GraphAccessTest do
       visitor_conn = if user, do: log_in_user(conn, user), else: conn
       {:ok, view, _html} = live(visitor_conn, ~p"/g/#{graph.slug}/graph")
       assert has_element?(view, "#graph-layout")
+      refute has_element?(view, "#graph-access-settings")
+      refute has_element?(view, "#toggle_public_graph")
+      refute has_element?(view, "#toggle_lock_graph")
 
       for event <- ["toggle_lock_graph", "toggle_public_graph"] do
         render_click(view, event)

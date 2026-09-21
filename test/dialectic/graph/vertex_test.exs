@@ -83,14 +83,14 @@ defmodule Dialectic.Graph.VertexTest do
         id: "parent",
         class: "origin",
         content: "Parent",
-        compound: true
+        parent: "Group"
       }
 
       child = %Vertex{
         id: "child",
         class: "answer",
         content: "Child",
-        parent: parent.id,
+        parent: "Group",
         prompt_kind: "selection_explain"
       }
 
@@ -99,20 +99,24 @@ defmodule Dialectic.Graph.VertexTest do
       :digraph.add_vertex(graph, parent.id, parent)
       :digraph.add_vertex(graph, child.id, child)
       :digraph.add_vertex(graph, deleted.id, deleted)
+      :digraph.add_vertex(graph, "Main", %Vertex{id: "Main", compound: true})
+      :digraph.add_vertex(graph, "Group", %Vertex{id: "Group", compound: true, parent: "Main"})
       :digraph.add_edge(graph, parent.id, child.id)
       :digraph.add_edge(graph, parent.id, deleted.id)
+      :digraph.add_edge(graph, "Group", child.id)
 
       elements = Vertex.to_cytoscape_format(graph)
       nodes = Enum.filter(elements, &Map.has_key?(&1, :classes))
       edges = Enum.reject(elements, &Map.has_key?(&1, :classes))
 
       assert Enum.sort_by(nodes, & &1.data.id) == [
-               %{classes: "answer", data: %{content: "Child", id: "child", parent: "parent"}},
-               %{
-                 classes: "origin",
-                 data: %{compound: true, content: "Parent", id: "parent", parent: nil}
-               }
+               %{classes: "answer", data: %{content: "Child", id: "child"}},
+               %{classes: "origin", data: %{content: "Parent", id: "parent"}}
              ]
+
+      assert {"child", %{parent: "Group"}} = :digraph.vertex(graph, "child")
+      assert {"Group", %{parent: "Main", compound: true}} = :digraph.vertex(graph, "Group")
+      assert :digraph.out_neighbours(graph, "Group") == ["child"]
 
       assert edges == [
                %{

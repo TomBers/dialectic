@@ -284,12 +284,12 @@ hooks.GraphLayout = {
     window.addEventListener("resize", this._handleMobileGraphResize);
 
     this.el.addEventListener("toggle-panel", (e) => {
-      const { id } = e.detail;
+      const { id, open = false } = e.detail;
       const targetPanel = document.getElementById(id);
 
       if (!targetPanel) return;
 
-      const isClosed = targetPanel.classList.contains("translate-x-full");
+      const isClosed = open || targetPanel.classList.contains("translate-x-full");
 
       if (id === "chat-drawer" && isClosed) {
         this.pushEvent("open_grid_chat", {});

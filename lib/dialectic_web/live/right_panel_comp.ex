@@ -7,7 +7,6 @@ defmodule DialecticWeb.RightPanelComp do
   @moduledoc """
   Accordion-style right panel with:
   - Node Information (shareable link + exports)
-  - Streams (list, focus/toggle, and start)
   - Keyboard Shortcuts
   """
 
@@ -53,23 +52,22 @@ defmodule DialecticWeb.RightPanelComp do
       |> assign(:share_path, share_path)
       |> assign_new(:search_term, fn -> "" end)
       |> assign_new(:search_results, fn -> [] end)
-      |> assign_new(:group_states, fn -> %{} end)
       |> assign_new(:prompt_mode, fn -> "university" end)
       |> assign_new(:current_user, fn -> nil end)
       |> assign_new(:highlights, fn -> [] end)
       |> assign_new(:activity_logs, fn -> load_activity_logs(graph_id) end)
       |> assign_new(:editing_highlight_id, fn -> nil end)
       |> assign_new(:open_sections, fn -> MapSet.new() end)
-      |> maybe_open_configure(Map.get(assigns, :open_section))
+      |> maybe_open_section(Map.get(assigns, :open_section))
 
     {:ok, socket}
   end
 
-  defp maybe_open_configure(socket, "configure") do
-    update(socket, :open_sections, &MapSet.put(&1, "configure"))
+  defp maybe_open_section(socket, section) when section in ["configure", "workspace"] do
+    update(socket, :open_sections, &MapSet.put(&1, section))
   end
 
-  defp maybe_open_configure(socket, _section), do: socket
+  defp maybe_open_section(socket, _section), do: socket
 
   @valid_sections ~w(configure workspace activity export utilities)
 
@@ -348,6 +346,7 @@ defmodule DialecticWeb.RightPanelComp do
 
       <%!-- Workspace Section --%>
       <details
+        :if={owner?(@graph_struct, @current_user)}
         id="details-workspace"
         class="group rounded-lg border border-gray-200 bg-white shadow-sm hover:shadow transition-shadow"
         open={MapSet.member?(@open_sections, "workspace")}
@@ -366,7 +365,7 @@ defmodule DialecticWeb.RightPanelComp do
               <div>
                 <div class="text-xs font-semibold text-gray-800">Access & collaboration</div>
                 <p class="text-[10px] text-gray-500 leading-tight">
-                  Groups, editing, and visibility
+                  Editing and visibility
                 </p>
               </div>
             </div>
@@ -377,64 +376,6 @@ defmodule DialecticWeb.RightPanelComp do
           </div>
         </summary>
         <div class="border-t border-gray-100 px-3 py-2.5 space-y-3">
-          <%!-- Groups subsection --%>
-          <div class="space-y-2">
-            <div class="flex items-center justify-between">
-              <div class="text-[11px] font-medium text-gray-600 uppercase tracking-wide">
-                Groups ({length(@work_streams)})
-              </div>
-              <button
-                type="button"
-                phx-click="open_start_stream_modal"
-                class="inline-flex items-center gap-1 text-[11px] font-medium text-indigo-600 hover:text-indigo-800 transition-colors"
-              >
-                <.icon name="hero-plus" class="w-3 h-3" /> New
-              </button>
-            </div>
-            <div class="max-h-40 overflow-y-auto">
-              <%= if @work_streams && length(@work_streams) > 0 do %>
-                <ul class="space-y-1">
-                  <%= for s <- @work_streams do %>
-                    <li class="flex items-center justify-between gap-2 px-2 py-1.5 rounded-md bg-gray-50 hover:bg-gray-100 transition-colors">
-                      <span class="text-xs text-gray-700 truncate flex-1">{s.id}</span>
-                      <div class="flex items-center gap-1">
-                        <button
-                          type="button"
-                          phx-click="focus_stream"
-                          phx-value-id={s.id}
-                          class="px-2 py-1 rounded-md text-[10px] font-medium text-gray-600 hover:bg-white hover:text-gray-800 transition-colors"
-                        >
-                          Focus
-                        </button>
-                        <button
-                          type="button"
-                          phx-click="toggle_stream"
-                          phx-value-id={s.id}
-                          class="px-2 py-1 rounded-md text-[10px] font-medium text-gray-600 hover:bg-white hover:text-gray-800 transition-colors"
-                        >
-                          Toggle
-                        </button>
-                        <%= if s.id != "Main" do %>
-                          <button
-                            type="button"
-                            phx-click="delete_stream"
-                            phx-value-id={s.id}
-                            class="px-2 py-1 rounded-md text-[10px] font-medium text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors"
-                            title="Delete group (must be empty)"
-                          >
-                            <.icon name="hero-trash" class="w-3 h-3" />
-                          </button>
-                        <% end %>
-                      </div>
-                    </li>
-                  <% end %>
-                </ul>
-              <% else %>
-                <p class="text-[11px] text-gray-400 text-center py-2">No groups yet</p>
-              <% end %>
-            </div>
-          </div>
-
           <%!-- Access subsection (owner only) --%>
           <%= if owner?(@graph_struct, @current_user) do %>
             <div class="pt-2 border-t border-gray-100 space-y-2">

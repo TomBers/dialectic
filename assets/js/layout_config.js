@@ -80,17 +80,6 @@ export const layoutConfig = {
     compactMinInitialZoom: 0.82,
   },
 
-  // Compound drag and drop options
-  compoundDragDropOptions: {
-    grabbedNode: () => true,
-    dropTarget: () => true,
-    dropSibling: () => false,
-    newParentNode: () => [],
-    boundingBoxOptions: { includeLabels: true, includeOverlays: false },
-    overThreshold: 10,
-    outThreshold: 10,
-  },
-
   // Vertical spacing settings for styling
   nodeSpacing: {
     marginTop: 10,

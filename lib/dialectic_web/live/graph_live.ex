@@ -156,9 +156,6 @@ defmodule DialecticWeb.GraphLive do
             graph_db.prompt_mode || "university"
           )
 
-        # Ensure a main group exists
-        _ = ensure_main_group(graph_title)
-
         {node_id, initial_highlight_id} = resolve_target_node(graph_title, params)
 
         node =
@@ -205,6 +202,15 @@ defmodule DialecticWeb.GraphLive do
       DialecticWeb.RightPanelComp,
       id: "right-panel-comp",
       open_section: "configure"
+    )
+
+    {:noreply, socket}
+  end
+
+  def handle_event("open_access_settings", _params, socket) do
+    send_update(DialecticWeb.RightPanelComp,
+      id: "right-panel-comp",
+      open_section: "workspace"
     )
 
     {:noreply, socket}
@@ -1029,8 +1035,6 @@ defmodule DialecticWeb.GraphLive do
           {:noreply, updated_socket} =
             update_graph(socket, {nil, node}, "node_clicked")
 
-          updated_socket = reapply_right_panel_state(socket, updated_socket)
-
           updated_socket =
             updated_socket
             |> assign(combine_selected_nodes: updated_selected)
@@ -1084,8 +1088,6 @@ defmodule DialecticWeb.GraphLive do
           {:noreply, updated_socket} =
             update_graph(socket, {nil, node}, "node_clicked")
 
-          updated_socket = reapply_right_panel_state(socket, updated_socket)
-
           updated_socket =
             updated_socket
             |> assign(presentation_slide_ids: updated_ids)
@@ -1120,7 +1122,6 @@ defmodule DialecticWeb.GraphLive do
             update_graph(socket, {nil, node}, "node_clicked")
 
           # Preserve and re-apply panel/menu state across node changes
-          updated_socket = reapply_right_panel_state(socket, updated_socket)
 
           # Close the quick search overlay and clear highlights when navigating from search
           updated_socket =
@@ -1174,7 +1175,6 @@ defmodule DialecticWeb.GraphLive do
         )
 
       # Preserve and re-apply panel/menu state across node moves
-      updated_socket = reapply_right_panel_state(socket, updated_socket)
 
       {:noreply, push_event(updated_socket, "center_node", %{id: updated_socket.assigns.node.id})}
     else
@@ -2595,10 +2595,6 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  defp ensure_main_group(graph_id) do
-    GraphManager.ensure_main_group(graph_id)
-  end
-
   defp finish_posting_thought(socket, graph_result, operation) do
     {:noreply, socket} =
       socket
@@ -2739,21 +2735,6 @@ defmodule DialecticWeb.GraphLive do
   end
 
   defp activity_actor(socket), do: socket.assigns[:current_user] || socket.assigns[:user]
-
-  # Helper to preserve and re-apply right panel state across node changes/moves
-  defp reapply_right_panel_state(socket, updated_socket) do
-    updated_socket =
-      updated_socket
-      |> assign(:group_states, socket.assigns[:group_states] || %{})
-
-    send_update(
-      DialecticWeb.RightPanelComp,
-      id: "right-panel-comp",
-      group_states: updated_socket.assigns[:group_states]
-    )
-
-    updated_socket
-  end
 
   defp update_streaming_node(socket, updated_vertex, node_id) do
     new_content = Map.get(updated_vertex, :content, "")
@@ -2904,7 +2885,6 @@ defmodule DialecticWeb.GraphLive do
       background_generation_sequence: 0,
       graph_operation: "",
       ask_question: true,
-      group_states: %{},
       search_highlight: nil,
       search_term: "",
       search_results: [],
@@ -3098,9 +3078,6 @@ defmodule DialecticWeb.GraphLive do
       node ->
         {:noreply, updated_socket} =
           update_graph(socket, {nil, node}, "presentation_go_to_slide")
-
-        updated_socket =
-          reapply_right_panel_state(socket, updated_socket)
 
         push_event(updated_socket, "center_node", %{id: node.id})
     end
