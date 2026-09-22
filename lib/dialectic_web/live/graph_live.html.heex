@@ -91,13 +91,18 @@
           }
           data-panel-toggle="right-panel"
           class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600"
-          aria-label="Access controls"
+          aria-label={
+            if(@graph_struct.is_public,
+              do: "Public grid: access controls",
+              else: "Private grid: access controls"
+            )
+          }
           title={
             "Access controls: #{if @graph_struct.is_public, do: "Public", else: "Private"} · #{if @graph_struct.is_locked, do: "Protected", else: "Editable"}"
           }
         >
           <.icon
-            name={if(@graph_struct.is_locked, do: "hero-lock-closed", else: "hero-lock-open")}
+            name={if(@graph_struct.is_public, do: "hero-globe-alt", else: "hero-lock-closed")}
             class="h-3.5 w-3.5"
           />
         </button>
@@ -536,61 +541,75 @@
             />
 
             <div class="pointer-events-none absolute right-4 top-4 z-20 flex flex-col items-end gap-2">
-              <div class="pointer-events-auto inline-flex items-center gap-3 rounded-full border border-slate-200/90 bg-white/95 px-3 py-2 text-xs font-semibold text-slate-700 shadow-[0_18px_30px_-24px_rgba(15,23,42,0.55)] ring-1 ring-white/80 backdrop-blur">
-                <span class="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                  Zoom
-                </span>
-                <span
-                  id="graph-zoom-level"
-                  data-zoom-level
-                  class="min-w-[3.25rem] text-right font-semibold tabular-nums text-slate-900"
-                >
-                  100%
-                </span>
-                <input
-                  type="range"
-                  min="0"
-                  max="1000"
-                  value="574"
-                  step="1"
-                  data-zoom-slider
-                  class="h-1.5 w-32 cursor-pointer appearance-none rounded-full bg-slate-200 accent-slate-800"
-                  aria-label="Adjust graph zoom"
-                  title="Adjust graph zoom"
-                />
-              </div>
-
-              <div class="pointer-events-auto inline-flex items-center gap-1 rounded-[1.1rem] border border-slate-200/90 bg-white/98 p-1 shadow-[0_22px_40px_-28px_rgba(15,23,42,0.55)] ring-1 ring-white/80 backdrop-blur">
+              <div
+                id="graph-zoom-toolbar"
+                role="group"
+                aria-label="Graph zoom controls"
+                class="pointer-events-auto inline-flex items-center gap-0.5 rounded-xl border border-slate-200 bg-white p-1 text-xs text-slate-700 shadow-sm"
+              >
                 <button
+                  id="graph-zoom-out"
                   type="button"
                   data-zoom-action="out"
-                  class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-transparent text-slate-600 transition hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900"
+                  class="inline-flex h-9 w-9 items-center justify-center rounded-lg hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-teal-600"
                   aria-label="Zoom out"
                   title="Zoom out"
                 >
                   <.icon name="hero-minus" class="h-4 w-4" />
                 </button>
+                <details id="graph-zoom-options" class="relative">
+                  <summary
+                    class="flex h-9 min-w-[3.25rem] cursor-pointer list-none items-center justify-center rounded-lg px-1 font-semibold tabular-nums hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-teal-600 [&::-webkit-details-marker]:hidden"
+                    aria-label="Fine-tune graph zoom"
+                    title="Fine-tune graph zoom"
+                  >
+                    <span id="graph-zoom-level" data-zoom-level>100%</span>
+                  </summary>
+                  <div class="absolute right-0 top-full mt-2 w-48 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+                    <label for="graph-zoom-slider" class="mb-3 block text-xs font-medium">
+                      Adjust zoom
+                    </label>
+                    <input
+                      id="graph-zoom-slider"
+                      type="range"
+                      min="0"
+                      max="1000"
+                      value="574"
+                      step="1"
+                      data-zoom-slider
+                      class="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-slate-800"
+                      aria-label="Adjust graph zoom"
+                    />
+                  </div>
+                </details>
                 <button
-                  type="button"
-                  data-zoom-action="fit"
-                  class="inline-flex h-10 items-center justify-center rounded-full border border-slate-200 bg-slate-50 px-3 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-100 hover:text-slate-950"
-                  aria-label="Fit graph to screen"
-                  title="Fit graph to screen"
-                >
-                  Fit
-                </button>
-                <button
+                  id="graph-zoom-in"
                   type="button"
                   data-zoom-action="in"
-                  class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-transparent text-slate-600 transition hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900"
+                  class="inline-flex h-9 w-9 items-center justify-center rounded-lg hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-teal-600"
                   aria-label="Zoom in"
                   title="Zoom in"
                 >
                   <.icon name="hero-plus" class="h-4 w-4" />
                 </button>
+                <span aria-hidden="true" class="mx-1 h-4 w-px bg-slate-200"></span>
+                <button
+                  id="graph-zoom-fit"
+                  type="button"
+                  data-zoom-action="fit"
+                  class="inline-flex h-9 items-center justify-center rounded-lg px-2.5 font-semibold hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-teal-600"
+                  aria-label="Fit graph to screen"
+                  title="Fit graph to screen"
+                >
+                  Fit
+                </button>
               </div>
 
-              <div class="max-w-[17rem] rounded-full bg-white/78 px-3 py-1.5 text-[11px] font-medium text-slate-600 shadow-[0_14px_28px_-24px_rgba(15,23,42,0.45)] ring-1 ring-white/70 backdrop-blur">
+              <div
+                id="graph-interaction-hint"
+                data-graph-hint
+                class="max-w-[17rem] rounded-lg bg-white/95 px-2 py-1 text-[11px] text-slate-500"
+              >
                 <span>Click a box to open it in the reader.</span>
               </div>
             </div>

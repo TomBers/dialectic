@@ -28,6 +28,8 @@ defmodule DialecticWeb.GraphAccessTest do
              "#graph-header #graph-access-settings[title='Access controls: Public · Editable']"
            )
 
+    assert has_element?(view, "#graph-access-settings .hero-globe-alt")
+
     refute has_element?(view, "#details-workspace[open]")
 
     view |> element("#graph-access-settings") |> render_click()
@@ -40,6 +42,8 @@ defmodule DialecticWeb.GraphAccessTest do
              view,
              "#graph-access-settings[title='Access controls: Private · Editable']"
            )
+
+    assert has_element?(view, "#graph-access-settings .hero-lock-closed")
 
     refute has_element?(view, "#toggle_public_graph[checked]")
 
@@ -54,6 +58,8 @@ defmodule DialecticWeb.GraphAccessTest do
              view,
              "#graph-access-settings[title='Access controls: Public · Protected']"
            )
+
+    assert has_element?(view, "#graph-access-settings .hero-globe-alt")
 
     refute has_element?(view, "#toggle_lock_graph[checked]")
 

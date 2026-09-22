@@ -105,6 +105,23 @@ describe("graph viewport lifecycle", () => {
     expect(cy.pan()).toEqual(pan);
   });
 
+  it("dismisses the graph hint on interaction and keeps it dismissed after server patches", () => {
+    const hint = document.createElement("div");
+    hint.dataset.graphHint = "";
+    hook.el.append(hint);
+    mount();
+    expect(hint.hidden).toBe(false);
+
+    hook.el.dispatchEvent(new Event("pointerdown", { bubbles: true }));
+    expect(hint.hidden).toBe(true);
+
+    hint.hidden = false;
+    hook.updated();
+    flushFrames();
+    expect(hint.hidden).toBe(true);
+    expect(hook.cy.zoom()).toBe(0.85);
+  });
+
   it("restores the actual zoom display after LiveView patches its default text", () => {
     const indicator = document.createElement("span");
     indicator.dataset.zoomLevel = "";

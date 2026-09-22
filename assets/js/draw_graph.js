@@ -1710,22 +1710,30 @@ function _injectDepthToggleStyles() {
   background: #fef3c7;
   border-color: #f59e0b;
   color: #92400e;
-  box-shadow: 0 0 6px rgba(245, 158, 11, 0.45), 0 1px 2px rgba(0,0,0,0.08);
+  box-shadow: none;
 }
 .depth-toggle-btn.depth-collapsed-btn:hover {
   background: #fde68a;
   border-color: #d97706;
-  box-shadow: 0 0 10px rgba(245, 158, 11, 0.6), 0 2px 4px rgba(0,0,0,0.12);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08);
 }
 /* Visible branch → subtle grey Hide action. */
 .depth-toggle-btn.depth-expanded-btn {
-  background: #ffffff;
-  border-color: #d1d5db;
-  color: #6b7280;
+  background: transparent;
+  border-color: transparent;
+  color: #64748b;
+  box-shadow: none;
 }
-.depth-toggle-btn.depth-expanded-btn:hover {
-  background: #f9fafb;
-  border-color: #9ca3af;
+.depth-toggle-btn.depth-expanded-btn:hover,
+.depth-toggle-btn.depth-expanded-btn:focus-visible,
+.depth-toggle-btn.depth-expanded-btn.depth-control-active {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #475569;
+}
+.depth-toggle-btn:focus-visible {
+  outline: 2px solid #0f766e;
+  outline-offset: 2px;
 }
 .graph-focus-controls {
   position: absolute;
@@ -2144,6 +2152,7 @@ function _updateDepthTogglePositions(cy) {
     const { x, y, translateX, translateY } = depthTogglePosition(bb);
 
     btn.style.display = "";
+    btn.classList.toggle("depth-control-active", node.hasClass("selected"));
     btn.style.setProperty("--depth-toggle-scale", scale.toFixed(3));
     btn.style.setProperty("--depth-toggle-translate-x", translateX);
     btn.style.setProperty("--depth-toggle-translate-y", translateY);

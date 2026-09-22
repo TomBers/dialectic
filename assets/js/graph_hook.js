@@ -338,6 +338,17 @@ const graphHook = {
   mounted() {
     const { graph, node, div, graphId } = this.el.dataset;
     this._lastGraphStr = graph;
+    this._graphHintDismissed = false;
+    this._dismissGraphHint = () => {
+      this._graphHintDismissed = true;
+      const hint = this.el.querySelector("[data-graph-hint]");
+      if (hint) hint.hidden = true;
+    };
+    for (const event of ["pointerdown", "wheel", "keydown"]) {
+      this.el.addEventListener(event, this._dismissGraphHint, {
+        capture: true, passive: true, once: true,
+      });
+    }
     const appearance = syncGraphAppearanceStorage(this.el.dataset);
     this._reduceMotion = appearance.reduceMotion;
     this._highContrast = appearance.highContrast;
@@ -2433,6 +2444,8 @@ const graphHook = {
     }
     this._syncZoomIndicators?.();
 
+    if (this._graphHintDismissed) this._dismissGraphHint();
+
     if (this._bindPngButtons) {
       this._bindPngButtons();
     }
@@ -2445,6 +2458,9 @@ const graphHook = {
     if (this._debugRedraw) this._debugRedraw();
   },
   destroyed() {
+    for (const event of ["pointerdown", "wheel", "keydown"]) {
+      this.el.removeEventListener(event, this._dismissGraphHint, true);
+    }
     storeGraphViewport(
       this.el?.dataset?.graphId,
       this._readReaderPathIds().join(","),

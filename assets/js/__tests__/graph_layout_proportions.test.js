@@ -91,7 +91,7 @@ describe("graph layout proportions", () => {
     expect(nodeStyle["font-weight"]).toBe(500);
     expect(nodeStyle["text-metrics"]).toBe("font");
     expect(nodeStyle.height).toBe("label");
-    expect(nodeStyle.padding).toBe("10px");
+    expect(nodeStyle.padding).toBe("14px");
     expect(nodeStyle.ghost).toBe("no");
   });
 
