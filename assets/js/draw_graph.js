@@ -73,7 +73,7 @@ const getVisibleViewport = (container) => {
 };
 
 const constrainViewport = (cy, container) => {
-  if (!cy || !container) return false;
+  if (!cy || !container || cy.destroyed() || !cy.renderer()) return false;
 
   const visibleNodes = cy.nodes().filter(VISIBLE_GRAPH_NODE_FILTER);
   if (!visibleNodes || visibleNodes.length === 0) return false;
@@ -344,13 +344,15 @@ export function draw_graph(
     return clampValue(delta * speed, -maxStep, maxStep);
   };
   let clampPending = false;
+  let clampFrame = null;
   let clampInProgress = false;
   let layoutRunning = false;
   const scheduleViewportClamp = ({ immediate = false } = {}) => {
     if (
       clampInProgress ||
       !cy ||
-      (typeof cy.destroyed === "function" && cy.destroyed())
+      cy.destroyed() ||
+      !cy.renderer()
     ) {
       return;
     }
@@ -361,6 +363,7 @@ export function draw_graph(
     }
 
     const runClamp = () => {
+      clampFrame = null;
       clampPending = false;
       if (
         clampInProgress ||
@@ -384,13 +387,14 @@ export function draw_graph(
     };
 
     if (immediate) {
+      if (clampFrame !== null) cancelAnimationFrame(clampFrame);
       runClamp();
       return;
     }
 
     if (clampPending) return;
     clampPending = true;
-    requestAnimationFrame(runClamp);
+    clampFrame = requestAnimationFrame(runClamp);
   };
 
   let initialLayoutReadyNotified = false;
@@ -1080,6 +1084,11 @@ export function draw_graph(
   };
 
   cy.one("destroy", () => {
+    if (clampFrame !== null) cancelAnimationFrame(clampFrame);
+    if (viewportClampTimeout !== null) clearTimeout(viewportClampTimeout);
+    clampFrame = null;
+    viewportClampTimeout = null;
+    clampPending = false;
     serverEventRefs.forEach((ref) => context.removeHandleEvent(ref));
     container.removeEventListener("wheel", wheelHandler);
     container.removeEventListener("mousedown", mousedownHandler);
@@ -1091,7 +1100,6 @@ export function draw_graph(
     document.removeEventListener("keyup", keyupHandler);
     window.removeEventListener("mousemove", mousemoveHandler);
     window.removeEventListener("mouseup", mouseupHandler);
-    if (viewportClampTimeout !== null) clearTimeout(viewportClampTimeout);
     cy.cleanupDepthOverlay();
   });
   return cy;

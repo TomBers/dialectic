@@ -38,6 +38,9 @@
       title_id="graph-title"
       title={@graph_struct.title}
       menu_id="graph-top-menu"
+      follow_id_prefix="graph"
+      current_user={@current_user}
+      following_graph?={@following_graph?}
       menu_class={[@mobile_inquiry? && "hidden md:flex"]}
     >
       <:heading_actions>
@@ -81,7 +84,7 @@
           click={
             JS.dispatch("toggle-panel",
               to: "#graph-layout",
-              detail: %{id: "right-panel"}
+              detail: %{id: "right-panel", section: "configure"}
             )
             |> JS.push("open_prompt_settings")
           }
@@ -93,11 +96,14 @@
           phx-click={
             JS.dispatch("toggle-panel",
               to: "#graph-layout",
-              detail: %{id: "right-panel", open: true}
+              detail: %{id: "right-panel", section: "workspace"}
             )
             |> JS.push("open_access_settings")
           }
           data-panel-toggle="right-panel"
+          data-panel-section="workspace"
+          aria-controls="right-panel"
+          aria-expanded="false"
           class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600"
           aria-label={
             if(@graph_struct.is_public,
@@ -116,34 +122,6 @@
         </button>
 
         <div class="flex shrink-0 items-center gap-1.5">
-          <%= if @current_user do %>
-            <button
-              id="graph-follow-grid-button"
-              type="button"
-              phx-click={if(@following_graph?, do: "unfollow_graph", else: "follow_graph")}
-              aria-pressed={@following_graph?}
-              class="inline-flex h-7 items-center gap-1 rounded-lg border border-slate-300 bg-white px-2.5 text-[11px] font-semibold text-black transition hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600"
-            >
-              <.icon
-                name={if(@following_graph?, do: "hero-check", else: "hero-plus")}
-                class="h-3.5 w-3.5"
-              />
-              <%= if @following_graph? do %>
-                Following
-              <% else %>
-                Follow
-              <% end %>
-            </button>
-          <% else %>
-            <.link
-              navigate={~p"/users/log_in"}
-              id="graph-follow-grid-login-link"
-              class="inline-flex h-7 items-center gap-1 rounded-lg border border-slate-300 bg-white px-2.5 text-[11px] font-semibold text-black transition hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600"
-            >
-              <.icon name="hero-plus" class="h-3.5 w-3.5" /> Follow
-            </.link>
-          <% end %>
-
           <div class="hidden h-4 w-px bg-slate-200 sm:block"></div>
 
           <.live_component

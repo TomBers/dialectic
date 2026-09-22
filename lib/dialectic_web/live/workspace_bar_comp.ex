@@ -8,6 +8,9 @@ defmodule DialecticWeb.WorkspaceBarComp do
   attr :title, :string, required: true
   attr :menu_id, :string, required: true
   attr :menu_class, :list, default: []
+  attr :follow_id_prefix, :string, required: true
+  attr :current_user, :any, required: true
+  attr :following_graph?, :boolean, required: true
   slot :heading_actions
   slot :navigation, required: true
   slot :tools
@@ -29,6 +32,49 @@ defmodule DialecticWeb.WorkspaceBarComp do
         {render_slot(@navigation)}
         <div class="workspace-context-actions">
           {render_slot(@tools)}
+          <%= if @current_user do %>
+            <button
+              id={"#{@follow_id_prefix}-follow-grid-button"}
+              type="button"
+              phx-click={if(@following_graph?, do: "unfollow_graph", else: "follow_graph")}
+              aria-label={
+                if(@following_graph?,
+                  do: "Stop receiving grid updates in Activity",
+                  else: "Get notified about grid changes in Activity"
+                )
+              }
+              aria-pressed={to_string(@following_graph?)}
+              title={
+                if(@following_graph?,
+                  do: "Updates from this grid appear in Activity. Click to turn them off.",
+                  else: "Get notified when this grid changes and see updates in Activity."
+                )
+              }
+              class={[
+                "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-slate-600 transition duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 sm:h-7 sm:w-7",
+                if(@following_graph?,
+                  do: "border-sky-200 bg-sky-100 text-sky-700 hover:bg-sky-200",
+                  else:
+                    "border-transparent bg-slate-50 hover:bg-slate-100 hover:text-slate-950 sm:bg-transparent"
+                )
+              ]}
+            >
+              <.icon
+                name={if(@following_graph?, do: "hero-bell-solid", else: "hero-bell-alert")}
+                class="h-4 w-4"
+              />
+            </button>
+          <% else %>
+            <.link
+              navigate={~p"/users/log_in"}
+              id={"#{@follow_id_prefix}-follow-grid-login-link"}
+              aria-label="Sign in to get notified about grid changes in Activity"
+              title="Sign in to get notified when this grid changes and see updates in Activity."
+              class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-transparent bg-slate-50 text-slate-600 transition duration-150 hover:bg-slate-100 hover:text-slate-950 sm:h-7 sm:w-7 sm:bg-transparent"
+            >
+              <.icon name="hero-bell-alert" class="h-4 w-4" />
+            </.link>
+          <% end %>
         </div>
       </div>
     </header>
@@ -46,6 +92,9 @@ defmodule DialecticWeb.WorkspaceBarComp do
       type="button"
       phx-click={@click}
       data-panel-toggle="right-panel"
+      data-panel-section="configure"
+      aria-controls="right-panel"
+      aria-expanded="false"
       class="hidden h-8 shrink-0 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 transition hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-800 sm:inline-flex"
       title="Change explanation level"
       aria-label={"Explanation level: #{prompt_mode_label(@prompt_mode)}. Change explanation level"}

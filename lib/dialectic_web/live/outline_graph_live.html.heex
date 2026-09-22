@@ -44,6 +44,9 @@
       title_id="reader-title"
       title={@graph_struct.title}
       menu_id="reader-top-menu"
+      follow_id_prefix="reader"
+      current_user={@current_user}
+      following_graph?={@following_graph?}
       menu_class={["hidden sm:flex"]}
     >
       <:navigation>
@@ -89,50 +92,6 @@
           <span>Style</span>
           <.icon name="hero-chevron-down" class="h-3.5 w-3.5" aria-hidden="true" />
         </button>
-
-        <%= if @current_user do %>
-          <button
-            id="reader-follow-grid-button"
-            type="button"
-            phx-click={if(@following_graph?, do: "unfollow_graph", else: "follow_graph")}
-            aria-label={
-              if(@following_graph?,
-                do: "Stop receiving grid updates in Activity",
-                else: "Get notified about grid changes in Activity"
-              )
-            }
-            aria-pressed={to_string(@following_graph?)}
-            title={
-              if(@following_graph?,
-                do: "Updates from this grid appear in Activity. Click to turn them off.",
-                else: "Get notified when this grid changes and see updates in Activity."
-              )
-            }
-            class={[
-              "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-slate-600 transition duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 sm:h-7 sm:w-7",
-              if(@following_graph?,
-                do: "border-sky-200 bg-sky-100 text-sky-700 hover:bg-sky-200",
-                else:
-                  "border-transparent bg-slate-50 hover:bg-slate-100 hover:text-slate-950 sm:bg-transparent"
-              )
-            ]}
-          >
-            <.icon
-              name={if(@following_graph?, do: "hero-bell-solid", else: "hero-bell-alert")}
-              class="h-4 w-4"
-            />
-          </button>
-        <% else %>
-          <.link
-            navigate={~p"/users/log_in"}
-            id="reader-follow-grid-login-link"
-            aria-label="Sign in to get notified about grid changes in Activity"
-            title="Sign in to get notified when this grid changes and see updates in Activity."
-            class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-transparent bg-slate-50 text-slate-600 transition duration-150 hover:bg-slate-100 hover:text-slate-950 sm:h-7 sm:w-7 sm:bg-transparent"
-          >
-            <.icon name="hero-bell-alert" class="h-4 w-4" />
-          </.link>
-        <% end %>
 
         <%= if !@can_edit do %>
           <span class="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700">

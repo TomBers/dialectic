@@ -61,11 +61,17 @@ describe("graph viewport lifecycle", () => {
       graph: JSON.stringify(elements), node: "0", div: "cy-inner",
       graphId: "viewport-test", reduceMotion: "true", readerPathIds: "[]",
     });
-    hook = { ...graphHook, el, pushEvent: vi.fn(), handleEvent: vi.fn() };
+    hook = {
+      ...graphHook, el, pushEvent: vi.fn(),
+      handleEvent: vi.fn((event) => event), removeHandleEvent: vi.fn(),
+    };
   });
 
   afterEach(() => {
+    const cy = hook.cy;
     hook.destroyed();
+    if (cy) expect(cy.destroyed()).toBe(true);
+    flushFrames();
     document.body.replaceChildren();
     window.history.replaceState({}, "", "/");
     vi.restoreAllMocks();
@@ -82,6 +88,59 @@ describe("graph viewport lifecycle", () => {
     expect(first.pstyle("label").value).toBe("Idea 0");
     expect(hook._container.dataset.graphReady).toBe("true");
     expect(hook._layoutRunning).toBe(false);
+  });
+
+  it("finishes teardown with viewport frames and pan timers pending", () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    mount();
+    const cy = hook.cy;
+    cy.scheduleViewportClamp();
+    const clampFrame = [...frames.keys()][0];
+    cy.nodes().dirtyBoundingBoxCache();
+    cy.pan({ x: 150, y: 100 });
+
+    hook.destroyed();
+    expect(frames.has(clampFrame)).toBe(false);
+    vi.advanceTimersByTime(100);
+
+    expect(() => flushFrames()).not.toThrow();
+    expect(cy.destroyed()).toBe(true);
+    expect(hook.cy).toBeNull();
+  });
+
+  it("ignores viewport measurements during and after renderer teardown", () => {
+    mount();
+    const cy = hook.cy;
+    const results = [];
+    cy.one("destroy", () => {
+      cy.nodes().dirtyBoundingBoxCache();
+      results.push(cy.constrainViewport());
+      cy.scheduleViewportClamp({ immediate: true });
+    });
+
+    expect(() => cy.destroy()).not.toThrow();
+    expect(results).toEqual([false]);
+    expect(cy.constrainViewport()).toBe(false);
+    expect(() => flushFrames()).not.toThrow();
+  });
+
+  it("finishes destroying the previous renderer when switching view modes", () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    mount();
+    const previous = hook.cy;
+    previous.scheduleViewportClamp();
+    previous.pan({ x: 150, y: 100 });
+
+    hook.el.dispatchEvent(new CustomEvent("viewModeChanged", {
+      detail: { view_mode: "compact" },
+    }));
+    vi.advanceTimersByTime(100);
+
+    expect(() => flushFrames()).not.toThrow();
+    expect(previous.destroyed()).toBe(true);
+    expect(hook.cy).not.toBe(previous);
+    expect(hook.cy.destroyed()).toBe(false);
+    expect(hook.cy.getElementById("0").pstyle("label").value).toBe("Idea 0");
   });
 
   it("does not reload or rearrange nodes on the first unchanged LiveView update", () => {

@@ -649,21 +649,28 @@ defmodule DialecticWeb.GraphLiveTest do
       user = assigns.current_user
       graph = assigns.graph_struct
 
-      assert has_element?(view, "#graph-follow-grid-button", "Follow")
+      assert has_element?(
+               view,
+               "#graph-follow-grid-button[aria-pressed='false'] .hero-bell-alert"
+             )
 
       view
       |> element("#graph-follow-grid-button")
       |> render_click()
 
       assert Follows.following_graph?(user, graph)
-      assert has_element?(view, "#graph-follow-grid-button", "Following")
+      assert has_element?(view, "#graph-follow-grid-button[aria-pressed='true'] .hero-bell-solid")
 
       view
       |> element("#graph-follow-grid-button")
       |> render_click()
 
       refute Follows.following_graph?(user, graph)
-      assert has_element?(view, "#graph-follow-grid-button", "Follow")
+
+      assert has_element?(
+               view,
+               "#graph-follow-grid-button[aria-pressed='false'] .hero-bell-alert"
+             )
     end
 
     test "crafted unauthenticated unfollow event opens the login modal", %{conn: conn} do

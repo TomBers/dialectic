@@ -74,6 +74,26 @@ defmodule DialecticWeb.GraphAccessTest do
     assert has_element?(view, "#toggle_lock_graph[checked]")
   end
 
+  test "access and explanation shortcuts focus their own section", %{
+    conn: conn,
+    owner: owner,
+    graph: graph
+  } do
+    {:ok, view, _html} = live(log_in_user(conn, owner), ~p"/g/#{graph.slug}/graph")
+
+    view |> element("#graph-access-settings") |> render_click()
+    assert has_element?(view, "#details-workspace[open]")
+    refute has_element?(view, "#details-configure[open]")
+
+    view |> element("#graph-workspace-bar-level") |> render_click()
+    assert has_element?(view, "#details-configure[open]")
+    refute has_element?(view, "#details-workspace[open]")
+
+    view |> element("#graph-access-settings") |> render_click()
+    assert has_element?(view, "#details-workspace[open]")
+    refute has_element?(view, "#details-configure[open]")
+  end
+
   test "forged access-setting events cannot change another user's grid", %{
     conn: conn,
     graph: graph

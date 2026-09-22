@@ -196,10 +196,14 @@ defmodule DialecticWeb.AskFormComp do
                 phx-click={
                   Phoenix.LiveView.JS.dispatch("toggle-panel",
                     to: "#graph-layout",
-                    detail: %{id: "right-panel"}
+                    detail: %{id: "right-panel", section: "configure"}
                   )
                   |> Phoenix.LiveView.JS.push("open_prompt_settings")
                 }
+                data-panel-toggle="right-panel"
+                data-panel-section="configure"
+                aria-controls="right-panel"
+                aria-expanded="false"
                 class="mt-2 inline-flex min-h-11 items-center gap-2 rounded-lg border border-slate-200 px-3 text-xs font-semibold text-slate-700 md:hidden"
               >
                 Answer settings

@@ -64,7 +64,12 @@ defmodule DialecticWeb.RightPanelComp do
   end
 
   defp maybe_open_section(socket, section) when section in ["configure", "workspace"] do
-    update(socket, :open_sections, &MapSet.put(&1, section))
+    update(socket, :open_sections, fn sections ->
+      sections
+      |> MapSet.delete("configure")
+      |> MapSet.delete("workspace")
+      |> MapSet.put(section)
+    end)
   end
 
   defp maybe_open_section(socket, _section), do: socket
