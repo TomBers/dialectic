@@ -36,13 +36,26 @@
       id="graph-header"
       class="relative z-20 flex shrink-0 items-center justify-between gap-4 border-b border-slate-200 bg-white px-4 py-1.5"
     >
-      <h1
-        id="graph-title"
-        class="min-w-0 flex-1 truncate text-sm font-semibold text-slate-700"
-        title={@graph_struct.title}
-      >
-        {@graph_struct.title}
-      </h1>
+      <div id="graph-heading" class="flex min-w-0 flex-1 items-center gap-2">
+        <h1
+          id="graph-title"
+          class="min-w-0 truncate text-sm font-semibold text-slate-700"
+          title={@graph_struct.title}
+        >
+          {@graph_struct.title}
+        </h1>
+        <button
+          id="graph-help-button"
+          type="button"
+          phx-click="open_help_modal"
+          class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-transparent bg-slate-50 text-slate-600 transition hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600 sm:h-7 sm:w-7 sm:bg-transparent"
+          aria-label="Open how-to guide for this page"
+          title="Open how-to guide for this page"
+        >
+          <.icon name="hero-question-mark-circle" class="h-4 w-4" />
+          <span class="sr-only">How to use</span>
+        </button>
+      </div>
       <div
         id="graph-top-menu"
         class={[
@@ -113,13 +126,8 @@
               id="graph-follow-grid-button"
               type="button"
               phx-click={if(@following_graph?, do: "unfollow_graph", else: "follow_graph")}
-              class={[
-                "inline-flex h-7 items-center gap-1 rounded-lg px-2.5 text-[11px] font-semibold transition",
-                if(@following_graph?,
-                  do: "bg-slate-100 text-slate-700 hover:bg-slate-200/80",
-                  else: "bg-slate-950 text-white hover:bg-slate-800"
-                )
-              ]}
+              aria-pressed={@following_graph?}
+              class="inline-flex h-7 items-center gap-1 rounded-lg border border-slate-300 bg-white px-2.5 text-[11px] font-semibold text-black transition hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600"
             >
               <.icon
                 name={if(@following_graph?, do: "hero-check", else: "hero-plus")}
@@ -135,7 +143,7 @@
             <.link
               navigate={~p"/users/log_in"}
               id="graph-follow-grid-login-link"
-              class="inline-flex h-7 items-center gap-1 rounded-lg bg-slate-950 px-2.5 text-[11px] font-semibold text-white transition hover:bg-slate-800"
+              class="inline-flex h-7 items-center gap-1 rounded-lg border border-slate-300 bg-white px-2.5 text-[11px] font-semibold text-black transition hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600"
             >
               <.icon name="hero-plus" class="h-3.5 w-3.5" /> Follow
             </.link>

@@ -19,7 +19,7 @@
 
 import { marked } from "marked";
 import DOMPurify from "dompurify";
-import katex from "katex";
+import { renderToString } from "katex";
 import { extractTitle, hashTitle as hashString } from "./title_utils.js";
 
 const katexPlugin = {
@@ -43,7 +43,7 @@ const katexPlugin = {
         }
       },
       renderer(token) {
-        return katex.renderToString(token.text, {
+        return renderToString(token.text, {
           displayMode: true,
           throwOnError: false,
         });
@@ -68,7 +68,7 @@ const katexPlugin = {
         }
       },
       renderer(token) {
-        return katex.renderToString(token.text, {
+        return renderToString(token.text, {
           displayMode: false,
           throwOnError: false,
         });

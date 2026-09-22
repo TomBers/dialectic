@@ -434,33 +434,64 @@ defmodule DialecticWeb.HomeLive do
               A grid grows as you ask, keeping the connections visible so you can return
               and keep learning.
             </p>
-            <div class="mt-8 flex flex-wrap items-center gap-3">
-              <.link
-                id="home-start-grid-link"
-                href="#start-here"
-                data-analytics-event="start_grid_clicked"
-                data-analytics-location="home_hero"
-                class="hidden min-h-11 items-center gap-2 rounded-md bg-teal-300 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-teal-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-300 md:inline-flex"
+            <div id="start-here" class="mt-7 scroll-mt-24">
+              <div id="home-start-panel" class="hidden max-w-xl md:block">
+                <label
+                  id="home-question-label"
+                  for="new-idea-input"
+                  class="mb-3 block text-base font-semibold text-white"
+                >
+                  What are you curious about?
+                </label>
+                <div class="rounded-xl bg-white/10 p-2 text-slate-950 ring-1 ring-white/20">
+                  <.live_component
+                    module={DialecticWeb.NewIdeaFormComp}
+                    id="new-idea-form"
+                    form={@form}
+                    placeholder="Ask a question or name a topic"
+                    submit_label="Continue"
+                    autofocus={@focus_new_grid}
+                    minimal={true}
+                    authenticated={!is_nil(@current_user)}
+                    public_grid_warning="New grids are public and editable by default. Anyone can read them and, while editing is on, add to them. Sign in first if you want to control access in Settings; never include sensitive information."
+                  />
+                </div>
+              </div>
+              <div id="home-mobile-community-start" class="md:hidden">
+                <p class="text-sm leading-6 text-slate-300">
+                  Read public grids, add your own thoughts, and ask follow-up questions from your phone.
+                </p>
+              </div>
+              <div class="mt-4 flex flex-wrap items-center gap-3">
+                <.link
+                  id="home-mobile-community-link"
+                  navigate={~p"/community"}
+                  data-analytics-event="community_clicked"
+                  data-analytics-location="home_hero"
+                  class="inline-flex min-h-11 items-center gap-2 rounded-md bg-teal-300 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-teal-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-300 md:hidden"
+                >
+                  Browse public grids <.icon name="hero-arrow-right" class="h-4 w-4" />
+                </.link>
+                <.link
+                  id="home-community-secondary-link"
+                  navigate={~p"/community"}
+                  data-analytics-event="community_clicked"
+                  data-analytics-location="question_form"
+                  class="hidden min-h-11 items-center gap-2 rounded-md border border-teal-200/60 bg-white/10 px-4 py-2 text-sm font-semibold text-teal-50 transition hover:bg-white/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-300 md:inline-flex"
+                >
+                  Browse public grids <.icon name="hero-arrow-right" class="h-4 w-4" />
+                </.link>
+              </div>
+              <p
+                :if={is_nil(@current_user)}
+                id="home-try-reassurance"
+                class="mt-3 text-sm leading-6 text-slate-300"
               >
-                Try it with a question <.icon name="hero-arrow-down" class="h-4 w-4" />
-              </.link>
-              <.link
-                id="home-example-link"
-                href="#home-proof-carousel"
-                class="inline-flex min-h-11 items-center gap-2 rounded-md border border-teal-200/60 bg-teal-300 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-teal-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-300 md:bg-white/10 md:text-teal-50 md:hover:bg-white/15"
-              >
-                See a real example <.icon name="hero-arrow-down" class="h-4 w-4" />
-              </.link>
+                <span class="hidden md:inline">Try Simple answers without an account.</span>
+                <span class="md:hidden">Explore public grids without an account.</span>
+                Sign up free to save bookmarks and highlights.
+              </p>
             </div>
-            <p
-              :if={is_nil(@current_user)}
-              id="home-try-reassurance"
-              class="mt-4 text-sm text-slate-300"
-            >
-              <span class="hidden md:inline">Try Simple answers without an account.</span>
-              <span class="md:hidden">Explore public grids without an account.</span>
-              Sign up free to save bookmarks and highlights.
-            </p>
             <.link
               id="home-ai-scepticism-link"
               navigate={~p"/intro/ai"}
@@ -532,92 +563,6 @@ defmodule DialecticWeb.HomeLive do
       <.learning_journey current_user={@current_user} />
 
       <.proof_carousel />
-
-      <section
-        id="start-here"
-        class="relative isolate overflow-hidden border-b border-stone-300 bg-[#f4f1e9]"
-      >
-        <div
-          aria-hidden="true"
-          class="absolute -left-28 top-10 -z-10 h-64 w-64 rounded-full bg-teal-200/35 blur-3xl"
-        >
-        </div>
-        <div
-          aria-hidden="true"
-          class="absolute -right-28 bottom-0 -z-10 h-64 w-64 rounded-full bg-amber-200/35 blur-3xl"
-        >
-        </div>
-        <div class="mx-auto w-full max-w-3xl px-5 py-12 sm:px-8 sm:py-16">
-          <div id="home-mobile-community-start" class="text-center md:hidden">
-            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
-              Explore on mobile
-            </p>
-            <h2 class="mt-3 font-serif text-4xl font-semibold leading-tight tracking-tight">
-              Follow a line of thought.
-            </h2>
-            <p class="mx-auto mt-4 max-w-md text-base leading-7 text-slate-600">
-              Read public grids, add your own thoughts, and ask follow-up questions from your phone.
-              Use a larger screen to create grids and work with the full map.
-            </p>
-            <.link
-              id="home-mobile-community-link"
-              navigate={~p"/community"}
-              data-analytics-event="community_clicked"
-              data-analytics-location="mobile_participation"
-              class="mt-6 inline-flex min-h-11 items-center gap-2 rounded-md bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
-            >
-              Browse public grids <.icon name="hero-arrow-right" class="h-4 w-4" />
-            </.link>
-          </div>
-
-          <div id="home-start-panel" class="hidden md:block">
-            <div class="text-center">
-              <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">Try it</p>
-              <h2 class="mt-3 font-serif text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
-                Start with a question.
-              </h2>
-              <p class="mt-3 text-base leading-7 text-slate-600">
-                Pick something you’re curious about. Your first answer is the start of a grid—where you take it next is up to you.
-              </p>
-              <p
-                :if={is_nil(@current_user)}
-                id="home-start-reassurance"
-                class="mt-2 text-sm text-slate-600"
-              >
-                Simple answers are free to try without an account. Saving bookmarks and highlights requires a free account.
-              </p>
-            </div>
-
-            <div class="mt-7 rounded-xl bg-[linear-gradient(120deg,#2dd4bf_0%,#818cf8_52%,#fbbf24_100%)] p-[1px] shadow-[0_24px_60px_-38px_rgba(15,23,42,0.55)]">
-              <div class="rounded-[calc(0.75rem-1px)] bg-white p-4 sm:p-6">
-                <.live_component
-                  module={DialecticWeb.NewIdeaFormComp}
-                  id="new-idea-form"
-                  form={@form}
-                  placeholder="Ask a question or name a topic"
-                  submit_label="Continue"
-                  autofocus={@focus_new_grid}
-                  minimal={true}
-                  authenticated={!is_nil(@current_user)}
-                  public_grid_warning="New grids are public and editable by default. Anyone can read them and, while editing is on, add to them. Sign in first if you want to control access in Settings; never include sensitive information."
-                />
-              </div>
-            </div>
-            <p class="mt-5 text-center text-sm text-slate-600">
-              Prefer to look around first?
-              <.link
-                id="home-community-secondary-link"
-                navigate={~p"/community"}
-                data-analytics-event="community_clicked"
-                data-analytics-location="question_form"
-                class="font-semibold text-teal-800 underline decoration-teal-400 underline-offset-4 hover:text-teal-950"
-              >
-                Browse public grids
-              </.link>
-            </p>
-          </div>
-        </div>
-      </section>
 
       <section
         id="home-product-preview"
@@ -844,31 +789,32 @@ defmodule DialecticWeb.HomeLive do
             <p class="mt-3 max-w-xl text-sm leading-6 text-slate-300">
               Enjoy the exploration. Keep the connections. Return with a new question whenever you’re ready.
             </p>
-            <p :if={is_nil(@current_user)} class="mt-2 text-sm text-slate-400">
-              Free account. No payment details.
-            </p>
           </div>
-          <%= if @current_user do %>
-            <.link
-              id="home-final-library-link"
-              navigate={~p"/u/#{Dialectic.Accounts.User.effective_username(@current_user)}" <> "#profile-thinking-library"}
-              data-analytics-event="saved_for_recall_clicked"
-              data-analytics-location="home_final_cta"
-              class="inline-flex shrink-0 items-center justify-center gap-2 rounded-md bg-teal-300 px-6 py-3.5 text-base font-semibold text-slate-950 transition hover:bg-teal-200"
-            >
-              Open your library <.icon name="hero-arrow-right" class="h-4 w-4" />
-            </.link>
-          <% else %>
-            <.link
-              id="home-final-sign-up-link"
-              navigate={~p"/users/register"}
-              data-analytics-event="sign_up_cta_clicked"
-              data-analytics-location="home_final_cta"
-              class="inline-flex shrink-0 items-center justify-center gap-2 rounded-md bg-teal-300 px-6 py-3.5 text-base font-semibold text-slate-950 transition hover:bg-teal-200"
-            >
-              Sign up free <.icon name="hero-arrow-right" class="h-4 w-4" />
-            </.link>
-          <% end %>
+          <div class="flex shrink-0 flex-col items-start gap-3 sm:items-end">
+            <.start_grid_actions id="home-final" location="home_final_cta" dark={true} />
+            <%= if @current_user do %>
+              <.link
+                id="home-final-library-link"
+                navigate={~p"/u/#{Dialectic.Accounts.User.effective_username(@current_user)}" <> "#profile-thinking-library"}
+                data-analytics-event="saved_for_recall_clicked"
+                data-analytics-location="home_final_cta"
+                class="inline-flex min-h-11 items-center text-sm font-semibold text-slate-300 underline decoration-slate-500 underline-offset-4 hover:text-teal-200"
+              >
+                Open your library
+              </.link>
+            <% else %>
+              <.link
+                id="home-final-sign-up-link"
+                navigate={~p"/users/register"}
+                data-analytics-event="sign_up_cta_clicked"
+                data-analytics-location="home_final_cta"
+                class="inline-flex min-h-11 items-center text-sm font-semibold text-slate-300 underline decoration-slate-500 underline-offset-4 hover:text-teal-200"
+              >
+                Sign up free to save your discoveries
+              </.link>
+              <p class="text-xs text-slate-400">No payment details.</p>
+            <% end %>
+          </div>
         </div>
       </section>
 
@@ -918,6 +864,49 @@ defmodule DialecticWeb.HomeLive do
           </nav>
         </div>
       </footer>
+    </div>
+    """
+  end
+
+  attr :id, :string, required: true
+  attr :location, :string, required: true
+  attr :dark, :boolean, default: false
+
+  defp start_grid_actions(assigns) do
+    ~H"""
+    <div id={"#{@id}-actions"}>
+      <.link
+        id={"#{@id}-start-grid-link"}
+        href="#start-here"
+        phx-click={JS.focus(to: "#new-idea-input")}
+        aria-controls="new-idea-input"
+        data-analytics-event="start_grid_clicked"
+        data-analytics-location={@location}
+        class={[
+          "hidden min-h-11 items-center justify-center gap-2 rounded-md px-5 py-3 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 md:inline-flex",
+          if(@dark,
+            do: "bg-teal-300 text-slate-950 hover:bg-teal-200 focus-visible:outline-teal-300",
+            else: "bg-teal-800 text-white hover:bg-teal-900 focus-visible:outline-teal-800"
+          )
+        ]}
+      >
+        Start with your own question <.icon name="hero-arrow-up" class="h-4 w-4" />
+      </.link>
+      <.link
+        id={"#{@id}-community-link"}
+        navigate={~p"/community"}
+        data-analytics-event="community_clicked"
+        data-analytics-location={@location}
+        class={[
+          "inline-flex min-h-11 items-center justify-center gap-2 rounded-md px-5 py-3 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 md:hidden",
+          if(@dark,
+            do: "bg-teal-300 text-slate-950 hover:bg-teal-200 focus-visible:outline-teal-300",
+            else: "bg-teal-800 text-white hover:bg-teal-900 focus-visible:outline-teal-800"
+          )
+        ]}
+      >
+        Browse public grids <.icon name="hero-arrow-right" class="h-4 w-4" />
+      </.link>
     </div>
     """
   end
@@ -1201,6 +1190,15 @@ defmodule DialecticWeb.HomeLive do
             aria-current="false"
           ></button>
           <span class="sr-only" data-carousel-status aria-live="polite">1 of 2</span>
+        </div>
+        <div
+          id="home-proof-cta"
+          class="mt-8 flex flex-col gap-4 border-t border-stone-300 pt-6 sm:flex-row sm:items-center sm:justify-between"
+        >
+          <p class="font-serif text-2xl font-semibold text-slate-950">
+            Where will your curiosity take you?
+          </p>
+          <.start_grid_actions id="home-proof" location="home_proof_cta" />
         </div>
       </div>
     </section>

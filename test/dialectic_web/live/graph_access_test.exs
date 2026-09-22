@@ -20,7 +20,7 @@ defmodule DialecticWeb.GraphAccessTest do
   } do
     {:ok, view, _html} = live(log_in_user(conn, owner), ~p"/g/#{graph.slug}/graph")
 
-    assert has_element?(view, "#graph-header > #graph-title")
+    assert has_element?(view, "#graph-header #graph-heading > #graph-title + #graph-help-button")
     assert has_element?(view, "#graph-header #graph-workspace-bar")
 
     assert has_element?(

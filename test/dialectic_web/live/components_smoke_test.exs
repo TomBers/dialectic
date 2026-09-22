@@ -22,7 +22,7 @@ defmodule DialecticWeb.ComponentsSmokeTest do
       assert Code.ensure_loaded?(@document_menu_mod)
     end
 
-    test "renders direct help, present, and grid tools actions" do
+    test "renders direct present and grid tools actions" do
       html =
         render_component(@document_menu_mod,
           id: "document-menu",
@@ -34,7 +34,6 @@ defmodule DialecticWeb.ComponentsSmokeTest do
 
       {:ok, document} = Floki.parse_fragment(html)
 
-      assert Floki.find(document, "#document-menu-help-document-menu") != []
       assert Floki.find(document, "#document-menu-present-document-menu") != []
 
       assert Floki.find(

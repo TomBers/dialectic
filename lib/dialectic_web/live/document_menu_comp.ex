@@ -15,18 +15,6 @@ defmodule DialecticWeb.DocumentMenuComp do
     ~H"""
     <div id={"document-menu-actions-#{@id}"} class={root_classes(@compact)}>
       <button
-        id={"document-menu-help-#{@id}"}
-        type="button"
-        phx-click="open_help_modal"
-        class={action_button_classes(@compact)}
-        aria-label="Open how-to guide for this page"
-        title="Open how-to guide for this page"
-      >
-        <.icon name="hero-academic-cap" class="h-4 w-4" />
-        <span class={action_label_classes(@compact)}>How to use</span>
-      </button>
-
-      <button
         id={"document-menu-present-#{@id}"}
         type="button"
         phx-click={
