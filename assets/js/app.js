@@ -164,7 +164,7 @@ const clearModeSwitchClasses = () => {
   delete document.documentElement.dataset.viewTransitionDirection;
 };
 
-const scheduleModeSwitchCleanup = (delay = 320) => {
+const scheduleModeSwitchCleanup = (delay = 180) => {
   window.clearTimeout(modeSwitchCleanupTimer);
   modeSwitchCleanupTimer = window.setTimeout(() => {
     clearModeSwitchClasses();
@@ -176,7 +176,7 @@ document.addEventListener(
   "click",
   (event) => {
     const link = event.target.closest('a[data-view-transition="mode-switch"]');
-    if (!link) return;
+    if (!link || link.getAttribute("aria-current") === "page") return;
     if (
       event.defaultPrevented ||
       event.button !== 0 ||
@@ -265,6 +265,7 @@ hooks.PasswordToggle = {
 hooks.GraphLayout = {
   mounted() {
     this.activePanelId = null;
+    this.activePanelSection = null;
     this._reopenSideDrawerAfterPresentation = false;
     this._reopenSideDrawerAfterCombine = false;
     this._mobileOutlineCloseTimer = null;
@@ -284,12 +285,14 @@ hooks.GraphLayout = {
     window.addEventListener("resize", this._handleMobileGraphResize);
 
     this.el.addEventListener("toggle-panel", (e) => {
-      const { id } = e.detail;
+      const { id, section = null, open = false } = e.detail;
       const targetPanel = document.getElementById(id);
 
       if (!targetPanel) return;
 
-      const isClosed = targetPanel.classList.contains("translate-x-full");
+      const isClosed =
+        open || targetPanel.classList.contains("translate-x-full") ||
+        (section !== null && section !== this.activePanelSection);
 
       if (id === "chat-drawer" && isClosed) {
         this.pushEvent("open_grid_chat", {});
@@ -348,6 +351,7 @@ hooks.GraphLayout = {
 
       if (isClosed) {
         this.activePanelId = id;
+        this.activePanelSection = section;
         // Open the target
         targetPanel.classList.remove(
           "translate-x-full",
@@ -370,15 +374,7 @@ hooks.GraphLayout = {
         if (bottomMenu) bottomMenu.classList.add("panel-open");
         this._syncOutlineDetailForPanel(id);
 
-        const btn = document.querySelector(`[data-panel-toggle="${id}"]`);
-        if (btn) {
-          btn.classList.add(
-            "ring-2",
-            "ring-offset-1",
-            "ring-white",
-            "scale-110",
-          );
-        }
+        if (section !== null) targetPanel.scrollTop = 0;
       } else {
         this.activePanelId = null;
         // Everything is closed now
@@ -389,6 +385,8 @@ hooks.GraphLayout = {
         if (bottomMenu) bottomMenu.classList.remove("panel-open");
         this._syncOutlineDetailForPanel(null);
       }
+
+      this._syncPanelToggles();
 
       const shouldRestoreSideDrawer =
         (this._reopenSideDrawerAfterPresentation &&
@@ -542,16 +540,6 @@ hooks.GraphLayout = {
           "overflow-y-auto",
         );
       }
-
-      const btn = document.querySelector(`[data-panel-toggle="${panelId}"]`);
-      if (btn) {
-        btn.classList.remove(
-          "ring-2",
-          "ring-offset-1",
-          "ring-white",
-          "scale-110",
-        );
-      }
     });
 
     const elementsToShift = document.querySelectorAll(".shift-with-panel");
@@ -564,6 +552,19 @@ hooks.GraphLayout = {
     this._syncOutlineDetailForPanel(null);
 
     this.activePanelId = null;
+    this.activePanelSection = null;
+    this._syncPanelToggles();
+  },
+  _syncPanelToggles() {
+    this.el.querySelectorAll("[data-panel-toggle]").forEach((button) => {
+      const active =
+        button.dataset.panelToggle === this.activePanelId &&
+        (button.dataset.panelSection || null) === this.activePanelSection;
+      button.setAttribute("aria-expanded", String(active));
+      for (const className of ["ring-2", "ring-offset-1", "ring-white", "scale-110"]) {
+        button.classList.toggle(className, active);
+      }
+    });
   },
   _syncOutlineDetailForPanel(activePanelId) {
     const outlineDetail = document.getElementById("outline-detail");
@@ -880,15 +881,8 @@ hooks.GraphLayout = {
 
       const bottomMenu = document.getElementById("bottom-menu");
       if (bottomMenu) bottomMenu.classList.add("panel-open");
-
-      // Re-activate button
-      const btn = document.querySelector(
-        `[data-panel-toggle="${this.activePanelId}"]`,
-      );
-      if (btn) {
-        btn.classList.add("ring-2", "ring-offset-1", "ring-white", "scale-110");
-      }
     }
+    this._syncPanelToggles();
   },
 };
 

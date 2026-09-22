@@ -1,11 +1,10 @@
 import cytoscape from "cytoscape";
 import dagre from "cytoscape-dagre";
-import compoundDragAndDrop from "cytoscape-compound-drag-and-drop";
 import { graphStyle } from "./graph_style";
 import { layoutConfig } from "./layout_config.js";
+import { createGraphRenderer } from "./graph_renderer.js";
 
 cytoscape.use(dagre);
-cytoscape.use(compoundDragAndDrop);
 
 const VISIBLE_GRAPH_NODE_FILTER = (n) =>
   !n.hasClass("hidden") &&
@@ -74,7 +73,7 @@ const getVisibleViewport = (container) => {
 };
 
 const constrainViewport = (cy, container) => {
-  if (!cy || !container) return false;
+  if (!cy || !container || cy.destroyed() || !cy.renderer()) return false;
 
   const visibleNodes = cy.nodes().filter(VISIBLE_GRAPH_NODE_FILTER);
   if (!visibleNodes || visibleNodes.length === 0) return false;
@@ -140,46 +139,92 @@ const constrainViewport = (cy, container) => {
   return true;
 };
 
-const fitVisibleGraph = (
-  cy,
-  container,
-  padding,
-  { focusNodeId = null, minZoom = 0 } = {},
-) => {
-  if (!cy || (typeof cy.destroyed === "function" && cy.destroyed())) {
+export const fitVisibleGraph = (cy, container, padding = 24) => {
+  if (!cy || !container || cy.destroyed()) {
     return false;
   }
 
   const visibleNodes = cy.nodes().filter(VISIBLE_GRAPH_NODE_FILTER);
-  if (!visibleNodes || visibleNodes.length === 0) return false;
+  if (visibleNodes.length === 0) return false;
 
-  cy.fit(visibleNodes, padding);
+  const viewport = getVisibleViewport(container);
+  const width = viewport.width - 2 * padding;
+  const height = viewport.height - 2 * padding;
+  if (width <= 0 || height <= 0) return false;
 
-  if (minZoom > 0 && cy.zoom() < minZoom) {
-    const visibleLeafNodes = visibleNodes.filter(
-      (candidate) => !candidate.isParent(),
-    );
-    const requestedFocus = focusNodeId
-      ? cy.getElementById(String(focusNodeId))
-      : null;
-    const focusNode =
-      requestedFocus && requestedFocus.length > 0 && requestedFocus.visible()
-        ? requestedFocus
-        : visibleLeafNodes.first();
-
-    if (focusNode && focusNode.length > 0) {
-      const readableZoom = Math.min(minZoom, cy.maxZoom());
-      const viewport = getVisibleViewport(container);
-      const position = focusNode.position();
-
-      cy.zoom(readableZoom);
-      cy.pan({
-        x: viewport.left + viewport.width / 2 - position.x * readableZoom,
-        y: viewport.top + viewport.height / 2 - position.y * readableZoom,
-      });
-    }
+  const bounds = visibleNodes.boundingBox();
+  if (![bounds.x1, bounds.y1, bounds.w, bounds.h].every(Number.isFinite)) {
+    return false;
   }
 
+  // Fit the overview into the unobscured canvas, without enlarging small grids.
+  const zoom = clampValue(
+    Math.min(width / Math.max(1, bounds.w), height / Math.max(1, bounds.h), 1),
+    cy.minZoom(),
+    cy.maxZoom(),
+  );
+  cy.viewport({
+    zoom,
+    pan: {
+      x: viewport.left + viewport.width / 2 - (bounds.x1 + bounds.w / 2) * zoom,
+      y: viewport.top + viewport.height / 2 - (bounds.y1 + bounds.h / 2) * zoom,
+    },
+  });
+
+  return true;
+};
+
+export const frameReadingGraph = (
+  cy, container, focusNodeId, viewMode = "spaced", direction = "TB",
+) => {
+  if (!cy || !container || cy.destroyed()) return false;
+  const nodes = cy.nodes().filter(VISIBLE_GRAPH_NODE_FILTER);
+  if (nodes.length === 0) return false;
+
+  const viewport = getVisibleViewport(container);
+  const padding = 24;
+  const width = viewport.width - 2 * padding;
+  const height = viewport.height - 2 * padding;
+  if (width <= 0 || height <= 0) return false;
+
+  const focus = nodes.getElementById(String(focusNodeId)).first();
+  const node = focus.length ? focus : nodes.first();
+  const bounds = nodes.boundingBox();
+  const nodeBounds = node.boundingBox();
+  const minReadingZoom = viewMode === "compact"
+    ? layoutConfig.readabilitySettings.compactMinInitialZoom
+    : layoutConfig.readabilitySettings.spacedMinInitialZoom;
+  const zoom = clampValue(Math.min(
+    1,
+    Math.max(minReadingZoom, Math.min(width / bounds.w, height / bounds.h)),
+    width / Math.max(1, nodeBounds.w),
+    height / Math.max(1, nodeBounds.h),
+  ), cy.minZoom(), cy.maxZoom());
+
+  // Leave most of the canvas ahead of the selected idea in the flow direction.
+  // Clamp the anchor so the entire title remains visible on narrow screens.
+  const leadingAnchor = (length, nodeSize) => clampValue(
+    length * 0.22,
+    padding + nodeSize * zoom / 2,
+    length - padding - nodeSize * zoom / 2,
+  );
+  let x = viewport.width / 2;
+  let y = viewport.height / 2;
+  if (direction === "LR" || direction === "RL") {
+    x = leadingAnchor(viewport.width, nodeBounds.w);
+    if (direction === "RL") x = viewport.width - x;
+  } else {
+    y = leadingAnchor(viewport.height, nodeBounds.h);
+    if (direction === "BT") y = viewport.height - y;
+  }
+  const position = node.position();
+  cy.viewport({
+    zoom,
+    pan: {
+      x: viewport.left + x - position.x * zoom,
+      y: viewport.top + y - position.y * zoom,
+    },
+  });
   return true;
 };
 
@@ -195,14 +240,6 @@ export function draw_graph(
   const reduceMotion = options.reduceMotion === true;
   const highContrast = options.highContrast === true;
 
-  // Check if we have a small graph (2 nodes)
-
-  const edgeCount = elements.filter((ele) =>
-    ele.data.hasOwnProperty("source"),
-  ).length;
-
-  const isSmallGraph = edgeCount === 1;
-
   // Get graph direction from localStorage
   const graphDirection = localStorage.getItem("graph_direction") || "TB";
 
@@ -212,8 +249,7 @@ export function draw_graph(
       ? layoutConfig.compactLayout
       : layoutConfig.baseLayout;
 
-  // Create a modified layout config for small graphs
-  const initialFitPadding = isSmallGraph ? 200 : 84;
+  const initialFitPadding = 24;
   const layoutOptions =
     options.layoutName === "preset"
       ? {
@@ -231,21 +267,33 @@ export function draw_graph(
             : {}),
         };
 
-  const cy = cytoscape({
-    container: graph, // container to render in
-    elements: elements,
-    style: graphStyle(viewMode, graphId, { highContrast, reduceMotion }),
-    layout: {
-      name: "preset",
-      fit: false,
+  const cy = createGraphRenderer(
+    {
+      container: graph,
+      elements,
+      style: graphStyle(viewMode, { highContrast, reduceMotion }),
+      layout: { name: "preset", fit: false },
+      boxSelectionEnabled: false,
+      autounselectify: false,
+      // Apply depth-collapse before running the initial layout.
+      minZoom: layoutConfig.zoomSettings.min || 0.05,
+      maxZoom: layoutConfig.zoomSettings.max || 4.0,
+      webgl: options.webgl !== false,
     },
-
-    boxSelectionEnabled: false, // box selection disabled
-    autounselectify: false, // allow multi‑select
-    // Layout is deferred — we apply depth-collapse first, then run layout manually
-    minZoom: layoutConfig.zoomSettings.min || 0.05,
-    maxZoom: layoutConfig.zoomSettings.max || 4.0,
-  });
+    (lostCy) => {
+      if (context.cy !== lostCy) return;
+      const focusedBranchId = lostCy._focusedBranchId;
+      const readerPathFocus = lostCy._readerPathFocus;
+      context._recreateCy(lostCy.elements().jsons(), {
+        webgl: false,
+        preserveViewport: true,
+        skipInitialLayout: true,
+        layoutName: "preset",
+      });
+      context.cy._focusedBranchId = focusedBranchId;
+      context.cy._readerPathFocus = readerPathFocus;
+    },
+  );
 
   // Store graphId on the cy instance so persistence helpers can find it
   cy._graphId = graphId || null;
@@ -296,40 +344,15 @@ export function draw_graph(
     return clampValue(delta * speed, -maxStep, maxStep);
   };
   let clampPending = false;
+  let clampFrame = null;
   let clampInProgress = false;
   let layoutRunning = false;
-  let responsiveLabelStylePending = false;
-  const refreshResponsiveLabelStyles = ({ immediate = false } = {}) => {
-    if (!cy || (typeof cy.destroyed === "function" && cy.destroyed())) {
-      return;
-    }
-
-    const runRefresh = () => {
-      responsiveLabelStylePending = false;
-      if (!cy || (typeof cy.destroyed === "function" && cy.destroyed())) {
-        return;
-      }
-
-      try {
-        cy.style().update();
-      } catch (_e) {}
-    };
-
-    if (immediate) {
-      runRefresh();
-      return;
-    }
-
-    if (responsiveLabelStylePending) return;
-    responsiveLabelStylePending = true;
-    requestAnimationFrame(runRefresh);
-  };
-
   const scheduleViewportClamp = ({ immediate = false } = {}) => {
     if (
       clampInProgress ||
       !cy ||
-      (typeof cy.destroyed === "function" && cy.destroyed())
+      cy.destroyed() ||
+      !cy.renderer()
     ) {
       return;
     }
@@ -340,6 +363,7 @@ export function draw_graph(
     }
 
     const runClamp = () => {
+      clampFrame = null;
       clampPending = false;
       if (
         clampInProgress ||
@@ -363,13 +387,14 @@ export function draw_graph(
     };
 
     if (immediate) {
+      if (clampFrame !== null) cancelAnimationFrame(clampFrame);
       runClamp();
       return;
     }
 
     if (clampPending) return;
     clampPending = true;
-    requestAnimationFrame(runClamp);
+    clampFrame = requestAnimationFrame(runClamp);
   };
 
   let initialLayoutReadyNotified = false;
@@ -390,11 +415,13 @@ export function draw_graph(
 
   // Track layout running to avoid pre-layout panning/centering flicker
   let initialGraphFitted = options.skipInitialLayout === true;
+  cy._initialLayoutComplete = options.skipInitialLayout === true;
   cy.on("layoutstart", () => {
     layoutRunning = true;
   });
   cy.on("layoutstop", () => {
     layoutRunning = false;
+    cy._initialLayoutComplete = true;
     const hadPendingClamp = clampPending;
     clampPending = false;
 
@@ -402,25 +429,16 @@ export function draw_graph(
       initialGraphFitted = true;
       requestAnimationFrame(() => {
         if (!cy || (typeof cy.destroyed === "function" && cy.destroyed())) return;
-        const readabilitySettings = layoutConfig.readabilitySettings || {};
-        const minInitialZoom =
-          viewMode === "compact"
-            ? readabilitySettings.compactMinInitialZoom || 0.78
-            : readabilitySettings.spacedMinInitialZoom || 0.75;
-
-        fitVisibleGraph(cy, container, initialFitPadding, {
-          focusNodeId: node,
-          minZoom: minInitialZoom,
-        });
+        if (options.fitInitialViewport !== false) {
+          frameReadingGraph(cy, container, node, viewMode, graphDirection);
+        }
         scheduleViewportClamp({ immediate: true });
-        refreshResponsiveLabelStyles({ immediate: true });
         notifyInitialLayoutReady();
       });
       return;
     }
 
     scheduleViewportClamp({ immediate: hadPendingClamp });
-    refreshResponsiveLabelStyles();
   });
 
   // Now run the initial layout (only visible nodes are positioned)
@@ -429,7 +447,6 @@ export function draw_graph(
   if (options.skipInitialLayout === true) {
     requestAnimationFrame(() => {
       scheduleViewportClamp({ immediate: true });
-      refreshResponsiveLabelStyles({ immediate: true });
       notifyInitialLayoutReady();
     });
   } else {
@@ -487,14 +504,20 @@ export function draw_graph(
   cy.on("mouseover", "node", (evt) => {
     const n = evt.target;
     if (n.isParent && n.isParent()) return;
-    n.addClass("node-hover");
+    cy.batch(() => {
+      n.addClass("node-hover");
+      n.connectedEdges().addClass("edge-hover");
+    });
     if (!isSpaceDown && !isMouseDown) {
       container.style.cursor = "pointer";
     }
   });
   cy.on("mouseout", "node", (evt) => {
     const n = evt.target;
-    n.removeClass("node-hover");
+    cy.batch(() => {
+      n.removeClass("node-hover");
+      n.connectedEdges().removeClass("edge-hover");
+    });
     if (!isMouseDown) {
       container.style.cursor = isSpaceDown ? "grab" : "";
     }
@@ -523,7 +546,6 @@ export function draw_graph(
       );
 
       cy.zoom({ level: next, renderedPosition });
-      scheduleViewportClamp();
     } else {
       // Two-finger scroll / mouse wheel pans the canvas
       e.preventDefault();
@@ -539,7 +561,6 @@ export function draw_graph(
 
       // Natural pan (scroll right -> content moves right)
       cy.panBy({ x: -dx, y: -dy });
-      scheduleViewportClamp();
     }
   };
 
@@ -594,7 +615,6 @@ export function draw_graph(
         level: next,
         renderedPosition: touchCenter,
       });
-      scheduleViewportClamp();
     }
   };
 
@@ -804,163 +824,6 @@ export function draw_graph(
   window.addEventListener("mousemove", mousemoveHandler);
   window.addEventListener("mouseup", mouseupHandler);
 
-  const dd_options = layoutConfig.compoundDragDropOptions;
-
-  cy.compoundDragAndDrop(dd_options);
-
-  let boxSelecting = false;
-  let dragOrigin = null;
-
-  /* remember where the drag started */
-  cy.on("cdndgrab", (evt) => {
-    evt.target.scratch("_oldParent", evt.target.data("parent") || null);
-  });
-
-  /* fire after the drop */
-  cy.on("cdnddrop", (evt, dropTarget /*, dropSibling */) => {
-    const ele = evt.target; // dragged node
-    const oldParent = ele.scratch("_oldParent"); // what we saved
-    ele.removeScratch("_oldParent");
-
-    /* decide what the *new* parent should be */
-    const targetIsGroup = dropTarget && dropTarget.isParent();
-    const newParent = targetIsGroup ? dropTarget.id() : null;
-
-    /* prevent leaving if old group would become empty (last child) */
-    if (!targetIsGroup && oldParent) {
-      const oldGroup = cy.getElementById(oldParent);
-      if (oldGroup && oldGroup.length) {
-        // Remaining children excluding the dragged node
-        const remaining = oldGroup.children().filter((n) => !n.same(ele));
-        if (remaining.length === 0) {
-          // Revert: reattach to old group and abort
-          ele.move({ parent: oldParent });
-          return;
-        }
-      }
-    }
-
-    /* ——— ensure the data matches that decision ——— */
-    if (!targetIsGroup) ele.move({ parent: null }); // detach from old group
-    // (If targetIsGroup, CDnD has already moved it for us.)
-
-    /* ——— skip no‑ops ——— */
-    if (oldParent === newParent) return;
-
-    /* ——— notify LiveView ——— */
-    if (newParent) {
-      context.pushEvent("node:join_group", {
-        node: ele.id(),
-        parent: newParent,
-        old: oldParent,
-      });
-    } else {
-      context.pushEvent("node:leave_group", {
-        node: ele.id(),
-        parent: oldParent,
-      });
-    }
-  });
-
-  // Enhanced hover effect
-  cy.on("mouseover", "node", function (e) {
-    const node = this;
-
-    node.connectedEdges().addClass("edge-hover");
-  });
-
-  // Reset on mouseout
-  cy.on("mouseout", "node", function (e) {
-    const node = this;
-
-    // Remove the highlight classes
-    node.connectedEdges().removeClass("edge-hover");
-  });
-
-  cy.on("boxstart", (_e) => {
-    // box selection disabled
-  });
-
-  cy.on("boxend", (_e) => {
-    // box selection disabled
-  });
-
-  // Disabled: prevent accidental collapse of compound groups via tap
-  // Toggling is controlled exclusively by the Streams panel
-  cy.on("tap", "node[compound]", function (e) {
-    e.preventDefault();
-    e.stopPropagation();
-  });
-
-  // Make compound/group nodes non-selectable so they are ignored by navigation selection
-  try {
-    cy.$("node[compound]").forEach((n) => {
-      n.selectable(false);
-      n.grabbable(false);
-    });
-  } catch (_e) {}
-
-  cy.on("add", "node", function (e) {
-    try {
-      const n = e.target;
-      if (n && n.isParent()) {
-        n.selectable(false);
-        n.grabbable(false);
-      } else if (n && n.isNode && n.isNode()) {
-        // Hide any node added under a collapsed group
-        const anc = n.ancestors().filter((a) => a.isParent() && isCollapsed(a));
-        if (anc && anc.length) {
-          n.addClass("hidden");
-        }
-      }
-    } catch (_e) {}
-  });
-
-  // Ensure edges respect collapsed groups when added
-  cy.on("add", "edge", function (e) {
-    try {
-      const edge = e.target;
-
-      // Skip reroute during bulk JSON reloads when a scratch flag is set
-      const cyInst = edge.cy && edge.cy();
-      if (cyInst && cyInst.scratch && cyInst.scratch("_bulkReload")) {
-        return;
-      }
-
-      const src = edge.source();
-      const tgt = edge.target();
-
-      // Find nearest collapsed ancestor for a node, if any
-      const collapsedAncestor = (n) => {
-        if (!n || !n.isNode || !n.isNode()) return null;
-        const anc = n.ancestors().filter((a) => a.isParent() && isCollapsed(a));
-        return anc.length ? anc[0] : null;
-      };
-
-      const srcGroup = collapsedAncestor(src);
-      const tgtGroup = collapsedAncestor(tgt);
-
-      // Hide interior edges if both ends are within the same collapsed group
-      if (srcGroup && tgtGroup && srcGroup.id() === tgtGroup.id()) {
-        edge.addClass("hidden");
-        return;
-      }
-
-      // Reroute external edges to the collapsed parent on the inside end
-      if (!edge.data("_origSource"))
-        edge.data("_origSource", edge.data("source"));
-      if (!edge.data("_origTarget"))
-        edge.data("_origTarget", edge.data("target"));
-
-      if (srcGroup) {
-        edge.move({ source: srcGroup.id() });
-      }
-      if (tgtGroup) {
-        edge.move({ target: tgtGroup.id() });
-      }
-    } catch (_e) {}
-  });
-
   // Node selection handling
   let lastTapTime = 0;
   let lastTapNode = null;
@@ -1053,10 +916,10 @@ export function draw_graph(
       });
     }
     // If a layout is running, skip the pre-layout nudge to avoid flicker.
-    enforceCollapsedState(cy);
   });
 
   requestAnimationFrame(() => {
+    if (cy.destroyed()) return;
     cy.elements().removeClass("selected");
     let initial = null;
     if (node) {
@@ -1073,52 +936,23 @@ export function draw_graph(
     scheduleViewportClamp();
   });
 
-  // Streams: focus and toggle group handlers
-  context.handleEvent("focus_group", ({ id }) => {
-    try {
-      const group = cy.getElementById(id);
-      if (group && group.isParent()) {
-        cy.animate({
-          center: { eles: group },
-          duration: cy._reduceMotion ? 0 : 150,
-          easing: "ease-in-out-quad",
-        });
-      }
-    } catch (_e) {}
-  });
-
-  context.handleEvent("toggle_group", ({ id }) => {
-    try {
-      const group = cy.getElementById(id);
-      if (group && group.isParent()) {
-        const revealing = isCollapsed(group);
-        toggle(group);
-
-        if (revealing) {
-          reflowAfterVisibilityChange(cy);
-        } else {
-          _relayoutAfterDepthChange(cy);
-        }
-      }
-    } catch (_e) {}
-  });
-
-  // Force a full relayout (e.g., after creating a new group)
+  const serverEventRefs = [];
+  const handleServerEvent = (name, handler) => {
+    serverEventRefs.push(context.handleEvent(name, handler));
+  };
+  // Force a full relayout after server-side graph changes
   // Delay ensures any in-flight layout from updated() completes first
-  context.handleEvent("reflow_layout", () => {
+  handleServerEvent("reflow_layout", () => {
     setTimeout(() => {
+      if (cy.destroyed()) return;
       try {
         _relayoutAfterDepthChange(cy);
-        // After layout, spread out any overlapping compound nodes
-        setTimeout(() => {
-          _spreadOverlappingCompoundNodes(cy);
-        }, 300);
       } catch (_e) {}
     }, 350);
   });
 
   // Depth-collapse events from LiveView
-  context.handleEvent("expand_node", ({ id }) => {
+  handleServerEvent("expand_node", ({ id }) => {
     try {
       const n = cy.getElementById(id);
       if (n && n.length > 0 && !n.isParent()) {
@@ -1127,7 +961,7 @@ export function draw_graph(
     } catch (_e) {}
   });
 
-  context.handleEvent("collapse_node", ({ id }) => {
+  handleServerEvent("collapse_node", ({ id }) => {
     try {
       const n = cy.getElementById(id);
       if (n && n.length > 0 && !n.isParent()) {
@@ -1136,13 +970,13 @@ export function draw_graph(
     } catch (_e) {}
   });
 
-  context.handleEvent("expand_all_depth", () => {
+  handleServerEvent("expand_all_depth", () => {
     try {
       expandAllDepth(cy);
     } catch (_e) {}
   });
 
-  context.handleEvent("collapse_all_depth", (payload) => {
+  handleServerEvent("collapse_all_depth", (payload) => {
     try {
       const defaultCollapseDepth = 1;
       const maxDepth =
@@ -1153,19 +987,8 @@ export function draw_graph(
     } catch (_e) {}
   });
 
-  // Enforce collapsed state for compound groups on init and common lifecycle hooks
-  try {
-    enforceCollapsedState(cy);
-    cy.ready(() => enforceCollapsedState(cy));
-    // Removed: collapse enforcement on layoutstop to avoid unexpected edge reroutes
-    // Removed: collapse enforcement on render to avoid unexpected edge reroutes
-  } catch (_e) {}
-
-  // Expose collapsed-state enforcement for external callers
-  cy.enforceCollapsedState = () => enforceCollapsedState(cy);
   cy.constrainViewport = () => constrainViewport(cy, container);
   cy.scheduleViewportClamp = (opts) => scheduleViewportClamp(opts);
-  cy.refreshResponsiveLabelStyles = (opts) => refreshResponsiveLabelStyles(opts);
 
   // Expose depth-collapse helpers on the cy instance for graph_hook.js
   cy.saveDepthCollapseState = () => saveDepthCollapseState(cy);
@@ -1173,7 +996,6 @@ export function draw_graph(
     restoreDepthCollapseState(cy, state);
   cy.recomputeDepthVisibility = () => recomputeDepthVisibility(cy);
   cy.ensureDepthVisible = (id) => ensureDepthVisible(cy, id);
-  cy.ensureGroupVisible = (id) => ensureGroupVisible(cy, id);
   cy.ensureNodeVisible = (id) => ensureNodeVisible(cy, id);
   cy.focusBranch = (nodeOrId) =>
     focusBranch(
@@ -1212,7 +1034,6 @@ export function draw_graph(
   };
 
   cy.on("pan zoom", queueViewportClamp);
-  cy.on("zoom", () => refreshResponsiveLabelStyles());
   cy.on("mouseup touchend", flushViewportClamp);
 
   // ── Depth-toggle overlay buttons (expand/collapse via mouse click) ──
@@ -1226,7 +1047,7 @@ export function draw_graph(
 
   // Keep button positions in sync with pan / zoom / animation (throttled to 1 rAF)
   let _depthToggleRafPending = false;
-  cy.on("render", () => {
+  cy.on("pan zoom position bounds resize", () => {
     if (!_depthToggleRafPending) {
       _depthToggleRafPending = true;
       requestAnimationFrame(() => {
@@ -1240,6 +1061,7 @@ export function draw_graph(
   // Build initial overlays — the first layoutstop may fire before the listener
   // above is registered (if dagre finishes synchronously), so schedule a fallback.
   requestAnimationFrame(() => {
+    if (cy.destroyed()) return;
     _rebuildDepthToggleOverlays(cy, container);
     _rebuildFocusControls(cy, container);
   });
@@ -1261,144 +1083,27 @@ export function draw_graph(
     } catch (_e) {}
   };
 
+  cy.one("destroy", () => {
+    if (clampFrame !== null) cancelAnimationFrame(clampFrame);
+    if (viewportClampTimeout !== null) clearTimeout(viewportClampTimeout);
+    clampFrame = null;
+    viewportClampTimeout = null;
+    clampPending = false;
+    serverEventRefs.forEach((ref) => context.removeHandleEvent(ref));
+    container.removeEventListener("wheel", wheelHandler);
+    container.removeEventListener("mousedown", mousedownHandler);
+    container.removeEventListener("touchstart", touchStartHandler);
+    container.removeEventListener("touchmove", touchMoveHandler);
+    container.removeEventListener("touchend", touchEndHandler);
+    container.removeEventListener("touchcancel", touchEndHandler);
+    document.removeEventListener("keydown", keydownHandler);
+    document.removeEventListener("keyup", keyupHandler);
+    window.removeEventListener("mousemove", mousemoveHandler);
+    window.removeEventListener("mouseup", mouseupHandler);
+    cy.cleanupDepthOverlay();
+  });
   return cy;
 }
-
-/* ───────────────────────── collapse ───────────────────────── */
-function collapse(parent) {
-  // always apply collapse; no early return
-
-  let descendants = parent.descendants();
-  if (!descendants || descendants.length === 0) {
-    // Fallback to direct children if descendants are not yet computed
-    descendants = parent.children();
-  }
-  const intEdges = descendants
-    .connectedEdges()
-    .filter(
-      (e) =>
-        descendants.contains(e.source()) && descendants.contains(e.target()),
-    );
-  const extEdges = descendants.connectedEdges().subtract(intEdges);
-
-  /* 1 · save where each child sits so we can restore it */
-  descendants.forEach((n) => {
-    n.data("_prevPos", { x: n.position("x"), y: n.position("y") });
-  });
-
-  /* 2 · stash IDs for quick lookup */
-  parent.data({
-    collapsed: "true",
-    _descendants: descendants.map((n) => n.id()),
-    _intEdges: intEdges.map((e) => e.id()),
-    _extEdges: extEdges.map((e) => e.id()),
-  });
-
-  /* 3 · hide kids + interior edges, reroute externals */
-  descendants.addClass("hidden");
-  const hiddenCount = descendants.filter((n) => n.hasClass("hidden")).length;
-
-  // Final fallback: hide by selector if structural descendants are not present
-  if (!descendants || descendants.length === 0) {
-    const cy = parent.cy && parent.cy();
-    if (cy) {
-      const fallbackKids = cy.nodes(`[parent = "${parent.id()}"]`);
-      fallbackKids.addClass("hidden");
-    }
-  }
-  intEdges.addClass("hidden");
-  const hiddenIntEdges = intEdges.filter((e) => e.hasClass("hidden")).length;
-
-  let movedSrc = 0;
-  let movedTgt = 0;
-  extEdges.forEach((e) => {
-    if (!e.data("_origSource")) e.data("_origSource", e.data("source"));
-    if (!e.data("_origTarget")) e.data("_origTarget", e.data("target"));
-
-    if (descendants.contains(e.source())) {
-      e.move({ source: parent.id() });
-      movedSrc++;
-    }
-    if (descendants.contains(e.target())) {
-      e.move({ target: parent.id() });
-      movedTgt++;
-    }
-  });
-}
-
-/* ───────────────────────── expand ───────────────────────── */
-function expand(parent) {
-  if (!isCollapsed(parent)) return;
-
-  const cy = parent.cy();
-
-  const descIds = parent.data("_descendants");
-  const intIds = parent.data("_intEdges");
-  const extIds = parent.data("_extEdges");
-
-  if (!descIds || !intIds || !extIds) {
-    // No stored collapse state in this instance; just clear the flag
-    parent.removeData("collapsed");
-    return;
-  }
-
-  /* collections we stashed earlier */
-  const descendants = cy.collection(descIds.map((id) => cy.getElementById(id)));
-  const intEdges = cy.collection(intIds.map((id) => cy.getElementById(id)));
-  const extEdges = cy.collection(extIds.map((id) => cy.getElementById(id)));
-
-  /* 1 · show kids + interior edges */
-  descendants.removeClass("hidden");
-  intEdges.removeClass("hidden");
-
-  /* 2 · restore edge endpoints */
-  extEdges.forEach((e) => {
-    const src = e.data("_origSource");
-    const tgt = e.data("_origTarget");
-    if (src) e.move({ source: src });
-    if (tgt) e.move({ target: tgt });
-  });
-
-  /* 3 · restore previous coordinates *or* run a mini‑layout */
-  const anyPrev = descendants.some((n) => n.data("_prevPos"));
-  if (anyPrev) {
-    descendants.forEach((n) => {
-      const p = n.data("_prevPos");
-      if (p) n.position(p);
-    });
-  } else {
-    cy.layout({
-      ...layoutConfig.expandLayout,
-      eles: descendants.union(intEdges),
-    }).run();
-  }
-
-  /* 4 · clean up flags */
-  parent.removeData("collapsed");
-}
-
-function toggle(parent) {
-  parent.data("collapsed") ? expand(parent) : collapse(parent);
-}
-
-function isCollapsed(ele) {
-  const v = ele && ele.data && ele.data("collapsed");
-  return v === true || v === "true";
-}
-
-function enforceCollapsedState(cy) {
-  try {
-    cy.$("node[compound]")
-      .filter((n) => isCollapsed(n))
-      .forEach((n) => {
-        collapse(n);
-      });
-  } catch (_e) {}
-}
-
-/* ═══════════════════════════════════════════════════════════
-   Depth-based progressive disclosure (DAG collapse/expand)
-   ═══════════════════════════════════════════════════════════ */
 
 /**
  * BFS from root nodes to assign a `_depth` value to every non-compound node.
@@ -1513,11 +1218,12 @@ function collapseNodeChildren(cy, node) {
   const children = node.outgoers("node").filter((n) => !n.isParent());
   if (children.length === 0) return; // leaf node, nothing to collapse
 
+  const viewportAnchor = captureViewportAnchor(cy, node);
   node.data("_depthCollapsed", "true");
   node.addClass("node-collapsed");
   recomputeDepthVisibility(cy);
   _persistDepthState(cy);
-  _relayoutAfterDepthChange(cy);
+  reflowAfterVisibilityChange(cy, null, { animate: false, viewportAnchor });
 }
 
 /**
@@ -1528,11 +1234,12 @@ function expandNodeChildren(cy, node) {
   if (!node || node.length === 0 || node.isParent()) return;
   if (!isDepthCollapsed(node)) return;
 
+  const viewportAnchor = captureViewportAnchor(cy, node);
   node.removeData("_depthCollapsed");
   node.removeClass("node-collapsed");
   recomputeDepthVisibility(cy);
   _persistDepthState(cy);
-  reflowAfterVisibilityChange(cy);
+  reflowAfterVisibilityChange(cy, null, { animate: false, viewportAnchor });
 }
 
 /** Expand every depth-collapsed node in the graph */
@@ -1569,33 +1276,6 @@ function collapseAllDepth(cy, maxDepth) {
  * Ensure a specific node is visible by expanding any collapsed ancestors
  * along the path from a root to it.
  */
-/**
- * If the target node is inside a collapsed compound group (.hidden),
- * expand that group so the node becomes visible on the canvas.
- */
-function ensureGroupVisible(cy, nodeId) {
-  const node = cy.getElementById(nodeId);
-  if (!node || node.length === 0 || !node.hasClass("hidden")) return false;
-
-  // Walk up compound parents until we find the collapsed one
-  let expanded = false;
-  let current = node;
-  while (current && current.length > 0) {
-    const parent = current.parent();
-    if (parent && parent.length > 0 && isCollapsed(parent)) {
-      expand(parent);
-      expanded = true;
-      // After expanding, the node should be visible — but if it's still
-      // hidden (nested collapse), keep walking up.
-      if (!node.hasClass("hidden")) break;
-    }
-    current = parent;
-  }
-
-  // Return whether we expanded anything so the caller can trigger a reflow
-  return expanded;
-}
-
 function ensureDepthVisible(cy, nodeId) {
   const node = cy.getElementById(nodeId);
   if (!node || node.length === 0 || !node.hasClass("depth-hidden")) return false;
@@ -1714,10 +1394,7 @@ export function focusPath(
     const selected = cy.$("node.selected").filter((node) => !node.isParent());
     if (selected.length > 0) cy.applySelectionContext?.(selected[0]);
     if (container && !preserveViewport) {
-      fitVisibleGraph(cy, container, 84, {
-        focusNodeId:
-          selected.length > 0 ? selected[0].id() : pathIds[pathIds.length - 1],
-      });
+      fitVisibleGraph(cy, container);
     }
     onDone?.();
   }, { animate, viewportAnchor });
@@ -1787,10 +1464,9 @@ function ensureNodeVisible(cy, nodeId) {
       : false;
   if (focusChanged) clearReaderPathState(cy);
 
-  const groupChanged = ensureGroupVisible(cy, nodeId);
   const depthChanged = ensureDepthVisible(cy, nodeId);
 
-  return focusChanged || groupChanged || depthChanged;
+  return focusChanged || depthChanged;
 }
 
 /** Save current depth-collapse flags (node id → true) for persistence across cy.json() reloads */
@@ -1869,96 +1545,6 @@ function _loadDepthStateFromStorage(graphId) {
     }
   } catch (_e) {}
   return null;
-}
-
-/**
- * Spread out overlapping compound (group) nodes by shifting them apart.
- * This is useful after creating new groups that might overlap existing ones.
- */
-function _spreadOverlappingCompoundNodes(cy) {
-  try {
-    const compoundNodes = cy
-      .nodes()
-      .filter((n) => n.isParent() && !n.hasClass("hidden"));
-    if (compoundNodes.length < 2) return;
-
-    const padding = 50; // Minimum spacing between compound nodes
-    const nodeData = [];
-
-    // Collect bounding boxes for all compound nodes
-    compoundNodes.forEach((node) => {
-      const bb = node.boundingBox({
-        includeLabels: false,
-        includeOverlays: false,
-      });
-      nodeData.push({
-        node,
-        bb,
-        cx: (bb.x1 + bb.x2) / 2,
-        cy: (bb.y1 + bb.y2) / 2,
-        width: bb.x2 - bb.x1,
-        height: bb.y2 - bb.y1,
-      });
-    });
-
-    // Check for overlaps and spread nodes apart
-    let hasOverlap = true;
-    let iterations = 0;
-    const maxIterations = 10;
-
-    while (hasOverlap && iterations < maxIterations) {
-      hasOverlap = false;
-      iterations++;
-
-      for (let i = 0; i < nodeData.length; i++) {
-        for (let j = i + 1; j < nodeData.length; j++) {
-          const a = nodeData[i];
-          const b = nodeData[j];
-
-          // Check if bounding boxes overlap (with padding)
-          const overlapX = Math.max(
-            0,
-            Math.min(a.bb.x2, b.bb.x2) - Math.max(a.bb.x1, b.bb.x1) + padding,
-          );
-          const overlapY = Math.max(
-            0,
-            Math.min(a.bb.y2, b.bb.y2) - Math.max(a.bb.y1, b.bb.y1) + padding,
-          );
-
-          if (overlapX > 0 && overlapY > 0) {
-            hasOverlap = true;
-
-            // Calculate direction to push nodes apart
-            const dx = b.cx - a.cx;
-            const dy = b.cy - a.cy;
-            const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-
-            // Push nodes apart based on overlap
-            const pushX = (dx / dist) * (overlapX / 2 + padding);
-            const pushY = (dy / dist) * (overlapY / 2 + padding);
-
-            // Move node b and its children
-            const bChildren = b.node.descendants().union(b.node);
-            bChildren.forEach((child) => {
-              child.position({
-                x: child.position("x") + pushX,
-                y: child.position("y") + pushY,
-              });
-            });
-
-            // Update bounding box data for b
-            const newBb = b.node.boundingBox({
-              includeLabels: false,
-              includeOverlays: false,
-            });
-            b.bb = newBb;
-            b.cx = (newBb.x1 + newBb.x2) / 2;
-            b.cy = (newBb.y1 + newBb.y2) / 2;
-          }
-        }
-      }
-    }
-  } catch (_e) {}
 }
 
 /**
@@ -2132,22 +1718,30 @@ function _injectDepthToggleStyles() {
   background: #fef3c7;
   border-color: #f59e0b;
   color: #92400e;
-  box-shadow: 0 0 6px rgba(245, 158, 11, 0.45), 0 1px 2px rgba(0,0,0,0.08);
+  box-shadow: none;
 }
 .depth-toggle-btn.depth-collapsed-btn:hover {
   background: #fde68a;
   border-color: #d97706;
-  box-shadow: 0 0 10px rgba(245, 158, 11, 0.6), 0 2px 4px rgba(0,0,0,0.12);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08);
 }
 /* Visible branch → subtle grey Hide action. */
 .depth-toggle-btn.depth-expanded-btn {
-  background: #ffffff;
-  border-color: #d1d5db;
-  color: #6b7280;
+  background: transparent;
+  border-color: transparent;
+  color: #64748b;
+  box-shadow: none;
 }
-.depth-toggle-btn.depth-expanded-btn:hover {
-  background: #f9fafb;
-  border-color: #9ca3af;
+.depth-toggle-btn.depth-expanded-btn:hover,
+.depth-toggle-btn.depth-expanded-btn:focus-visible,
+.depth-toggle-btn.depth-expanded-btn.depth-control-active {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #475569;
+}
+.depth-toggle-btn:focus-visible {
+  outline: 2px solid #0f766e;
+  outline-offset: 2px;
 }
 .graph-focus-controls {
   position: absolute;
@@ -2517,7 +2111,8 @@ function _updateDepthTogglePositions(cy) {
   }
 
   if (cy._depthToggleOverlay) {
-    cy._depthToggleOverlay.style.display = cy._focusedBranchId ? "none" : "";
+    cy._depthToggleOverlay.style.display =
+      cy._focusedBranchId || zoom < hideBelowZoom ? "none" : "";
   }
 
   const focusControls = cy._focusControls;
@@ -2525,8 +2120,11 @@ function _updateDepthTogglePositions(cy) {
   const stackedControls = focusControls?.classList.contains(
     "visibility-control-stack",
   );
+  const viewportWidth = cy.width();
+  const viewportHeight = cy.height();
 
   cy._depthToggleButtons?.forEach((btn, nodeId) => {
+    if (cy._focusedBranchId || zoom < hideBelowZoom) return;
     const node = cy.getElementById(nodeId);
     if (
       !node ||
@@ -2540,7 +2138,14 @@ function _updateDepthTogglePositions(cy) {
     }
 
     const bb = node.renderedBoundingBox({ includeLabels: false });
-    if (!bb || bb.w === 0) {
+    if (
+      !bb ||
+      bb.w === 0 ||
+      bb.x2 < -48 ||
+      bb.x1 > viewportWidth + 48 ||
+      bb.y2 < -48 ||
+      bb.y1 > viewportHeight + 48
+    ) {
       btn.style.display = "none";
       return;
     }
@@ -2555,6 +2160,7 @@ function _updateDepthTogglePositions(cy) {
     const { x, y, translateX, translateY } = depthTogglePosition(bb);
 
     btn.style.display = "";
+    btn.classList.toggle("depth-control-active", node.hasClass("selected"));
     btn.style.setProperty("--depth-toggle-scale", scale.toFixed(3));
     btn.style.setProperty("--depth-toggle-translate-x", translateX);
     btn.style.setProperty("--depth-toggle-translate-y", translateY);

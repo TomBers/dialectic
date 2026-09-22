@@ -23,7 +23,7 @@ describe("graph layout proportions", () => {
     }
   });
 
-  it("uses label dimensions and stable node ordering without curved routing", () => {
+  it("uses label dimensions and stable node ordering independently of edge routing", () => {
     for (const layout of dagreLayouts) {
       expect(layout.nodeDimensionsIncludeLabels).toBe(true);
       expect(layout).not.toHaveProperty("useDagreEdgeControlPoints");
@@ -41,11 +41,11 @@ describe("graph layout proportions", () => {
     }
   });
 
-  it("renders real Cytoscape edges with orthogonal relationship routing", () => {
+  it("keeps initial and newly added edges compatible with WebGL", () => {
     const cy = cytoscape({
       headless: true,
       styleEnabled: true,
-      style: graphStyle("spaced", ""),
+      style: graphStyle("spaced", { reduceMotion: true }),
       elements: [
         { data: { id: "a" } },
         { data: { id: "b" } },
@@ -67,21 +67,17 @@ describe("graph layout proportions", () => {
 
     expect(cy.getElementById("a-b").pstyle("label").value).toBe("clarifies");
     expect(cy.getElementById("a-b").pstyle("line-fill").value).toBe("solid");
-    expect(cy.getElementById("b-c").pstyle("line-fill").value).toBe(
-      "linear-gradient",
-    );
-    expect(cy.getElementById("b-c").pstyle("curve-style").value).toBe(
-      "round-taxi",
-    );
-    expect(cy.getElementById("b-c").pstyle("taxi-direction").value).toBe(
-      "vertical",
-    );
+    cy.add({ data: { id: "c-a", source: "c", target: "a" } });
+    cy.edges().forEach((edge) => {
+      expect(edge.pstyle("line-fill").value).toBe("solid");
+      expect(edge.pstyle("curve-style").value).toBe("bezier");
+    });
 
     cy.destroy();
   });
 
   it("uses narrower spaced nodes while retaining readable text padding", () => {
-    const nodeStyle = styleFor(graphStyle("spaced", "Example"), "node");
+    const nodeStyle = styleFor(graphStyle("spaced"), "node");
     const nodeWidth = nodeStyle.width({});
 
     expect(nodeWidth).toBeLessThan(312);
@@ -89,41 +85,18 @@ describe("graph layout proportions", () => {
   });
 
   it("uses compact idea labels without counting node padding twice", () => {
-    const nodeStyle = styleFor(graphStyle("spaced", "Example"), "node");
+    const nodeStyle = styleFor(graphStyle("spaced"), "node");
 
     expect(nodeStyle["font-size"]).toBe(16);
     expect(nodeStyle["font-weight"]).toBe(500);
-    expect(nodeStyle["text-metrics"]).toBe("glyph");
+    expect(nodeStyle["text-metrics"]).toBe("font");
     expect(nodeStyle.height).toBe("label");
-    expect(nodeStyle.padding).toBe("10px");
+    expect(nodeStyle.padding).toBe("14px");
     expect(nodeStyle.ghost).toBe("no");
   });
 
-  it("keeps taxi routing aligned with the graph direction", () => {
-    const styles = graphStyle("spaced", "Example");
-    const edgeStyle = styleFor(styles, "edge");
-
-    const edgeA = { id: () => "edge-a" };
-    const edgeB = { id: () => "edge-b" };
-
-    expect(edgeStyle["curve-style"]).toBe("round-taxi");
-
-    localStorage.setItem("graph_direction", "TB");
-    expect(edgeStyle["taxi-direction"]()).toBe("vertical");
-    localStorage.setItem("graph_direction", "LR");
-    expect(edgeStyle["taxi-direction"]()).toBe("horizontal");
-    localStorage.removeItem("graph_direction");
-    expect(edgeStyle["taxi-turn"](edgeA)).toMatch(/^(38|42|46|50|54|58|62)%$/);
-    expect(edgeStyle["taxi-turn"](edgeA)).not.toBe(edgeStyle["taxi-turn"](edgeB));
-    expect(edgeStyle["taxi-turn-min-distance"]).toBe(18);
-    expect(edgeStyle["taxi-radius"]).toBe(12);
-    expect(edgeStyle["edge-distances"]).toBe("intersection");
-    expect(edgeStyle["line-fill"]).toBe("linear-gradient");
-    expect(edgeStyle["line-gradient-stop-positions"]).toBe("0% 100%");
-  });
-
   it("reveals generation relationships only for contextual edges", () => {
-    const styles = graphStyle("spaced", "Example");
+    const styles = graphStyle("spaced");
     const edgeStyle = styleFor(styles, "edge");
     const hoverStyle = styleFor(styles, ".edge-hover");
     const selectedStyle = styleFor(styles, "edge.selected-edge");
@@ -167,8 +140,8 @@ describe("graph layout proportions", () => {
   it("keeps graph labels concise in reading and overview modes", () => {
     const longTitle = "A".repeat(140);
     const node = { data: () => longTitle };
-    const spacedStyle = styleFor(graphStyle("spaced", "Example"), "node");
-    const compactStyle = styleFor(graphStyle("compact", "Example"), "node");
+    const spacedStyle = styleFor(graphStyle("spaced"), "node");
+    const compactStyle = styleFor(graphStyle("compact"), "node");
 
     expect(spacedStyle.label(node)).toBe(`${"A".repeat(120)}…`);
     expect(compactStyle.label(node)).toBe(`${"A".repeat(72)}…`);
@@ -178,13 +151,13 @@ describe("graph layout proportions", () => {
 
 it("shows a complete descriptive title instead of cutting it at the old limit", () => {
   const title = "How individual liberty and social responsibility shape John Stuart Mill's account of human flourishing";
-  const style = styleFor(graphStyle("spaced", "Example"), "node");
+  const style = styleFor(graphStyle("spaced"), "node");
   expect(style.label({ data: () => `\n\n## **${title}**\nLonger body text` })).toBe(title);
 });
 
 it("cuts long labels at word boundaries and uses rendered label height", () => {
   for (const [mode, cutoff] of [["spaced", 120], ["compact", 72]]) {
-    const style = styleFor(graphStyle(mode, "Example"), "node");
+    const style = styleFor(graphStyle(mode), "node");
     const title = "Understanding the relationship between individual freedom and collective responsibility in democratic societies requires careful consideration";
     const node = { data: () => title };
     const label = style.label(node);

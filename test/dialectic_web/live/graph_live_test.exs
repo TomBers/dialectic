@@ -41,7 +41,18 @@ defmodule DialecticWeb.GraphLiveTest do
     conn = log_in_user(conn, user)
 
     {:ok, graph} = Dialectic.GraphFixtures.insert_graph_fixture(graph_name)
-    graph = graph |> Ecto.Changeset.change(user_id: user.id) |> Dialectic.Repo.update!()
+
+    data =
+      if graph.data["nodes"] == [] do
+        root = %Vertex{id: "1", content: graph_name, class: "origin"}
+        serialized = root |> Vertex.serialize() |> Jason.encode!() |> Jason.decode!()
+        Map.put(graph.data, "nodes", [serialized])
+      else
+        graph.data
+      end
+
+    graph =
+      graph |> Ecto.Changeset.change(user_id: user.id, data: data) |> Dialectic.Repo.update!()
 
     live(conn, ~p"/g/#{graph.slug}/graph?node=1")
   end
@@ -638,21 +649,28 @@ defmodule DialecticWeb.GraphLiveTest do
       user = assigns.current_user
       graph = assigns.graph_struct
 
-      assert has_element?(view, "#graph-follow-grid-button", "Follow")
+      assert has_element?(
+               view,
+               "#graph-follow-grid-button[aria-pressed='false'] .hero-bell-alert"
+             )
 
       view
       |> element("#graph-follow-grid-button")
       |> render_click()
 
       assert Follows.following_graph?(user, graph)
-      assert has_element?(view, "#graph-follow-grid-button", "Following")
+      assert has_element?(view, "#graph-follow-grid-button[aria-pressed='true'] .hero-bell-solid")
 
       view
       |> element("#graph-follow-grid-button")
       |> render_click()
 
       refute Follows.following_graph?(user, graph)
-      assert has_element?(view, "#graph-follow-grid-button", "Follow")
+
+      assert has_element?(
+               view,
+               "#graph-follow-grid-button[aria-pressed='false'] .hero-bell-alert"
+             )
     end
 
     test "crafted unauthenticated unfollow event opens the login modal", %{conn: conn} do
@@ -2231,20 +2249,15 @@ defmodule DialecticWeb.GraphLiveTest do
     end
 
     test "restore_presentation sets title and filters invalid node IDs", %{conn: conn} do
-      {:ok, view, _html} = setup_live(conn)
+      {:ok, view, _html} = setup_live_for_graph(conn, "Restore Presentation")
 
-      # The Satre fixture has no real graph nodes, so all IDs will be
-      # filtered out by the find_node validation — but the title should
-      # still be set.
       render_click(view, "restore_presentation", %{
         "slide_ids" => ["1", "nonexistent_xyz"],
         "title" => "Restored Talk"
       })
 
       state = :sys.get_state(view.pid).socket.assigns
-      # All IDs invalid for this graph → filtered to empty
-      assert state.presentation_slide_ids == []
-      # Title is still restored even when no valid slides remain
+      assert state.presentation_slide_ids == ["1"]
       assert state.presentation_title == "Restored Talk"
     end
 

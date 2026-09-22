@@ -1,4 +1,5 @@
-import { draw_graph } from "./draw_graph";
+import { draw_graph, fitVisibleGraph } from "./draw_graph";
+import { refreshGraphLabels } from "./graph_renderer.js";
 import { layoutConfig } from "./layout_config.js";
 import { extractListItems } from "./list_detection_hook.js";
 import { syncSelectedNodeUrl } from "./selected_node_url.js";
@@ -336,6 +337,18 @@ const ensureVisible = (cy, container, nodeId) => {
 const graphHook = {
   mounted() {
     const { graph, node, div, graphId } = this.el.dataset;
+    this._lastGraphStr = graph;
+    this._graphHintDismissed = false;
+    this._dismissGraphHint = () => {
+      this._graphHintDismissed = true;
+      const hint = this.el.querySelector("[data-graph-hint]");
+      if (hint) hint.hidden = true;
+    };
+    for (const event of ["pointerdown", "wheel", "keydown"]) {
+      this.el.addEventListener(event, this._dismissGraphHint, {
+        capture: true, passive: true, once: true,
+      });
+    }
     const appearance = syncGraphAppearanceStorage(this.el.dataset);
     this._reduceMotion = appearance.reduceMotion;
     this._highContrast = appearance.highContrast;
@@ -479,11 +492,9 @@ const graphHook = {
     );
 
     // Layout/centering coordination state
-    // The initial cy.layout().run() in draw_graph is already in flight by this
-    // point, so start as true. A one-shot layoutstop listener flips it back
-    // once the initial layout finishes. This ensures that deferred operations
-    // (e.g. presentation_filter_graph from a shared link) wait correctly.
-    this._layoutRunning = initialDrawOptions.skipInitialLayout !== true;
+    // Reduced-motion layouts can finish synchronously inside draw_graph.
+    // Only wait for layoutstop when the initial layout is still in flight.
+    this._layoutRunning = !this.cy._initialLayoutComplete;
     if (this._layoutRunning) {
       this.cy.one("layoutstop", () => {
         this._layoutRunning = false;
@@ -674,32 +685,8 @@ const graphHook = {
       }
     };
 
-    const visibleGraphNodes = () =>
-      this.cy.nodes().filter(
-        (n) =>
-          !n.hasClass("hidden") &&
-          !n.hasClass("depth-hidden") &&
-          !n.hasClass("presentation-hidden") &&
-          !n.hasClass("presentation-hidden-parent"),
-      );
-
     const fitGraph = () => {
-      const visibleNodes = visibleGraphNodes();
-      if (!visibleNodes || visibleNodes.length === 0) return;
-
-      const fitPadding = window.matchMedia("(max-width: 1023px)").matches
-        ? 56
-        : 84;
-
-      this.cy.fit(visibleNodes, fitPadding);
-
-      // Then offset horizontally so the centered content lands in the visible area, not under the right panel
-      const rightPanelWidth = getRightPanelWidth();
-      const deltaX = rightPanelWidth > 0 ? -(rightPanelWidth / 2) : 0;
-
-      if (deltaX !== 0) {
-        this.cy.panBy({ x: deltaX, y: 0 });
-      }
+      if (!fitVisibleGraph(this.cy, container)) return;
 
       if (typeof this.cy.scheduleViewportClamp === "function") {
         this.cy.scheduleViewportClamp({ immediate: true });
@@ -833,10 +820,6 @@ const graphHook = {
         try {
           this.cy.resize();
         } catch (_e) {}
-
-        if (typeof this.cy.refreshResponsiveLabelStyles === "function") {
-          this.cy.refreshResponsiveLabelStyles({ immediate: true });
-        }
 
         if (typeof this.cy.scheduleViewportClamp === "function") {
           this.cy.scheduleViewportClamp({ immediate: true });
@@ -1016,7 +999,7 @@ const graphHook = {
         if (!ids || ids.length === 0) return;
 
         const idSet = new Set(ids);
-        const allNodes = this.cy.nodes().filter((n) => !n.data("compound"));
+        const allNodes = this.cy.nodes();
         let needsReflow = false;
 
         allNodes.forEach((n) => {
@@ -1208,7 +1191,7 @@ const graphHook = {
 
   /**
    * Applies the presentation filter: hides nodes not in the selected set,
-   * preserves compound parents of visible nodes, and hides orphaned edges.
+   * and hides edges outside that set.
    * Called both from the initial filter event and after cy.json() reloads.
    */
   _applyPresentationFilter() {
@@ -1216,9 +1199,7 @@ const graphHook = {
     const ids = this._presentationIds;
     const idSet = new Set(ids);
 
-    // First, ensure selected nodes are not stuck in depth-hidden or
-    // collapsed-group states — otherwise they'll remain invisible even
-    // after we remove presentation-hidden.
+    // Reveal selected nodes before applying the presentation filter.
     let needsReflow = false;
     ids.forEach((id) => {
       const n = this.cy.getElementById(id);
@@ -1232,49 +1213,25 @@ const graphHook = {
       }
     });
 
-    // Collect compound parents of every selected node so we
-    // don't accidentally hide a parent that contains visible children.
-    const keepParentIds = new Set();
-    ids.forEach((id) => {
-      const n = this.cy.getElementById(id);
-      if (n && n.length > 0) {
-        let p = n.parent();
-        while (p && p.length > 0) {
-          keepParentIds.add(p.id());
-          p = p.parent();
-        }
-      }
-    });
-
     this.cy.startBatch();
 
     this.cy.nodes().forEach((n) => {
       if (idSet.has(n.id())) {
         n.removeClass("presentation-hidden");
-        n.removeClass("presentation-hidden-parent");
         n.addClass("presentation-slide");
         n.removeStyle("display");
-      } else if (n.data("compound") || keepParentIds.has(n.id())) {
-        // Compound group that contains a visible child — keep it
-        // structurally present (so children render) but visually hidden
-        // (no border, no background, no label).
-        n.removeClass("presentation-hidden");
-        n.removeClass("presentation-slide");
-        n.addClass("presentation-hidden-parent");
-        n.style("display", "element");
       } else {
         n.addClass("presentation-hidden");
         n.removeClass("presentation-slide");
-        n.removeClass("presentation-hidden-parent");
         n.style("display", "none");
       }
     });
 
     this.cy.edges().forEach((e) => {
       const srcVisible =
-        idSet.has(e.source().id()) || keepParentIds.has(e.source().id());
+        idSet.has(e.source().id());
       const tgtVisible =
-        idSet.has(e.target().id()) || keepParentIds.has(e.target().id());
+        idSet.has(e.target().id());
       if (srcVisible && tgtVisible) {
         e.removeClass("presentation-hidden");
         e.addClass("presentation-edge");
@@ -1763,10 +1720,6 @@ const graphHook = {
         data: { ...el.data },
       };
 
-      if (next.data.parent && !keepIds.has(String(next.data.parent))) {
-        delete next.data.parent;
-      }
-
       const orderedPosition = next.data.id
         ? orderedPositions.get(String(next.data.id))
         : null;
@@ -1951,6 +1904,7 @@ const graphHook = {
   },
 
   _scheduleFontAwareRedraw() {
+    const cy = this.cy;
     const redraw = () => {
       if (!this.cy) return;
 
@@ -1966,7 +1920,11 @@ const graphHook = {
     if (document.fonts && document.fonts.ready) {
       document.fonts.ready
         .then(() => {
-          requestAnimationFrame(redraw);
+          requestAnimationFrame(() => {
+            if (this.cy !== cy || cy.destroyed()) return;
+            refreshGraphLabels(cy);
+            redraw();
+          });
         })
         .catch(() => {});
     }
@@ -2041,6 +1999,11 @@ const graphHook = {
 
     if (this.cy && this._debugRedraw) {
       this.cy.on("pan zoom render", this._debugRedraw);
+    }
+
+    if (this.cy && this._syncZoomIndicators) {
+      this.cy.on("zoom layoutstop", this._syncZoomIndicators);
+      this._syncZoomIndicators();
     }
 
     this._scheduleFontAwareRedraw();
@@ -2198,6 +2161,7 @@ const graphHook = {
         reduceMotion: this._reduceMotion,
         highContrast: this._highContrast,
         animateInitialLayout: readerPathIds.length === 0,
+        fitInitialViewport: false,
       },
     );
 
@@ -2226,6 +2190,11 @@ const graphHook = {
       this.cy.on("pan zoom position", this._onCyPanZoom);
     }
 
+    if (this.cy && this._syncZoomIndicators) {
+      this.cy.on("zoom layoutstop", this._syncZoomIndicators);
+      this._syncZoomIndicators();
+    }
+
     // Re-apply presentation filter if it was active
     if (this._presentationFiltered && this._presentationIds) {
       try {
@@ -2252,11 +2221,6 @@ const graphHook = {
 
     // Simply re-layout with the new direction
     if (this.cy) {
-      // Re-evaluate style function mappers (e.g. compound label position)
-      try {
-        this.cy.style().update();
-      } catch (_e) {}
-
       layoutGraph(this.cy, {}, () => {
         // Restore zoom and pan after layout
         try {
@@ -2326,9 +2290,6 @@ const graphHook = {
         try {
           this.cy.scratch("_bulkReload", null);
         } catch (_e) {}
-      }
-      if (typeof this.cy.enforceCollapsedState === "function") {
-        this.cy.enforceCollapsedState();
       }
 
       if (presentationMode === "presenting" && presentationIds.length > 0) {
@@ -2481,6 +2442,9 @@ const graphHook = {
     if (this._bindZoomControls) {
       this._bindZoomControls();
     }
+    this._syncZoomIndicators?.();
+
+    if (this._graphHintDismissed) this._dismissGraphHint();
 
     if (this._bindPngButtons) {
       this._bindPngButtons();
@@ -2494,6 +2458,9 @@ const graphHook = {
     if (this._debugRedraw) this._debugRedraw();
   },
   destroyed() {
+    for (const event of ["pointerdown", "wheel", "keydown"]) {
+      this.el.removeEventListener(event, this._dismissGraphHint, true);
+    }
     storeGraphViewport(
       this.el?.dataset?.graphId,
       this._readReaderPathIds().join(","),

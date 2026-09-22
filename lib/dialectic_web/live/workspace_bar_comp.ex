@@ -2,6 +2,109 @@ defmodule DialecticWeb.WorkspaceBarComp do
   use DialecticWeb, :html
   alias DialecticWeb.ColUtils
 
+  attr :id, :string, required: true
+  attr :heading_id, :string, required: true
+  attr :title_id, :string, required: true
+  attr :title, :string, required: true
+  attr :menu_id, :string, required: true
+  attr :menu_class, :list, default: []
+  attr :follow_id_prefix, :string, required: true
+  attr :current_user, :any, required: true
+  attr :following_graph?, :boolean, required: true
+  slot :heading_actions
+  slot :navigation, required: true
+  slot :tools
+
+  def workspace_header(assigns) do
+    ~H"""
+    <header id={@id} class="workspace-header">
+      <div id={@heading_id} class="workspace-heading">
+        <h1
+          id={@title_id}
+          class="min-w-0 truncate text-sm font-semibold text-slate-700"
+          title={@title}
+        >
+          {@title}
+        </h1>
+        {render_slot(@heading_actions)}
+      </div>
+      <div id={@menu_id} class={["workspace-menu", @menu_class]}>
+        {render_slot(@navigation)}
+        <div class="workspace-context-actions">
+          {render_slot(@tools)}
+          <%= if @current_user do %>
+            <button
+              id={"#{@follow_id_prefix}-follow-grid-button"}
+              type="button"
+              phx-click={if(@following_graph?, do: "unfollow_graph", else: "follow_graph")}
+              aria-label={
+                if(@following_graph?,
+                  do: "Stop receiving grid updates in Activity",
+                  else: "Get notified about grid changes in Activity"
+                )
+              }
+              aria-pressed={to_string(@following_graph?)}
+              title={
+                if(@following_graph?,
+                  do: "Updates from this grid appear in Activity. Click to turn them off.",
+                  else: "Get notified when this grid changes and see updates in Activity."
+                )
+              }
+              class={[
+                "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-slate-600 transition duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 sm:h-7 sm:w-7",
+                if(@following_graph?,
+                  do: "border-sky-200 bg-sky-100 text-sky-700 hover:bg-sky-200",
+                  else:
+                    "border-transparent bg-slate-50 hover:bg-slate-100 hover:text-slate-950 sm:bg-transparent"
+                )
+              ]}
+            >
+              <.icon
+                name={if(@following_graph?, do: "hero-bell-solid", else: "hero-bell-alert")}
+                class="h-4 w-4"
+              />
+            </button>
+          <% else %>
+            <.link
+              navigate={~p"/users/log_in"}
+              id={"#{@follow_id_prefix}-follow-grid-login-link"}
+              aria-label="Sign in to get notified about grid changes in Activity"
+              title="Sign in to get notified when this grid changes and see updates in Activity."
+              class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-transparent bg-slate-50 text-slate-600 transition duration-150 hover:bg-slate-100 hover:text-slate-950 sm:h-7 sm:w-7 sm:bg-transparent"
+            >
+              <.icon name="hero-bell-alert" class="h-4 w-4" />
+            </.link>
+          <% end %>
+        </div>
+      </div>
+    </header>
+    """
+  end
+
+  attr :id, :string, required: true
+  attr :prompt_mode, :string, required: true
+  attr :click, :any, required: true
+
+  def prompt_mode_button(assigns) do
+    ~H"""
+    <button
+      id={@id}
+      type="button"
+      phx-click={@click}
+      data-panel-toggle="right-panel"
+      data-panel-section="configure"
+      aria-controls="right-panel"
+      aria-expanded="false"
+      class="hidden h-8 shrink-0 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 transition hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-800 sm:inline-flex"
+      title="Change explanation level"
+      aria-label={"Explanation level: #{prompt_mode_label(@prompt_mode)}. Change explanation level"}
+    >
+      <.icon name="hero-adjustments-horizontal" class="h-3.5 w-3.5 text-slate-500" />
+      <span>{prompt_mode_label(@prompt_mode)}</span>
+    </button>
+    """
+  end
+
   attr :id, :string, default: "workspace-bar"
   attr :mode, :atom, required: true
   attr :graph_struct, :map, required: true
@@ -15,8 +118,6 @@ defmodule DialecticWeb.WorkspaceBarComp do
   attr :highlights_panel_id, :string, default: nil
   attr :show_share, :boolean, default: true
   attr :share_click, :any, default: nil
-  attr :prompt_mode, :string, default: nil
-  attr :prompt_mode_click, :any, default: nil
   attr :mobile_aux_id, :string, default: nil
   attr :mobile_aux_click, :any, default: nil
   attr :mobile_aux_open, :boolean, default: false
@@ -73,20 +174,6 @@ defmodule DialecticWeb.WorkspaceBarComp do
         </div>
       </div>
 
-      <button
-        :if={@prompt_mode && @prompt_mode_click}
-        id={"#{@id}-level"}
-        type="button"
-        phx-click={@prompt_mode_click}
-        data-panel-toggle="right-panel"
-        class="ml-1 hidden h-8 shrink-0 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 transition hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-800 sm:inline-flex"
-        title="Change explanation level"
-        aria-label={"Explanation level: #{prompt_mode_label(@prompt_mode)}. Change explanation level"}
-      >
-        <.icon name="hero-adjustments-horizontal" class="h-3.5 w-3.5 text-slate-500" />
-        <span>{prompt_mode_label(@prompt_mode)}</span>
-      </button>
-
       <div class={divider_classes(@compact)}></div>
 
       <div class="ml-auto flex flex-wrap items-center gap-1 sm:ml-0">
@@ -119,7 +206,9 @@ defmodule DialecticWeb.WorkspaceBarComp do
           aria-label={search_button_label(@mode)}
         >
           <.icon name="hero-magnifying-glass" class="h-4 w-4" />
-          <span class="hidden sm:inline">Search</span>
+          <span class={if(@compact, do: "hidden md:inline", else: "hidden sm:inline")}>
+            Search
+          </span>
           <kbd class={kbd_classes(@compact)}>
             ⌘K
           </kbd>
@@ -181,7 +270,7 @@ defmodule DialecticWeb.WorkspaceBarComp do
 
   defp bar_classes(true) do
     [
-      "flex w-full max-w-full items-center gap-2 sm:inline-flex sm:w-auto sm:shrink-0 sm:flex-wrap sm:justify-start"
+      "flex w-full max-w-full items-center gap-2 sm:inline-flex sm:w-auto sm:shrink-0 sm:flex-wrap sm:justify-start lg:w-[27rem]"
     ]
   end
 
@@ -276,7 +365,7 @@ defmodule DialecticWeb.WorkspaceBarComp do
 
   defp action_label_classes(true), do: "hidden"
   defp action_label_classes(false), do: "hidden sm:inline"
-  defp highlights_label_classes(true), do: "hidden sm:inline"
+  defp highlights_label_classes(true), do: "hidden md:inline"
   defp highlights_label_classes(false), do: "hidden sm:inline"
 
   defp highlight_count_classes(true) do

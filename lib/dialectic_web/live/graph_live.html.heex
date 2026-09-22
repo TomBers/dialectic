@@ -31,9 +31,113 @@
       )
     }
   >
-    <h1 :if={@presentation_mode != :presenting} class="sr-only">
-      {@graph_struct.title}
-    </h1>
+    <DialecticWeb.WorkspaceBarComp.workspace_header
+      :if={@presentation_mode != :presenting}
+      id="graph-header"
+      heading_id="graph-heading"
+      title_id="graph-title"
+      title={@graph_struct.title}
+      menu_id="graph-top-menu"
+      follow_id_prefix="graph"
+      current_user={@current_user}
+      following_graph?={@following_graph?}
+      menu_class={[@mobile_inquiry? && "hidden md:flex"]}
+    >
+      <:heading_actions>
+        <button
+          id="graph-help-button"
+          type="button"
+          phx-click="open_help_modal"
+          class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-transparent bg-slate-50 text-slate-600 transition hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600 sm:h-7 sm:w-7 sm:bg-transparent"
+          aria-label="Open how-to guide for this page"
+          title="Open how-to guide for this page"
+        >
+          <.icon name="hero-question-mark-circle" class="h-4 w-4" />
+          <span class="sr-only">How to use</span>
+        </button>
+      </:heading_actions>
+      <:navigation>
+        <DialecticWeb.WorkspaceBarComp.workspace_bar
+          id="graph-workspace-bar"
+          mode={:graph}
+          graph_struct={@graph_struct}
+          node_id={Map.get(@node || %{}, :id)}
+          nav_params={graph_nav_params(@token, @reader_path_endpoint)}
+          show_search
+          search_click="open_search_overlay_click"
+          highlights_click={
+            JS.dispatch("toggle-panel",
+              to: "#graph-layout",
+              detail: %{id: "highlights-drawer"}
+            )
+          }
+          highlights_count={length(@highlights)}
+          highlights_panel_id="highlights-drawer"
+          share_click="open_share_modal"
+          compact
+        />
+      </:navigation>
+      <:tools>
+        <DialecticWeb.WorkspaceBarComp.prompt_mode_button
+          id="graph-workspace-bar-level"
+          prompt_mode={@prompt_mode}
+          click={
+            JS.dispatch("toggle-panel",
+              to: "#graph-layout",
+              detail: %{id: "right-panel", section: "configure"}
+            )
+            |> JS.push("open_prompt_settings")
+          }
+        />
+        <button
+          :if={@current_user && @graph_struct.user_id == @current_user.id}
+          id="graph-access-settings"
+          type="button"
+          phx-click={
+            JS.dispatch("toggle-panel",
+              to: "#graph-layout",
+              detail: %{id: "right-panel", section: "workspace"}
+            )
+            |> JS.push("open_access_settings")
+          }
+          data-panel-toggle="right-panel"
+          data-panel-section="workspace"
+          aria-controls="right-panel"
+          aria-expanded="false"
+          class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600"
+          aria-label={
+            if(@graph_struct.is_public,
+              do: "Public grid: access controls",
+              else: "Private grid: access controls"
+            )
+          }
+          title={
+            "Access controls: #{if @graph_struct.is_public, do: "Public", else: "Private"} · #{if @graph_struct.is_locked, do: "Protected", else: "Editable"}"
+          }
+        >
+          <.icon
+            name={if(@graph_struct.is_public, do: "hero-globe-alt", else: "hero-lock-closed")}
+            class="h-3.5 w-3.5"
+          />
+        </button>
+
+        <div class="flex shrink-0 items-center gap-1.5">
+          <div class="hidden h-4 w-px bg-slate-200 sm:block"></div>
+
+          <.live_component
+            module={DialecticWeb.DocumentMenuComp}
+            id="document-menu"
+            graph_id={@graph_id}
+            graph_struct={@graph_struct}
+            node={@node}
+            can_edit={@can_edit}
+            token={@token}
+            layout_target="#graph-layout"
+            compact={true}
+          />
+        </div>
+      </:tools>
+    </DialecticWeb.WorkspaceBarComp.workspace_header>
     <% slides = slides(@graph_id, @presentation_slide_ids) %>
     <% active_slide = active_slide(slides, @node) %>
     <% active_slide_id = if active_slide, do: active_slide.id, else: nil %>
@@ -228,6 +332,7 @@
     <%!-- Main content with drawer menu --%>
     <div
       id="graph-keyboard-workspace"
+      data-mode-switch-content
       phx-hook="GraphKeyboardNavigation"
       data-active-region="reader"
       class={[
@@ -308,99 +413,6 @@
           )
         ]}
       >
-        <%= if @presentation_mode != :presenting do %>
-          <div class={[
-            "relative z-20 flex-none border-b border-slate-200 bg-white/98 backdrop-blur-lg",
-            @mobile_inquiry? && "hidden md:block"
-          ]}>
-            <div class="px-4 py-1.5 sm:px-5 lg:px-6">
-              <div
-                id="graph-top-menu"
-                class="flex min-h-[38px] flex-wrap items-center gap-1.5 lg:flex-nowrap"
-              >
-                <DialecticWeb.WorkspaceBarComp.workspace_bar
-                  id="graph-workspace-bar"
-                  mode={:graph}
-                  graph_struct={@graph_struct}
-                  node_id={Map.get(@node || %{}, :id)}
-                  nav_params={graph_nav_params(@token, @reader_path_endpoint)}
-                  prompt_mode={@prompt_mode}
-                  prompt_mode_click={
-                    JS.dispatch("toggle-panel",
-                      to: "#graph-layout",
-                      detail: %{id: "right-panel"}
-                    )
-                    |> JS.push("open_prompt_settings")
-                  }
-                  show_search
-                  search_click="open_search_overlay_click"
-                  highlights_click={
-                    JS.dispatch("toggle-panel",
-                      to: "#graph-layout",
-                      detail: %{id: "highlights-drawer"}
-                    )
-                  }
-                  highlights_count={length(@highlights)}
-                  highlights_panel_id="highlights-drawer"
-                  share_click="open_share_modal"
-                  compact
-                />
-
-                <div class="ml-auto flex shrink-0 items-center gap-1.5">
-                  <%= if @current_user do %>
-                    <button
-                      id="graph-follow-grid-button"
-                      type="button"
-                      phx-click={
-                        if(@following_graph?, do: "unfollow_graph", else: "follow_graph")
-                      }
-                      class={[
-                        "inline-flex h-7 items-center gap-1 rounded-lg px-2.5 text-[11px] font-semibold transition",
-                        if(@following_graph?,
-                          do: "bg-slate-100 text-slate-700 hover:bg-slate-200/80",
-                          else: "bg-slate-950 text-white hover:bg-slate-800"
-                        )
-                      ]}
-                    >
-                      <.icon
-                        name={if(@following_graph?, do: "hero-check", else: "hero-plus")}
-                        class="h-3.5 w-3.5"
-                      />
-                      <%= if @following_graph? do %>
-                        Following
-                      <% else %>
-                        Follow
-                      <% end %>
-                    </button>
-                  <% else %>
-                    <.link
-                      navigate={~p"/users/log_in"}
-                      id="graph-follow-grid-login-link"
-                      class="inline-flex h-7 items-center gap-1 rounded-lg bg-slate-950 px-2.5 text-[11px] font-semibold text-white transition hover:bg-slate-800"
-                    >
-                      <.icon name="hero-plus" class="h-3.5 w-3.5" /> Follow
-                    </.link>
-                  <% end %>
-
-                  <div class="hidden h-4 w-px bg-slate-200 sm:block"></div>
-
-                  <.live_component
-                    module={DialecticWeb.DocumentMenuComp}
-                    id="document-menu"
-                    graph_id={@graph_id}
-                    graph_struct={@graph_struct}
-                    node={@node}
-                    can_edit={@can_edit}
-                    token={@token}
-                    layout_target="#graph-layout"
-                    compact={true}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        <% end %>
-
         <div
           :if={map_size(@background_generations) > 0 and @presentation_mode != :presenting}
           id="background-generations"
@@ -511,61 +523,75 @@
             />
 
             <div class="pointer-events-none absolute right-4 top-4 z-20 flex flex-col items-end gap-2">
-              <div class="pointer-events-auto inline-flex items-center gap-3 rounded-full border border-slate-200/90 bg-white/95 px-3 py-2 text-xs font-semibold text-slate-700 shadow-[0_18px_30px_-24px_rgba(15,23,42,0.55)] ring-1 ring-white/80 backdrop-blur">
-                <span class="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                  Zoom
-                </span>
-                <span
-                  id="graph-zoom-level"
-                  data-zoom-level
-                  class="min-w-[3.25rem] text-right font-semibold tabular-nums text-slate-900"
-                >
-                  100%
-                </span>
-                <input
-                  type="range"
-                  min="0"
-                  max="1000"
-                  value="574"
-                  step="1"
-                  data-zoom-slider
-                  class="h-1.5 w-32 cursor-pointer appearance-none rounded-full bg-slate-200 accent-slate-800"
-                  aria-label="Adjust graph zoom"
-                  title="Adjust graph zoom"
-                />
-              </div>
-
-              <div class="pointer-events-auto inline-flex items-center gap-1 rounded-[1.1rem] border border-slate-200/90 bg-white/98 p-1 shadow-[0_22px_40px_-28px_rgba(15,23,42,0.55)] ring-1 ring-white/80 backdrop-blur">
+              <div
+                id="graph-zoom-toolbar"
+                role="group"
+                aria-label="Graph zoom controls"
+                class="pointer-events-auto inline-flex items-center gap-0.5 rounded-xl border border-slate-200 bg-white p-1 text-xs text-slate-700 shadow-sm"
+              >
                 <button
+                  id="graph-zoom-out"
                   type="button"
                   data-zoom-action="out"
-                  class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-transparent text-slate-600 transition hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900"
+                  class="inline-flex h-9 w-9 items-center justify-center rounded-lg hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-teal-600"
                   aria-label="Zoom out"
                   title="Zoom out"
                 >
                   <.icon name="hero-minus" class="h-4 w-4" />
                 </button>
+                <details id="graph-zoom-options" class="relative">
+                  <summary
+                    class="flex h-9 min-w-[3.25rem] cursor-pointer list-none items-center justify-center rounded-lg px-1 font-semibold tabular-nums hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-teal-600 [&::-webkit-details-marker]:hidden"
+                    aria-label="Fine-tune graph zoom"
+                    title="Fine-tune graph zoom"
+                  >
+                    <span id="graph-zoom-level" data-zoom-level>100%</span>
+                  </summary>
+                  <div class="absolute right-0 top-full mt-2 w-48 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+                    <label for="graph-zoom-slider" class="mb-3 block text-xs font-medium">
+                      Adjust zoom
+                    </label>
+                    <input
+                      id="graph-zoom-slider"
+                      type="range"
+                      min="0"
+                      max="1000"
+                      value="574"
+                      step="1"
+                      data-zoom-slider
+                      class="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-slate-800"
+                      aria-label="Adjust graph zoom"
+                    />
+                  </div>
+                </details>
                 <button
-                  type="button"
-                  data-zoom-action="fit"
-                  class="inline-flex h-10 items-center justify-center rounded-full border border-slate-200 bg-slate-50 px-3 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-100 hover:text-slate-950"
-                  aria-label="Fit graph to screen"
-                  title="Fit graph to screen"
-                >
-                  Fit
-                </button>
-                <button
+                  id="graph-zoom-in"
                   type="button"
                   data-zoom-action="in"
-                  class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-transparent text-slate-600 transition hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900"
+                  class="inline-flex h-9 w-9 items-center justify-center rounded-lg hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-teal-600"
                   aria-label="Zoom in"
                   title="Zoom in"
                 >
                   <.icon name="hero-plus" class="h-4 w-4" />
                 </button>
+                <span aria-hidden="true" class="mx-1 h-4 w-px bg-slate-200"></span>
+                <button
+                  id="graph-zoom-fit"
+                  type="button"
+                  data-zoom-action="fit"
+                  class="inline-flex h-9 items-center justify-center rounded-lg px-2.5 font-semibold hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-teal-600"
+                  aria-label="Fit graph to screen"
+                  title="Fit graph to screen"
+                >
+                  Fit
+                </button>
               </div>
 
-              <div class="max-w-[17rem] rounded-full bg-white/78 px-3 py-1.5 text-[11px] font-medium text-slate-600 shadow-[0_14px_28px_-24px_rgba(15,23,42,0.45)] ring-1 ring-white/70 backdrop-blur">
+              <div
+                id="graph-interaction-hint"
+                data-graph-hint
+                class="max-w-[17rem] rounded-lg bg-white/95 px-2 py-1 text-[11px] text-slate-500"
+              >
                 <span>Click a box to open it in the reader.</span>
               </div>
             </div>
@@ -586,60 +612,6 @@
         <%= if @graph_id do %>
           <span phx-window-keydown={show_modal("modal-graph-live-modal-comp")} phx-key="Enter"></span>
         <% end %>
-
-        <!-- Streams panel -->
-
-        <%!-- removed deprecated combine modal; now uses combine-drawer panel --%>
-        <%!-- removed deprecated grouping modal; grouping now only via streams --%>
-
-        <.modal
-          :if={@show_start_stream_modal}
-          id="start-stream-modal"
-          on_cancel={JS.push("cancel_start_stream")}
-          show
-        >
-          <h2 class="text-xl font-semibold mb-4">Start a new group</h2>
-          <form phx-submit="start_stream" class="space-y-3">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Group name</label>
-              <input
-                type="text"
-                name="title"
-                id="start-stream-title"
-                required
-                class="block w-full rounded-lg text-zinc-900 focus:ring-0 sm:text-sm sm:leading-6 border-zinc-300 focus:border-zinc-800"
-                oninput="document.getElementById('start-stream-content').value=this.value"
-              />
-              <input type="hidden" name="content" id="start-stream-content" />
-            </div>
-            <div class="flex items-center gap-2">
-              <input
-                type="checkbox"
-                name="auto_answer"
-                id="start-stream-auto-answer"
-                class="rounded border-gray-300"
-              />
-              <label for="start-stream-auto-answer" class="text-sm text-gray-700">
-                Automatically answer this question on create
-              </label>
-            </div>
-            <div class="flex justify-end gap-2">
-              <button
-                type="button"
-                phx-click="cancel_start_stream"
-                class="px-3 py-1 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                class="px-3 py-1 rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
-              >
-                Create group
-              </button>
-            </div>
-          </form>
-        </.modal>
 
         <.modal
           :if={@show_explore_modal}
@@ -776,12 +748,10 @@
               id="settings-menu"
               graph_id={@graph_id}
               node={@node}
-              work_streams={@work_streams}
               current_user={@current_user}
               graph_struct={@graph_struct}
               search_term={@search_term}
               search_results={@search_results}
-              group_states={@group_states}
               highlights={@highlights}
               prompt_mode={@prompt_mode}
               token={@token}

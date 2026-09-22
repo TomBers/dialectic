@@ -76,7 +76,7 @@ defmodule DialecticWeb.HomeLive do
        homepage_faqs: @homepage_faqs,
        json_ld: homepage_json_ld(),
        page_description:
-         "For questions that matter, compare views, trace claims to sources, and keep your reasoning in a grid you can revisit and share."
+         "Enjoy following your curiosity with AI. Ask, challenge, and explain ideas in a grid that grows as you go, then use search, highlights, and recall to return and keep learning."
      )
      |> stream_configure(:partner_grids,
        dom_id: fn item ->
@@ -412,101 +412,90 @@ defmodule DialecticWeb.HomeLive do
 
         <div class="mx-auto grid min-h-[72svh] w-full max-w-7xl items-center gap-12 px-5 py-16 sm:min-h-[78svh] sm:px-8 lg:grid-cols-[minmax(0,1.12fr)_minmax(22rem,0.72fr)] lg:px-10">
           <div class="max-w-4xl">
-            <h1
-              id="home-hero-title"
-              class="flex items-start gap-4 text-white sm:gap-6"
-            >
+            <p class="flex items-center gap-3 text-xl font-semibold text-slate-200">
               <img
                 id="home-hero-logo"
                 src={~p"/images/brandmark.svg"}
                 alt=""
-                width="56"
-                height="56"
-                class="mt-1 h-8 w-8 shrink-0 sm:mt-2 sm:h-12 sm:w-12"
+                width="36"
+                height="36"
+                class="h-9 w-9 shrink-0"
               />
-              <span class="min-w-0">
-                <span
-                  id="home-hero-brand"
-                  class="block text-4xl font-semibold leading-none tracking-[-0.035em] sm:text-6xl"
-                >
-                  RationalGrid
-                </span>
-                <span
-                  id="home-hero-tagline"
-                  class="mt-3 block text-2xl font-normal leading-none tracking-tight text-slate-300 sm:text-4xl"
-                >
-                  See what you think.
-                </span>
-              </span>
+              <span id="home-hero-brand">RationalGrid</span>
+            </p>
+            <h1
+              id="home-hero-title"
+              class="mt-7 text-4xl font-semibold leading-[1.08] tracking-[-0.035em] text-white sm:text-5xl xl:text-6xl"
+            >
+              Follow your curiosity. <span class="block text-teal-200">Build on every answer.</span>
             </h1>
-            <p
-              id="home-hero-subheading"
-              class="mt-8 text-lg leading-8 text-slate-200"
-            >
-              Use AI to answer questions, then go beyond a one-off chat: explore competing views and
-              build a durable map of your learning that you can expand, revisit, and share—with
-              tools to help when you get stuck.
+            <p id="home-hero-subheading" class="mt-6 max-w-xl text-lg leading-8 text-slate-200">
+              Enjoy exploring an idea, challenge an answer, or unpack a technical term.
+              A grid grows as you ask, keeping the connections visible so you can return
+              and keep learning.
             </p>
-            <div class="mt-12 flex flex-wrap items-center gap-4">
-              <%= if @current_user do %>
-                <.link
-                  id="home-start-grid-link"
-                  href="#start-here"
-                  data-analytics-event="start_grid_clicked"
-                  data-analytics-location="home_hero"
-                  class="inline-flex items-center gap-2 rounded-md bg-teal-300 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-teal-200"
+            <div id="start-here" class="mt-7 scroll-mt-24">
+              <div id="home-start-panel" class="hidden max-w-xl md:block">
+                <label
+                  id="home-question-label"
+                  for="new-idea-input"
+                  class="mb-3 block text-base font-semibold text-white"
                 >
-                  Start a grid <.icon name="hero-arrow-down" class="h-4 w-4" />
-                </.link>
-              <% else %>
+                  What are you curious about?
+                </label>
+                <div class="rounded-xl bg-white/10 p-2 text-slate-950 ring-1 ring-white/20">
+                  <.live_component
+                    module={DialecticWeb.NewIdeaFormComp}
+                    id="new-idea-form"
+                    form={@form}
+                    placeholder="Ask a question or name a topic"
+                    submit_label="Continue"
+                    autofocus={@focus_new_grid}
+                    minimal={true}
+                    authenticated={!is_nil(@current_user)}
+                    public_grid_warning="New grids are public and editable by default. Anyone can read them and, while editing is on, add to them. Sign in first if you want to control access in Settings; never include sensitive information."
+                  />
+                </div>
+              </div>
+              <div id="home-mobile-community-start" class="md:hidden">
+                <p class="text-sm leading-6 text-slate-300">
+                  Read public grids, add your own thoughts, and ask follow-up questions from your phone.
+                </p>
+              </div>
+              <div class="mt-4 flex flex-wrap items-center gap-3">
                 <.link
-                  id="home-sign-up-link"
-                  navigate={~p"/users/register"}
-                  data-analytics-event="sign_up_cta_clicked"
+                  id="home-mobile-community-link"
+                  navigate={~p"/community"}
+                  data-analytics-event="community_clicked"
                   data-analytics-location="home_hero"
-                  class="inline-flex items-center gap-2 rounded-md bg-teal-300 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-teal-200"
+                  class="inline-flex min-h-11 items-center gap-2 rounded-md bg-teal-300 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-teal-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-300 md:hidden"
                 >
-                  Sign up free <.icon name="hero-arrow-right" class="h-4 w-4" />
+                  Browse public grids <.icon name="hero-arrow-right" class="h-4 w-4" />
                 </.link>
-              <% end %>
-              <.link
-                id="home-community-hero-link"
-                navigate={~p"/community"}
-                data-analytics-event="community_clicked"
-                data-analytics-location="home_hero"
-                class="inline-flex items-center gap-2 rounded-md border border-teal-200/60 bg-white/10 px-5 py-3 text-sm font-semibold text-teal-50 transition hover:border-teal-200 hover:bg-white/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-300"
-              >
-                Community grids <.icon name="hero-arrow-right" class="h-4 w-4" />
-              </.link>
-              <.link
+                <.link
+                  id="home-community-secondary-link"
+                  navigate={~p"/community"}
+                  data-analytics-event="community_clicked"
+                  data-analytics-location="question_form"
+                  class="hidden min-h-11 items-center gap-2 rounded-md border border-teal-200/60 bg-white/10 px-4 py-2 text-sm font-semibold text-teal-50 transition hover:bg-white/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-300 md:inline-flex"
+                >
+                  Browse public grids <.icon name="hero-arrow-right" class="h-4 w-4" />
+                </.link>
+              </div>
+              <p
                 :if={is_nil(@current_user)}
-                id="home-explore-question-link"
-                href="#start-here"
-                data-analytics-event="explore_question_clicked"
-                data-analytics-location="home_hero"
-                class="inline-flex items-center gap-2 border-b border-slate-400 px-1 py-2 text-sm font-semibold text-white transition hover:border-teal-300 hover:text-teal-200"
+                id="home-try-reassurance"
+                class="mt-3 text-sm leading-6 text-slate-300"
               >
-                Explore a question <.icon name="hero-arrow-down" class="h-4 w-4" />
-              </.link>
-              <.link
-                id="home-about-link"
-                navigate={~p"/about"}
-                class="inline-flex items-center gap-2 border-b border-slate-400 px-1 py-2 text-sm font-semibold text-white transition hover:border-teal-300 hover:text-teal-200"
-              >
-                Why RationalGrid? <.icon name="hero-arrow-right" class="h-4 w-4" />
-              </.link>
+                <span class="hidden md:inline">Try Simple answers without an account.</span>
+                <span class="md:hidden">Explore public grids without an account.</span>
+                Sign up free to save bookmarks and highlights.
+              </p>
             </div>
-            <p
-              :if={is_nil(@current_user)}
-              id="home-sign-up-reassurance"
-              class="mt-4 text-sm text-slate-400"
-            >
-              Free account. No payment details. Save your grids, unlock deeper answers, and control access.
-            </p>
             <.link
               id="home-ai-scepticism-link"
               navigate={~p"/intro/ai"}
-              class="group mt-4 inline-flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-400 transition hover:text-slate-200"
+              class="group mt-5 inline-flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-400 transition hover:text-slate-200"
             >
               <span class="font-semibold text-slate-200 group-hover:text-teal-200">
                 Sceptical about AI?
@@ -516,118 +505,64 @@ defmodule DialecticWeb.HomeLive do
             </.link>
           </div>
 
-          <div class="hidden lg:block" aria-hidden="true">
-            <div class="relative mx-auto max-w-md">
-              <div class="absolute -inset-12 -z-10 bg-[radial-gradient(circle,rgba(45,212,191,0.13),transparent_62%)] blur-2xl">
+          <div id="home-grid-preview" class="mx-auto w-full max-w-md">
+            <p class="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-teal-200">
+              One question. Room to explore.
+            </p>
+            <div class="overflow-hidden rounded-xl border border-white/20 bg-white text-slate-950 shadow-2xl">
+              <div class="flex items-center gap-2 border-b border-slate-200 bg-slate-100 px-5 py-3 text-xs font-semibold text-slate-600">
+                <.icon name="hero-squares-2x2" class="h-4 w-4 text-teal-700" /> An example grid
               </div>
-              <div class="border border-white/10 border-l-4 border-l-sky-400 bg-slate-900/80 px-5 py-4 shadow-2xl backdrop-blur-sm">
-                <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-sky-300">Question</p>
-                <p class="mt-1 font-serif text-xl text-white">
-                  What makes an explanation convincing?
+              <div class="px-4 py-5 sm:px-5">
+                <div class="rounded-lg border border-sky-200 border-l-4 border-l-sky-500 bg-sky-50 px-4 py-3">
+                  <p class="text-xs font-semibold text-sky-800">Ask</p>
+                  <p class="mt-1 text-base font-semibold">Does AI make us better thinkers?</p>
+                </div>
+                <div aria-hidden="true" class="mx-auto h-5 w-px bg-slate-300"></div>
+                <div class="rounded-lg border border-teal-200 border-l-4 border-l-teal-500 bg-teal-50 px-4 py-3">
+                  <p class="text-xs font-semibold text-teal-800">An idea to explore</p>
+                  <p class="mt-1 text-sm leading-6">
+                    Better output and better thinking are different achievements.
+                  </p>
+                </div>
+                <div aria-hidden="true" class="mx-auto h-5 w-px bg-slate-300"></div>
+                <div class="relative -mx-1.5 grid grid-cols-2">
+                  <div aria-hidden="true" class="absolute inset-x-1/4 top-0 border-t border-slate-300">
+                  </div>
+                  <div class="px-1.5">
+                    <div aria-hidden="true" class="mx-auto h-5 w-px bg-slate-300"></div>
+                    <div class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-3">
+                      <p class="text-xs font-semibold text-amber-800">Challenge</p>
+                      <p class="mt-1 text-sm leading-6">Could AI make us less independent?</p>
+                    </div>
+                  </div>
+                  <div class="px-1.5">
+                    <div aria-hidden="true" class="mx-auto h-5 w-px bg-slate-300"></div>
+                    <div class="rounded-lg border border-violet-200 bg-violet-50 px-3 py-3">
+                      <p class="text-xs font-semibold text-violet-800">Explain a term</p>
+                      <p class="mt-1 text-sm leading-6">What is “cognitive offloading”?</p>
+                    </div>
+                  </div>
+                </div>
+                <p class="mt-4 text-center text-xs leading-5 text-slate-500">
+                  Each new direction stays connected.
                 </p>
               </div>
-              <div class="mx-auto h-9 w-px bg-slate-500"></div>
-              <div class="relative grid grid-cols-2 gap-8 border-t border-slate-500 pt-9">
-                <div class="absolute left-1/4 top-0 h-9 w-px bg-slate-500"></div>
-                <div class="absolute right-1/4 top-0 h-9 w-px bg-slate-500"></div>
-                <div class="border border-white/10 border-l-4 border-l-emerald-400 bg-slate-900/80 px-4 py-3 backdrop-blur-sm">
-                  <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-300">
-                    Answer
-                  </p>
-                  <p class="mt-1 text-sm font-medium text-white">Evidence and reasoning</p>
-                </div>
-                <div class="border border-white/10 border-l-4 border-l-amber-400 bg-slate-900/80 px-4 py-3 backdrop-blur-sm">
-                  <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-300">
-                    Challenge
-                  </p>
-                  <p class="mt-1 text-sm font-medium text-white">Which assumption fails?</p>
-                </div>
-              </div>
-              <div class="ml-auto mr-[12%] h-9 w-px bg-slate-500"></div>
-              <div class="ml-auto w-[58%] border border-white/10 border-l-4 border-l-violet-400 bg-slate-900/80 px-4 py-3 backdrop-blur-sm">
-                <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-300">Source</p>
-                <p class="mt-1 text-sm font-medium text-white">Keep the evidence attached</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section
-        id="start-here"
-        class="relative isolate overflow-hidden border-b border-stone-300 bg-[#f4f1e9]"
-      >
-        <div
-          aria-hidden="true"
-          class="absolute -left-28 top-10 -z-10 h-64 w-64 rounded-full bg-teal-200/35 blur-3xl"
-        >
-        </div>
-        <div
-          aria-hidden="true"
-          class="absolute -right-28 bottom-0 -z-10 h-64 w-64 rounded-full bg-amber-200/35 blur-3xl"
-        >
-        </div>
-        <div class="mx-auto w-full max-w-3xl px-5 py-12 sm:px-8 sm:py-16">
-          <div id="home-mobile-community-start" class="text-center md:hidden">
-            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
-              Explore on mobile
-            </p>
-            <h2 class="mt-3 font-serif text-4xl font-semibold leading-tight tracking-tight">
-              Follow a line of thought.
-            </h2>
-            <p class="mx-auto mt-4 max-w-md text-base leading-7 text-slate-600">
-              Read public grids, add your own thoughts, and ask follow-up questions from your phone.
-              Use a larger screen to create grids and work with the full map.
-            </p>
-            <.link
-              id="home-mobile-community-link"
-              navigate={~p"/community"}
-              data-analytics-event="community_clicked"
-              data-analytics-location="mobile_participation"
-              class="mt-6 inline-flex min-h-11 items-center gap-2 rounded-md bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
-            >
-              Browse public grids <.icon name="hero-arrow-right" class="h-4 w-4" />
-            </.link>
-          </div>
-
-          <div id="home-start-panel" class="hidden md:block">
-            <div class="text-center">
-              <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">Try it</p>
-              <h2 class="mt-3 font-serif text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
-                Start with a question.
-              </h2>
-            </div>
-
-            <div class="mt-7 rounded-xl bg-[linear-gradient(120deg,#2dd4bf_0%,#818cf8_52%,#fbbf24_100%)] p-[1px] shadow-[0_24px_60px_-38px_rgba(15,23,42,0.55)]">
-              <div class="rounded-[calc(0.75rem-1px)] bg-white p-4 sm:p-6">
-                <.live_component
-                  module={DialecticWeb.NewIdeaFormComp}
-                  id="new-idea-form"
-                  form={@form}
-                  placeholder="Ask a question or name a topic"
-                  submit_label="Continue"
-                  autofocus={@focus_new_grid}
-                  minimal={true}
-                  authenticated={!is_nil(@current_user)}
-                  public_grid_warning="New grids are public and editable by default. Anyone can read them and, while editing is on, add to them. Sign in first if you want to control access in Settings; never include sensitive information."
-                />
-              </div>
-            </div>
-            <p class="mt-5 text-center text-sm text-slate-600">
-              Prefer to look around first?
               <.link
-                id="home-community-secondary-link"
-                navigate={~p"/community"}
-                data-analytics-event="community_clicked"
-                data-analytics-location="question_form"
-                class="font-semibold text-teal-800 underline decoration-teal-400 underline-offset-4 hover:text-teal-950"
+                id="home-grid-preview-link"
+                href="#home-learning-journey"
+                class="flex min-h-11 items-center justify-between gap-3 border-t border-slate-200 px-5 py-4 text-sm font-semibold text-teal-800 transition hover:bg-teal-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-teal-700"
               >
-                Browse public grids
+                See how your grid grows <.icon name="hero-arrow-down" class="h-4 w-4 shrink-0" />
               </.link>
-            </p>
+            </div>
           </div>
         </div>
       </section>
+
+      <.learning_journey current_user={@current_user} />
+
+      <.proof_carousel />
 
       <section
         id="home-product-preview"
@@ -640,50 +575,26 @@ defmodule DialecticWeb.HomeLive do
         </div>
         <div class="mx-auto grid w-full max-w-7xl gap-10 px-5 py-12 sm:px-8 sm:py-16 lg:grid-cols-[minmax(20rem,0.72fr)_minmax(0,1.28fr)] lg:items-center lg:px-10">
           <div id="home-learning-loop">
-            <p class="inline-flex rounded-full border border-teal-300/40 bg-teal-300/10 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.14em] text-teal-100 shadow-sm">
-              How RationalGrid supports learning
+            <p class="text-xs font-semibold uppercase tracking-[0.16em] text-teal-200">
+              Take a closer look
             </p>
-            <ul
-              id="home-learning-overview"
-              class="mt-8 max-w-xl space-y-5 text-base leading-7 text-slate-300"
-            >
-              <li class="border-l-2 border-sky-400 pl-4">
-                <strong class="text-white">Discover.</strong>
-                Use AI to find new information and open paths worth investigating.
-              </li>
-              <li class="border-l-2 border-violet-400 pl-4">
-                <strong class="text-white">Connect.</strong>
-                Branch questions into answers, challenges, evidence, sources, and further questions.
-              </li>
-              <li class="border-l-2 border-teal-300 pl-4">
-                <strong class="text-white">Recall.</strong>
-                Bookmark nodes and highlight passages; they collect in
-                <%= if @current_user do %>
-                  <.link
-                    id="home-saved-for-recall-link"
-                    navigate={~p"/u/#{@current_user.username}" <> "#profile-thinking-library"}
-                    class="font-semibold text-teal-200 underline decoration-teal-500 underline-offset-4 hover:text-teal-100"
-                  >
-                    Saved for recall
-                  </.link>
-                <% else %>
-                  <span class="font-semibold text-teal-200">Saved for recall</span>
-                <% end %>
-                so the right idea is there when you need it.
-              </li>
-              <li class="border-l-2 border-amber-300 pl-4">
-                <strong class="text-white">Share.</strong>
-                Send a complete grid or a specific highlight so others can follow the idea in its
-                original context.
-              </li>
-            </ul>
+            <h2 class="mt-3 font-serif text-3xl font-semibold tracking-tight sm:text-4xl">
+              See the questions connect.
+            </h2>
+            <p class="mt-5 max-w-xl text-base leading-7 text-slate-300">
+              Follow a surprising answer, ask for a challenge, or get a tricky term explained.
+              It all becomes part of the same grid, so you can follow the reasoning again later.
+            </p>
+            <p class="mt-4 max-w-xl text-base leading-7 text-slate-300">
+              Watch the product tour, or open the guide and explore at your own pace.
+            </p>
             <div class="mt-5 flex flex-wrap gap-x-5 gap-y-3">
               <.link
-                id="home-features-link"
+                id="home-about-link"
                 navigate={~p"/about"}
                 class="inline-flex items-center gap-2 border-b border-slate-500 pb-1 text-sm font-semibold text-white transition hover:border-teal-300 hover:text-teal-200"
               >
-                Explore all features <.icon name="hero-arrow-right" class="h-4 w-4" />
+                Why RationalGrid? <.icon name="hero-arrow-right" class="h-4 w-4" />
               </.link>
               <.link
                 id="home-guide-link"
@@ -731,8 +642,6 @@ defmodule DialecticWeb.HomeLive do
           </div>
         </div>
       </section>
-
-      <.proof_carousel />
 
       <section
         id="popular-grids"
@@ -872,33 +781,40 @@ defmodule DialecticWeb.HomeLive do
         <div class="mx-auto flex w-full max-w-5xl flex-col gap-6 px-5 py-12 sm:flex-row sm:items-center sm:justify-between sm:px-8 sm:py-14">
           <div>
             <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-300">
-              Follow the reasoning
+              Where will your curiosity take you?
             </p>
             <h2 class="mt-2 font-serif text-3xl font-semibold tracking-tight sm:text-4xl">
-              Start with a question that matters.
+              Build a grid you’ll want to come back to.
             </h2>
+            <p class="mt-3 max-w-xl text-sm leading-6 text-slate-300">
+              Enjoy the exploration. Keep the connections. Return with a new question whenever you’re ready.
+            </p>
           </div>
-          <%= if @current_user do %>
-            <.link
-              id="home-final-start-grid-link"
-              href="#start-here"
-              data-analytics-event="start_grid_clicked"
-              data-analytics-location="home_final_cta"
-              class="inline-flex shrink-0 items-center justify-center gap-2 rounded-md bg-teal-300 px-6 py-3.5 text-base font-semibold text-slate-950 transition hover:bg-teal-200"
-            >
-              Start a grid <.icon name="hero-arrow-up" class="h-4 w-4" />
-            </.link>
-          <% else %>
-            <.link
-              id="home-final-sign-up-link"
-              navigate={~p"/users/register"}
-              data-analytics-event="sign_up_cta_clicked"
-              data-analytics-location="home_final_cta"
-              class="inline-flex shrink-0 items-center justify-center gap-2 rounded-md bg-teal-300 px-6 py-3.5 text-base font-semibold text-slate-950 transition hover:bg-teal-200"
-            >
-              Sign up free <.icon name="hero-arrow-right" class="h-4 w-4" />
-            </.link>
-          <% end %>
+          <div class="flex shrink-0 flex-col items-start gap-3 sm:items-end">
+            <.start_grid_actions id="home-final" location="home_final_cta" dark={true} />
+            <%= if @current_user do %>
+              <.link
+                id="home-final-library-link"
+                navigate={~p"/u/#{Dialectic.Accounts.User.effective_username(@current_user)}" <> "#profile-thinking-library"}
+                data-analytics-event="saved_for_recall_clicked"
+                data-analytics-location="home_final_cta"
+                class="inline-flex min-h-11 items-center text-sm font-semibold text-slate-300 underline decoration-slate-500 underline-offset-4 hover:text-teal-200"
+              >
+                Open your library
+              </.link>
+            <% else %>
+              <.link
+                id="home-final-sign-up-link"
+                navigate={~p"/users/register"}
+                data-analytics-event="sign_up_cta_clicked"
+                data-analytics-location="home_final_cta"
+                class="inline-flex min-h-11 items-center text-sm font-semibold text-slate-300 underline decoration-slate-500 underline-offset-4 hover:text-teal-200"
+              >
+                Sign up free to save your discoveries
+              </.link>
+              <p class="text-xs text-slate-400">No payment details.</p>
+            <% end %>
+          </div>
         </div>
       </section>
 
@@ -949,6 +865,175 @@ defmodule DialecticWeb.HomeLive do
         </div>
       </footer>
     </div>
+    """
+  end
+
+  attr :id, :string, required: true
+  attr :location, :string, required: true
+  attr :dark, :boolean, default: false
+
+  defp start_grid_actions(assigns) do
+    ~H"""
+    <div id={"#{@id}-actions"}>
+      <.link
+        id={"#{@id}-start-grid-link"}
+        href="#start-here"
+        phx-click={JS.focus(to: "#new-idea-input")}
+        aria-controls="new-idea-input"
+        data-analytics-event="start_grid_clicked"
+        data-analytics-location={@location}
+        class={[
+          "hidden min-h-11 items-center justify-center gap-2 rounded-md px-5 py-3 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 md:inline-flex",
+          if(@dark,
+            do: "bg-teal-300 text-slate-950 hover:bg-teal-200 focus-visible:outline-teal-300",
+            else: "bg-teal-800 text-white hover:bg-teal-900 focus-visible:outline-teal-800"
+          )
+        ]}
+      >
+        Start with your own question <.icon name="hero-arrow-up" class="h-4 w-4" />
+      </.link>
+      <.link
+        id={"#{@id}-community-link"}
+        navigate={~p"/community"}
+        data-analytics-event="community_clicked"
+        data-analytics-location={@location}
+        class={[
+          "inline-flex min-h-11 items-center justify-center gap-2 rounded-md px-5 py-3 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 md:hidden",
+          if(@dark,
+            do: "bg-teal-300 text-slate-950 hover:bg-teal-200 focus-visible:outline-teal-300",
+            else: "bg-teal-800 text-white hover:bg-teal-900 focus-visible:outline-teal-800"
+          )
+        ]}
+      >
+        Browse public grids <.icon name="hero-arrow-right" class="h-4 w-4" />
+      </.link>
+    </div>
+    """
+  end
+
+  defp learning_journey(assigns) do
+    ~H"""
+    <section
+      id="home-learning-journey"
+      aria-labelledby="home-learning-title"
+      class="scroll-mt-8 border-b border-stone-200 bg-white"
+    >
+      <div class="mx-auto w-full max-w-7xl px-5 py-12 sm:px-8 sm:py-16 lg:px-10">
+        <div class="max-w-3xl">
+          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-teal-800">
+            Your curiosity gives it shape
+          </p>
+          <h2
+            id="home-learning-title"
+            class="mt-3 font-serif text-3xl font-semibold tracking-tight sm:text-4xl"
+          >
+            Enjoy the detours. Keep the connections.
+          </h2>
+          <p class="mt-4 text-base leading-7 text-slate-600">
+            Follow an interesting idea, test it, or pause to understand a term. Each move adds to
+            the same grid. That structure is what you return to tomorrow, next week, or next month.
+          </p>
+        </div>
+
+        <ol id="home-learning-steps" class="mt-9 grid gap-8 md:grid-cols-3">
+          <li id="home-learning-ask" class="flex min-w-0 flex-col border-t-2 border-sky-500 pt-5">
+            <p class="text-xs font-bold uppercase tracking-[0.16em] text-sky-800">01 / Ask</p>
+            <h3 class="mt-2 text-xl font-semibold">Start with a little curiosity.</h3>
+            <p class="mt-3 text-sm leading-6 text-slate-600">
+              Bring a big question, a passing thought, or something you’ve always wondered about.
+              Your first answer starts the grid.
+            </p>
+            <div class="mt-5 flex-1 rounded-lg border border-slate-200 bg-slate-50 p-5">
+              <p class="text-xs font-semibold text-slate-500">An example starting point</p>
+              <p class="mt-3 rounded-md border border-sky-200 bg-sky-50 px-3 py-3 text-sm font-semibold text-slate-900">
+                Does AI make us better thinkers?
+              </p>
+              <div aria-hidden="true" class="ml-5 h-5 border-l border-slate-300"></div>
+              <div class="ml-5 rounded-md border border-teal-200 bg-white px-3 py-3">
+                <p class="text-xs font-semibold text-teal-800">An idea from the answer</p>
+                <p class="mt-1 text-sm leading-6 text-slate-700">
+                  Better output and better thinking are different achievements.
+                </p>
+              </div>
+            </div>
+          </li>
+          <li
+            id="home-learning-explore"
+            class="flex min-w-0 flex-col border-t-2 border-violet-400 pt-5"
+          >
+            <p class="text-xs font-bold uppercase tracking-[0.16em] text-violet-800">02 / Explore</p>
+            <h3 class="mt-2 text-xl font-semibold">Let the question take you further.</h3>
+            <p class="mt-3 text-sm leading-6 text-slate-600">
+              Ask a follow-up, invite a counterargument, or explain a technical term.
+              Each branch stays linked to the idea that sparked it, all in the same grid.
+            </p>
+            <div class="mt-5 flex-1 rounded-lg border border-slate-200 bg-slate-50 p-5">
+              <p class="text-xs font-semibold text-slate-500">Two directions from the same idea</p>
+              <div class="mt-4 space-y-3 border-l border-slate-300 pl-3">
+                <div class="rounded-md border border-amber-200 bg-amber-50 px-3 py-3">
+                  <p class="text-xs font-semibold text-amber-800">Challenge the answer</p>
+                  <p class="mt-1 text-sm leading-6 text-slate-800">
+                    Could AI make us less independent?
+                  </p>
+                </div>
+                <div class="rounded-md border border-violet-200 bg-violet-50 px-3 py-3">
+                  <p class="text-xs font-semibold text-violet-800">Explain a term</p>
+                  <p class="mt-1 text-sm leading-6 text-slate-800">What is “cognitive offloading”?</p>
+                </div>
+              </div>
+            </div>
+          </li>
+          <li id="home-learning-return" class="flex min-w-0 flex-col border-t-2 border-teal-500 pt-5">
+            <p class="text-xs font-bold uppercase tracking-[0.16em] text-teal-800">03 / Return</p>
+            <h3 class="mt-2 text-xl font-semibold">Find your way back in.</h3>
+            <p class="mt-3 text-sm leading-6 text-slate-600">
+              The grid keeps the path you took. Search for an idea, revisit a highlight, or open
+              a bookmark in Saved for recall, then keep exploring.
+            </p>
+            <div
+              id="home-return-tools"
+              class="mt-5 flex-1 rounded-lg border border-slate-200 bg-white p-5"
+            >
+              <p class="text-xs font-semibold text-slate-500">Three ways back to the context</p>
+              <ul class="mt-4 space-y-4 text-sm leading-6">
+                <li class="flex items-start gap-3">
+                  <.icon name="hero-magnifying-glass" class="mt-1 h-4 w-4 shrink-0 text-teal-700" />
+                  <span><strong class="block text-slate-900">Search</strong><span class="text-slate-600">Find an idea within your grid.</span></span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <.icon name="hero-pencil" class="mt-1 h-4 w-4 shrink-0 text-amber-700" />
+                  <span><strong class="block text-slate-900">Highlights</strong><span class="text-slate-600">Keep the passages that catch your attention.</span></span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <.icon name="hero-bookmark" class="mt-1 h-4 w-4 shrink-0 text-violet-700" />
+                  <span><strong class="block text-slate-900">Saved for recall</strong><span class="text-slate-600">Reopen bookmarks and highlights from your profile.</span></span>
+                </li>
+              </ul>
+            </div>
+          </li>
+        </ol>
+        <div class="mt-7 flex flex-wrap items-center justify-between gap-4 border-t border-slate-200 pt-5 text-sm leading-6 text-slate-600">
+          <p id="home-recall-account-note">
+            A free account keeps your bookmarks and highlights together.
+            <.link
+              :if={@current_user}
+              id="home-saved-for-recall-link"
+              navigate={~p"/u/#{Dialectic.Accounts.User.effective_username(@current_user)}" <> "#profile-thinking-library"}
+              class="font-semibold text-teal-800 underline decoration-teal-500 underline-offset-4 hover:text-teal-950"
+            >
+              Open Saved for recall
+            </.link>
+          </p>
+          <.link
+            id="home-example-question-link"
+            navigate={~p"/questions/does-ai-make-us-better-thinkers"}
+            class="inline-flex min-h-11 items-center gap-2 font-semibold text-teal-800 underline decoration-teal-500 underline-offset-4 hover:text-teal-950"
+          >
+            Read the example question <.icon name="hero-arrow-right" class="h-4 w-4" />
+          </.link>
+        </div>
+      </div>
+    </section>
     """
   end
 
@@ -1106,6 +1191,15 @@ defmodule DialecticWeb.HomeLive do
           ></button>
           <span class="sr-only" data-carousel-status aria-live="polite">1 of 2</span>
         </div>
+        <div
+          id="home-proof-cta"
+          class="mt-8 flex flex-col gap-4 border-t border-stone-300 pt-6 sm:flex-row sm:items-center sm:justify-between"
+        >
+          <p class="font-serif text-2xl font-semibold text-slate-950">
+            Where will your curiosity take you?
+          </p>
+          <.start_grid_actions id="home-proof" location="home_proof_cta" />
+        </div>
       </div>
     </section>
     """
@@ -1136,7 +1230,7 @@ defmodule DialecticWeb.HomeLive do
           "url" => base_url,
           "image" => base_url <> ~p"/images/graph_live.webp",
           "description" =>
-            "A free AI-assisted argument mapping tool for comparing views, tracing claims to sources, and sharing the reasoning behind a conclusion.",
+            "A free AI-assisted learning and research tool. Build a connected grid as you ask questions, challenge answers, and explain technical terms, then return with search, highlights, and bookmarks.",
           "applicationCategory" => "EducationalApplication",
           "operatingSystem" => "Web",
           "isAccessibleForFree" => true,

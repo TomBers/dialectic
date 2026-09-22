@@ -849,36 +849,18 @@ defmodule GraphManager do
   # - else first non-deleted vertex
   # - else nil
   def best_node(path, desired_id) do
-    vertex_ids =
-      vertices(path)
-      |> Enum.filter(fn vid ->
-        case vertex_label(path, vid) do
-          %{} = v -> not Map.get(v, :deleted, false)
-          _ -> false
-        end
-      end)
-
-    with nil <- find_node_by_id(path, desired_id),
-         nil <- find_node_by_id(path, "1") do
-      fallback_id =
-        vertex_ids
-        |> Enum.find_value(fn vid ->
-          case vertex_label(path, vid) do
-            %{} = v ->
-              if not Map.get(v, :deleted, false), do: v.id, else: nil
-
-            _ ->
-              nil
+    [desired_id, "1" | vertices(path)]
+    |> Enum.uniq()
+    |> Enum.find_value(fn id ->
+      case vertex_label(path, id) do
+        %{} = vertex ->
+          if Map.get(vertex, :deleted) != true and Map.get(vertex, :compound) != true do
+            find_node_by_id(path, id)
           end
-        end)
 
-      if is_binary(fallback_id) do
-        find_node_by_id(path, fallback_id)
-      else
-        nil
+        _ ->
+          nil
       end
-    else
-      node -> node
-    end
+    end)
   end
 end

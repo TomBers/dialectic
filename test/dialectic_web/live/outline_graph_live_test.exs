@@ -1055,7 +1055,7 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert_patch(view, ~p"/g/#{graph.slug}?node=4")
   end
 
-  test "reader can follow and unfollow the current grid", %{conn: conn} do
+  test "grid update notifications stay consistent between reader and grid views", %{conn: conn} do
     user = user_fixture()
     graph = create_graph()
 
@@ -1073,12 +1073,33 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert Follows.following_graph?(user, graph)
     assert has_element?(view, "#reader-follow-grid-button[aria-pressed='true']")
 
-    view
-    |> element("#reader-follow-grid-button")
+    {:ok, grid_view, _html} =
+      view
+      |> element("#reader-workspace-bar-graph")
+      |> render_click()
+      |> follow_redirect(log_in_user(conn, user))
+
+    assert has_element?(
+             grid_view,
+             "#graph-follow-grid-button[aria-pressed='true'] .hero-bell-solid"
+           )
+
+    grid_view
+    |> element("#graph-follow-grid-button")
     |> render_click()
 
     refute Follows.following_graph?(user, graph)
-    assert has_element?(view, "#reader-follow-grid-button[aria-pressed='false']")
+
+    {:ok, reader_view, _html} =
+      grid_view
+      |> element("#graph-workspace-bar-reader")
+      |> render_click()
+      |> follow_redirect(log_in_user(conn, user))
+
+    assert has_element?(
+             reader_view,
+             "#reader-follow-grid-button[aria-pressed='false'] .hero-bell-alert"
+           )
   end
 
   test "reader can bookmark and remove a bookmark from a node", %{conn: conn} do

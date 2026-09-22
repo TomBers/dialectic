@@ -205,31 +205,9 @@ const SPACED_NODE_FONT_SIZE = 16;
 const SPACED_NODE_LINE_HEIGHT = 1.35;
 const COMPACT_NODE_FONT_SIZE = 11;
 const COMPACT_NODE_LINE_HEIGHT = 1.25;
-const MAIN_GROUP_TITLE_MIN_RENDERED_WIDTH = 280;
-const MAIN_GROUP_TITLE_MAX_RENDERED_WIDTH = 960;
-const MAIN_GROUP_TITLE_RENDERED_MARGIN = 96;
 const GRAPH_LABEL_FONT_FAMILY =
   'InterVariable, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-const GRAPH_GROUP_LABEL_FONT_FAMILY = GRAPH_LABEL_FONT_FAMILY;
 
-
-const graphTaxiDirection = () => {
-  const graphDirection = localStorage.getItem("graph_direction") || "TB";
-  return graphDirection === "LR" || graphDirection === "RL"
-    ? "horizontal"
-    : "vertical";
-};
-
-const stableTaxiTurn = (edge) => {
-  const edgeId = String(typeof edge.id === "function" ? edge.id() : "");
-  let hash = 0;
-
-  for (const character of edgeId) {
-    hash = (hash * 31 + character.charCodeAt(0)) >>> 0;
-  }
-
-  return `${38 + (hash % 7) * 4}%`;
-};
 
 const mixWithWhite = (hexColor, whiteRatio) => {
   const normalized = String(hexColor || "").replace("#", "");
@@ -243,13 +221,12 @@ const mixWithWhite = (hexColor, whiteRatio) => {
   return `rgb(${mixedChannels.join(", ")})`;
 };
 
-export function graphStyle(viewMode = "spaced", mainGroupTitle = "", options = {}) {
+export function graphStyle(viewMode = "spaced", options = {}) {
   const isCompact = viewMode === "compact";
   const highContrast = options.highContrast === true;
-  const reduceMotion = options.reduceMotion === true;
-  const transitionDuration = (duration) => (reduceMotion ? "0ms" : duration);
-  const compoundLabel = (n) =>
-    n.id() === "Main" && mainGroupTitle ? mainGroupTitle : n.data("id");
+  // Apply interaction states atomically. Animated style changes rebuild WebGL
+  // label textures on each frame and can briefly mix old labels with new edges.
+  const transitionDuration = () => "0ms";
   const relationshipLabelStyle = {
     label: edgeRelationLabel,
     "font-family": GRAPH_LABEL_FONT_FAMILY,
@@ -279,7 +256,7 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "", options = {
         height: "label",
         "min-width": isCompact ? 50 : 72,
         "min-height": isCompact ? 14 : 22,
-        padding: isCompact ? "4px" : "10px",
+        padding: isCompact ? "4px" : "14px",
         "text-wrap": "wrap",
         "text-max-width": (n) => {
           if (!isCompact) return SPACED_NODE_WIDTH - SPACED_NODE_TEXT_PADDING;
@@ -299,7 +276,7 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "", options = {
         /* font & layout --------------------------------------------------- */
         "font-family": GRAPH_LABEL_FONT_FAMILY,
         "font-size": isCompact ? COMPACT_NODE_FONT_SIZE : SPACED_NODE_FONT_SIZE,
-        "text-metrics": "glyph",
+        "text-metrics": "font",
         "font-weight": 500,
         "text-halign": "center",
         "text-valign": "center",
@@ -327,7 +304,7 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "", options = {
 
         ghost: "no",
 
-        /* smooth transitions for hover / select state changes */
+        /* Keep node and relationship state changes in the same frame. */
         "transition-property":
           "background-color border-color border-width opacity underlay-opacity underlay-padding",
         "transition-duration": transitionDuration("170ms"),
@@ -342,85 +319,10 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "", options = {
         "background-color": "#ecfdf5",
       },
     },
-    {
-      selector: "node[compound]",
-      style: {
-        label: compoundLabel,
-        "text-halign": () => {
-          const dir = localStorage.getItem("graph_direction") || "TB";
-          return dir === "RL" ? "right" : dir === "LR" ? "left" : "center";
-        },
-        "text-valign": () => {
-          const dir = localStorage.getItem("graph_direction") || "TB";
-          return dir === "BT" ? "bottom" : "top";
-        },
-        "text-margin-y": () => {
-          const dir = localStorage.getItem("graph_direction") || "TB";
-          return dir === "BT" ? -10 : 10;
-        },
-        "font-family": GRAPH_GROUP_LABEL_FONT_FAMILY,
-        "font-size": isCompact ? 10 : 12,
-        "font-weight": "bold",
-        "text-transform": "uppercase",
-        color: "#475569",
-        "text-outline-width": 0,
-        "text-outline-opacity": 0,
-        "text-opacity": 1,
-        "text-background-color": "#ffffff",
-        "text-background-opacity": 0.78,
-        "text-background-padding": isCompact ? 3 : 5,
-        "text-background-shape": "roundrectangle",
-        "text-border-color": "#cbd5e1",
-        "text-border-opacity": 0.72,
-        "text-border-width": 0.75,
-        "text-border-style": "solid",
-        padding: isCompact ? "16px" : "40px",
-
-        "background-opacity": 0.2,
-        "background-color": "#f8fafc",
-        "border-width": isCompact ? 1.25 : 2,
-        "border-style": "dotted",
-        "border-color": "#94a3b8",
-        shape: "roundrectangle",
-        "corner-radius": isCompact ? 16 : 32,
-      },
-    },
-    {
-      selector: 'node[compound][id = "Main"]',
-      style: {
-        "font-size": isCompact ? 13 : 18,
-        "font-weight": "bold",
-        "text-transform": "none",
-        "text-wrap": "wrap",
-        "text-max-width": (n) => getMainGroupTitleMaxWidth(n, isCompact),
-        "line-height": 1.25,
-        "text-margin-y": () => {
-          const dir = localStorage.getItem("graph_direction") || "TB";
-          return dir === "BT" ? 24 : -24;
-        },
-        padding: isCompact ? "28px" : "56px",
-        color: "#0f172a",
-        "text-background-opacity": 0,
-        "text-border-width": 0,
-        "text-border-opacity": 0,
-      },
-    },
     { selector: ".hidden", style: { display: "none" } },
     { selector: ".depth-hidden", style: { display: "none" } },
     { selector: ".focus-hidden", style: { display: "none" } },
     { selector: ".presentation-hidden", style: { display: "none" } },
-    {
-      selector: ".presentation-hidden-parent",
-      style: {
-        "background-opacity": 0,
-        "border-width": 0,
-        "border-opacity": 0,
-        "text-opacity": 0,
-        "underlay-opacity": 0,
-        padding: "4px",
-      },
-    },
-
     /* Visual indicator for nodes whose children are collapsed */
     {
       selector: ".node-collapsed",
@@ -430,51 +332,6 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "", options = {
       },
     },
 
-    /* draw the parent differently when it's collapsed --- */
-    {
-      selector: 'node[compound][collapsed = "true"]',
-      style: {
-        /* dynamic badge size based on label length */
-        width: (n) => {
-          if (!isCompact) return 220;
-          return getCompactCollapsedWidth(n);
-        },
-        height: isCompact ? 28 : 48,
-
-        /* look & feel: pill shape */
-        shape: "roundrectangle",
-        "corner-radius": isCompact ? 14 : 24,
-        "background-opacity": 1,
-        "background-color": "#fffdf8",
-        "border-width": isCompact ? 1.5 : 2,
-        "border-color": "#cbd5e1",
-        "border-style": "solid",
-
-        /* chevron indicator (right side) */
-        "background-fit": "none",
-        "background-clip": "node",
-        "background-width": isCompact ? 8 : 12,
-        "background-height": isCompact ? 8 : 12,
-        "background-position-x": "92%",
-        "background-position-y": "50%",
-
-        /* text centred inside the card */
-        label: compoundLabel,
-        "text-valign": "center",
-        "text-halign": "center",
-        "text-margin-x": 0,
-        "font-family": GRAPH_GROUP_LABEL_FONT_FAMILY,
-        "font-size": isCompact ? 10 : 12,
-        "font-weight": "bold",
-        "text-transform": "uppercase",
-        "text-wrap": "ellipsis",
-        "text-max-width": (n) => {
-          if (!isCompact) return 180;
-          return getCompactCollapsedWidth(n) - 25;
-        },
-        color: "#475569",
-      },
-    },
     // Edge styling — quieter by default, stronger on context/hover
     {
       selector: "edge",
@@ -482,23 +339,14 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "", options = {
         label: "",
         width: highContrast ? (isCompact ? 1.3 : 1.8) : isCompact ? 1 : 1.4,
         "line-color": highContrast ? "#334155" : "#64748b",
-        "line-fill": "linear-gradient",
-        "line-gradient-stop-colors": highContrast
-          ? "#64748b #0f172a"
-          : "#cbd5e1 #475569",
-        "line-gradient-stop-positions": "0% 100%",
+        "line-fill": "solid",
         "line-cap": "round",
-        "curve-style": "round-taxi",
-        "taxi-direction": graphTaxiDirection,
-        "taxi-turn": stableTaxiTurn,
-        "taxi-turn-min-distance": isCompact ? 12 : 18,
-        "taxi-radius": isCompact ? 8 : 12,
+        "curve-style": "bezier",
         "edge-distances": "intersection",
         "target-arrow-shape": "triangle",
         "target-arrow-color": highContrast ? "#334155" : "#64748b",
         "arrow-scale": isCompact ? 0.58 : 0.76,
-        opacity: highContrast ? 0.76 : 0.5,
-        /* smooth transition so hover fade-in feels polished */
+        opacity: highContrast ? 0.76 : 0.62,
         "transition-property": "line-color target-arrow-color width opacity",
         "transition-duration": transitionDuration("150ms"),
         "transition-timing-function": "ease-in-out-sine",
@@ -526,12 +374,12 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "", options = {
     style: {
       "background-color": defaultNodeStyle.selectedBackground,
       "border-color": defaultNodeStyle.selectedBorder,
-      "border-width": isCompact ? 3 : 4,
+      "border-width": isCompact ? 2.5 : 3,
       "border-style": "solid",
       color: defaultNodeStyle.selectedText,
       "underlay-color": defaultNodeStyle.selectedBorder,
-      "underlay-opacity": 0.1,
-      "underlay-padding": isCompact ? 8 : 12,
+      "underlay-opacity": 0.08,
+      "underlay-padding": isCompact ? 4 : 6,
       "underlay-shape": "roundrectangle",
       "z-index": 9997,
     },
@@ -607,24 +455,17 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "", options = {
           0.78,
         ),
         "border-color": cols[nodeType].selectedBorder,
-        "border-width": isCompact ? 3 : 4,
+        "border-width": isCompact ? 2.5 : 3,
         "border-style": "solid",
         color: defaultNodeStyle.selectedText,
         "underlay-color": cols[nodeType].selectedBorder,
-        "underlay-opacity": 0.1,
-        "underlay-padding": isCompact ? 8 : 12,
+        "underlay-opacity": 0.08,
+        "underlay-padding": isCompact ? 4 : 6,
         "underlay-shape": "roundrectangle",
         "z-index": 9997,
       },
     });
 
-    /* per-type accent border for collapsed compound "cards" */
-    base_style.push({
-      selector: `node[compound][collapsed = "true"].${nodeType}`,
-      style: {
-        "border-color": cols[nodeType].border,
-      },
-    });
   }
 
   base_style.push({
@@ -633,14 +474,6 @@ export function graphStyle(viewMode = "spaced", mainGroupTitle = "", options = {
       "border-width": isCompact ? 2 : 2.75,
       "border-style": "solid",
       "background-color": "#f8fafc",
-    },
-  });
-
-  base_style.push({
-    selector:
-      'node[compound], node[compound].selected, node[compound][collapsed = "true"]',
-    style: {
-      events: "no",
     },
   });
 
@@ -844,46 +677,4 @@ function getCompactNodeWidth(n) {
 
   // Min 50px, max 140px to keep compact
   return Math.max(50, Math.min(140, computed));
-}
-
-function getCompactCollapsedWidth(n) {
-  const label = n.data("id") || "";
-  // Estimate width: ~7px per character at 10px font + padding for chevron
-  const charWidth = 7;
-  const padding = 30; // Extra padding for chevron and margins
-  const computed = Math.ceil(label.length * charWidth) + padding;
-
-  // Min 70px, max 150px
-  return Math.max(70, Math.min(150, computed));
-}
-
-function getMainGroupTitleMaxWidth(n, isCompact) {
-  const fallback = isCompact ? 560 : 960;
-
-  try {
-    const cy = n.cy && n.cy();
-    const container = cy && cy.container && cy.container();
-    const zoom = cy && typeof cy.zoom === "function" ? cy.zoom() : 1;
-    const rect = container && container.getBoundingClientRect();
-
-    if (!rect || !Number.isFinite(rect.width) || rect.width <= 0) {
-      return fallback;
-    }
-
-    const maxRenderedWidth = isCompact
-      ? Math.min(560, rect.width - 32)
-      : Math.min(
-          MAIN_GROUP_TITLE_MAX_RENDERED_WIDTH,
-          rect.width - MAIN_GROUP_TITLE_RENDERED_MARGIN,
-        );
-
-    const renderedWidth = Math.max(
-      MAIN_GROUP_TITLE_MIN_RENDERED_WIDTH,
-      maxRenderedWidth,
-    );
-
-    return renderedWidth / Math.max(zoom || 1, 0.05);
-  } catch (_e) {
-    return fallback;
-  }
 }

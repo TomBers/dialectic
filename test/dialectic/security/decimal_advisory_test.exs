@@ -1,12 +1,11 @@
 defmodule Dialectic.Security.DecimalAdvisoryTest do
   use ExUnit.Case, async: true
 
-  test "the audit exception is limited to the verified Hex release" do
+  test "Decimal releases do not bypass the security audit" do
     lock = Mix.Dep.Lock.read()
     decimal = Map.fetch!(lock, :decimal)
 
-    assert Dialectic.MixProject.hex_config(lock) ==
-             [ignore_advisories: ["EEF-CVE-2026-32686"]]
+    assert Dialectic.MixProject.hex_config(lock) == []
 
     for version <- ["2.4.1", "3.0.0", "3.1.0", "3.1.2", "4.0.0"] do
       assert Dialectic.MixProject.hex_config(%{decimal: put_elem(decimal, 2, version)}) == []

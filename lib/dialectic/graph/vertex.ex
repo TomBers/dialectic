@@ -393,22 +393,15 @@ defmodule Dialectic.Graph.Vertex do
       Enum.flat_map(vertices, fn vertex ->
         # Get the vertex label/data from the digraph
         case :digraph.vertex(graph, vertex) do
+          {_vid, %{compound: true}} ->
+            []
+
           {vid, %{deleted: false} = dat} ->
             # Create cytoscape node format
             [
               %{
                 classes: dat.class,
-                data:
-                  %{
-                    id: vid,
-                    parent: Map.get(dat, :parent, ""),
-                    content: dat.content
-                  }
-                  |> then(fn m ->
-                    if Map.get(dat, :compound, false),
-                      do: Map.put(m, :compound, true),
-                      else: m
-                  end)
+                data: %{id: vid, content: dat.content}
               }
             ]
 
@@ -417,10 +410,13 @@ defmodule Dialectic.Graph.Vertex do
         end
       end)
 
-    # Convert edges to cytoscape edges format
+    visible_ids = MapSet.new(nodes, & &1.data.id)
+
+    # Only include edges between rendered ideas; stored group data is unchanged.
     edges =
       Enum.flat_map(edges, fn edge ->
         with {_, v1, v2, _} <- :digraph.edge(graph, edge),
+             true <- MapSet.member?(visible_ids, v1) and MapSet.member?(visible_ids, v2),
              {source_id, %{deleted: false}} <- :digraph.vertex(graph, v1),
              {target_id, %{deleted: false} = target_data} <- :digraph.vertex(graph, v2) do
           # Create edge ID from source and target names

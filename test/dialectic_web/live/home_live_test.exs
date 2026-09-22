@@ -135,7 +135,12 @@ defmodule DialecticWeb.HomeLiveTest do
 
   test "community grids are easy to reach without signing in", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/")
-    assert has_element?(view, ~s(#home-community-hero-link[href="/community"]), "Community grids")
+
+    assert has_element?(
+             view,
+             ~s(#home-community-secondary-link[href="/community"]),
+             "Browse public grids"
+           )
   end
 
   test "emphasizes the community grid library action", %{conn: conn} do
@@ -155,12 +160,6 @@ defmodule DialecticWeb.HomeLiveTest do
              view,
              ~s(#home-about-link[href="/about"]),
              "Why RationalGrid?"
-           )
-
-    assert has_element?(
-             view,
-             ~s(#home-features-link[href="/about"]),
-             "Explore all features"
            )
 
     refute has_element?(view, "#home-why-understanding")
@@ -186,11 +185,20 @@ defmodule DialecticWeb.HomeLiveTest do
     refute has_element?(view, "#existing-grid-choice")
   end
 
-  test "renders a minimal start section", %{conn: conn} do
+  test "places one labelled question form in the hero and preserves the start anchor", %{
+    conn: conn
+  } do
     {:ok, view, _html} = live(conn, ~p"/")
 
-    assert has_element?(view, "#start-here h2", "Start with a question.")
-    assert has_element?(view, "#home-start-panel #new-idea-form")
+    assert has_element?(view, "#home-video-hero #start-here #new-idea-form")
+
+    assert has_element?(
+             view,
+             ~s(#home-question-label[for="new-idea-input"]),
+             "What are you curious about?"
+           )
+
+    assert view |> element("#new-idea-form") |> render()
     assert has_element?(view, ~s(#home-community-secondary-link[href="/community"]))
 
     assert has_element?(
@@ -210,17 +218,34 @@ defmodule DialecticWeb.HomeLiveTest do
 
     assert has_element?(view, "#home-hero-logo")
     assert has_element?(view, "#home-hero-brand", "RationalGrid")
-    assert has_element?(view, "#home-hero-tagline", "See what you think.")
+    assert has_element?(view, "#home-hero-title", "Follow your curiosity. Build on every answer.")
 
     assert has_element?(
              view,
              "#home-hero-subheading",
-             "Use AI to answer questions, then go beyond a one-off chat"
+             "A grid grows as you ask, keeping the connections visible"
            )
 
-    assert has_element?(view, "#home-video-hero", "Explore a question")
-    assert has_element?(view, ~s(#home-sign-up-link[href="/users/register"]), "Sign up free")
-    assert has_element?(view, "#home-sign-up-reassurance", "No payment details")
+    assert has_element?(view, "#home-video-hero #new-idea-input")
+    assert has_element?(view, "#home-video-hero #new-idea-submit")
+
+    assert has_element?(
+             view,
+             ~s(#home-community-secondary-link[href="/community"]),
+             "Browse public grids"
+           )
+
+    refute has_element?(view, "#home-example-link")
+
+    assert has_element?(view, "#home-try-reassurance", "without an account")
+
+    assert has_element?(
+             view,
+             "#home-try-reassurance",
+             "Sign up free to save bookmarks and highlights"
+           )
+
+    refute has_element?(view, ~s(#home-video-hero a[href="/users/register"]))
 
     assert has_element?(
              view,
@@ -248,7 +273,9 @@ defmodule DialecticWeb.HomeLiveTest do
     refute has_element?(view, "#home-value-summary")
   end
 
-  test "shows a start-grid hero action instead of signup when signed in", %{conn: conn} do
+  test "keeps trying a question available and links signed-in users to their recall library", %{
+    conn: conn
+  } do
     user = user_fixture()
 
     {:ok, view, _html} =
@@ -256,49 +283,24 @@ defmodule DialecticWeb.HomeLiveTest do
       |> log_in_user(user)
       |> live(~p"/")
 
-    assert has_element?(view, ~s(#home-start-grid-link[href="#start-here"]), "Start a grid")
+    assert has_element?(view, "#home-video-hero #new-idea-input")
+    assert has_element?(view, "#home-video-hero #new-idea-submit")
 
-    assert has_element?(
-             view,
-             ~s(#home-community-hero-link[href="/community"]),
-             "Community grids"
-           )
+    assert has_element?(view, ~s(#home-community-secondary-link[href="/community"]))
 
-    refute has_element?(view, "#home-explore-question-link")
-    assert has_element?(view, ~s(#home-final-start-grid-link[href="#start-here"]), "Start a grid")
-    refute has_element?(view, "#home-sign-up-link")
+    username = Dialectic.Accounts.User.effective_username(user)
+    library_path = "/u/#{username}#profile-thinking-library"
+    assert has_element?(view, ~s(#home-saved-for-recall-link[href="#{library_path}"]))
+    assert has_element?(view, ~s(#home-final-library-link[href="#{library_path}"]))
+    refute has_element?(view, "#home-try-reassurance")
     refute has_element?(view, "#home-final-sign-up-link")
   end
 
   test "shows the product briefly and links to the detailed pages", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/")
 
-    refute has_element?(view, "#home-learning-loop h2")
-    assert has_element?(view, "#home-learning-loop > p", "How RationalGrid supports learning")
-
-    assert has_element?(
-             view,
-             "#home-learning-overview",
-             "Discover. Use AI to find new information"
-           )
-
-    assert has_element?(
-             view,
-             "#home-learning-overview",
-             "Connect. Branch questions into answers, challenges, evidence, sources"
-           )
-
-    assert has_element?(view, "#home-learning-overview", "Saved for recall")
-    assert has_element?(view, "#home-learning-overview", "Share. Send a complete grid")
-    assert has_element?(view, "#home-learning-overview", "a specific highlight")
-    refute has_element?(view, "#home-chat-distinction")
-    refute has_element?(view, "#home-retrieval-learning")
-
-    assert has_element?(
-             view,
-             ~s(#home-features-link[href="/about"]),
-             "Explore all features"
-           )
+    assert has_element?(view, "#home-learning-loop h2", "See the questions connect.")
+    assert has_element?(view, "#home-learning-loop", "follow the reasoning again later")
 
     assert has_element?(
              view,
@@ -419,13 +421,71 @@ defmodule DialecticWeb.HomeLiveTest do
            )
   end
 
-  test "orders explanation, proof, examples, reassurance, and final action", %{conn: conn} do
+  test "repeats the invitation after proof and at the bottom while keeping one hero form", %{
+    conn: conn
+  } do
     {:ok, view, _html} = live(conn, ~p"/")
 
     assert has_element?(
              view,
-             "#home-product-preview + #home-proof-carousel + #popular-grids + #home-definition + #home-ai-limits-faq + #home-final-cta + footer"
+             "#home-video-hero + #home-learning-journey + #home-proof-carousel + #home-product-preview + #popular-grids + #home-definition + #home-ai-limits-faq + #home-final-cta + footer"
            )
+
+    for location <- ["proof", "final"] do
+      assert has_element?(
+               view,
+               "#home-#{location}-start-grid-link[href='#start-here'][aria-controls='new-idea-input'][phx-click]"
+             )
+
+      assert has_element?(view, "#home-#{location}-community-link[href='/community']")
+      refute has_element?(view, "#home-#{location}-actions form")
+    end
+  end
+
+  test "explains building a grid through exploration before introducing recall tools", %{
+    conn: conn
+  } do
+    {:ok, view, _html} = live(conn, ~p"/")
+
+    assert has_element?(
+             view,
+             "#home-learning-ask + #home-learning-explore + #home-learning-return"
+           )
+
+    assert has_element?(view, "#home-learning-explore", "Challenge the answer")
+    assert has_element?(view, "#home-learning-explore", "Explain a term")
+    assert has_element?(view, "#home-return-tools", "Search")
+    assert has_element?(view, "#home-return-tools", "Highlights")
+    assert has_element?(view, "#home-return-tools", "Saved for recall")
+    assert has_element?(view, "#home-recall-account-note", "free account")
+    assert has_element?(view, ~s(#home-grid-preview-link[href="#home-learning-journey"]))
+
+    assert has_element?(
+             view,
+             ~s(#home-example-question-link[href="/questions/does-ai-make-us-better-thinkers"])
+           )
+
+    refute has_element?(view, "#home-saved-for-recall-link")
+    refute has_element?(view, "#home-final-library-link")
+    assert has_element?(view, ~s(#home-final-sign-up-link[href="/users/register"]))
+  end
+
+  test "existing prompt links still prefill the hero form and request focus", %{conn: conn} do
+    {:ok, view, _html} =
+      live(conn, ~p"/?initial_prompt=Why%20do%20habits%20persist%3F&focus=grid#start-here")
+
+    assert has_element?(
+             view,
+             "#home-video-hero #new-idea-input[autofocus]",
+             "Why do habits persist?"
+           )
+
+    view
+    |> form("#new-idea-form", vertex: %{content: "Why do habits persist?"})
+    |> render_submit()
+
+    assert has_element?(view, "#home-video-hero #new-idea-level-step")
+    assert has_element?(view, "#home-public-grid-note", "public and editable by default")
   end
 
   test "explains each answer depth in the start form", %{conn: conn} do

@@ -15,12 +15,10 @@ defmodule DialecticWeb.SettingsMenuComp do
         id="right-panel-comp"
         graph_id={@graph_id}
         node={@node}
-        work_streams={@work_streams}
         current_user={@current_user}
         graph_struct={@graph_struct}
         search_term={@search_term}
         search_results={@search_results}
-        group_states={@group_states}
         highlights={@highlights}
         prompt_mode={@prompt_mode}
         token={@token}

@@ -6,8 +6,8 @@ const styleFor = (styles, selector) =>
 
 describe("graph accessibility styles", () => {
   it("strengthens node colour, borders, and edges in high contrast mode", () => {
-    const regular = graphStyle("spaced", "Example");
-    const highContrast = graphStyle("spaced", "Example", {
+    const regular = graphStyle("spaced");
+    const highContrast = graphStyle("spaced", {
       highContrast: true,
     });
 
@@ -20,14 +20,14 @@ describe("graph accessibility styles", () => {
     expect(styleFor(highContrast, "edge").opacity).toBeGreaterThan(
       styleFor(regular, "edge").opacity,
     );
-    expect(styleFor(highContrast, "edge")["line-gradient-stop-colors"]).not.toBe(
-      styleFor(regular, "edge")["line-gradient-stop-colors"],
+    expect(styleFor(highContrast, "edge")["line-color"]).not.toBe(
+      styleFor(regular, "edge")["line-color"],
     );
   });
 
   it("keeps highlighted relationships readable on a solid accent colour", () => {
-    const styles = graphStyle("spaced", "Example");
-    const highContrast = graphStyle("spaced", "Example", {
+    const styles = graphStyle("spaced");
+    const highContrast = graphStyle("spaced", {
       highContrast: true,
     });
 
@@ -46,11 +46,21 @@ describe("graph accessibility styles", () => {
   });
 
   it("removes Cytoscape style transitions when reduced motion is enabled", () => {
-    const reducedMotion = graphStyle("spaced", "Example", {
+    const reducedMotion = graphStyle("spaced", {
       reduceMotion: true,
     });
 
     expect(styleFor(reducedMotion, "node")["transition-duration"]).toBe("0ms");
     expect(styleFor(reducedMotion, "edge")["transition-duration"]).toBe("0ms");
+  });
+
+  it("applies hover, search and selection without intermediate texture states", () => {
+    for (const mode of ["spaced", "compact"]) {
+      for (const { style } of graphStyle(mode)) {
+        if (style["transition-duration"]) {
+          expect(style["transition-duration"]).toBe("0ms");
+        }
+      }
+    }
   });
 });

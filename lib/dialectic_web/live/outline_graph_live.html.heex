@@ -38,119 +38,68 @@
       </button>
     </div>
 
-    <div class="flex-none border-b border-slate-200/90 bg-white/97 shadow-[0_12px_24px_-26px_rgba(15,23,42,0.22)] backdrop-blur-lg sm:shadow-[0_16px_32px_-30px_rgba(15,23,42,0.28)]">
-      <div class="grid grid-cols-1 lg:grid-cols-[20rem_minmax(0,1fr)] xl:grid-cols-[22rem_minmax(0,1fr)]">
-        <div class="hidden border-r border-slate-200 bg-slate-50/70 lg:flex lg:items-center lg:px-4 xl:px-5">
-          <span class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
-            <.icon name="hero-document-text" class="h-3 w-3" /> Reader
+    <DialecticWeb.WorkspaceBarComp.workspace_header
+      id="reader-header"
+      heading_id="reader-heading"
+      title_id="reader-title"
+      title={@graph_struct.title}
+      menu_id="reader-top-menu"
+      follow_id_prefix="reader"
+      current_user={@current_user}
+      following_graph?={@following_graph?}
+      menu_class={["hidden sm:flex"]}
+    >
+      <:navigation>
+        <DialecticWeb.WorkspaceBarComp.workspace_bar
+          id="reader-workspace-bar"
+          mode={:reader}
+          graph_struct={@graph_struct}
+          node_id={@selected_node_id}
+          nav_params={reader_nav_params(@nav_params, @path_focus_ids)}
+          show_search
+          search_click="open_search_overlay_click"
+          highlights_click={
+            JS.dispatch("toggle-panel",
+              to: "#outline-layout",
+              detail: %{id: "highlights-drawer"}
+            )
+          }
+          highlights_count={length(@visible_highlights)}
+          highlights_panel_id="highlights-drawer"
+          share_click="open_share_modal"
+          compact
+        />
+      </:navigation>
+      <:tools>
+        <button
+          id="reader-workspace-bar-outline-desktop"
+          type="button"
+          phx-click={JS.dispatch("toggle-mobile-outline", to: "#outline-layout")}
+          aria-label="Show conversation outline"
+          title="Show conversation outline"
+          aria-controls="outline-mobile-nav-panel"
+          aria-expanded="false"
+          class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 lg:hidden"
+        >
+          <.icon name="hero-bars-3-bottom-left" class="h-4 w-4" />
+        </button>
+        <button
+          id="reader-appearance-toggle"
+          type="button"
+          popovertarget="reader-appearance-panel"
+          class="inline-flex h-8 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-medium text-slate-600 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 [anchor-name:--reader-style]"
+        >
+          <span>Style</span>
+          <.icon name="hero-chevron-down" class="h-3.5 w-3.5" aria-hidden="true" />
+        </button>
+
+        <%= if !@can_edit do %>
+          <span class="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700">
+            <.icon name="hero-lock-closed" class="h-3.5 w-3.5" /> Read only
           </span>
-        </div>
-
-        <div class="px-4 py-1.5 sm:px-5 sm:py-2.5 lg:px-6">
-          <div class="grid gap-2.5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-4">
-            <div class="min-w-0">
-              <div class="flex min-w-0 items-center gap-1.5 sm:flex-wrap sm:gap-2 lg:min-h-[38px]">
-                <span class="hidden items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600 sm:inline-flex lg:hidden">
-                  <.icon name="hero-document-text" class="h-3 w-3" /> Reader
-                </span>
-
-                <h1 class="min-w-0 truncate text-sm font-semibold leading-tight tracking-tight text-slate-950 sm:text-lg">
-                  {@graph_struct.title}
-                </h1>
-              </div>
-            </div>
-
-            <div class="hidden min-w-0 flex-wrap items-center gap-2 sm:flex lg:justify-self-end">
-              <DialecticWeb.WorkspaceBarComp.workspace_bar
-                id="reader-workspace-bar"
-                mode={:reader}
-                graph_struct={@graph_struct}
-                node_id={@selected_node_id}
-                nav_params={reader_nav_params(@nav_params, @path_focus_ids)}
-                mobile_aux_id="reader-workspace-bar-outline-desktop"
-                mobile_aux_click={JS.dispatch("toggle-mobile-outline", to: "#outline-layout")}
-                mobile_aux_label="Conversation outline"
-                mobile_aux_title="Show conversation outline"
-                mobile_aux_icon="hero-bars-3-bottom-left"
-                mobile_aux_controls="outline-mobile-nav-panel"
-                show_search
-                search_click="open_search_overlay_click"
-                highlights_click={
-                  JS.dispatch("toggle-panel",
-                    to: "#outline-layout",
-                    detail: %{id: "highlights-drawer"}
-                  )
-                }
-                highlights_count={length(@visible_highlights)}
-                highlights_panel_id="highlights-drawer"
-                share_click="open_share_modal"
-                compact
-              />
-
-              <button
-                id="reader-appearance-toggle"
-                type="button"
-                popovertarget="reader-appearance-panel"
-                class="inline-flex h-8 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-medium text-slate-600 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 [anchor-name:--reader-style]"
-              >
-                <span>Style</span>
-                <.icon name="hero-chevron-down" class="h-3.5 w-3.5" aria-hidden="true" />
-              </button>
-
-              <%= if @current_user do %>
-                <button
-                  id="reader-follow-grid-button"
-                  type="button"
-                  phx-click={if(@following_graph?, do: "unfollow_graph", else: "follow_graph")}
-                  aria-label={
-                    if(@following_graph?,
-                      do: "Stop receiving grid updates in Activity",
-                      else: "Get notified about grid changes in Activity"
-                    )
-                  }
-                  aria-pressed={to_string(@following_graph?)}
-                  title={
-                    if(@following_graph?,
-                      do: "Updates from this grid appear in Activity. Click to turn them off.",
-                      else: "Get notified when this grid changes and see updates in Activity."
-                    )
-                  }
-                  class={[
-                    "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-slate-600 transition duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 sm:h-7 sm:w-7",
-                    if(@following_graph?,
-                      do: "border-sky-200 bg-sky-100 text-sky-700 hover:bg-sky-200",
-                      else:
-                        "border-transparent bg-slate-50 hover:bg-slate-100 hover:text-slate-950 sm:bg-transparent"
-                    )
-                  ]}
-                >
-                  <.icon
-                    name={if(@following_graph?, do: "hero-bell-solid", else: "hero-bell-alert")}
-                    class="h-4 w-4"
-                  />
-                </button>
-              <% else %>
-                <.link
-                  navigate={~p"/users/log_in"}
-                  id="reader-follow-grid-login-link"
-                  aria-label="Sign in to get notified about grid changes in Activity"
-                  title="Sign in to get notified when this grid changes and see updates in Activity."
-                  class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-transparent bg-slate-50 text-slate-600 transition duration-150 hover:bg-slate-100 hover:text-slate-950 sm:h-7 sm:w-7 sm:bg-transparent"
-                >
-                  <.icon name="hero-bell-alert" class="h-4 w-4" />
-                </.link>
-              <% end %>
-
-              <%= if !@can_edit do %>
-                <span class="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700">
-                  <.icon name="hero-lock-closed" class="h-3.5 w-3.5" /> Read only
-                </span>
-              <% end %>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+        <% end %>
+      </:tools>
+    </DialecticWeb.WorkspaceBarComp.workspace_header>
 
     <DialecticWeb.ReaderMobileNavComp.reader_mobile_nav
       reader_style={@reader_style}
@@ -193,6 +142,7 @@
 
     <div
       id="outline-scroll-shell"
+      data-mode-switch-content
       class="relative flex flex-1 min-h-0 flex-col overflow-x-hidden overflow-y-auto lg:grid lg:grid-cols-[20rem_minmax(0,1fr)] lg:overflow-clip xl:grid-cols-[22rem_minmax(0,1fr)]"
       phx-hook="ReaderScroll"
     >

@@ -16,9 +16,9 @@ defmodule Dialectic.MixProject do
     ]
   end
 
-  def hex_config(%{decimal: {:hex, :decimal, "3.1.1", _, _, _, "hexpm", _}}) do
-    [ignore_advisories: ["EEF-CVE-2026-32686"]]
-  end
+  # def hex_config(%{decimal: {:hex, :decimal, "3.1.1", _, _, _, "hexpm", _}}) do
+  #   [ignore_advisories: ["EEF-CVE-2026-32686"]]
+  # end
 
   def hex_config(_lock), do: []
 
