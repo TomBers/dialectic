@@ -31,19 +31,16 @@
       )
     }
   >
-    <header
+    <DialecticWeb.WorkspaceBarComp.workspace_header
       :if={@presentation_mode != :presenting}
       id="graph-header"
-      class="relative z-20 flex shrink-0 items-center justify-between gap-4 border-b border-slate-200 bg-white px-4 py-1.5"
+      heading_id="graph-heading"
+      title_id="graph-title"
+      title={@graph_struct.title}
+      menu_id="graph-top-menu"
+      menu_class={[@mobile_inquiry? && "hidden md:flex"]}
     >
-      <div id="graph-heading" class="flex min-w-0 flex-1 items-center gap-2">
-        <h1
-          id="graph-title"
-          class="min-w-0 truncate text-sm font-semibold text-slate-700"
-          title={@graph_struct.title}
-        >
-          {@graph_struct.title}
-        </h1>
+      <:heading_actions>
         <button
           id="graph-help-button"
           type="button"
@@ -55,28 +52,14 @@
           <.icon name="hero-question-mark-circle" class="h-4 w-4" />
           <span class="sr-only">How to use</span>
         </button>
-      </div>
-      <div
-        id="graph-top-menu"
-        class={[
-          "flex min-h-[38px] shrink-0 flex-wrap items-center gap-1.5",
-          @mobile_inquiry? && "hidden md:flex"
-        ]}
-      >
+      </:heading_actions>
+      <:navigation>
         <DialecticWeb.WorkspaceBarComp.workspace_bar
           id="graph-workspace-bar"
           mode={:graph}
           graph_struct={@graph_struct}
           node_id={Map.get(@node || %{}, :id)}
           nav_params={graph_nav_params(@token, @reader_path_endpoint)}
-          prompt_mode={@prompt_mode}
-          prompt_mode_click={
-            JS.dispatch("toggle-panel",
-              to: "#graph-layout",
-              detail: %{id: "right-panel"}
-            )
-            |> JS.push("open_prompt_settings")
-          }
           show_search
           search_click="open_search_overlay_click"
           highlights_click={
@@ -90,7 +73,19 @@
           share_click="open_share_modal"
           compact
         />
-
+      </:navigation>
+      <:tools>
+        <DialecticWeb.WorkspaceBarComp.prompt_mode_button
+          id="graph-workspace-bar-level"
+          prompt_mode={@prompt_mode}
+          click={
+            JS.dispatch("toggle-panel",
+              to: "#graph-layout",
+              detail: %{id: "right-panel"}
+            )
+            |> JS.push("open_prompt_settings")
+          }
+        />
         <button
           :if={@current_user && @graph_struct.user_id == @current_user.id}
           id="graph-access-settings"
@@ -120,7 +115,7 @@
           />
         </button>
 
-        <div class="ml-auto flex shrink-0 items-center gap-1.5">
+        <div class="flex shrink-0 items-center gap-1.5">
           <%= if @current_user do %>
             <button
               id="graph-follow-grid-button"
@@ -163,8 +158,8 @@
             compact={true}
           />
         </div>
-      </div>
-    </header>
+      </:tools>
+    </DialecticWeb.WorkspaceBarComp.workspace_header>
     <% slides = slides(@graph_id, @presentation_slide_ids) %>
     <% active_slide = active_slide(slides, @node) %>
     <% active_slide_id = if active_slide, do: active_slide.id, else: nil %>
@@ -359,6 +354,7 @@
     <%!-- Main content with drawer menu --%>
     <div
       id="graph-keyboard-workspace"
+      data-mode-switch-content
       phx-hook="GraphKeyboardNavigation"
       data-active-region="reader"
       class={[

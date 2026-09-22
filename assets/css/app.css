@@ -447,67 +447,83 @@
         "calt" 1;
 }
 
-#graph-layout,
-#outline-layout {
-    transition:
-        opacity 220ms ease,
-        transform 220ms ease,
-        filter 220ms ease;
-    transform-origin: center top;
-    will-change: opacity, transform, filter;
+@layer components {
+    .workspace-header {
+        @apply relative z-20 flex shrink-0 flex-wrap items-center gap-x-4 gap-y-1 border-b border-slate-200 bg-white px-4 py-1.5;
+    }
+
+    .workspace-heading {
+        @apply flex min-h-7 min-w-0 basis-full items-center gap-2;
+    }
+
+    .workspace-menu {
+        @apply flex min-h-[42px] w-full min-w-0 flex-wrap items-center justify-between gap-1.5;
+    }
+
+    .workspace-context-actions {
+        @apply ml-auto flex shrink-0 items-center justify-end gap-1.5;
+    }
+
+    @screen sm {
+        .workspace-menu {
+            @apply flex-nowrap;
+        }
+    }
+
+    @screen lg {
+        .workspace-header {
+            @apply flex-nowrap;
+        }
+
+        .workspace-heading {
+            @apply flex-1 basis-auto;
+        }
+
+        .workspace-menu {
+            @apply w-auto shrink-0;
+        }
+
+        .workspace-context-actions {
+            width: 23rem;
+        }
+    }
 }
 
-html[data-view-transition-direction="reader"] {
-    --mode-switch-leave-x: -16px;
-    --mode-switch-enter-x: 16px;
+[data-mode-switch-content] {
+    transition: opacity 120ms ease;
 }
 
-html[data-view-transition-direction="graph"] {
-    --mode-switch-leave-x: 16px;
-    --mode-switch-enter-x: -16px;
+html.mode-switch-leave [data-mode-switch-content] {
+    opacity: 0.7;
 }
 
-html.global-modal-open #graph-layout,
-html.global-modal-open #outline-layout {
-    will-change: auto;
-}
-
-html.mode-switch-leave #graph-layout,
-html.mode-switch-leave #outline-layout {
-    opacity: 0.52;
-    transform: translate3d(var(--mode-switch-leave-x, 0), 0, 0) scale(0.996);
-    filter: saturate(0.96);
-}
-
-html.mode-switch-enter #graph-layout,
-html.mode-switch-enter #outline-layout {
-    animation: mode-switch-in 280ms cubic-bezier(0.22, 1, 0.36, 1);
+html.mode-switch-enter [data-mode-switch-content] {
+    animation: mode-switch-in 160ms ease-out;
 }
 
 @keyframes mode-switch-in {
-    0% {
-        opacity: 0;
-        transform: translate3d(var(--mode-switch-enter-x, 0), 0, 0) scale(0.996);
-        filter: saturate(0.97);
-    }
-
-    100% {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-        filter: saturate(1);
-    }
+    from { opacity: 0.7; }
+    to { opacity: 1; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    #graph-layout,
-    #outline-layout {
+    [data-mode-switch-content] {
         transition: none;
     }
 
-    html.mode-switch-enter #graph-layout,
-    html.mode-switch-enter #outline-layout {
+    html.mode-switch-leave [data-mode-switch-content] {
+        opacity: 1;
+    }
+
+    html.mode-switch-enter [data-mode-switch-content] {
         animation: none;
     }
+}
+
+.reading-appearance[data-reduce-motion="true"] [data-mode-switch-content] {
+    transition: none;
+    animation: none;
+    opacity: 1;
 }
 
 /* This file is for your main application CSS */

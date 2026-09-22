@@ -164,7 +164,7 @@ const clearModeSwitchClasses = () => {
   delete document.documentElement.dataset.viewTransitionDirection;
 };
 
-const scheduleModeSwitchCleanup = (delay = 320) => {
+const scheduleModeSwitchCleanup = (delay = 180) => {
   window.clearTimeout(modeSwitchCleanupTimer);
   modeSwitchCleanupTimer = window.setTimeout(() => {
     clearModeSwitchClasses();
@@ -176,7 +176,7 @@ document.addEventListener(
   "click",
   (event) => {
     const link = event.target.closest('a[data-view-transition="mode-switch"]');
-    if (!link) return;
+    if (!link || link.getAttribute("aria-current") === "page") return;
     if (
       event.defaultPrevented ||
       event.button !== 0 ||
