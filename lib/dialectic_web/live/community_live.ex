@@ -57,9 +57,12 @@ defmodule DialecticWeb.CommunityLive do
       if params["category"] in ["curated", "partners", "all"],
         do: params["category"]
 
-    category = category_param || "all"
     legacy_size = %{"seedlings" => "small", "deep_dives" => "large"}[params["category"]]
     size = normalize_size(params["size"] || legacy_size)
+
+    category =
+      category_param ||
+        if(search != "" or tag != nil or size != "all", do: "all", else: "curated")
 
     sort = if params["sort"] in ["updated", "largest"], do: params["sort"], else: "newest"
 
@@ -371,7 +374,7 @@ defmodule DialecticWeb.CommunityLive do
                 aria-label="Browse grid collections"
                 class="flex gap-1 overflow-x-auto border-b border-stone-300 pb-3"
               >
-                <%= for {category, label} <- [{"all", "All grids"}, {"curated", "Curated grids"}, {"partners", "Partner grids"}] do %>
+                <%= for {category, label} <- [{"curated", "Curated grids"}, {"all", "All grids"}, {"partners", "Partner grids"}] do %>
                   <.link
                     id={"community-format-#{category}"}
                     href={browse_path(@browse_params, %{"category" => category})}
@@ -463,7 +466,7 @@ defmodule DialecticWeb.CommunityLive do
                   </p>
                   <.link
                     id="community-empty-reset"
-                    href={~p"/community"}
+                    href={~p"/community?category=all"}
                     class="mt-4 inline-flex text-sm font-semibold text-teal-800 underline underline-offset-4"
                   >Browse all grids</.link>
                 </div>
@@ -471,7 +474,6 @@ defmodule DialecticWeb.CommunityLive do
                   <.community_grid_row
                     id={id}
                     graph={item.graph}
-                    author_name={item.author_name}
                     selected_tag={@active_tag}
                     can_generate_tags={admin?(@current_user)}
                     generating_tags={@generating_tags}
@@ -512,7 +514,6 @@ defmodule DialecticWeb.CommunityLive do
 
   attr :id, :string, required: true
   attr :graph, :map, required: true
-  attr :author_name, :string, default: nil
   attr :selected_tag, :string, default: nil
   attr :can_generate_tags, :boolean, default: false
   attr :generating_tags, :any, required: true
@@ -525,90 +526,52 @@ defmodule DialecticWeb.CommunityLive do
       |> assign(:title, display_title(assigns.graph))
       |> assign(:tags, tags)
       |> assign(:node_count, graph_node_count(assigns.graph))
-      |> assign(:created_label, created_label(assigns.graph))
-      |> assign(:accent_style, row_accent_style(tags))
       |> assign(:generating_tags?, MapSet.member?(assigns.generating_tags, assigns.graph.title))
 
     ~H"""
     <article
       id={@id}
       data-role="community-grid-row"
-      class="group relative grid gap-5 px-5 py-4 pl-6 transition hover:bg-[#fbfaf6] sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-6 sm:pl-7"
+      class="px-5 py-5 transition hover:bg-stone-50 sm:px-6"
     >
-      <div aria-hidden="true" class="absolute inset-y-0 left-0 w-1" style={@accent_style}></div>
-      <div class="min-w-0">
+      <h3>
         <.link
+          id={@id <> "-title"}
           navigate={graph_path(@graph)}
-          class="text-balance font-serif text-xl font-semibold leading-7 tracking-tight text-slate-950 transition group-hover:text-teal-800 hover:text-teal-900 sm:text-2xl"
+          class="font-serif text-lg font-medium leading-7 text-slate-900 transition hover:text-teal-800 focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-700 sm:text-xl"
         >
           {@title}
         </.link>
+      </h3>
 
-        <div
-          data-role="community-grid-meta"
-          class="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500"
-        >
-          <%= if is_binary(@author_name) and String.trim(@author_name) != "" do %>
-            <.link
-              navigate={~p"/u/#{@author_name}"}
-              class="font-medium text-slate-600 transition hover:text-teal-800"
-            >
-              by @{@author_name}
-            </.link>
-            <span aria-hidden="true">·</span>
-          <% end %>
-          <span aria-label={"Created " <> @created_label}>{@created_label}</span>
-          <span aria-hidden="true">·</span>
-          <span>{idea_count_label(@node_count)}</span>
-        </div>
-
-        <div class="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
-          <%= if @tags == [] do %>
-            <span class="text-xs font-medium text-slate-500">Untagged</span>
-            <button
-              :if={@can_generate_tags}
-              id={@id <> "-generate-tags"}
-              type="button"
-              phx-click="generate_tags"
-              phx-value-identifier={@graph.slug || @graph.title}
-              disabled={@generating_tags?}
-              class="inline-flex items-center gap-1 text-xs font-semibold text-teal-700 transition hover:text-teal-900 disabled:cursor-wait disabled:opacity-60"
-            >
-              <.icon
-                name={if(@generating_tags?, do: "hero-arrow-path", else: "hero-sparkles")}
-                class={tag_generation_icon_class(@generating_tags?)}
-              />
-              {if(@generating_tags?, do: "Generating...", else: "Generate tags")}
-            </button>
-          <% else %>
-            <.link
-              :for={tag <- @tags}
-              href={~p"/community?tag=#{Graphs.normalize_tag(tag)}"}
-              class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600"
-            >
-              <span
-                aria-hidden="true"
-                class="h-1.5 w-1.5 shrink-0 rounded-full"
-                style={"background-color: " <> tag_color_hex(tag)}
-              ></span>
-              {tag_label(tag)}
-            </.link>
-          <% end %>
-        </div>
-      </div>
-
-      <div class="flex items-center border-t border-stone-200 pt-4 sm:border-t-0 sm:pt-0">
+      <div
+        data-role="community-grid-meta"
+        class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500"
+      >
         <.link
-          navigate={graph_path(@graph)}
-          class="inline-flex items-center gap-1.5 text-xs font-semibold text-teal-800 transition hover:text-teal-950"
-          aria-label={"Read grid: " <> @title}
+          :for={tag <- @tags}
+          href={~p"/community?tag=#{Graphs.normalize_tag(tag)}"}
+          class="transition hover:text-teal-800 hover:underline focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"
         >
-          Read grid
-          <.icon
-            name="hero-arrow-right"
-            class="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5"
-          />
+          {tag_label(tag)}
         </.link>
+        <span :if={@tags != []} aria-hidden="true">·</span>
+        <span>{idea_count_label(@node_count)}</span>
+        <button
+          :if={@tags == [] and @can_generate_tags}
+          id={@id <> "-generate-tags"}
+          type="button"
+          phx-click="generate_tags"
+          phx-value-identifier={@graph.slug || @graph.title}
+          disabled={@generating_tags?}
+          class="inline-flex items-center gap-1 font-medium text-teal-700 transition hover:text-teal-900 disabled:cursor-wait disabled:opacity-60"
+        >
+          <.icon
+            name={if(@generating_tags?, do: "hero-arrow-path", else: "hero-sparkles")}
+            class={tag_generation_icon_class(@generating_tags?)}
+          />
+          {if(@generating_tags?, do: "Generating...", else: "Generate tags")}
+        </button>
       </div>
     </article>
     """
@@ -668,8 +631,8 @@ defmodule DialecticWeb.CommunityLive do
     case Enum.find(tags, fn tag ->
            selected_tag && Graphs.normalize_tag(tag) == Graphs.normalize_tag(selected_tag)
          end) do
-      nil -> Enum.take(tags, 3)
-      matching_tag -> [matching_tag | Enum.reject(tags, &(&1 == matching_tag))] |> Enum.take(3)
+      nil -> tags
+      matching_tag -> [matching_tag | Enum.reject(tags, &(&1 == matching_tag))]
     end
   end
 
@@ -698,8 +661,8 @@ defmodule DialecticWeb.CommunityLive do
       |> Map.take(["tag"])
       |> Map.put(
         "category",
-        if(socket.assigns.active_category == "curated" and is_nil(socket.assigns.active_tag),
-          do: "curated"
+        if(is_nil(socket.assigns.active_tag),
+          do: if(socket.assigns.active_category == "all", do: "all")
         )
       )
       |> Map.put("page", if(result.page > 1, do: result.page))
@@ -765,7 +728,7 @@ defmodule DialecticWeb.CommunityLive do
     params
     |> Map.reject(fn {key, value} ->
       value in [nil, ""] or (key == "page" and value in [1, "1"]) or
-        (key in ["category", "size"] and value == "all")
+        (key == "size" and value == "all")
     end)
   end
 
@@ -854,19 +817,6 @@ defmodule DialecticWeb.CommunityLive do
       {first, rest} -> String.upcase(first) <> rest
       nil -> "Untitled grid"
     end
-  end
-
-  defp row_accent_style(tags) do
-    colors = tags |> Enum.map(&tag_color_hex/1) |> Enum.uniq()
-
-    gradient_colors =
-      case colors do
-        [] -> [tag_color_hex(""), "#cbd5e1"]
-        [color] -> [color, "#cbd5e1"]
-        colors -> colors
-      end
-
-    "background-image: linear-gradient(180deg, #{Enum.join(gradient_colors, ", ")});"
   end
 
   defp page_title(search, tag, category, size) do
