@@ -27,7 +27,7 @@ defmodule DialecticWeb.AboutLiveTest do
     assert has_element?(
              view,
              ~s(#about-mobile-community-link[href="/community"]),
-             "Browse public grids"
+             "Explore community grids"
            )
 
     assert has_element?(

@@ -18,7 +18,7 @@ defmodule DialecticWeb.CommunityLive do
       socket
       |> assign(
         page_title: "Community Grids",
-        page_description: "Browse public and partner grids built with RationalGrid.",
+        page_description: "Explore community grids built with RationalGrid.",
         search_term: "",
         active_tag: nil,
         active_category: nil,
@@ -810,10 +810,10 @@ defmodule DialecticWeb.CommunityLive do
     end
   end
 
-  defp page_description(nil), do: "Browse public and partner grids built with RationalGrid."
+  defp page_description(nil), do: "Explore community grids built with RationalGrid."
 
   defp page_description(tag) do
-    "Explore public grids about #{tag_label(tag)}. Follow questions, compare perspectives, and examine sources shared by the RationalGrid community."
+    "Explore community grids about #{tag_label(tag)}. Follow questions, compare perspectives, and examine sources shared by the RationalGrid community."
   end
 
   defp category_class(true),

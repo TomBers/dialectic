@@ -4,6 +4,8 @@ config :dialectic, Oban, testing: :manual
 
 config :dialectic, sync_tasks_for_testing: true
 
+config :dialectic, :sitemap_page_size, 10
+
 # Mock LLM requests
 config :dialectic, :llm_req_options, plug: Dialectic.Test.LLMTestPlug
 

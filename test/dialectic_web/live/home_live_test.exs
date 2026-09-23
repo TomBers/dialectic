@@ -139,7 +139,7 @@ defmodule DialecticWeb.HomeLiveTest do
     assert has_element?(
              view,
              ~s(#home-community-secondary-link[href="/community"]),
-             "Browse public grids"
+             "Explore community grids"
            )
   end
 
@@ -149,7 +149,7 @@ defmodule DialecticWeb.HomeLiveTest do
     assert has_element?(
              view,
              ~s(#home-community-grids-link[href="/community"]),
-             "Explore public grids"
+             "Explore community grids"
            )
   end
 
@@ -232,7 +232,7 @@ defmodule DialecticWeb.HomeLiveTest do
     assert has_element?(
              view,
              ~s(#home-community-secondary-link[href="/community"]),
-             "Browse public grids"
+             "Explore community grids"
            )
 
     refute has_element?(view, "#home-example-link")
@@ -299,7 +299,7 @@ defmodule DialecticWeb.HomeLiveTest do
   test "shows the product briefly and links to the detailed pages", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/")
 
-    assert has_element?(view, "#home-learning-loop h2", "See the questions connect.")
+    assert has_element?(view, "#home-learning-loop h2#home-product-preview-title")
     assert has_element?(view, "#home-learning-loop", "follow the reasoning again later")
 
     assert has_element?(
@@ -317,7 +317,7 @@ defmodule DialecticWeb.HomeLiveTest do
            )
 
     refute has_element?(view, "#home-example-video iframe")
-    assert has_element?(view, "#popular-grids", "See what others have explored.")
+    assert has_element?(view, "#popular-grids h2#home-community-title")
 
     assert has_element?(view, "#home-testimonial", "An amazing free specialised AI tool")
 
@@ -380,9 +380,9 @@ defmodule DialecticWeb.HomeLiveTest do
              "Read the source article"
            )
 
-    assert has_element?(view, "#home-definition h2", "What is RationalGrid?")
+    refute has_element?(view, "#home-definition")
 
-    assert has_element?(view, "#home-ai-limits-faq h2", "AI and source limits")
+    assert has_element?(view, "#home-ai-limits-faq h2#home-faq-title")
     assert has_element?(view, "#home-faq-cost", "How much does RationalGrid cost?")
     assert has_element?(view, "#home-faq-ai-usage-limits", "What are the AI usage limits?")
     assert has_element?(view, "#home-faq-ai-usage-limits", "three AI requests in progress")
@@ -404,18 +404,6 @@ defmodule DialecticWeb.HomeLiveTest do
 
     assert has_element?(
              view,
-             "#home-definition",
-             "RationalGrid is a free, not-for-profit, AI-assisted research and argument-mapping tool."
-           )
-
-    assert has_element?(
-             view,
-             "#home-definition",
-             "It helps students and researchers organize claims and evidence into structured, shareable formats."
-           )
-
-    assert has_element?(
-             view,
              "footer p.text-slate-400",
              "See what you think."
            )
@@ -428,7 +416,7 @@ defmodule DialecticWeb.HomeLiveTest do
 
     assert has_element?(
              view,
-             "#home-video-hero + #home-learning-journey + #home-proof-carousel + #home-product-preview + #popular-grids + #home-definition + #home-ai-limits-faq + #home-final-cta + footer"
+             "#home-video-hero + #home-learning-journey + #home-proof-carousel + #home-product-preview + #popular-grids + #home-ai-limits-faq + #home-final-cta + footer"
            )
 
     for location <- ["proof", "final"] do
@@ -449,6 +437,11 @@ defmodule DialecticWeb.HomeLiveTest do
 
     assert has_element?(
              view,
+             ~s(#home-learning-journey[aria-labelledby="home-learning-title"] h2#home-learning-title)
+           )
+
+    assert has_element?(
+             view,
              "#home-learning-ask + #home-learning-explore + #home-learning-return"
            )
 
@@ -457,12 +450,19 @@ defmodule DialecticWeb.HomeLiveTest do
     assert has_element?(view, "#home-return-tools", "Search")
     assert has_element?(view, "#home-return-tools", "Highlights")
     assert has_element?(view, "#home-return-tools", "Saved for recall")
-    assert has_element?(view, "#home-recall-account-note", "free account")
+    assert has_element?(view, "#home-learning-return #home-recall-account-note", "free account")
     assert has_element?(view, ~s(#home-grid-preview-link[href="#home-learning-journey"]))
 
     assert has_element?(
              view,
-             ~s(#home-example-question-link[href="/questions/does-ai-make-us-better-thinkers"])
+             ~s(#home-learning-actions #home-learning-start-grid-link[href="#start-here"][aria-controls="new-idea-input"][phx-click]),
+             "Start your own grid"
+           )
+
+    assert has_element?(
+             view,
+             ~s(#home-learning-actions #home-learning-community-link[href="/community"]),
+             "Explore community grids"
            )
 
     refute has_element?(view, "#home-saved-for-recall-link")

@@ -432,7 +432,8 @@ defmodule DialecticWeb.HomeLive do
             <p id="home-hero-subheading" class="mt-6 max-w-xl text-lg leading-8 text-slate-200">
               Enjoy exploring an idea, challenge an answer, or unpack a technical term.
               A grid grows as you ask, keeping the connections visible so you can return
-              and keep learning.
+              and keep learning. Share your grid to discover other perspectives and explore
+              new directions together in real time.
             </p>
             <div id="start-here" class="mt-7 scroll-mt-24">
               <div id="home-start-panel" class="hidden max-w-xl md:block">
@@ -459,7 +460,7 @@ defmodule DialecticWeb.HomeLive do
               </div>
               <div id="home-mobile-community-start" class="md:hidden">
                 <p class="text-sm leading-6 text-slate-300">
-                  Read public grids, add your own thoughts, and ask follow-up questions from your phone.
+                  Read community grids, add your own thoughts, and ask follow-up questions from your phone.
                 </p>
               </div>
               <div class="mt-4 flex flex-wrap items-center gap-3">
@@ -470,7 +471,7 @@ defmodule DialecticWeb.HomeLive do
                   data-analytics-location="home_hero"
                   class="inline-flex min-h-11 items-center gap-2 rounded-md bg-teal-300 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-teal-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-300 md:hidden"
                 >
-                  Browse public grids <.icon name="hero-arrow-right" class="h-4 w-4" />
+                  Explore community grids <.icon name="hero-arrow-right" class="h-4 w-4" />
                 </.link>
                 <.link
                   id="home-community-secondary-link"
@@ -479,7 +480,7 @@ defmodule DialecticWeb.HomeLive do
                   data-analytics-location="question_form"
                   class="hidden min-h-11 items-center gap-2 rounded-md border border-teal-200/60 bg-white/10 px-4 py-2 text-sm font-semibold text-teal-50 transition hover:bg-white/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-300 md:inline-flex"
                 >
-                  Browse public grids <.icon name="hero-arrow-right" class="h-4 w-4" />
+                  Explore community grids <.icon name="hero-arrow-right" class="h-4 w-4" />
                 </.link>
               </div>
               <p
@@ -488,7 +489,7 @@ defmodule DialecticWeb.HomeLive do
                 class="mt-3 text-sm leading-6 text-slate-300"
               >
                 <span class="hidden md:inline">Try Simple answers without an account.</span>
-                <span class="md:hidden">Explore public grids without an account.</span>
+                <span class="md:hidden">Explore community grids without an account.</span>
                 Sign up free to save bookmarks and highlights.
               </p>
             </div>
@@ -575,9 +576,12 @@ defmodule DialecticWeb.HomeLive do
         </div>
         <div class="mx-auto grid w-full max-w-7xl gap-10 px-5 py-12 sm:px-8 sm:py-16 lg:grid-cols-[minmax(20rem,0.72fr)_minmax(0,1.28fr)] lg:items-center lg:px-10">
           <div id="home-learning-loop">
-            <p class="text-xs font-semibold uppercase tracking-[0.16em] text-teal-200">
-              Video Introduction
-            </p>
+            <h2
+              id="home-product-preview-title"
+              class="text-xs font-semibold uppercase tracking-[0.16em] text-teal-200"
+            >
+              Watch the tour
+            </h2>
             <p class="mt-5 max-w-xl text-base leading-7 text-slate-300">
               Follow a surprising answer, ask for a challenge, or get a tricky term explained.
               It all becomes part of the same grid, so you can follow the reasoning again later.
@@ -652,16 +656,19 @@ defmodule DialecticWeb.HomeLive do
         <div class="mx-auto w-full max-w-7xl px-5 py-12 sm:px-8 sm:py-16 lg:px-10">
           <div class="flex flex-col gap-5 border-b border-slate-300 pb-6 sm:flex-row sm:items-end sm:justify-between">
             <div class="max-w-3xl">
-              <p class="inline-block border-l-2 border-teal-500 pl-3 text-sm font-bold uppercase tracking-[0.14em] text-teal-900">
+              <h2
+                id="home-community-title"
+                class="inline-block border-l-2 border-teal-500 pl-3 text-sm font-bold uppercase tracking-[0.14em] text-teal-900"
+              >
                 Explore the community
-              </p>
+              </h2>
             </div>
             <.link
               id="home-community-grids-link"
               navigate={~p"/community"}
               class="group inline-flex shrink-0 items-center gap-2 rounded-md bg-teal-300 px-6 py-3.5 text-base font-semibold text-slate-950 shadow-[0_18px_36px_-18px_rgba(13,148,136,0.8)] ring-1 ring-teal-500/30 transition hover:-translate-y-0.5 hover:bg-teal-200 hover:shadow-[0_22px_40px_-18px_rgba(13,148,136,0.9)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
             >
-              Explore public grids
+              Explore community grids
               <.icon
                 name="hero-arrow-right"
                 class="h-4 w-4 transition-transform group-hover:translate-x-0.5"
@@ -692,43 +699,31 @@ defmodule DialecticWeb.HomeLive do
         </div>
       </section>
 
-      <section id="home-definition" class="border-b border-slate-800 bg-slate-900 text-white">
-        <div class="mx-auto w-full max-w-7xl px-5 py-10 sm:px-8 sm:py-12 lg:px-10">
-          <h2 class="font-serif text-3xl font-semibold tracking-tight sm:text-4xl">
-            What is RationalGrid?
-          </h2>
-          <p class="mt-4 max-w-3xl text-base leading-7 text-slate-300">
-            RationalGrid is a free, not-for-profit, AI-assisted research and argument-mapping tool. It
-            helps students and researchers organize claims and evidence into structured, shareable
-            formats.
-          </p>
-        </div>
-      </section>
-
-      <section id="home-ai-limits-faq" class="border-b border-stone-300 bg-[#f4f1e9]">
+      <section id="home-ai-limits-faq" class="border-b border-slate-800 bg-slate-900 text-white">
         <div class="mx-auto w-full max-w-5xl px-5 py-12 sm:px-8 sm:py-16">
-          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
-            Free to explore
-          </p>
-          <h2 class="mt-3 font-serif text-4xl font-semibold tracking-tight">
-            AI and source limits
+          <h2
+            id="home-faq-title"
+            class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-200"
+          >
+            FAQs
           </h2>
-          <div class="mt-7 divide-y divide-stone-300 border-y border-stone-300">
+
+          <div class="mt-7 divide-y divide-slate-700 border-y border-slate-700">
             <details :for={faq <- @homepage_faqs} id={"home-faq-#{faq.id}"} class="group py-5">
-              <summary class="flex cursor-pointer list-none items-center justify-between gap-4 font-semibold text-slate-950">
+              <summary class="flex cursor-pointer list-none items-center justify-between gap-4 font-semibold text-white">
                 {faq.question}
                 <.icon
                   name="hero-plus"
-                  class="h-5 w-5 shrink-0 text-teal-700 transition group-open:rotate-45"
+                  class="h-5 w-5 shrink-0 text-teal-300 transition group-open:rotate-45"
                 />
               </summary>
-              <p class="mt-3 w-full text-sm leading-6 text-slate-600">
+              <p class="mt-3 w-full text-sm leading-6 text-slate-300">
                 {faq.answer}
                 <%= if Map.get(faq, :comparisons_link?, false) do %>
                   <.link
                     id="home-faq-comparisons-link"
                     navigate={~p"/compare"}
-                    class="font-semibold text-teal-800 underline decoration-teal-600/50 underline-offset-4 hover:text-teal-950"
+                    class="font-semibold text-teal-200 underline decoration-teal-400/50 underline-offset-4 hover:text-white"
                   >
                     See how RationalGrid compares with other tools and approaches.
                   </.link>
@@ -737,7 +732,7 @@ defmodule DialecticWeb.HomeLive do
                   <.link
                     id="home-faq-notion-obsidian-link"
                     navigate={~p"/compare/notion-obsidian"}
-                    class="font-semibold text-teal-800 underline decoration-teal-600/50 underline-offset-4 hover:text-teal-950"
+                    class="font-semibold text-teal-200 underline decoration-teal-400/50 underline-offset-4 hover:text-white"
                   >
                     See the complete Notion and Obsidian research workflow.
                   </.link>
@@ -748,35 +743,35 @@ defmodule DialecticWeb.HomeLive do
           <.link
             id="home-ai-limits-details-link"
             navigate={~p"/intro/ai"}
-            class="mt-5 inline-flex items-center gap-2 border-b border-slate-500 pb-1 text-sm font-semibold text-slate-800 transition hover:border-teal-700 hover:text-teal-800"
+            class="mt-5 inline-flex items-center gap-2 border-b border-slate-500 pb-1 text-sm font-semibold text-white transition hover:border-teal-300 hover:text-teal-200"
           >
             Learn how AI and sources work <.icon name="hero-arrow-right" class="h-4 w-4" />
           </.link>
         </div>
       </section>
 
-      <section id="home-final-cta" class="border-b border-slate-700 bg-slate-950 text-white">
+      <section id="home-final-cta" class="border-b border-stone-300 bg-[#f4f1e9] text-slate-950">
         <div class="mx-auto flex w-full max-w-5xl flex-col gap-6 px-5 py-12 sm:flex-row sm:items-center sm:justify-between sm:px-8 sm:py-14">
           <div>
-            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-300">
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
               Where will your curiosity take you?
             </p>
             <h2 class="mt-2 font-serif text-3xl font-semibold tracking-tight sm:text-4xl">
               Build a grid you’ll want to come back to.
             </h2>
-            <p class="mt-3 max-w-xl text-sm leading-6 text-slate-300">
+            <p class="mt-3 max-w-xl text-sm leading-6 text-slate-600">
               Enjoy the exploration. Keep the connections. Return with a new question whenever you’re ready.
             </p>
           </div>
           <div class="flex shrink-0 flex-col items-start gap-3 sm:items-end">
-            <.start_grid_actions id="home-final" location="home_final_cta" dark={true} />
+            <.start_grid_actions id="home-final" location="home_final_cta" />
             <%= if @current_user do %>
               <.link
                 id="home-final-library-link"
                 navigate={~p"/u/#{Dialectic.Accounts.User.effective_username(@current_user)}" <> "#profile-thinking-library"}
                 data-analytics-event="saved_for_recall_clicked"
                 data-analytics-location="home_final_cta"
-                class="inline-flex min-h-11 items-center text-sm font-semibold text-slate-300 underline decoration-slate-500 underline-offset-4 hover:text-teal-200"
+                class="inline-flex min-h-11 items-center text-sm font-semibold text-slate-700 underline decoration-slate-500 underline-offset-4 hover:text-teal-800"
               >
                 Open your library
               </.link>
@@ -786,11 +781,11 @@ defmodule DialecticWeb.HomeLive do
                 navigate={~p"/users/register"}
                 data-analytics-event="sign_up_cta_clicked"
                 data-analytics-location="home_final_cta"
-                class="inline-flex min-h-11 items-center text-sm font-semibold text-slate-300 underline decoration-slate-500 underline-offset-4 hover:text-teal-200"
+                class="inline-flex min-h-11 items-center text-sm font-semibold text-slate-700 underline decoration-slate-500 underline-offset-4 hover:text-teal-800"
               >
                 Sign up free to save your discoveries
               </.link>
-              <p class="text-xs text-slate-400">No payment details.</p>
+              <p class="text-xs text-slate-600">No payment details.</p>
             <% end %>
           </div>
         </div>
@@ -883,7 +878,7 @@ defmodule DialecticWeb.HomeLive do
           )
         ]}
       >
-        Browse public grids <.icon name="hero-arrow-right" class="h-4 w-4" />
+        Explore community grids <.icon name="hero-arrow-right" class="h-4 w-4" />
       </.link>
     </div>
     """
@@ -898,9 +893,12 @@ defmodule DialecticWeb.HomeLive do
     >
       <div class="mx-auto w-full max-w-7xl px-5 py-12 sm:px-8 sm:py-16 lg:px-10">
         <div class="max-w-3xl">
-          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-teal-800">
-            3-step learning
-          </p>
+          <h2
+            id="home-learning-title"
+            class="text-xs font-semibold uppercase tracking-[0.18em] text-teal-800"
+          >
+            How it works
+          </h2>
         </div>
 
         <ol id="home-learning-steps" class="mt-9 grid gap-8 md:grid-cols-3">
@@ -977,27 +975,43 @@ defmodule DialecticWeb.HomeLive do
                   <span><strong class="block text-slate-900">Saved for recall</strong><span class="text-slate-600">Reopen bookmarks and highlights from your profile.</span></span>
                 </li>
               </ul>
+              <p id="home-recall-account-note" class="mt-5 text-sm leading-6 text-slate-600">
+                A free account keeps your bookmarks and highlights together.
+                <.link
+                  :if={@current_user}
+                  id="home-saved-for-recall-link"
+                  navigate={~p"/u/#{Dialectic.Accounts.User.effective_username(@current_user)}" <> "#profile-thinking-library"}
+                  class="font-semibold text-teal-800 underline decoration-teal-500 underline-offset-4 hover:text-teal-950"
+                >
+                  Open Saved for recall
+                </.link>
+              </p>
             </div>
           </li>
         </ol>
-        <div class="mt-7 flex flex-wrap items-center justify-between gap-4 border-t border-slate-200 pt-5 text-sm leading-6 text-slate-600">
-          <p id="home-recall-account-note">
-            A free account keeps your bookmarks and highlights together.
-            <.link
-              :if={@current_user}
-              id="home-saved-for-recall-link"
-              navigate={~p"/u/#{Dialectic.Accounts.User.effective_username(@current_user)}" <> "#profile-thinking-library"}
-              class="font-semibold text-teal-800 underline decoration-teal-500 underline-offset-4 hover:text-teal-950"
-            >
-              Open Saved for recall
-            </.link>
-          </p>
+        <div
+          id="home-learning-actions"
+          class="mt-7 flex flex-wrap items-center gap-3 border-t border-slate-200 pt-5"
+        >
           <.link
-            id="home-example-question-link"
-            navigate={~p"/questions/does-ai-make-us-better-thinkers"}
-            class="inline-flex min-h-11 items-center gap-2 font-semibold text-teal-800 underline decoration-teal-500 underline-offset-4 hover:text-teal-950"
+            id="home-learning-start-grid-link"
+            href="#start-here"
+            phx-click={JS.show(to: "#home-start-panel") |> JS.focus(to: "#new-idea-input")}
+            aria-controls="new-idea-input"
+            data-analytics-event="start_grid_clicked"
+            data-analytics-location="home_learning_journey"
+            class="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-teal-800 px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-800"
           >
-            Read the example question <.icon name="hero-arrow-right" class="h-4 w-4" />
+            Start your own grid <.icon name="hero-arrow-up" class="h-4 w-4" />
+          </.link>
+          <.link
+            id="home-learning-community-link"
+            navigate={~p"/community"}
+            data-analytics-event="community_clicked"
+            data-analytics-location="home_learning_journey"
+            class="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-teal-800 px-5 py-3 text-sm font-semibold text-teal-800 transition hover:bg-teal-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-800"
+          >
+            Explore community grids <.icon name="hero-arrow-right" class="h-4 w-4" />
           </.link>
         </div>
       </div>
@@ -1017,9 +1031,12 @@ defmodule DialecticWeb.HomeLive do
       <div class="mx-auto w-full max-w-6xl px-5 py-12 sm:px-8 sm:py-16 lg:px-10">
         <div class="flex items-end justify-between gap-6 border-b border-stone-300 pb-5">
           <div>
-            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
-              What people are saying
-            </p>
+            <h2
+              id="home-proof-title"
+              class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800"
+            >
+              RationalGrid in use
+            </h2>
           </div>
           <div class="flex shrink-0 items-center gap-2">
             <button

@@ -13,8 +13,12 @@ defmodule DialecticWeb.SitemapController do
 
   import Ecto.Query
 
-  @page_size 50_000
+  @page_size Application.compile_env(:dialectic, :sitemap_page_size, 50_000)
   @minimum_ideas 21
+
+  if @page_size not in 1..50_000 do
+    raise ArgumentError, "sitemap_page_size must be between 1 and 50,000"
+  end
 
   def index(conn, _params) do
     base_url = DialecticWeb.Endpoint.url()

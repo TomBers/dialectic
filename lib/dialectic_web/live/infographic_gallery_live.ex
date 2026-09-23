@@ -62,7 +62,7 @@ defmodule DialecticWeb.InfographicGalleryLive do
         <div class="mx-auto grid max-w-7xl gap-6 px-5 py-12 sm:px-8 sm:py-16 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-end lg:px-10">
           <div class="max-w-4xl">
             <p class="border-l-2 border-teal-700 pl-3 text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
-              From public grids
+              From community grids
             </p>
             <h1 class="mt-5 font-serif text-5xl font-semibold tracking-tight sm:text-6xl">
               Infographic Gallery

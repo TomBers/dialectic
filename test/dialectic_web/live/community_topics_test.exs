@@ -144,7 +144,7 @@ defmodule DialecticWeb.CommunityTopicsTest do
       assert attribute(document, "meta[name=robots]", "content") == []
 
       assert attribute(document, "meta[name=description]", "content") == [
-               "Explore public grids about Sociology. Follow questions, compare perspectives, and examine sources shared by the RationalGrid community."
+               "Explore community grids about Sociology. Follow questions, compare perspectives, and examine sources shared by the RationalGrid community."
              ]
 
       assert document |> LazyHTML.query("title") |> LazyHTML.text() =~ "Sociology"

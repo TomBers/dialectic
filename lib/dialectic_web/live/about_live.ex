@@ -50,7 +50,7 @@ defmodule DialecticWeb.AboutLive do
                   navigate={~p"/community"}
                   class="border-b border-slate-500 pb-0.5 hover:border-teal-700 hover:text-teal-800 md:hidden"
                 >
-                  Browse public grids
+                  Explore community grids
                 </.link>
                 <.link
                   navigate={~p"/intro/how"}
