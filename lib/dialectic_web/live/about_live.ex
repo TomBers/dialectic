@@ -35,15 +35,22 @@ defmodule DialecticWeb.AboutLive do
             </div>
             <div class="border-t border-slate-400 pt-4">
               <p class="text-sm leading-6 text-slate-600">
-                Free to use, open source, and built in public as a not-for-profit project.
+                A free, not-for-profit project with publicly available code on GitHub.
               </p>
               <div class="mt-4 flex flex-wrap gap-4 text-sm font-semibold">
                 <.link
                   id="about-start-grid-link"
                   href={~p"/?focus=grid#start-here"}
-                  class="border-b border-slate-500 pb-0.5 hover:border-teal-700 hover:text-teal-800"
+                  class="hidden border-b border-slate-500 pb-0.5 hover:border-teal-700 hover:text-teal-800 md:inline-flex"
                 >
                   Start a grid
+                </.link>
+                <.link
+                  id="about-mobile-community-link"
+                  navigate={~p"/community"}
+                  class="border-b border-slate-500 pb-0.5 hover:border-teal-700 hover:text-teal-800 md:hidden"
+                >
+                  Browse public grids
                 </.link>
                 <.link
                   navigate={~p"/intro/how"}
@@ -70,14 +77,12 @@ defmodule DialecticWeb.AboutLive do
                 id="about-purpose-heading"
                 class="mt-2 font-serif text-4xl font-semibold tracking-tight"
               >
-                Make serious learning more engaging.
+                Make learning more rewarding.
               </h2>
             </div>
             <p class="text-base leading-7 text-slate-600">
-              RationalGrid grew from a wish to make learning more fun, use large language models
-              well, and offer something better than the low-quality material that often surrounds
-              difficult topics online. It is also intended as a place for serious, in-depth
-              discussion of questions that do not get talked about enough.
+              We started RationalGrid to make learning enjoyable and put AI to thoughtful use.
+              We want to give difficult, overlooked questions the depth and discussion they deserve.
             </p>
           </section>
 
@@ -140,7 +145,7 @@ defmodule DialecticWeb.AboutLive do
           </section>
 
           <section id="about-audiences" class="mt-12" aria-labelledby="about-audiences-heading">
-            <div class="grid gap-5 border-b border-slate-400 pb-5 sm:grid-cols-[minmax(0,1fr)_22rem] sm:items-end">
+            <div class="border-b border-slate-400 pb-5">
               <div>
                 <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
                   Who it serves
@@ -152,10 +157,6 @@ defmodule DialecticWeb.AboutLive do
                   Who RationalGrid is for
                 </h2>
               </div>
-              <p class="text-sm leading-6 text-slate-600">
-                People who need to compare interpretations, keep evidence attached, and return to
-                the reasoning behind their work.
-              </p>
             </div>
 
             <div class="divide-y divide-stone-300 border-b border-stone-300">
@@ -166,21 +167,56 @@ defmodule DialecticWeb.AboutLive do
                 <p class="font-mono text-xs font-bold text-sky-700">01</p>
                 <h3 class="font-serif text-xl font-semibold">Students</h3>
                 <p class="max-w-2xl text-sm leading-6 text-slate-600">
-                  Turn an essay or dissertation question into connected claims, counterarguments,
-                  and sources you can revisit.
+                  <strong class="font-semibold text-slate-950">
+                    Build a knowledge base that grows with your course.
+                  </strong>
+                  Connect concepts, examples, and sources in a grid, then revisit saved branches as
+                  you revise. Ask follow-up questions to work through gaps in your understanding.
                 </p>
               </article>
               <article
-                id="about-audience-researchers-writers"
+                id="about-audience-researchers"
                 class="grid gap-2 py-5 sm:grid-cols-[2.5rem_16rem_1fr] sm:items-baseline lg:grid-cols-[2.5rem_20rem_1fr]"
               >
                 <p class="font-mono text-xs font-bold text-rose-700">02</p>
-                <h3 class="font-serif text-xl font-semibold">
-                  Researchers, journalists, and writers
-                </h3>
+                <h3 class="font-serif text-xl font-semibold">Researchers</h3>
                 <p class="max-w-2xl text-sm leading-6 text-slate-600">
-                  Keep competing interpretations and evidence connected while investigating a topic
-                  or planning a piece of writing.
+                  <strong class="font-semibold text-slate-950">
+                    Map a field and test your understanding.
+                  </strong>
+                  Lay out key concepts, competing explanations, and open questions. Use the
+                  critical-thinking tools to challenge assumptions and check claims against original
+                  sources before deciding what to investigate next.
+                </p>
+              </article>
+              <article
+                id="about-audience-writers"
+                class="grid gap-2 py-5 sm:grid-cols-[2.5rem_16rem_1fr] sm:items-baseline lg:grid-cols-[2.5rem_20rem_1fr]"
+              >
+                <p class="font-mono text-xs font-bold text-amber-700">03</p>
+                <h3 class="font-serif text-xl font-semibold">Journalists and writers</h3>
+                <p class="max-w-2xl text-sm leading-6 text-slate-600">
+                  <strong class="font-semibold text-slate-950">
+                    Keep the evidence behind the story.
+                  </strong>
+                  Compare interpretations, connect sources to claims, and keep counterarguments
+                  alongside your own. Export the grid to plan a piece of writing, with supporting
+                  material you can trace back and check.
+                </p>
+              </article>
+              <article
+                id="about-audience-curious-learners"
+                class="grid gap-2 py-5 sm:grid-cols-[2.5rem_16rem_1fr] sm:items-baseline lg:grid-cols-[2.5rem_20rem_1fr]"
+              >
+                <p class="font-mono text-xs font-bold text-teal-800">04</p>
+                <h3 class="font-serif text-xl font-semibold">Curious learners</h3>
+                <p class="max-w-2xl text-sm leading-6 text-slate-600">
+                  <strong class="font-semibold text-slate-950">
+                    Turn a passing question into something you can build on.
+                  </strong>
+                  Follow a topic into new branches, ask for examples or simpler explanations, and
+                  bookmark what you want to return to. Your questions and discoveries stay connected
+                  for the next time curiosity strikes.
                 </p>
               </article>
             </div>
@@ -214,7 +250,7 @@ defmodule DialecticWeb.AboutLive do
                 <article class="border-t border-slate-400 pt-4">
                   <img src={image} alt={name} class="h-20 w-20 rounded-full object-cover" />
                   <h3 class="mt-3 font-serif text-lg font-semibold text-slate-950">{name}</h3>
-                  <p class="mt-1 text-xs leading-5 text-slate-500">{role}</p>
+                  <p class="mt-1 text-xs leading-5 text-slate-700">{role}</p>
                 </article>
               <% end %>
             </div>
@@ -234,12 +270,23 @@ defmodule DialecticWeb.AboutLive do
                   LinkedIn profile
                 </a>
               </div>
-              <p class="max-w-3xl text-sm leading-6 text-slate-600">
-                Tom was one of the first engineers at Octopus Energy, co-founded Ecopush as CTO, and
-                later led three engineering teams at Limejump. He now builds RationalGrid, bringing
-                experience in software development and engineering leadership to tools for exploring
-                ideas and reasoning.
-              </p>
+              <div class="max-w-3xl space-y-3 text-sm leading-6 text-slate-600">
+                <p>
+                  Tom was one of the first engineers at Octopus Energy, co-founded Ecopush as CTO,
+                  and later led three engineering teams at Limejump. He also worked in software
+                  development at IBM Hursley Laboratories, contributing to research on <a
+                    id="about-gaiandb-link"
+                    href="https://github.com/gaiandb/gaiandb"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="underline hover:text-teal-800"
+                  >GaianDB</a>.
+                </p>
+                <p>
+                  He holds an MPhil in Sustainable Development from the University of Cambridge and
+                  a BEng in Engineering from the University of Reading.
+                </p>
+              </div>
             </article>
           </section>
 
@@ -258,7 +305,7 @@ defmodule DialecticWeb.AboutLive do
             <dl class="mt-6 divide-y divide-stone-300 border-y border-stone-300 bg-white">
               <div class="grid gap-1 px-4 py-3 sm:grid-cols-[13rem_1fr]">
                 <dt class="font-semibold">Type</dt><dd>
-                  Free, open-source, not-for-profit software project
+                  Free, not-for-profit software project
                 </dd>
               </div>
               <div class="grid gap-1 px-4 py-3 sm:grid-cols-[13rem_1fr]">
@@ -274,7 +321,13 @@ defmodule DialecticWeb.AboutLive do
               </div>
               <div class="grid gap-1 px-4 py-3 sm:grid-cols-[13rem_1fr]">
                 <dt class="font-semibold">Source code</dt><dd>
-                  <a class="underline" href="https://github.com/TomBers/dialectic">GitHub</a>
+                  <a
+                    id="about-source-link"
+                    class="underline"
+                    href="https://github.com/TomBers/dialectic"
+                  >
+                    Publicly available on GitHub
+                  </a>
                 </dd>
               </div>
               <div class="grid gap-1 px-4 py-3 sm:grid-cols-[13rem_1fr]">

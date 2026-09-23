@@ -35,7 +35,7 @@ defmodule DialecticWeb.UserRegistrationLive do
               </li>
             </ul>
           </div>
-          <p class="mt-12 text-sm text-slate-400">Free, open source, and not-for-profit.</p>
+          <p class="mt-12 text-sm text-slate-400">Free to use and not-for-profit.</p>
         </aside>
 
         <section class="px-6 py-8 sm:px-10 sm:py-12">
