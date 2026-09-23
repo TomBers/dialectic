@@ -6,6 +6,8 @@ defmodule DialecticWeb.SitemapControllerTest do
 
   import Dialectic.GraphFixtures
 
+  @page_size Application.compile_env!(:dialectic, :sitemap_page_size)
+
   describe "sitemap endpoints" do
     test "returns 200 with XML content type", %{conn: conn} do
       for path <- [
@@ -67,11 +69,11 @@ defmodule DialecticWeb.SitemapControllerTest do
       end
     end
 
-    test "graph pagination includes every grid once beyond the 50,000-URL boundary", %{conn: conn} do
+    test "graph pagination includes every grid once across the page boundary", %{conn: conn} do
       now = ~U[2026-09-16 12:00:00Z]
 
       slugs =
-        for index <- 1..50_000,
+        for index <- 1..@page_size,
             do: "sitemap-grid-" <> String.pad_leading(to_string(index), 5, "0")
 
       slugs
@@ -94,7 +96,8 @@ defmodule DialecticWeb.SitemapControllerTest do
       assert index =~ "/sitemap-grids.xml?page=1"
       refute index =~ "/sitemap-grids.xml?page=2"
 
-      extra = developed_graph(%{title: "One extra grid", slug: "sitemap-grid-50001"})
+      extra_slug = "sitemap-grid-" <> String.pad_leading(to_string(@page_size + 1), 5, "0")
+      extra = developed_graph(%{title: "One extra grid", slug: extra_slug})
       index = conn |> get("/sitemap.xml") |> response(200)
       assert index =~ "/sitemap-grids.xml?page=2"
       refute index =~ "/sitemap-grids.xml?page=3"
@@ -105,14 +108,15 @@ defmodule DialecticWeb.SitemapControllerTest do
 
       assert first == Enum.map(slugs, &(base_url <> "/g/" <> &1))
       assert second == [base_url <> "/g/" <> extra.slug]
-      assert length(first) == 50_000
+      assert length(first) == @page_size
       assert length(second) == 1
     end
 
     test "topic pagination has its own URL budget and preserves every normalized topic", %{
       conn: conn
     } do
-      tags = for index <- 1..50_000, do: "Topic " <> String.pad_leading(to_string(index), 5, "0")
+      tags =
+        for index <- 1..@page_size, do: "Topic " <> String.pad_leading(to_string(index), 5, "0")
 
       graph =
         developed_graph(%{title: "Many sitemap topics"})
@@ -122,7 +126,8 @@ defmodule DialecticWeb.SitemapControllerTest do
       index = conn |> get("/sitemap.xml") |> response(200)
       refute index =~ "/sitemap-topics.xml?page=2"
 
-      graph |> Ecto.Changeset.change(tags: graph.tags ++ ["Topic 50001"]) |> Repo.update!()
+      extra_tag = "Topic " <> String.pad_leading(to_string(@page_size + 1), 5, "0")
+      graph |> Ecto.Changeset.change(tags: graph.tags ++ [extra_tag]) |> Repo.update!()
       index = conn |> get("/sitemap.xml") |> response(200)
       assert index =~ "/sitemap-pages.xml"
       assert index =~ "/sitemap-grids.xml?page=1"
@@ -134,8 +139,8 @@ defmodule DialecticWeb.SitemapControllerTest do
       base_url = DialecticWeb.Endpoint.url()
 
       assert first == Enum.map(tags, &(base_url <> ~p"/community?tag=#{String.downcase(&1)}"))
-      assert second == [base_url <> "/community?tag=topic+50001"]
-      assert length(first) == 50_000
+      assert second == [base_url <> ~p"/community?tag=#{String.downcase(extra_tag)}"]
+      assert length(first) == @page_size
       assert length(second) == 1
     end
 

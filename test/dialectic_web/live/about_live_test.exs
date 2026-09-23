@@ -3,118 +3,40 @@ defmodule DialecticWeb.AboutLiveTest do
 
   import Phoenix.LiveViewTest
 
-  setup do
-    Req.Test.stub(Dialectic.Feedback, fn conn ->
-      Req.Test.json(conn, %{status: "ok"})
-    end)
+  test "renders the essential about-page content", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/about")
 
-    :ok
-  end
+    assert has_element?(view, "#about-value-proposition", "AI-assisted visual thinking tool")
+    assert has_element?(view, "#about-purpose", "Make learning more rewarding.")
+    assert has_element?(view, "#about-tools", "What RationalGrid does")
+    assert has_element?(view, "#about-tool-explore", "Explore connected ideas")
+    assert has_element?(view, "#about-tool-check", "Check claims and assumptions")
+    assert has_element?(view, "#about-tool-keep", "Keep and share the thinking")
+    assert has_element?(view, "#about-audiences", "Who RationalGrid is for")
+    assert has_element?(view, "#about-team", "The team behind RationalGrid")
+    assert has_element?(view, "#about-tom-berman", "one of the first engineers at Octopus Energy")
 
-  describe "about page" do
-    test "renders the about page", %{conn: conn} do
-      {:ok, view, html} = live(conn, ~p"/about")
+    assert has_element?(
+             view,
+             ~s(#about-tom-linkedin[href="https://www.linkedin.com/in/tom-berman-213a4711/"])
+           )
 
-      assert html =~ "About RationalGrid"
-      refute has_element?(view, "#about-connected-knowledge")
-      assert has_element?(view, "#about-hero", "Know what you think—and show how you got there.")
-      assert has_element?(view, "#about-purpose", "Some questions deserve more than one answer.")
-      assert has_element?(view, "#about-purpose", "meaning, belief, identity, doubt")
-      assert has_element?(view, "#about-outcome-whole-question", "See the whole question")
-      assert has_element?(view, "#about-outcome-unstuck", "Get unstuck")
-      assert has_element?(view, "#about-outcome-unstuck", "built-in critical-thinking tools")
+    assert has_element?(view, "#about-key-facts", "Core offering")
+    assert has_element?(view, ~s(#about-start-grid-link[href="/?focus=grid#start-here"]))
 
-      assert has_element?(
-               view,
-               ~s(#about-unstuck-tools-link[href="/intro/how#guide-critical-thinking-tools"]),
-               "See the critical-thinking tools in the Guide"
-             )
+    assert has_element?(
+             view,
+             ~s(#about-mobile-community-link[href="/community"]),
+             "Explore community grids"
+           )
 
-      assert has_element?(view, "#about-outcome-certainty", "Question what sounds certain")
-      assert has_element?(view, "#about-outcome-reasons", "Decide with reasons")
-      assert has_element?(view, "#about-outcome-disagreement", "Disagree more usefully")
-      assert has_element?(view, "#about-outcome-revision", "Change your mind well")
+    assert has_element?(
+             view,
+             ~s(#about-source-link[href="https://github.com/TomBers/dialectic"]),
+             "Publicly available on GitHub"
+           )
 
-      assert has_element?(
-               view,
-               "#about-ai-artifacts",
-               "AI helps you explore. The grid helps you remember."
-             )
-
-      assert has_element?(
-               view,
-               ~s(#about-ai-exploration-link[href="/intro/ai"]),
-               "Read about AI and exploration"
-             )
-
-      assert has_element?(view, "#about-tools", "Explore freely. Keep what matters.")
-      assert has_element?(view, "#about-tools", "Philosophy for All and Peter Worley")
-      assert has_element?(view, "#about-explore-question", "Question any part")
-      assert has_element?(view, "#about-explore-level", "Simple, Expanded, or In-depth")
-      assert has_element?(view, "#about-explore-branches", "separate branches")
-
-      assert has_element?(
-               view,
-               "#about-explore-critical-thinking",
-               "test assumptions, strengthen arguments"
-             )
-
-      assert has_element?(view, "#about-explore-views", "compare their evidence")
-      assert has_element?(view, "#about-explore-sources", "primary research")
-      assert has_element?(view, "#about-recall-highlights", "shareable link")
-      assert has_element?(view, "#about-recall-bookmarks", "find again")
-      assert has_element?(view, "#about-recall-export", "other tools")
-      assert has_element?(view, "#about-recall-shared", "see who added what")
-      assert has_element?(view, "#about-recall-profile", "others can follow and challenge")
-
-      assert has_element?(
-               view,
-               ~s(#about-tools-guide-link[href="/intro/how"]),
-               "See how the tools work"
-             )
-
-      assert has_element?(view, "#about-audiences", "Who is it for?")
-      assert has_element?(view, "#about-audience-students", "Students")
-      refute has_element?(view, "#about-audience-teachers")
-
-      assert has_element?(
-               view,
-               "#about-audience-researchers-writers",
-               "Researchers, journalists, and writers"
-             )
-
-      refute has_element?(view, "#about-audience-debate-organisers")
-      refute has_element?(view, "#about-audience-teams")
-      refute has_element?(view, "#about-audience-book-clubs")
-      refute has_element?(view, "#about-audience-critical-thinkers")
-      assert has_element?(view, "#about-tools", "How AI and sources work")
-
-      assert has_element?(view, ~s(#about-start-grid-link[href="/?focus=grid#start-here"]))
-    end
-
-    test "shows error when submitting blank feedback", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/about")
-
-      html =
-        view
-        |> form("#feedback-form", feedback: %{feedback: ""})
-        |> render_submit()
-
-      assert html =~ "Please enter some feedback before submitting."
-    end
-
-    test "shows thank you state after successful feedback submission", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/about")
-
-      view
-      |> form("#feedback-form", feedback: %{feedback: "Great tool, love using it!"})
-      |> render_submit()
-
-      # The submission is async, so we need to wait for the async task to complete
-      html = render_async(view, 1_000)
-
-      assert html =~ "Thank you!"
-      assert html =~ "Your feedback has been submitted"
-    end
+    refute has_element?(view, "#about-faq")
+    refute has_element?(view, "#feedback-form")
   end
 end

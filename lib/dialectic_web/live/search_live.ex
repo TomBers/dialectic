@@ -11,7 +11,7 @@ defmodule DialecticWeb.SearchLive do
      |> assign(
        page_title: "Search RationalGrid",
        page_description:
-         "Search ideas, explanations, and sources across public RationalGrid grids.",
+         "Search ideas, explanations, and sources across RationalGrid community grids.",
        noindex: true,
        query: "",
        result_count: 0,
@@ -110,7 +110,7 @@ defmodule DialecticWeb.SearchLive do
                 class="border border-stone-300 bg-white px-5 py-8 text-center shadow-sm"
               >
                 <.icon name="hero-document-magnifying-glass" class="mx-auto h-7 w-7 text-teal-700" />
-                <p class="mt-3 font-serif text-xl font-semibold">Search the public library</p>
+                <p class="mt-3 font-serif text-xl font-semibold">Search community grids</p>
                 <p class="mt-1 text-sm text-slate-600">
                   Try a person, concept, argument, book, or phrase.
                 </p>
@@ -120,7 +120,7 @@ defmodule DialecticWeb.SearchLive do
                 id="global-search-too-short"
                 class="border border-stone-300 bg-white px-5 py-6 text-sm text-slate-600 shadow-sm"
               >
-                Keep typing to search across public grids.
+                Keep typing to search across community grids.
               </div>
             <% @result_count == 0 -> %>
               <div

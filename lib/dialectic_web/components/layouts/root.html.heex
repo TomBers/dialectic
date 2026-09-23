@@ -160,28 +160,12 @@
             <span class="hidden sm:inline">Community</span>
           </.link>
           <.link
-            href={~p"/gallery"}
-            aria-label="Gallery"
-            data-secondary-navigation
-            title="Gallery"
-            class={[
-              "inline-flex h-full items-center gap-1 border-b-2 px-1.5 font-medium transition sm:px-2",
-              if(active_path == "/gallery",
-                do: "border-teal-300 text-white",
-                else: "border-transparent hover:border-slate-500 hover:text-white"
-              )
-            ]}
-          >
-            <.icon name="hero-photo" class="h-3.5 w-3.5" />
-            <span class="hidden sm:inline">Gallery</span>
-          </.link>
-          <.link
             id="mobile-community-nav-cta"
             href={~p"/community"}
-            aria-label="Browse community grids"
+            aria-label="Explore community grids"
             class="ml-1 inline-flex h-8 shrink-0 items-center rounded-md bg-teal-300 px-2.5 font-semibold text-slate-950 transition hover:bg-teal-200 md:hidden"
           >
-            <span>Browse</span>
+            <span>Explore</span>
           </.link>
           <.link
             id="desktop-new-grid-nav-link"

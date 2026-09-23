@@ -574,7 +574,7 @@ defmodule DialecticWeb.ActivityLive do
   end
 
   defp empty_state_body("following") do
-    "Follow public grids or users to turn this into a useful reading list."
+    "Follow community grids or users to turn this into a useful reading list."
   end
 
   defp empty_state_body(_filter) do
@@ -1175,7 +1175,7 @@ defmodule DialecticWeb.ActivityLive do
                     You are not following anything yet
                   </h2>
                   <p class="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
-                    Follow public grids or profiles to build a useful activity feed.
+                    Follow community grids or profiles to build a useful activity feed.
                   </p>
                 </div>
               <% else %>
