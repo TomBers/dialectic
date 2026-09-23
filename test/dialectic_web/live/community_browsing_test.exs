@@ -7,7 +7,7 @@ defmodule DialecticWeb.CommunityBrowsingTest do
   alias Dialectic.DbActions.Graphs
   alias Dialectic.Repo
 
-  test "defaults to all grids and presents the collections in browsing order", %{conn: conn} do
+  test "defaults to curated grids and presents the collections in browsing order", %{conn: conn} do
     curated = graph("A curated question", ["Sociology"])
     partner = graph("A partner question", ["Biology"])
     other = graph("An ordinary question", ["Philosophy"])
@@ -23,15 +23,15 @@ defmodule DialecticWeb.CommunityBrowsingTest do
 
     {:ok, view, _} = live(conn, ~p"/community")
 
-    assert has_element?(view, ~s(#community-format-all[aria-current="page"]))
+    assert has_element?(view, ~s(#community-format-curated[aria-current="page"]))
     assert has_element?(view, "#community-grid-#{curated.slug}")
-    assert has_element?(view, "#community-grid-#{partner.slug}")
-    assert has_element?(view, "#community-grid-#{other.slug}")
+    refute has_element?(view, "#community-grid-#{partner.slug}")
+    refute has_element?(view, "#community-grid-#{other.slug}")
     refute has_element?(view, "#community-grid-#{private.slug}")
 
     for {category, label, position} <- [
-          {"all", "All grids", 1},
-          {"curated", "Curated grids", 2},
+          {"curated", "Curated grids", 1},
+          {"all", "All grids", 2},
           {"partners", "Partner grids", 3}
         ] do
       assert has_element?(
@@ -54,7 +54,9 @@ defmodule DialecticWeb.CommunityBrowsingTest do
     assert has_element?(view, "#community-grid-#{partner.slug}")
     refute has_element?(view, "#community-grid-#{curated.slug}")
 
+    assert has_element?(view, ~s(#community-format-all[href="/community?category=all"]))
     render_patch(view, ~p"/community?category=all")
+    assert has_element?(view, ~s(#community-format-all[aria-current="page"]))
 
     for grid <- [curated, partner, other],
         do: assert(has_element?(view, "#community-grid-#{grid.slug}"))
@@ -67,7 +69,7 @@ defmodule DialecticWeb.CommunityBrowsingTest do
   } do
     grid = graph("A question outside the selection", ["Sociology"])
     {:ok, view, _} = live(conn, ~p"/community")
-    assert has_element?(view, "#community-grid-#{grid.slug}")
+    refute has_element?(view, "#community-grid-#{grid.slug}")
 
     view |> form("#community-search-form", %{search: grid.title}) |> render_change()
     assert has_element?(view, ~s(#community-format-all[aria-current="page"]))
@@ -77,8 +79,8 @@ defmodule DialecticWeb.CommunityBrowsingTest do
   test "curated and all-grid directories have distinct indexable canonical URLs", %{conn: conn} do
     for {path, canonical_path} <- [
           {~p"/community", ~p"/community"},
-          {~p"/community?category=curated", ~p"/community?category=curated"},
-          {~p"/community?category=all", ~p"/community"}
+          {~p"/community?category=curated", ~p"/community"},
+          {~p"/community?category=all", ~p"/community?category=all"}
         ] do
       doc = conn |> get(path) |> html_response(200) |> LazyHTML.from_document()
 

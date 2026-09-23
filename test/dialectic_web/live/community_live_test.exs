@@ -60,7 +60,7 @@ defmodule DialecticWeb.CommunityLiveTest do
       end
     end
 
-    test "partner results show the creation month after later metadata changes", %{conn: conn} do
+    test "partner results show a title link without date metadata", %{conn: conn} do
       graph =
         Dialectic.GraphFixtures.insert_graph(%{
           title: "Dated partner grid #{System.unique_integer([:positive])}",
@@ -82,7 +82,8 @@ defmodule DialecticWeb.CommunityLiveTest do
       {:ok, view, _html} = live(conn, ~p"/community?category=partners")
       selector = "#community-grid-#{graph.slug}"
 
-      assert has_element?(view, selector <> ~s( [aria-label="Created Jan 2024"]))
+      assert has_element?(view, selector <> "-title")
+      refute has_element?(view, selector <> ~s( [aria-label^="Created "]))
       refute has_element?(view, selector, "Aug 2026")
     end
 
@@ -96,7 +97,7 @@ defmodule DialecticWeb.CommunityLiveTest do
       assert has_element?(
                view,
                "#community-results-heading",
-               "All community grids"
+               "Curated grids"
              )
 
       render_patch(view, ~p"/community?category=deep_dives")
@@ -167,7 +168,7 @@ defmodule DialecticWeb.CommunityLiveTest do
       assert has_element?(view, "#community-grid-#{graph.slug}", "Tell me about gorillas")
     end
 
-    test "shows the creation month rather than a later metadata update", %{conn: conn} do
+    test "keeps grid metadata minimal", %{conn: conn} do
       graph =
         Dialectic.GraphFixtures.insert_graph(%{
           title: "Creation dated grid #{System.unique_integer([:positive])}",
@@ -185,8 +186,8 @@ defmodule DialecticWeb.CommunityLiveTest do
       {:ok, view, _html} = live(conn, ~p"/community?search=#{graph.title}")
       meta_selector = "#community-grid-#{graph.slug} [data-role=community-grid-meta]"
 
-      assert has_element?(view, meta_selector, "Jan 2024")
-      assert has_element?(view, meta_selector <> ~s( [aria-label="Created Jan 2024"]))
+      assert has_element?(view, meta_selector, "1 idea")
+      refute has_element?(view, meta_selector, "Jan 2024")
       refute has_element?(view, meta_selector, "Aug 2026")
     end
 
@@ -226,8 +227,8 @@ defmodule DialecticWeb.CommunityLiveTest do
       selector = "#community-grid-#{graph.slug}"
       assert has_element?(view, selector <> ~s([data-role="community-grid-row"]))
       assert has_element?(view, selector <> " [data-role=community-grid-meta]", "1 idea")
-      assert has_element?(view, selector <> " a", "Read grid")
-      assert has_element?(view, selector <> ~s( a[aria-label="Read grid: #{title}"]))
+      assert has_element?(view, selector <> "-title", title)
+      refute has_element?(view, selector <> ~s( a[aria-label^="Read grid: "]))
       refute has_element?(view, selector <> ~s( [aria-label^="Result "]))
 
       render_patch(view, ~p"/community?search=Freud")

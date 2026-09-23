@@ -9,6 +9,13 @@ defmodule DialecticWeb.CommunityTopicsTest do
   test "non-scalar query parameters fall back safely in HTTP and LiveView requests", %{conn: conn} do
     graph = tagged_graph("Malformed query grid", ["Sociology"])
 
+    {:ok, _} =
+      Dialectic.DbActions.Graphs.add_curated_grid(%{
+        graph_title: graph.title,
+        section: "curated",
+        position: 0
+      })
+
     for key <- ["search", "tag", "category", "size", "sort", "page"],
         query <- ["#{key}[]=x", "#{key}[nested]=x"] do
       path = "/community?" <> query
@@ -41,6 +48,14 @@ defmodule DialecticWeb.CommunityTopicsTest do
 
   test "non-text search event values clear safely", %{conn: conn} do
     grid = tagged_graph("A browsable grid", ["Sociology"])
+
+    {:ok, _} =
+      Dialectic.DbActions.Graphs.add_curated_grid(%{
+        graph_title: grid.title,
+        section: "curated",
+        position: 0
+      })
+
     {:ok, view, _} = live(conn, "/community?search=missing")
 
     for value <- [["x"], %{"nested" => "x"}, nil, 7] do
@@ -55,6 +70,14 @@ defmodule DialecticWeb.CommunityTopicsTest do
        %{conn: conn} do
     tags = for index <- 1..120, do: "Topic " <> String.pad_leading(to_string(index), 3, "0")
     grid = tagged_graph("Many browsable topics", tags)
+
+    {:ok, _} =
+      Dialectic.DbActions.Graphs.add_curated_grid(%{
+        graph_title: grid.title,
+        section: "curated",
+        position: 0
+      })
+
     {:ok, view, _} = live(conn, "/community")
 
     assert has_element?(view, "#community-topics > a:nth-child(50)")
