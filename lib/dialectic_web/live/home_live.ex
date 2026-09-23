@@ -576,11 +576,8 @@ defmodule DialecticWeb.HomeLive do
         <div class="mx-auto grid w-full max-w-7xl gap-10 px-5 py-12 sm:px-8 sm:py-16 lg:grid-cols-[minmax(20rem,0.72fr)_minmax(0,1.28fr)] lg:items-center lg:px-10">
           <div id="home-learning-loop">
             <p class="text-xs font-semibold uppercase tracking-[0.16em] text-teal-200">
-              Take a closer look
+              Video Introduction
             </p>
-            <h2 class="mt-3 font-serif text-3xl font-semibold tracking-tight sm:text-4xl">
-              See the questions connect.
-            </h2>
             <p class="mt-5 max-w-xl text-base leading-7 text-slate-300">
               Follow a surprising answer, ask for a challenge, or get a tricky term explained.
               It all becomes part of the same grid, so you can follow the reasoning again later.
@@ -656,13 +653,7 @@ defmodule DialecticWeb.HomeLive do
           <div class="flex flex-col gap-5 border-b border-slate-300 pb-6 sm:flex-row sm:items-end sm:justify-between">
             <div class="max-w-3xl">
               <p class="inline-block border-l-2 border-teal-500 pl-3 text-sm font-bold uppercase tracking-[0.14em] text-teal-900">
-                Partner grids
-              </p>
-              <h2 class="mt-3 font-serif text-4xl font-semibold tracking-tight sm:text-5xl">
-                See what other people explored.
-              </h2>
-              <p id="home-community-learning" class="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-                Find unfamiliar ideas, then question or extend any part.
+                Explore the community
               </p>
             </div>
             <.link
@@ -670,26 +661,13 @@ defmodule DialecticWeb.HomeLive do
               navigate={~p"/community"}
               class="group inline-flex shrink-0 items-center gap-2 rounded-md bg-teal-300 px-6 py-3.5 text-base font-semibold text-slate-950 shadow-[0_18px_36px_-18px_rgba(13,148,136,0.8)] ring-1 ring-teal-500/30 transition hover:-translate-y-0.5 hover:bg-teal-200 hover:shadow-[0_22px_40px_-18px_rgba(13,148,136,0.9)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
             >
-              Browse community
+              Explore public grids
               <.icon
                 name="hero-arrow-right"
                 class="h-4 w-4 transition-transform group-hover:translate-x-0.5"
               />
             </.link>
           </div>
-
-          <.link
-            id="home-question-pilot"
-            navigate={~p"/questions/does-ai-make-us-better-thinkers"}
-            class="mt-6 flex min-h-16 items-center justify-between gap-4 border-b border-stone-300 pb-6 text-teal-900 hover:text-teal-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-700"
-          >
-            <span>
-              <span class="block text-xs font-semibold uppercase tracking-widest">A question worth thinking about</span>
-              <span class="mt-1 block font-serif text-2xl">Does AI make us better thinkers?</span>
-              <span class="mt-1 block text-sm text-slate-600">Three studies, their limits, and a moment to think for yourself.</span>
-            </span>
-            <.icon name="hero-arrow-right" class="h-5 w-5 shrink-0" />
-          </.link>
 
           <section :if={!@partner_grids_empty?} id="home-partners" class="mt-8">
             <div
@@ -921,17 +899,7 @@ defmodule DialecticWeb.HomeLive do
       <div class="mx-auto w-full max-w-7xl px-5 py-12 sm:px-8 sm:py-16 lg:px-10">
         <div class="max-w-3xl">
           <p class="text-xs font-semibold uppercase tracking-[0.18em] text-teal-800">
-            Your curiosity gives it shape
-          </p>
-          <h2
-            id="home-learning-title"
-            class="mt-3 font-serif text-3xl font-semibold tracking-tight sm:text-4xl"
-          >
-            Enjoy the detours. Keep the connections.
-          </h2>
-          <p class="mt-4 text-base leading-7 text-slate-600">
-            Follow an interesting idea, test it, or pause to understand a term. Each move adds to
-            the same grid. That structure is what you return to tomorrow, next week, or next month.
+            3-step learning
           </p>
         </div>
 
@@ -1050,11 +1018,8 @@ defmodule DialecticWeb.HomeLive do
         <div class="flex items-end justify-between gap-6 border-b border-stone-300 pb-5">
           <div>
             <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
-              Evidence from the community
+              What people are saying
             </p>
-            <h2 class="mt-2 font-serif text-3xl font-semibold tracking-tight sm:text-4xl">
-              RationalGrid in use.
-            </h2>
           </div>
           <div class="flex shrink-0 items-center gap-2">
             <button

@@ -93,7 +93,7 @@ defmodule DialecticWeb.HomeLiveTest do
     {:ok, view, _html} = live(conn, ~p"/?search=missing&tag=unrelated&category=deep_dives")
 
     assert has_element?(view, "#home-partner-#{graph.slug}")
-    assert has_element?(view, "#popular-grids", "Partner grids")
+    assert has_element?(view, "#popular-grids", "Explore the community")
     refute has_element?(view, ~s(#popular-grids input[name="search"]))
   end
 
@@ -149,7 +149,7 @@ defmodule DialecticWeb.HomeLiveTest do
     assert has_element?(
              view,
              ~s(#home-community-grids-link[href="/community"]),
-             "Browse community"
+             "Explore public grids"
            )
   end
 
@@ -317,7 +317,7 @@ defmodule DialecticWeb.HomeLiveTest do
            )
 
     refute has_element?(view, "#home-example-video iframe")
-    assert has_element?(view, "#popular-grids", "See what other people explored.")
+    assert has_element?(view, "#popular-grids", "See what others have explored.")
 
     assert has_element?(view, "#home-testimonial", "An amazing free specialised AI tool")
 
