@@ -2,7 +2,6 @@ defmodule DialecticWeb.AmbassadorLive do
   use DialecticWeb, :live_view
 
   alias Dialectic.Ambassadors
-  require Logger
 
   @impl true
   def mount(_params, session, socket) do
@@ -14,6 +13,7 @@ defmodule DialecticWeb.AmbassadorLive do
          "Lead the next chapter of learning. Register your interest in a branded RationalGrid teaching hub, guided AI learning, and a share of subscription revenue.",
        form: to_form(Ambassadors.change_interest(), as: :interest),
        joined?: false,
+       signup_available?: Ambassadors.configured?(),
        submission_error: nil,
        signup_actor: session["llm_actor_id"] || socket.id
      ), layout: false}
@@ -55,23 +55,27 @@ defmodule DialecticWeb.AmbassadorLive do
   end
 
   defp save_interest(socket, params) do
+    socket = assign(socket, :form, to_form(Ambassadors.change_interest(params), as: :interest))
+
     case Ambassadors.register_interest(params) do
       {:ok, _interest} ->
         {:noreply, assign(socket, joined?: true, submission_error: nil)}
 
-      {:error, changeset} ->
+      {:error, %Ecto.Changeset{} = changeset} ->
         {:noreply, assign(socket, form: to_form(changeset, as: :interest))}
-    end
-  rescue
-    error in [Postgrex.Error, DBConnection.ConnectionError] ->
-      Logger.error("Ambassador interest could not be saved: #{inspect(error.__struct__)}")
 
-      {:noreply,
-       assign(
-         socket,
-         :submission_error,
-         "We couldn’t save your details. Please try again shortly."
-       )}
+      {:error, :not_configured} ->
+        {:noreply,
+         assign(socket, :submission_error, "Registration opens soon. Please check back shortly.")}
+
+      {:error, _reason} ->
+        {:noreply,
+         assign(
+           socket,
+           :submission_error,
+           "We couldn’t save your details. Please try again shortly."
+         )}
+    end
   end
 
   @impl true
@@ -351,8 +355,18 @@ defmodule DialecticWeb.AmbassadorLive do
                   {"An educator", "educator"},
                   {"An independent tutor", "tutor"},
                   {"A school or institution", "institution"},
-                  {"A student", "student"}
+                  {"A student", "student"},
+                  {"Other", "other"}
                 ]}
+                required
+                class="amb-input"
+              />
+              <.input
+                :if={@form[:role].value in ["other", :other]}
+                field={@form[:other_role]}
+                label="Your role"
+                placeholder="Tell us how you’re involved in learning"
+                maxlength="100"
                 required
                 class="amb-input"
               />
@@ -368,8 +382,17 @@ defmodule DialecticWeb.AmbassadorLive do
                 id="ambassador-submit"
                 type="submit"
                 class="amb-button"
+                disabled={!@signup_available?}
                 phx-disable-with="Saving your interest…"
               >Register my interest <.icon name="hero-arrow-up-right" class="h-4 w-4" /></button>
+              <p
+                :if={!@signup_available?}
+                id="ambassador-registration-pending"
+                role="status"
+                class="amb-signup-note"
+              >
+                Registration opens soon. Please check back shortly.
+              </p>
               <p class="amb-signup-note">
                 By joining, you’re asking to receive emails about this programme. No account, payment, or commitment required.
               </p>

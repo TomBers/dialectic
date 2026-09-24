@@ -3,8 +3,18 @@ defmodule DialecticWeb.AmbassadorLiveTest do
 
   import Phoenix.LiveViewTest
   alias Dialectic.Ambassadors
-  alias Dialectic.Ambassadors.Interest
-  alias Dialectic.Repo
+
+  setup do
+    owner = self()
+
+    Req.Test.stub(Ambassadors, fn conn ->
+      {:ok, body, conn} = Plug.Conn.read_body(conn)
+      send(owner, {:google_submission, URI.decode_query(body)})
+      Plug.Conn.resp(conn, 200, "Recorded")
+    end)
+
+    :ok
+  end
 
   test "public landing page has a signup form and clear programme information", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/ambassadors")
@@ -20,7 +30,7 @@ defmodule DialecticWeb.AmbassadorLiveTest do
     refute has_element?(view, "#userHeader")
   end
 
-  test "submitting interest persists it and displays confirmation", %{conn: conn} do
+  test "submitting interest sends it to Google Forms and displays confirmation", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/ambassadors")
 
     view
@@ -31,7 +41,9 @@ defmodule DialecticWeb.AmbassadorLiveTest do
 
     assert has_element?(view, "#ambassador-success[role='status']")
     refute has_element?(view, "#ambassador-interest-form")
-    assert %{role: :educator} = Repo.get_by!(Interest, email: "educator@example.com")
+
+    assert_received {:google_submission,
+                     %{"entry.100" => "educator@example.com", "entry.200" => "Educator"}}
   end
 
   test "invalid submissions stay editable and do not persist", %{conn: conn} do
@@ -43,7 +55,7 @@ defmodule DialecticWeb.AmbassadorLiveTest do
 
     assert has_element?(view, "#ambassador-interest-form p", "Enter a valid email address")
     refute has_element?(view, "#ambassador-success")
-    assert Repo.aggregate(Interest, :count) == 0
+    refute_received {:google_submission, _}
 
     view
     |> form("#ambassador-interest-form", interest: %{email: "tutor@example.com", role: "tutor"})
@@ -67,23 +79,55 @@ defmodule DialecticWeb.AmbassadorLiveTest do
     assert has_element?(view, "#interest_email[value='student@example.com']")
 
     view |> form("#ambassador-interest-form") |> render_submit()
-    assert %{role: :student} = Repo.get_by!(Interest, email: "student@example.com")
+
+    assert_received {:google_submission,
+                     %{"entry.100" => "student@example.com", "entry.200" => "Student"}}
   end
 
-  test "existing signups get the same confirmation without being duplicated", %{conn: conn} do
-    {:ok, _} =
-      Ambassadors.register_interest(%{email: "existing@example.com", role: "institution"})
-
+  test "Other reveals a role field and submits the description", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/ambassadors")
+    refute has_element?(view, "#interest_other_role")
 
     view
-    |> form("#ambassador-interest-form",
-      interest: %{email: "EXISTING@example.com", role: "tutor"}
-    )
+    |> form("#ambassador-interest-form", interest: %{email: "other@example.com", role: "other"})
+    |> render_change()
+
+    assert has_element?(view, "#interest_other_role[required]")
+
+    view
+    |> form("#ambassador-interest-form", interest: %{other_role: "Librarian"})
     |> render_submit()
 
     assert has_element?(view, "#ambassador-success")
-    assert [%{role: :institution}] = Repo.all(Interest)
+
+    assert_received {:google_submission,
+                     %{
+                       "entry.200" => "__other_option__",
+                       "entry.200.other_option_response" => "Librarian"
+                     }}
+  end
+
+  test "Google Form failure preserves the form and allows a retry", %{conn: conn} do
+    Req.Test.stub(Ambassadors, fn conn -> Plug.Conn.resp(conn, 503, "Unavailable") end)
+    {:ok, view, _html} = live(conn, ~p"/ambassadors")
+
+    view
+    |> form("#ambassador-interest-form", interest: %{email: "retry@example.com", role: "tutor"})
+    |> render_submit()
+
+    assert has_element?(view, "#ambassador-submit-error[role='alert']")
+    assert has_element?(view, "#interest_email[value='retry@example.com']")
+    refute has_element?(view, "#ambassador-success")
+
+    Req.Test.stub(Ambassadors, fn conn -> Plug.Conn.resp(conn, 200, "Recorded") end)
+    view |> form("#ambassador-interest-form") |> render_submit()
+    assert has_element?(view, "#ambassador-success")
+  end
+
+  test "the homepage header does not promote the trial", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/")
+    refute has_element?(view, "#ambassador-nav-link")
+    refute has_element?(view, "#userHeader a[href='/ambassadors']")
   end
 
   test "repeated attempts are limited with a recoverable error", %{conn: conn} do
@@ -97,6 +141,6 @@ defmodule DialecticWeb.AmbassadorLiveTest do
 
     assert has_element?(view, "#ambassador-submit-error[role='alert']", "wait a minute")
     assert has_element?(view, "#ambassador-interest-form")
-    assert Repo.aggregate(Interest, :count) == 0
+    refute_received {:google_submission, _}
   end
 end
