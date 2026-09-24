@@ -10,7 +10,7 @@ defmodule DialecticWeb.AmbassadorLive do
        page_title: "The Ambassador Programme — RationalGrid",
        page_title_suffix: "",
        page_description:
-         "Lead the next chapter of learning. Register your interest in a branded RationalGrid teaching hub, guided AI learning, and a share of subscription revenue.",
+         "RationalGrid turns questions and AI answers into connected grids of ideas. Help shape an educator programme to guide learning, develop your teaching, and share in subscription revenue.",
        form: to_form(Ambassadors.change_interest(), as: :interest),
        joined?: false,
        signup_available?: Ambassadors.configured?(),
@@ -92,7 +92,7 @@ defmodule DialecticWeb.AmbassadorLive do
           </a>
           <nav aria-label="Ambassador programme" class="amb-nav-links">
             <a id="amb-how-link" href="#how-it-works" class="amb-nav-secondary">How it works</a>
-            <a id="amb-benefits-link" href="#why-join" class="amb-nav-secondary">Why join?</a>
+            <a id="amb-earnings-link" href="#how-you-earn" class="amb-nav-secondary">How you earn</a>
             <a id="amb-faq-link" href="#ambassador-faq" class="amb-nav-secondary">FAQs</a>
             <a id="amb-nav-join" href="#join-programme" class="amb-button amb-button-small">
               Become an ambassador <.icon name="hero-arrow-up-right" class="h-4 w-4" />
@@ -103,23 +103,27 @@ defmodule DialecticWeb.AmbassadorLive do
         <section id="ambassador-hero" class="amb-hero amb-container" aria-labelledby="amb-hero-title">
           <div class="amb-hero-copy">
             <p class="amb-eyebrow"><span class="amb-status-dot"></span> THE AMBASSADOR PROGRAMME</p>
-            <h1 id="amb-hero-title">The future of learning.<br />Led by <em>you.</em></h1>
+            <h1 id="amb-hero-title">We’re RationalGrid.<br /><em>Teach. Guide. Earn.</em></h1>
             <p class="amb-hero-description">
-              Built on RationalGrid: ask a question, explore connected ideas in a growing grid,
-              and challenge answers as you go. The ambassador programme brings that approach
-              to your community through your own branded learning hub, guided by your expertise.
+              We turn questions and AI answers into connected grids of ideas, helping students
+              explore, challenge, and understand what they’re learning.
+            </p>
+            <p class="amb-hero-description">
+              For educators, we’re building branded hubs: invite your students, guide their use
+              of AI, and earn a share of eligible paid subscriptions. Protect the integrity of
+              your teaching and develop it with your students.
             </p>
             <div class="amb-hero-actions">
               <a id="amb-hero-join" href="#join-programme" class="amb-button">
-                Join the movement <.icon name="hero-arrow-up-right" class="h-4 w-4" />
+                Register your interest <.icon name="hero-arrow-up-right" class="h-4 w-4" />
               </a>
-              <a id="amb-hero-product" href={~p"/"} class="amb-text-link">
+              <a id="amb-hero-product" href={~p"/"} class="amb-button amb-button-product">
                 Explore RationalGrid <.icon name="hero-arrow-up-right" class="h-4 w-4" />
               </a>
             </div>
             <p class="amb-hero-note">
               <.icon name="hero-check-circle" class="h-4 w-4" />
-              Free to register your interest. A new chapter to help shape.
+              Free to register your interest. Programme in development.
             </p>
           </div>
 
@@ -202,46 +206,96 @@ defmodule DialecticWeb.AmbassadorLive do
         <section id="how-it-works" class="amb-section amb-container" aria-labelledby="amb-how-title">
           <div class="amb-section-heading">
             <div>
-              <p class="amb-eyebrow">A SHARED MISSION. A SHARED OPPORTUNITY.</p><h2 id="amb-how-title">
-                Your teaching. A bigger impact.
+              <p class="amb-eyebrow">HOW IT WORKS</p><h2 id="amb-how-title">
+                Your hub. Your students. Your opportunity.
               </h2>
             </div>
             <p>
-              Bring your people. We’re building the tools.<br />Here’s how the programme is designed to work.
+              You bring your expertise and your community.<br />Here’s the programme we’re building with educators.
             </p>
           </div>
           <div class="amb-steps">
-            <article class="amb-step">
+            <article id="amb-step-hub" class="amb-step">
               <div class="amb-step-top">
-                <span class="amb-step-icon amb-icon-peach"><.icon name="hero-window" class="h-6 w-6" /></span><span>01 / MAKE IT YOURS</span>
-              </div><h3>Your own branded hub</h3><p>
-                A home for your teaching, with your identity at the centre. Welcome students into a learning space that feels like yours.
+                <span class="amb-step-icon amb-icon-peach"><.icon name="hero-window" class="h-6 w-6" /></span><span>01 / SET UP YOUR HUB</span>
+              </div><h3>Put your teaching at the centre</h3><p>
+                Create a RationalGrid learning space under your own brand. Shape the questions
+                and topics students explore around what you teach.
               </p>
             </article>
-            <article class="amb-step">
+            <article id="amb-step-invite" class="amb-step">
               <div class="amb-step-top">
                 <span class="amb-step-icon amb-icon-green"><.icon
                   name="hero-sparkles"
                   class="h-6 w-6"
-                /></span><span>02 / GUIDE THE CURIOSITY</span>
-              </div><h3>Lead a better way to learn</h3><p>
-                Help students question, explore, and understand with AI. Keep your guidance and the integrity of information at the heart of learning.
+                /></span><span>02 / INVITE YOUR STUDENTS</span>
+              </div><h3>Bring them in. Guide their learning.</h3><p>
+                Invite your class, tutoring students, or learning community to your hub.
+                Use connected grids to explore ideas together, challenge AI answers, and check sources.
               </p>
             </article>
-            <article class="amb-step">
+            <article id="amb-step-earn" class="amb-step">
               <div class="amb-step-top">
                 <span class="amb-step-icon amb-icon-purple"><.icon
                   name="hero-arrow-trending-up"
                   class="h-6 w-6"
-                /></span><span>03 / SHARE IN THE GROWTH</span>
-              </div><h3>Make your impact rewarding</h3><p>
-                Earn a share of eligible student subscription revenue. When the learning community you bring grows, you benefit too.
+                /></span><span>03 / EARN FROM SUBSCRIPTIONS</span>
+              </div><h3>Share in the value you create</h3><p>
+                When students you bring to your hub take out an eligible paid subscription,
+                you receive an agreed share of that subscription revenue.
               </p>
             </article>
           </div>
           <p class="amb-terms-note">
             We’re gathering early interest. Hub features, revenue share, and programme terms will be confirmed before launch.
           </p>
+        </section>
+
+        <section
+          id="how-you-earn"
+          class="amb-earnings amb-container"
+          aria-labelledby="amb-earnings-title"
+        >
+          <div class="amb-earnings-copy">
+            <p class="amb-eyebrow">HOW YOU EARN · THE PROPOSED MODEL</p>
+            <h2 id="amb-earnings-title">Bring students.<br />Share in their subscriptions.</h2>
+            <p>Your earnings would come from eligible paid subscriptions taken out by students
+              you bring to your hub. Your role is to introduce RationalGrid and help those
+              students get value from it through your teaching.</p>
+            <a id="amb-earnings-join" href="#join-programme" class="amb-text-link">
+              Register your interest <.icon name="hero-arrow-up-right" class="h-4 w-4" />
+            </a>
+          </div>
+          <div class="amb-earnings-example">
+            <h3>A tutor’s example</h3>
+            <ol>
+              <li>
+                <span class="amb-earnings-number">1</span><div>
+                  <strong>You invite your students.</strong><p>
+                    You introduce your tutoring group to your branded RationalGrid hub.
+                  </p>
+                </div>
+              </li>
+              <li>
+                <span class="amb-earnings-number">2</span><div>
+                  <strong>Some choose a paid subscription.</strong><p>
+                    Eligible subscriptions from the students you brought in form the basis of your earnings.
+                  </p>
+                </div>
+              </li>
+              <li>
+                <span class="amb-earnings-number">3</span><div>
+                  <strong>You receive your agreed share.</strong><p>
+                    The proposed calculation is eligible subscription revenue × your agreed share.
+                  </p>
+                </div>
+              </li>
+            </ol>
+            <p id="amb-earnings-terms" class="amb-earnings-terms">
+              Commission rates, eligibility, and payout timing will be confirmed before launch.
+              Registering interest today does not generate earnings.
+            </p>
+          </div>
         </section>
 
         <section id="why-join" class="amb-mission amb-container" aria-labelledby="amb-mission-title">
