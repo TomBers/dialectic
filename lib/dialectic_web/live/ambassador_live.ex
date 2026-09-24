@@ -105,15 +105,16 @@ defmodule DialecticWeb.AmbassadorLive do
             <p class="amb-eyebrow"><span class="amb-status-dot"></span> THE AMBASSADOR PROGRAMME</p>
             <h1 id="amb-hero-title">The future of learning.<br />Led by <em>you.</em></h1>
             <p class="amb-hero-description">
-              Your expertise. Your community. Your own AI learning hub.
-              Help students think deeper — and share in the value you create.
+              Built on RationalGrid: ask a question, explore connected ideas in a growing grid,
+              and challenge answers as you go. The ambassador programme brings that approach
+              to your community through your own branded learning hub, guided by your expertise.
             </p>
             <div class="amb-hero-actions">
               <a id="amb-hero-join" href="#join-programme" class="amb-button">
                 Join the movement <.icon name="hero-arrow-up-right" class="h-4 w-4" />
               </a>
-              <a id="amb-hero-how" href="#how-it-works" class="amb-text-link">
-                See how it works <.icon name="hero-arrow-down" class="h-4 w-4" />
+              <a id="amb-hero-product" href={~p"/"} class="amb-text-link">
+                Explore RationalGrid <.icon name="hero-arrow-up-right" class="h-4 w-4" />
               </a>
             </div>
             <p class="amb-hero-note">
@@ -402,6 +403,22 @@ defmodule DialecticWeb.AmbassadorLive do
             </h2>
           </div>
           <div class="amb-faq-items">
+            <details id="amb-faq-try-today">
+              <summary>
+                How can I try RationalGrid today?<.icon name="hero-plus" class="h-4 w-4" />
+              </summary>
+              <p>
+                RationalGrid is available now. Start with a question, explore the connected ideas
+                in your grid, and challenge or unpack any answer. You can try Simple answers
+                without an account, or sign up free to save bookmarks and highlights.
+                You don’t need to wait for the ambassador programme to launch.
+                <a
+                  id="amb-faq-try-link"
+                  href={~p"/?focus=grid#start-here"}
+                  class="amb-text-link underline underline-offset-4"
+                >Try RationalGrid now <.icon name="hero-arrow-up-right" class="h-4 w-4" /></a>
+              </p>
+            </details>
             <details id="amb-faq-eligibility">
               <summary>
                 Who can become an ambassador?<.icon name="hero-plus" class="h-4 w-4" />
