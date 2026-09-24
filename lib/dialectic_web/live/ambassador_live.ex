@@ -10,7 +10,7 @@ defmodule DialecticWeb.AmbassadorLive do
        page_title: "The Ambassador Programme — RationalGrid",
        page_title_suffix: "",
        page_description:
-         "Lead the next chapter of learning. Register your interest in a branded RationalGrid teaching hub, guided AI learning, and a share of subscription revenue.",
+         "RationalGrid turns questions and AI answers into connected grids of ideas. Help shape an educator programme to guide learning, develop your teaching, and share in subscription revenue.",
        form: to_form(Ambassadors.change_interest(), as: :interest),
        joined?: false,
        signup_available?: Ambassadors.configured?(),
@@ -103,23 +103,27 @@ defmodule DialecticWeb.AmbassadorLive do
         <section id="ambassador-hero" class="amb-hero amb-container" aria-labelledby="amb-hero-title">
           <div class="amb-hero-copy">
             <p class="amb-eyebrow"><span class="amb-status-dot"></span> THE AMBASSADOR PROGRAMME</p>
-            <h1 id="amb-hero-title">The future of learning.<br />Led by <em>you.</em></h1>
+            <h1 id="amb-hero-title">We’re RationalGrid.<br /><em>Teach. Guide. Earn.</em></h1>
             <p class="amb-hero-description">
-              Built on RationalGrid: ask a question, explore connected ideas in a growing grid,
-              and challenge answers as you go. The ambassador programme brings that approach
-              to your community through your own branded learning hub, guided by your expertise.
+              We turn questions and AI answers into connected grids of ideas, helping students
+              explore, challenge, and understand what they’re learning.
+            </p>
+            <p class="amb-hero-description">
+              For educators, we’re building branded hubs where you can guide AI use,
+              protect the integrity of what you teach, and develop your material with students
+              — while earning a share of their subscription revenue.
             </p>
             <div class="amb-hero-actions">
               <a id="amb-hero-join" href="#join-programme" class="amb-button">
-                Join the movement <.icon name="hero-arrow-up-right" class="h-4 w-4" />
+                Register your interest <.icon name="hero-arrow-up-right" class="h-4 w-4" />
               </a>
-              <a id="amb-hero-product" href={~p"/"} class="amb-text-link">
+              <a id="amb-hero-product" href={~p"/"} class="amb-button amb-button-product">
                 Explore RationalGrid <.icon name="hero-arrow-up-right" class="h-4 w-4" />
               </a>
             </div>
             <p class="amb-hero-note">
               <.icon name="hero-check-circle" class="h-4 w-4" />
-              Free to register your interest. A new chapter to help shape.
+              Free to register your interest. Programme in development.
             </p>
           </div>
 

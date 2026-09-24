@@ -24,6 +24,9 @@
 .amb-nav-secondary:hover { color: var(--amb-orange); }
 .amb-button { display: inline-flex; justify-content: center; align-items: center; gap: 24px; padding: 16px 24px; background: var(--amb-orange); color: #fff; border: 1px solid var(--amb-orange); border-radius: 5px; font-size: 13px; font-weight: 600; line-height: 1.5; transition: background .2s, transform .2s; }
 .amb-button:hover { background: #9e3e27; transform: translateY(-1px); }
+.amb-button-product { background: #5eead4; color: #020617; border-color: #2dd4bf; box-shadow: 0 4px 14px #0206171a; white-space: nowrap; }
+.amb-button-product:hover { background: #99f6e4; color: #0f172a; border-color: #5eead4; }
+.ambassador-page .amb-button-product:focus-visible { outline-color: #0f766e; }
 .amb-button-small { padding: 12px 18px; font-size: 12px; gap: 15px; }
 .amb-hero { display: grid; grid-template-columns: 1.02fr 1fr; align-items: center; gap: 36px; padding-top: 85px; padding-bottom: 96px; }
 .amb-eyebrow { font-size: 10px; font-weight: 600; letter-spacing: 1.7px; line-height: 1.7; }
@@ -32,7 +35,8 @@
 .amb-hero h1 { margin: 25px 0 22px; font: 400 clamp(44px, 4.55vw, 67px)/1.08 Georgia, 'Times New Roman', serif; letter-spacing: -2.9px; }
 .amb-hero h1 em { color: var(--amb-orange); font-weight: 400; }
 .amb-hero-description { max-width: 440px; font-size: 16px; line-height: 1.8; color: var(--amb-muted); }
-.amb-hero-actions { display: flex; align-items: center; gap: 26px; margin-top: 31px; }
+.amb-hero-description + .amb-hero-description { margin-top: 16px; }
+.amb-hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 26px; margin-top: 31px; }
 .amb-text-link { display: inline-flex; align-items: center; gap: 12px; font-size: 12px; font-weight: 600; line-height: 1.5; }
 .amb-text-link:hover { color: var(--amb-orange); }
 .amb-hero-note { display: flex; align-items: center; gap: 7px; font-size: 10px; margin-top: 19px; color: var(--amb-muted); }
@@ -222,7 +226,7 @@ select.amb-input, .amb-signup-card select { padding-right: 32px; }
   .amb-hero h1 { font-size: 49px; letter-spacing: -2px; }
   .amb-hero-description { font-size: 14px; }
   .amb-hero-actions { gap: 18px; }
-  .amb-hero-actions .amb-button { font-size: 11px; padding: 14px; gap: 13px; }
+  .amb-hero-actions .amb-button { width: 100%; font-size: 13px; padding: 14px 18px; gap: 13px; }
   .amb-hero-actions .amb-text-link { font-size: 10px; gap: 7px; }
   .amb-hero-note { font-size: 9px; }
   .amb-hero-visual { width: 100%; padding-inline: 12px; }
