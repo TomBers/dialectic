@@ -69,6 +69,7 @@ defmodule DialecticWeb.Router do
   scope "/", DialecticWeb do
     pipe_through :browser
     live "/", HomeLive
+    live "/ambassadors", AmbassadorLive
     get "/my/ideas", PageController, :my_graphs
     get "/view_all/graphs", PageController, :view_all
     post "/graphs/:title/generate_tags", PageController, :generate_tags

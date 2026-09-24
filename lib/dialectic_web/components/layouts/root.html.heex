@@ -80,6 +80,7 @@
     </a>
     <% active_path = @conn.request_path %>
     <header
+      :if={active_path != "/ambassadors"}
       class="fixed inset-x-0 top-0 z-[9999] h-10 border-b border-slate-700 bg-slate-950 text-white"
       id="userHeader"
     >
@@ -143,6 +144,13 @@
           >
             <.icon name="hero-magnifying-glass" class="h-3.5 w-3.5" />
             <span class="hidden md:inline">Search</span>
+          </.link>
+          <.link
+            id="ambassador-nav-link"
+            href={~p"/ambassadors"}
+            class="hidden h-full items-center gap-1 border-b-2 border-transparent px-2 font-medium transition hover:border-slate-500 hover:text-white lg:inline-flex"
+          >
+            <.icon name="hero-academic-cap" class="h-3.5 w-3.5" /> For educators
           </.link>
           <.link
             href={~p"/community"}
@@ -244,7 +252,8 @@
         </div>
       </nav>
     </header>
-    <div id="userHeaderSpacer" class="h-10" aria-hidden="true"></div>
+    <div :if={active_path != "/ambassadors"} id="userHeaderSpacer" class="h-10" aria-hidden="true">
+    </div>
 
     <div id="page-content">
       {@inner_content}
