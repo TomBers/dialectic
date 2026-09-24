@@ -107,6 +107,18 @@
 .amb-step h3 { font: 23px/1.3 Georgia, serif; margin-top: 26px; letter-spacing: -.5px; }
 .amb-step > p { font-size: 12px; line-height: 1.9; margin-top: 12px; color: var(--amb-muted); }
 .amb-terms-note { margin-top: 16px; font-size: 10px; text-align: center; color: var(--amb-muted); }
+.amb-earnings { display: grid; grid-template-columns: 1fr 1.1fr; gap: 48px; align-items: center; margin-bottom: 75px; padding: 40px; border: 1px solid #d3e4db; border-radius: 8px; background: #edf6f0; }
+.amb-earnings h2 { margin-top: 15px; font: 36px/1.16 Georgia, serif; letter-spacing: -1px; }
+.amb-earnings-copy > p:not(.amb-eyebrow) { margin-top: 20px; font-size: 13px; line-height: 1.85; color: #536458; }
+.amb-earnings-copy > a { margin-top: 22px; color: #175e53; }
+.amb-earnings-example { background: #fffefa; border: 1px solid #d7e3d9; border-radius: 6px; padding: 26px; }
+.amb-earnings-example h3 { font: 23px/1.3 Georgia, serif; }
+.amb-earnings-example ol { display: grid; gap: 20px; margin-top: 22px; list-style: none; }
+.amb-earnings-example li { display: flex; align-items: flex-start; gap: 12px; }
+.amb-earnings-number { display: grid; place-items: center; flex-shrink: 0; width: 27px; height: 27px; border-radius: 50%; background: #d9f1e6; color: #175e53; font-size: 12px; font-weight: 600; }
+.amb-earnings-example strong { font-size: 12px; font-weight: 600; }
+.amb-earnings-example li p { margin-top: 4px; font-size: 12px; line-height: 1.8; color: var(--amb-muted); }
+.amb-earnings-terms { border-top: 1px solid #dde4d8; padding-top: 16px; margin-top: 22px; font-size: 10px; line-height: 1.8; color: var(--amb-muted); }
 .amb-mission { display: grid; grid-template-columns: .85fr 1fr; gap: 88px; align-items: center; padding-block: 10px 85px; }
 .amb-mission-art { min-height: 350px; border-radius: 7px; background-color: #e9eddf; background-image: linear-gradient(#d9dece75 1px, transparent 1px), linear-gradient(90deg, #d9dece75 1px, transparent 1px); background-size: 33px 33px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
 .amb-art-word { font: italic 76px/1 Georgia, serif; letter-spacing: -5px; color: #455641; transform: rotate(-7deg); }
@@ -184,6 +196,8 @@ select.amb-input, .amb-signup-card select { padding-right: 32px; }
   .amb-join h2 { font-size: 34px; }
 }
 @media (max-width: 800px) {
+  .amb-earnings { grid-template-columns: 1fr; gap: 28px; padding: 28px; margin-bottom: 55px; }
+  .amb-earnings h2 { font-size: 30px; }
   .amb-nav { height: 80px; }
   .amb-nav-secondary { display: none; }
   .amb-hero { grid-template-columns: 1fr; gap: 55px; padding-top: 58px; padding-bottom: 65px; }
@@ -216,6 +230,8 @@ select.amb-input, .amb-signup-card select { padding-right: 32px; }
   .amb-footer > a:last-child { margin-left: 0; }
 }
 @media (max-width: 480px) {
+  .amb-earnings { padding: 24px 18px; }
+  .amb-earnings-example { padding: 22px 18px; }
   .amb-container, .amb-nav { width: calc(100% - 40px); }
   .amb-nav { gap: 12px; }
   .amb-brand { font-size: 20px; gap: 5px; }

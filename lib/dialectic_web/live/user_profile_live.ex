@@ -9,8 +9,10 @@ defmodule DialecticWeb.UserProfileLive do
   alias Dialectic.Follows
   alias Dialectic.GridActivity
   alias Dialectic.Highlights
+  alias Dialectic.LearningReview
   alias DialecticWeb.Utils.NodeTitleHelper
   import DialecticWeb.GridCardComp
+  import DialecticWeb.LearningReviewComponents
 
   @impl true
   def mount(%{"username" => username}, _session, socket) do
@@ -78,12 +80,124 @@ defmodule DialecticWeb.UserProfileLive do
           |> assign(:private_graphs, private_graphs)
           |> assign(:noted_notes, noted_notes)
           |> assign(:saved_highlights, saved_highlights)
+          |> assign(
+            :learning_review,
+            LearningReview.build(noted_notes, saved_highlights, profile_user)
+          )
+          |> assign(
+            :learning_reason_form,
+            to_form(LearningReview.reason_form(), as: :learning_review)
+          )
+          |> assign(:learning_answer_form, to_form(LearningReview.answer_form(), as: :practice))
           |> assign(:saved_graph_groups, saved_graph_groups(noted_notes, saved_highlights))
           |> assign(:followed_graphs, followed_graphs)
           |> assign(:recent_activity, recent_activity)
           |> assign(:graph_to_delete, nil)
 
         {:ok, socket}
+    end
+  end
+
+  @impl true
+  def handle_event("start_learning_review", %{"learning_review" => params}, socket) do
+    changeset = LearningReview.reason_form(params)
+
+    if socket.assigns.is_own_profile? and socket.assigns.learning_review.status == :ready do
+      case Ecto.Changeset.apply_action(changeset, :validate) do
+        {:ok, %{reason: reason}} ->
+          case LearningReview.start(socket.assigns.learning_review, reason) do
+            {:ok, review} ->
+              {:noreply,
+               socket
+               |> assign(:learning_review, review)
+               |> push_event("analytics", %{
+                 event: "learning_review_started",
+                 params: %{reason: reason, item_count: LearningReview.count(review)}
+               })}
+
+            {:error, _} ->
+              {:noreply, socket}
+          end
+
+        {:error, changeset} ->
+          {:noreply,
+           assign(socket, :learning_reason_form, to_form(changeset, as: :learning_review))}
+      end
+    else
+      {:noreply, socket}
+    end
+  end
+
+  def handle_event("reveal_learning_review", %{"practice" => params}, socket) do
+    review = socket.assigns.learning_review
+
+    if socket.assigns.is_own_profile? and review.status == :practising and not review.revealed? do
+      case params |> LearningReview.answer_form() |> Ecto.Changeset.apply_action(:validate) do
+        {:ok, _answer} ->
+          {:noreply,
+           socket
+           |> assign(:learning_review, LearningReview.reveal(review))
+           |> assign(
+             :learning_answer_form,
+             to_form(LearningReview.answer_form(params), as: :practice)
+           )
+           |> push_event("analytics", %{
+             event: "learning_source_compared",
+             params: %{reason: review.reason}
+           })}
+
+        {:error, changeset} ->
+          {:noreply, assign(socket, :learning_answer_form, to_form(changeset, as: :practice))}
+      end
+    else
+      {:noreply, socket}
+    end
+  end
+
+  def handle_event("rate_learning_review", %{"rating" => rating}, socket) do
+    review = socket.assigns.learning_review
+    updated = LearningReview.rate(review, rating)
+
+    if socket.assigns.is_own_profile? and updated != review do
+      {:noreply,
+       socket
+       |> assign(:learning_review, updated)
+       |> push_event("analytics", %{
+         event: "learning_idea_reviewed",
+         params: %{reason: review.reason, self_check: rating}
+       })}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  def handle_event("next_learning_review", _params, socket) do
+    review = socket.assigns.learning_review
+    updated = LearningReview.next(review)
+
+    if socket.assigns.is_own_profile? and updated != review do
+      socket =
+        socket
+        |> assign(:learning_review, updated)
+        |> assign(:learning_answer_form, to_form(LearningReview.answer_form(), as: :practice))
+
+      socket =
+        if updated.status == :complete do
+          push_event(socket, "analytics", %{
+            event: "learning_review_completed",
+            params: %{
+              reason: updated.reason,
+              understood: updated.understood,
+              revisit: updated.revisit
+            }
+          })
+        else
+          socket
+        end
+
+      {:noreply, socket}
+    else
+      {:noreply, socket}
     end
   end
 
@@ -738,6 +852,11 @@ defmodule DialecticWeb.UserProfileLive do
               </div>
             </div>
           </header>
+          <.learning_review
+            review={@learning_review}
+            reason_form={@learning_reason_form}
+            answer_form={@learning_answer_form}
+          />
         <% end %>
 
         <%= if not @is_own_profile? or @profile_mode == :public do %>

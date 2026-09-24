@@ -949,6 +949,16 @@ defmodule DialecticWeb.HomeLive do
                 >
                   Open Saved for recall
                 </.link>
+                <.link
+                  :if={@current_user}
+                  id="home-practise-saved-link"
+                  navigate={~p"/u/#{Dialectic.Accounts.User.effective_username(@current_user)}" <> "#learning-review"}
+                  data-analytics-event="learning_practice_opened"
+                  data-analytics-location="home_learning_journey"
+                  class="mt-2 block font-semibold text-teal-800 underline decoration-teal-500 underline-offset-4 hover:text-teal-950"
+                >
+                  Practise explaining your saved ideas
+                </.link>
               </p>
             </div>
           </li>
