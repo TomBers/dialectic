@@ -12,6 +12,12 @@ config :dialectic, :llm_req_options, plug: Dialectic.Test.LLMTestPlug
 # Stub Google Forms HTTP calls in tests
 config :dialectic, Dialectic.Feedback, req_plug: {Req.Test, Dialectic.Feedback}
 
+config :dialectic, Dialectic.Ambassadors,
+  form_url: "https://docs.google.com/forms/d/e/ambassador-test/formResponse",
+  email_entry: "entry.100",
+  role_entry: "entry.200",
+  req_plug: {Req.Test, Dialectic.Ambassadors}
+
 # No-op auto-tagger for tests
 config :dialectic, :auto_tagger_module, Dialectic.Test.AutoTaggerTest
 
