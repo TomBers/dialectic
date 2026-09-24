@@ -81,7 +81,16 @@ defmodule DialecticWeb.AmbassadorLive do
       <div id="ambassador-page" class="ambassador-page">
         <header class="amb-nav">
           <a id="ambassador-home-link" href={~p"/"} class="amb-brand" aria-label="RationalGrid home">
-            <span class="amb-brand-icon"><.icon name="hero-square-3-stack-3d" class="h-6 w-6" /></span>
+            <span class="amb-brand-icon">
+              <img
+                id="ambassador-logo"
+                src={~p"/images/brandmark.svg"}
+                alt=""
+                width="24"
+                height="24"
+                class="h-6 w-6"
+              />
+            </span>
             RationalGrid<span class="amb-brand-dot">.</span>
           </a>
           <nav aria-label="Ambassador programme" class="amb-nav-links">
@@ -412,7 +421,19 @@ defmodule DialecticWeb.AmbassadorLive do
         </section>
 
         <footer class="amb-footer amb-container">
-          <a href={~p"/"} class="amb-brand"><span class="amb-brand-icon"><.icon name="hero-square-3-stack-3d" class="h-5 w-5" /></span>RationalGrid<span class="amb-brand-dot">.</span></a><p>
+          <a href={~p"/"} class="amb-brand">
+            <span class="amb-brand-icon">
+              <img
+                id="amb-footer-logo"
+                src={~p"/images/brandmark.svg"}
+                alt=""
+                width="20"
+                height="20"
+                class="h-5 w-5"
+              />
+            </span>
+            RationalGrid<span class="amb-brand-dot">.</span>
+          </a><p>
             Independent thinking. Shared possibility.
           </p><a id="amb-footer-about" href={~p"/about"}>Get to know RationalGrid
           <.icon name="hero-arrow-up-right" class="h-4 w-4" /></a>
