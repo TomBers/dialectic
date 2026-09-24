@@ -20,6 +20,12 @@ defmodule DialecticWeb.AmbassadorLiveTest do
     {:ok, view, _html} = live(conn, ~p"/ambassadors")
 
     assert has_element?(view, "#amb-hero-title")
+
+    assert has_element?(
+             view,
+             ~s(#ambassador-hub-preview[role="img"][aria-label="Illustrative preview of an educator’s branded learning hub"])
+           )
+
     assert has_element?(view, "#amb-hero-join[href='#join-programme']")
     assert has_element?(view, "#how-it-works")
     assert has_element?(view, "#student-referrals")
@@ -130,7 +136,7 @@ defmodule DialecticWeb.AmbassadorLiveTest do
     refute has_element?(view, "#userHeader a[href='/ambassadors']")
   end
 
-  test "repeated attempts are limited with a recoverable error", %{conn: conn} do
+  test "validation retries do not block a corrected signup", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/ambassadors")
 
     for _ <- 1..6 do
@@ -139,8 +145,17 @@ defmodule DialecticWeb.AmbassadorLiveTest do
       |> render_submit()
     end
 
-    assert has_element?(view, "#ambassador-submit-error[role='alert']", "wait a minute")
+    refute has_element?(view, "#ambassador-submit-error")
     assert has_element?(view, "#ambassador-interest-form")
     refute_received {:google_submission, _}
+
+    view
+    |> form("#ambassador-interest-form",
+      interest: %{email: "corrected@example.com", role: "educator"}
+    )
+    |> render_submit()
+
+    assert has_element?(view, "#ambassador-success")
+    assert_received {:google_submission, %{"entry.100" => "corrected@example.com"}}
   end
 end

@@ -4,7 +4,7 @@ defmodule DialecticWeb.AmbassadorLive do
   alias Dialectic.Ambassadors
 
   @impl true
-  def mount(_params, session, socket) do
+  def mount(_params, _session, socket) do
     {:ok,
      assign(socket,
        page_title: "The Ambassador Programme — RationalGrid",
@@ -14,8 +14,7 @@ defmodule DialecticWeb.AmbassadorLive do
        form: to_form(Ambassadors.change_interest(), as: :interest),
        joined?: false,
        signup_available?: Ambassadors.configured?(),
-       submission_error: nil,
-       signup_actor: session["llm_actor_id"] || socket.id
+       submission_error: nil
      ), layout: false}
   end
 
@@ -45,13 +44,7 @@ defmodule DialecticWeb.AmbassadorLive do
   end
 
   def handle_event("join", %{"interest" => params}, socket) do
-    case Dialectic.RateLimit.hit("ambassador:#{socket.assigns.signup_actor}", 60_000, 5) do
-      {:allow, _count} ->
-        save_interest(socket, params)
-
-      {:deny, _retry_after} ->
-        {:noreply, assign(socket, :submission_error, "Please wait a minute before trying again.")}
-    end
+    save_interest(socket, params)
   end
 
   defp save_interest(socket, params) do
@@ -130,6 +123,8 @@ defmodule DialecticWeb.AmbassadorLive do
           </div>
 
           <div
+            id="ambassador-hub-preview"
+            role="img"
             class="amb-hero-visual"
             aria-label="Illustrative preview of an educator’s branded learning hub"
           >
