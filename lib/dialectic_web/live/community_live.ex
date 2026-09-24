@@ -217,12 +217,9 @@ defmodule DialecticWeb.CommunityLive do
           <header id="community-page-header" class="border-b border-stone-300 pb-6">
             <div class="flex items-start justify-between gap-5">
               <div>
-                <p class="text-xs font-semibold uppercase tracking-[0.18em] text-teal-800">
-                  Explore together
-                </p>
                 <h1
                   id="community-page-title"
-                  class="mt-2 font-serif text-3xl font-semibold tracking-tight sm:text-4xl"
+                  class="text-xs font-semibold uppercase tracking-[0.18em] text-teal-800"
                 >
                   {if @active_tag, do: "#{tag_label(@active_tag)} grids", else: "Community grids"}
                 </h1>
@@ -238,16 +235,18 @@ defmodule DialecticWeb.CommunityLive do
                   id="community-introduction"
                   class="mt-2 max-w-2xl text-sm leading-6 text-slate-600"
                 >
-                  Challenge ideas, add your own thoughts and questions, and build on what others have
-                  started. Explore topics together through community grids.
+                  Share your questions and thinking to help others see something new.
                 </p>
               </div>
               <.link
                 id="community-create-grid"
                 navigate={~p"/?focus=grid#start-here"}
-                class="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-slate-950 px-3 py-2.5 text-sm font-semibold text-white hover:bg-teal-900"
+                class="inline-flex shrink-0 min-h-11 items-center justify-center gap-2 rounded-md bg-teal-800 px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-800"
               >
-                <.icon name="hero-plus" class="h-4 w-4" /><span class="hidden sm:inline">Create a grid</span><span class="sm:hidden">Create</span>
+                <span class="hidden sm:inline">Create a grid</span><span class="sm:hidden">Create</span><.icon
+                  name="hero-arrow-right"
+                  class="h-4 w-4"
+                />
               </.link>
             </div>
             <.form
@@ -504,6 +503,19 @@ defmodule DialecticWeb.CommunityLive do
                 >Next<.icon name="hero-arrow-right" class="h-4 w-4" /></.link>
                 <span :if={@page == @page_count}></span>
               </nav>
+              <div
+                id="community-contribute"
+                class="mt-8 border-t border-stone-300 px-4 py-8 text-center"
+              >
+                <h2 class="font-serif text-lg font-semibold text-slate-950 sm:text-xl">
+                  Something missing? Share your thinking. Give the community something to build on.
+                </h2>
+                <.link
+                  id="community-contribute-create-grid"
+                  navigate={~p"/?focus=grid#start-here"}
+                  class="mt-4 inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-teal-800 px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-800"
+                >Create a grid<.icon name="hero-arrow-right" class="h-4 w-4" /></.link>
+              </div>
             </section>
           </div>
         </div>
