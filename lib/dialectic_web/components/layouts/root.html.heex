@@ -177,20 +177,20 @@
           </.link>
           <%= if @current_user do %>
             <.link
-              href={~p"/activity"}
-              aria-label="Activity"
-              data-secondary-navigation
-              title="Activity"
+              id="my-learning-nav-link"
+              href={~p"/my/learning"}
+              aria-label="My Learning"
+              title="My Learning"
               class={[
                 "inline-flex h-full items-center gap-1 border-b-2 px-1.5 font-medium transition sm:px-2",
-                if(active_path == "/activity",
+                if(active_path == "/my/learning",
                   do: "border-teal-300 text-white",
                   else: "border-transparent hover:border-slate-500 hover:text-white"
                 )
               ]}
             >
-              <.icon name="hero-bell" class="h-3.5 w-3.5" />
-              <span class="hidden sm:inline">Activity</span>
+              <.icon name="hero-folder" class="h-3.5 w-3.5" />
+              <span>My Learning</span>
             </.link>
             <.link
               href={~p"/u/#{@current_user.username}"}

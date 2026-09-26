@@ -195,7 +195,7 @@ defmodule DialecticWeb.HomeLiveTest do
     assert has_element?(
              view,
              ~s(#home-question-label[for="new-idea-input"]),
-             "What are you curious about?"
+             "What would you like to learn?"
            )
 
     assert view |> element("#new-idea-form") |> render()
@@ -213,12 +213,12 @@ defmodule DialecticWeb.HomeLiveTest do
 
     assert has_element?(view, "#home-hero-logo")
     assert has_element?(view, "#home-hero-brand", "RationalGrid")
-    assert has_element?(view, "#home-hero-title", "Follow your curiosity. Build on every answer.")
+    assert has_element?(view, "#home-hero-title", "A home for everything you’re learning.")
 
     assert has_element?(
              view,
              "#home-hero-subheading",
-             "A grid grows as you ask, keeping the connections visible"
+             "Organise your grids by subject"
            )
 
     assert has_element?(view, "#home-video-hero #new-idea-input")
@@ -237,7 +237,7 @@ defmodule DialecticWeb.HomeLiveTest do
     assert has_element?(
              view,
              "#home-try-reassurance",
-             "Sign up free to save bookmarks and highlights"
+             "Sign up free to organise your grids, save bookmarks and highlights"
            )
 
     refute has_element?(view, ~s(#home-video-hero a[href="/users/register"]))
@@ -268,7 +268,7 @@ defmodule DialecticWeb.HomeLiveTest do
     refute has_element?(view, "#home-value-summary")
   end
 
-  test "keeps trying a question available and links signed-in users to their recall library", %{
+  test "keeps trying a question available and links signed-in users to My Learning", %{
     conn: conn
   } do
     user = user_fixture()
@@ -283,10 +283,18 @@ defmodule DialecticWeb.HomeLiveTest do
 
     assert has_element?(view, ~s(#home-community-secondary-link[href="/community"]))
 
-    username = Dialectic.Accounts.User.effective_username(user)
-    library_path = "/u/#{username}#profile-thinking-library"
-    assert has_element?(view, ~s(#home-saved-for-recall-link[href="#{library_path}"]))
-    assert has_element?(view, ~s(#home-final-library-link[href="#{library_path}"]))
+    assert has_element?(
+             view,
+             ~s(#home-learning-workspace-link[href="/my/learning"]),
+             "Open My Learning"
+           )
+
+    assert has_element?(
+             view,
+             ~s(#home-final-library-link[href="/my/learning"]),
+             "Open My Learning"
+           )
+
     refute has_element?(view, "#home-try-reassurance")
     refute has_element?(view, "#home-final-sign-up-link")
   end
@@ -295,7 +303,7 @@ defmodule DialecticWeb.HomeLiveTest do
     {:ok, view, _html} = live(conn, ~p"/")
 
     assert has_element?(view, "#home-learning-loop h2#home-product-preview-title")
-    assert has_element?(view, "#home-learning-loop", "follow the reasoning again later")
+    assert has_element?(view, "#home-visible-learning", "follow the reasoning and build on it")
 
     assert has_element?(
              view,
@@ -389,7 +397,11 @@ defmodule DialecticWeb.HomeLiveTest do
              "Why not just use ChatGPT or Claude?"
            )
 
-    assert has_element?(view, "#home-faq-chat-assistants", "when the path matters")
+    assert has_element?(
+             view,
+             "#home-faq-chat-assistants",
+             "Organise them by topic in My Learning"
+           )
 
     assert has_element?(
              view,
@@ -452,7 +464,7 @@ defmodule DialecticWeb.HomeLiveTest do
     assert has_element?(view, "#home-learning-explore", "Explain a term")
     assert has_element?(view, "#home-return-tools", "Search")
     assert has_element?(view, "#home-return-tools", "Highlights")
-    assert has_element?(view, "#home-return-tools", "Saved for recall")
+    assert has_element?(view, "#home-return-tools", "My Learning")
     assert has_element?(view, "#home-learning-return #home-recall-account-note", "free account")
     refute has_element?(view, "#home-grid-preview-link")
 
@@ -468,7 +480,7 @@ defmodule DialecticWeb.HomeLiveTest do
              "Explore community grids"
            )
 
-    refute has_element?(view, "#home-saved-for-recall-link")
+    refute has_element?(view, "#home-learning-workspace-link")
     refute has_element?(view, "#home-final-library-link")
     assert has_element?(view, ~s(#home-final-sign-up-link[href="/users/register"]))
   end

@@ -10,7 +10,7 @@ defmodule DialecticWeb.AmbassadorLive do
        page_title: "The Ambassador Programme — RationalGrid",
        page_title_suffix: "",
        page_description:
-         "Bring your teaching beyond the lesson with RationalGrid. Help students revisit ideas, deepen understanding, and explore a proposed share of subscription revenue.",
+         "See how students use AI through shared grids. Organise learning, guide questions, and help students build understanding with RationalGrid’s proposed ambassador programme.",
        form: to_form(Ambassadors.change_interest(), as: :interest),
        joined?: false,
        signup_available?: Ambassadors.configured?(),
@@ -105,12 +105,10 @@ defmodule DialecticWeb.AmbassadorLive do
           <div class="amb-hero-copy">
             <p class="amb-eyebrow"><span class="amb-status-dot"></span> THE AMBASSADOR PROGRAMME</p>
             <h1 id="amb-hero-title">We’re RationalGrid.<br />Teach. Guide. <em>Earn.</em></h1>
-            <p class="amb-hero-description">
-              Bring AI into learning and exploration through a shared whiteboard of connected
-              ideas. See the questions students ask, follow how their exploration develops, and
-              help them build on it. Our proposed ambassador programme would give you a branded
-              RationalGrid hub to extend your teaching and earn a share of eligible student
-              subscriptions.
+            <p id="amb-hero-description" class="amb-hero-description">
+              An AI learning workspace for your students—and a view of the work they share.
+              See what they ask, guide their next questions, and help their learning last.
+              Our proposed programme adds branded hubs and a share of eligible subscription revenue.
             </p>
             <div class="amb-hero-actions">
               <a id="amb-hero-join" href="#join-programme" class="amb-button">
@@ -151,9 +149,9 @@ defmodule DialecticWeb.AmbassadorLive do
               <div class="amb-hub-content">
                 <p class="amb-hub-kicker">KEEP LEARNING BETWEEN LESSONS</p>
                 <h2>Revisit an idea.<br />Take it further.</h2>
-                <p>Pick up a question. Check your understanding. Bring back what’s unclear.</p>
+                <p>Recall an idea. Check it. Share your next question.</p>
                 <div class="amb-hub-tabs">
-                  <span>Your learning space</span><span>Resources</span><span>Community</span>
+                  <span>My Learning</span><span>Topics</span><span>Collections</span>
                 </div>
                 <div class="amb-lesson">
                   <span class="amb-lesson-icon"><.icon name="hero-light-bulb" class="h-5 w-5" /></span>
@@ -218,8 +216,8 @@ defmodule DialecticWeb.AmbassadorLive do
               <div class="amb-step-top">
                 <span class="amb-step-icon amb-icon-peach"><.icon name="hero-window" class="h-6 w-6" /></span><span>01 / MAKE IT YOURS</span>
               </div><h3>Bring students into your hub</h3><p>
-                Invite your students to a branded RationalGrid learning space. Use a question from
-                your subject as the starting point, with your expertise guiding what they explore.
+                Invite students to your proposed branded hub. Start with a question from your
+                subject and explore it in shared grids.
               </p>
             </article>
             <article class="amb-step">
@@ -229,9 +227,8 @@ defmodule DialecticWeb.AmbassadorLive do
                   class="h-6 w-6"
                 /></span><span>02 / GUIDE THE CURIOSITY</span>
               </div><h3>Make the learning visible</h3><p>
-                Ask students to explore a question in a shared grid. Follow their questions and
-                contributions, discuss the connections they make, and build on that work together
-                in the next lesson.
+                Ask students to share their grids. See who asked what, review the AI responses,
+                and plan your next lesson around the gaps.
               </p>
             </article>
             <article class="amb-step">
@@ -241,9 +238,8 @@ defmodule DialecticWeb.AmbassadorLive do
                   class="h-6 w-6"
                 /></span><span>03 / SHARE IN THE GROWTH</span>
               </div><h3>Share in subscription revenue</h3><p>
-                Under the proposed model, when a student you introduce takes an eligible paid
-                subscription, you receive a share of that revenue. Your teaching gives them a
-                reason to use the platform beyond their first visit.
+                Under the proposed model, you would earn a share when a student you introduce
+                takes an eligible paid subscription.
               </p>
             </article>
           </div>
@@ -260,43 +256,35 @@ defmodule DialecticWeb.AmbassadorLive do
             <span class="amb-art-caption">BETTER, TOGETHER.</span>
           </div>
           <div class="amb-mission-copy">
-            <p class="amb-eyebrow">THE OPPORTUNITY FOR EDUCATORS</p>
+            <p class="amb-eyebrow">GUIDE STUDENT AI USE</p>
             <h2 id="amb-mission-title">
-              Bring AI into learning.<br /><em>Make the thinking visible.</em>
+              See how students use AI.<br /><em>Guide what happens next.</em>
             </h2>
-            <p>
-              You don’t have to fight AI to keep your teaching at the centre. Give students a
-              place to use it openly: ask questions, challenge answers, examine evidence, and
-              explore different explanations, with your guidance shaping the process.
-            </p>
-            <p>
-              A finished essay can conceal the process behind it, including whether it came from
-              a single AI prompt. RationalGrid works like a shared whiteboard: the questions,
-              responses, and connections remain visible in a structure you can share, discuss,
-              and build on together.
+            <p id="amb-student-visibility">
+              Students are already using AI. Ask them to share their grids so you can see their
+              questions and exploration, instead of guessing from the final assignment.
             </p>
             <ul>
-              <li>
+              <li id="amb-student-questions">
                 <.icon name="hero-check-circle" class="h-5 w-5" /><span><strong>See who asked what.</strong>
-                Questions from signed-in students are attributed to their contributors, so you
-                can follow their participation and ask them to explain their reasoning.</span>
+                Follow signed-in students’ questions and AI responses in shared grids.
+                Ask them to explain their choices and use that discussion to guide feedback.</span>
               </li>
-              <li>
-                <.icon name="hero-check-circle" class="h-5 w-5" /><span><strong>Explore the structure of an idea.</strong>
-                Follow the questions, branches, and AI responses. Use that visible structure to
-                discuss assumptions, check sources, and uncover what needs more work.</span>
+              <li id="amb-student-organisation">
+                <.icon name="hero-check-circle" class="h-5 w-5" /><span><strong>Keep a class’s work together.</strong>
+                In My Learning, Topics start from grid tags. Create your own Collections to group
+                shared grids by class, project, or subject.</span>
               </li>
-              <li>
-                <.icon name="hero-check-circle" class="h-5 w-5" /><span><strong>Build understanding together.</strong>
-                Share a grid with your class, explore another student’s question, and add a new
-                line of enquiry. Your teaching becomes the starting point for further exploration.</span>
+              <li id="amb-shared-learning">
+                <.icon name="hero-check-circle" class="h-5 w-5" /><span><strong>Learn with each other.</strong>
+                Compare perspectives, add questions to shared grids, and build on each other’s ideas.</span>
+              </li>
+              <li id="amb-lasting-learning">
+                <.icon name="hero-check-circle" class="h-5 w-5" /><span><strong>Make learning last.</strong>
+                Save useful passages with bookmarks and highlights. Recall strengthens memory;
+                connecting ideas deepens understanding.</span>
               </li>
             </ul>
-            <p>
-              Between lessons, students can return to the same grid, revisit a saved explanation,
-              and bring a new question back to you. Each visit has a purpose and earlier work
-              becomes something to develop further.
-            </p>
             <a id="amb-mission-join" href="#join-programme" class="amb-text-link">Help shape what comes next
             <.icon name="hero-arrow-up-right" class="h-4 w-4" /></a>
           </div>
@@ -393,8 +381,8 @@ defmodule DialecticWeb.AmbassadorLive do
             <p class="amb-eyebrow">BE PART OF THE NEXT CHAPTER</p><h2 id="amb-join-title">
               Take your teaching further.<br /><em>Help shape the programme.</em>
             </h2><p>
-              Interested in guiding students through your own RationalGrid hub and sharing in
-              subscription revenue? Register for programme updates and early-access opportunities.
+              Help shape a hub for guiding student AI use, organising learning, and sharing in
+              eligible subscription revenue. Register for updates and early-access opportunities.
             </p><span><.icon name="hero-arrow-up-right" class="h-5 w-5" /> Early interest is now open</span>
           </div>
           <div class="amb-signup-card">
@@ -498,12 +486,9 @@ defmodule DialecticWeb.AmbassadorLive do
                 How can I try RationalGrid today?<.icon name="hero-plus" class="h-4 w-4" />
               </summary>
               <p>
-                RationalGrid is available now. Start with a question, explore the connected ideas
-                in your grid, and challenge or unpack any answer. You can try Simple answers
-                without an account, or sign up free to save bookmarks and highlights.
-                Try a question from your next lesson, save a useful idea, and return to it with
-                a follow-up question. The branded hubs and revenue-sharing programme are still
-                being developed. <a
+                Try Simple answers without an account. Sign up free to organise grids in
+                My Learning, save bookmarks and highlights, and explore with others.
+                Branded hubs and revenue sharing are still in development. <a
                   id="amb-faq-try-link"
                   href={~p"/?focus=grid#start-here"}
                   class="font-semibold underline underline-offset-4"
@@ -515,11 +500,9 @@ defmodule DialecticWeb.AmbassadorLive do
                 How does my hub connect to RationalGrid?<.icon name="hero-plus" class="h-4 w-4" />
               </summary>
               <p>
-                The proposed hub brings the core RationalGrid experience into a learning space
-                with your branding and guidance. Students explore connected ideas, challenge
-                answers, and revisit their thinking, with your subject and teaching providing
-                the direction. You can explore RationalGrid today while we develop the hub
-                features with early educators.
+                The proposed hub would bring RationalGrid’s shared grids and organised workspace
+                into a space with your branding and guidance. You can use RationalGrid today
+                while we develop hubs with early educators.
               </p>
             </details>
             <details id="amb-faq-return">
@@ -527,13 +510,9 @@ defmodule DialecticWeb.AmbassadorLive do
                 Why would students keep coming back?<.icon name="hero-plus" class="h-4 w-4" />
               </summary>
               <p>
-                Give each visit a purpose linked to what you teach. For example, after a lesson
-                on evaluating evidence, ask students to explore a claim and bookmark a useful
-                explanation. Before the next lesson, they can reopen it, explain the reasoning
-                in their own words, and identify what they still don’t understand. Bring that
-                question into your next discussion. This is a teaching routine you can try with
-                RationalGrid today; we’ll work with early educators to learn what makes it useful
-                enough to return to regularly.
+                Give them a question to build on. Before the next lesson, ask them to recall an
+                explanation, reopen it to check their understanding, and bring back a new question.
+                My Learning keeps their grids and saved passages ready for revision.
               </p>
             </details>
             <details id="amb-faq-eligibility">
@@ -562,17 +541,14 @@ defmodule DialecticWeb.AmbassadorLive do
                 We’re collecting interest to shape the first version of the programme. A launch date hasn’t been set yet. Join the list for updates and opportunities to help shape early access.
               </p>
             </details>
-            <details id="amb-faq-integrity">
+            <details id="amb-faq-student-learning">
               <summary>
-                How does this support academic integrity?<.icon name="hero-plus" class="h-4 w-4" />
+                How can I see what students are using AI for?<.icon name="hero-plus" class="h-4 w-4" />
               </summary><p>
-                RationalGrid brings AI use into a visible learning process. A shared grid lets
-                you examine the questions students contributed, the AI responses they explored,
-                and the connections they followed. Use that record to ask students to explain
-                their choices, challenge a claim, or develop an argument in their own words.
-                It gives you material for a conversation about understanding alongside the final
-                piece of work. AI can make mistakes, so checking sources and applying your
-                institution’s policies remain part of the process.
+                Ask students to sign in and share their grids with you. Review their questions,
+                AI responses, and follow-ups, then ask them to explain their choices and check
+                sources. Group shared grids into your own Collections by class or project to
+                guide feedback and plan the next lesson.
               </p>
             </details>
             <details id="amb-faq-contributors">
@@ -580,12 +556,9 @@ defmodule DialecticWeb.AmbassadorLive do
                 Can I see who asked each question?<.icon name="hero-plus" class="h-4 w-4" />
               </summary>
               <p>
-                Questions and contributions from signed-in students are recorded against their
-                contributor identity. The reader shows their profile username when available
-                and labels AI responses separately. Ask students to sign in and set a username
-                so you can recognise their contributions; anonymous contributions appear as
-                guests. In a grid shared with you, this makes it easier to discuss who asked
-                what and how the exploration developed.
+                In grids shared with you, signed-in students’ contributions show their profile
+                username when available; AI responses are labelled separately. Ask students to
+                set a username you recognise. Anonymous contributions appear as guests.
               </p>
             </details>
           </div>
