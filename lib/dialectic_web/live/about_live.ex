@@ -10,7 +10,7 @@ defmodule DialecticWeb.AboutLive do
        page_title: "About RationalGrid",
        contact_mailto: "mailto:hello@rationalgrid.ai",
        page_description:
-         "RationalGrid helps people compare views, connect claims to sources, and build shareable maps of their reasoning."
+         "RationalGrid is a free AI learning workspace. Explore questions, organise grids by topic, and find your answers, bookmarks, and highlights together in My Learning."
      ), layout: false}
   end
 
@@ -26,11 +26,12 @@ defmodule DialecticWeb.AboutLive do
                 About RationalGrid
               </p>
               <h1 class="mt-5 font-serif text-5xl font-semibold leading-[1.02] tracking-tight sm:text-7xl">
-                Know what you think—and show how you got there.
+                Your learning, organised and ready to return to.
               </h1>
               <p id="about-value-proposition" class="mt-5 max-w-3xl text-lg leading-8 text-slate-600">
-                RationalGrid is a free, AI-assisted visual thinking tool for people who want to
-                compare ideas, connect claims to sources, and build shareable maps of their reasoning.
+                RationalGrid is a free AI learning workspace for finding answers and building on them.
+                Explore questions in connected grids, group them by subject, and keep your bookmarks
+                and highlights alongside them—all in My Learning.
               </p>
             </div>
             <div class="border-t border-slate-400 pt-4">
@@ -82,7 +83,9 @@ defmodule DialecticWeb.AboutLive do
             </div>
             <p class="text-base leading-7 text-slate-600">
               We started RationalGrid to make learning enjoyable and put AI to thoughtful use.
-              We want to give difficult, overlooked questions the depth and discussion they deserve.
+              ChatGPT can give you a great answer. But how will you find it a day, a month, or a year later?
+              My Learning keeps your grids, bookmarks, and highlights organised by topic,
+              so each study session can build on the last.
             </p>
           </section>
 
@@ -90,7 +93,7 @@ defmodule DialecticWeb.AboutLive do
             <div class="grid gap-5 border-b border-slate-400 pb-5 sm:grid-cols-[minmax(0,1fr)_22rem] sm:items-end">
               <div>
                 <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
-                  Explore + recall
+                  Explore + organise + return
                 </p>
                 <h2
                   id="about-tools-heading"
@@ -100,7 +103,8 @@ defmodule DialecticWeb.AboutLive do
                 </h2>
               </div>
               <p class="text-sm leading-6 text-slate-600">
-                AI helps you explore; the grid preserves the path so you can return, check, and share.
+                From a first question to a growing library of subjects, keep your learning together
+                in one workspace.
               </p>
             </div>
 
@@ -108,25 +112,33 @@ defmodule DialecticWeb.AboutLive do
               <article id="about-tool-explore" class="border-t-2 border-violet-600 pt-4">
                 <h3 class="font-serif text-xl font-semibold">Explore connected ideas</h3>
                 <p class="mt-2 text-sm leading-6 text-slate-600">
-                  Question any part of an answer, compare other views, and keep each direction in a
-                  visible branch instead of losing it in a chat history.
+                  Ask a question, follow up on any part of the answer, and compare other views.
+                  A grid keeps those questions, explanations, and sources connected so you can
+                  follow your reasoning again later.
                 </p>
               </article>
-              <article id="about-tool-check" class="border-t-2 border-teal-600 pt-4">
-                <h3 class="font-serif text-xl font-semibold">Check claims and assumptions</h3>
+              <article id="about-tool-organise" class="border-t-2 border-teal-600 pt-4">
+                <h3 class="font-serif text-xl font-semibold">Give each subject a home</h3>
                 <p class="mt-2 text-sm leading-6 text-slate-600">
-                  Follow claims to sources and use critical-thinking tools developed with Philosophy
-                  for All and Peter Worley. Important claims still need checking.
+                  Group related grids into collections such as Economics or History, like study
+                  notes for each subject. Start with topics drawn from your grid tags, then drag
+                  grids into collections or create your own.
                 </p>
               </article>
               <article id="about-tool-keep" class="border-t-2 border-amber-600 pt-4">
-                <h3 class="font-serif text-xl font-semibold">Keep and share the thinking</h3>
+                <h3 class="font-serif text-xl font-semibold">Find it again and build on it</h3>
                 <p class="mt-2 text-sm leading-6 text-slate-600">
-                  Highlight, bookmark, export, and publish useful paths so you or others can revisit
-                  how a view developed.
+                  Search your grids by title or tag, or open a topic in My Learning. Browse its
+                  grids, bookmarks, and highlights together, then jump back to a saved passage
+                  in context and continue exploring.
                 </p>
               </article>
             </div>
+            <p class="mt-5 text-sm leading-6 text-slate-600">
+              Along the way, follow claims to sources and use critical-thinking tools developed with
+              Philosophy for All and Peter Worley. Important claims still need checking.
+              You can also export or publish grids to share what you’ve learned.
+            </p>
             <div class="mt-5 flex flex-wrap gap-4 text-sm font-semibold">
               <.link
                 id="about-tools-guide-link"
@@ -170,8 +182,9 @@ defmodule DialecticWeb.AboutLive do
                   <strong class="font-semibold text-slate-950">
                     Build a knowledge base that grows with your course.
                   </strong>
-                  Connect concepts, examples, and sources in a grid, then revisit saved branches as
-                  you revise. Ask follow-up questions to work through gaps in your understanding.
+                  Keep grids for each subject in their own collection, with bookmarks and highlights
+                  ready for revision. Reopen an explanation and ask follow-up questions to work
+                  through gaps in your understanding.
                 </p>
               </article>
               <article
@@ -313,7 +326,7 @@ defmodule DialecticWeb.AboutLive do
               </div>
               <div class="grid gap-1 px-4 py-3 sm:grid-cols-[13rem_1fr]">
                 <dt class="font-semibold">Core offering</dt><dd>
-                  AI-assisted visual thinking and research grids
+                  AI learning workspace with grids, topic collections, bookmarks, and highlights
                 </dd>
               </div>
               <div class="grid gap-1 px-4 py-3 sm:grid-cols-[13rem_1fr]">

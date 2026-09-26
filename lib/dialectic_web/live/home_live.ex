@@ -3,6 +3,7 @@ defmodule DialecticWeb.HomeLive do
   alias Dialectic.DbActions.Graphs
   alias Dialectic.Graph.GraphActions
   alias Dialectic.Graph.Vertex
+  alias Dialectic.Learning
   alias DialecticWeb.Utils.UserUtils
   import DialecticWeb.GridCardComp
   require Logger
@@ -29,7 +30,7 @@ defmodule DialecticWeb.HomeLive do
       id: "chat-assistants",
       question: "Why not just use ChatGPT or Claude?",
       answer:
-        "You can—and sometimes should. ChatGPT or Claude is often simpler for a quick answer, draft, or short conversation. RationalGrid is useful when the path matters: it keeps questions, sources, notes, and branches connected so you can return, check evidence, compare views, share, and build with others.",
+        "ChatGPT can give you a great answer. But how will you find it a day, a month, or a year later? RationalGrid gives your learning a home: explore questions with AI in connected grids, organise those grids into subject collections, and keep bookmarks and highlights alongside them. When you return to a topic, your questions, answers, and saved passages are together in My Learning.",
       comparisons_link?: true
     },
     %{
@@ -72,11 +73,13 @@ defmodule DialecticWeb.HomeLive do
        ask_question: true,
        graph_id: nil,
        focus_new_grid: params["focus"] == "grid",
+       learning_collection:
+         Learning.get_collection(socket.assigns.current_user, params["collection"]),
        partner_grids_empty?: true,
        homepage_faqs: @homepage_faqs,
        json_ld: homepage_json_ld(),
        page_description:
-         "Enjoy following your curiosity with AI. Ask, challenge, and explain ideas in a grid that grows as you go, then use search, highlights, and recall to return and keep learning."
+         "An all-in-one AI learning workspace. Organise grids by topic, keep bookmarks and highlights alongside them, and find useful answers again in My Learning."
      )
      |> stream_configure(:partner_grids,
        dom_id: fn item ->
@@ -136,6 +139,7 @@ defmodule DialecticWeb.HomeLive do
       graph ->
         {:noreply,
          socket
+         |> collect_created_grid(graph)
          |> push_event("analytics", %{
            event: "grid_created",
            params: %{
@@ -298,6 +302,26 @@ defmodule DialecticWeb.HomeLive do
     end
   end
 
+  defp collect_created_grid(%{assigns: %{learning_collection: nil}} = socket, _graph), do: socket
+
+  defp collect_created_grid(socket, graph) do
+    case Learning.add_grid(
+           socket.assigns.current_user,
+           socket.assigns.learning_collection.id,
+           graph.title
+         ) do
+      {:ok, _} ->
+        socket
+
+      {:error, _} ->
+        put_flash(
+          socket,
+          :error,
+          "Your grid was created, but could not be added to the collection. You can organise it in My Learning."
+        )
+    end
+  end
+
   @impl true
   def render(assigns) do
     ~H"""
@@ -427,13 +451,12 @@ defmodule DialecticWeb.HomeLive do
               id="home-hero-title"
               class="mt-7 text-4xl font-semibold leading-[1.08] tracking-[-0.035em] text-white sm:text-5xl xl:text-6xl"
             >
-              Follow your curiosity. <span class="block text-teal-200">Build on every answer.</span>
+              A home for everything <span class="block text-teal-200">you’re learning.</span>
             </h1>
             <p id="home-hero-subheading" class="mt-6 max-w-xl text-lg leading-8 text-slate-200">
-              Enjoy exploring an idea, challenge an answer, or unpack a technical term.
-              A grid grows as you ask, keeping the connections visible so you can return
-              and keep learning. Share your grid to discover other perspectives and explore
-              new directions together in real time.
+              Find answers, organise your knowledge, and return to it—all in one AI learning workspace.
+              Organise your grids by subject, keep bookmarks and highlights alongside them,
+              and pick up where you left off in My Learning.
             </p>
             <div id="start-here" class="mt-7 scroll-mt-24">
               <div id="home-start-panel" class="max-w-xl">
@@ -442,8 +465,20 @@ defmodule DialecticWeb.HomeLive do
                   for="new-idea-input"
                   class="mb-3 block text-base font-semibold text-white"
                 >
-                  What are you curious about?
+                  What would you like to learn?
                 </label>
+                <p
+                  :if={@learning_collection}
+                  id="home-collection-context"
+                  class="mb-3 text-sm text-teal-200"
+                >
+                  Your new grid will be added to <strong>{@learning_collection.name}</strong>.
+                  <.link
+                    id="home-back-to-collection"
+                    href={~p"/my/learning?collection=#{@learning_collection.id}"}
+                    class="ml-2 underline"
+                  >Back to collection</.link>
+                </p>
                 <div class="rounded-xl bg-white/10 p-2 text-slate-950 ring-1 ring-white/20">
                   <.live_component
                     module={DialecticWeb.NewIdeaFormComp}
@@ -460,6 +495,14 @@ defmodule DialecticWeb.HomeLive do
               </div>
               <div class="mt-4 flex flex-wrap items-center gap-3">
                 <.link
+                  :if={@current_user}
+                  id="home-my-learning-link"
+                  href={~p"/my/learning"}
+                  class="inline-flex min-h-11 items-center gap-2 rounded-md bg-teal-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-teal-200"
+                >
+                  <.icon name="hero-folder" class="h-4 w-4" /> Open My Learning
+                </.link>
+                <.link
                   id="home-community-secondary-link"
                   navigate={~p"/community"}
                   data-analytics-event="community_clicked"
@@ -475,7 +518,7 @@ defmodule DialecticWeb.HomeLive do
                 class="mt-3 text-sm leading-6 text-slate-300"
               >
                 Try Simple answers without an account.
-                Sign up free to save bookmarks and highlights.
+                Sign up free to organise your grids, save bookmarks and highlights.
               </p>
             </div>
             <.link
@@ -731,13 +774,14 @@ defmodule DialecticWeb.HomeLive do
         <div class="mx-auto flex w-full max-w-5xl flex-col gap-6 px-5 py-12 sm:px-8 sm:py-14 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
-              Where will your curiosity take you?
+              A workspace that grows with you
             </p>
             <h2 class="mt-2 font-serif text-3xl font-semibold tracking-tight sm:text-4xl">
-              Build a grid you’ll want to come back to.
+              Find an answer today. Build on it tomorrow.
             </h2>
             <p class="mt-3 max-w-xl text-sm leading-6 text-slate-600">
-              Enjoy the exploration. Keep the connections. Return with a new question whenever you’re ready.
+              Give each subject a home. Keep related grids, bookmarks, and highlights together,
+              ready for your next question, project, or revision session.
             </p>
           </div>
           <div class="flex flex-col items-start gap-3 lg:max-w-sm lg:shrink-0 lg:items-end">
@@ -745,12 +789,12 @@ defmodule DialecticWeb.HomeLive do
             <%= if @current_user do %>
               <.link
                 id="home-final-library-link"
-                navigate={~p"/u/#{Dialectic.Accounts.User.effective_username(@current_user)}" <> "#profile-thinking-library"}
-                data-analytics-event="saved_for_recall_clicked"
+                href={~p"/my/learning"}
+                data-analytics-event="my_learning_clicked"
                 data-analytics-location="home_final_cta"
                 class="inline-flex min-h-11 items-center text-sm font-semibold text-slate-700 underline decoration-slate-500 underline-offset-4 hover:text-teal-800"
               >
-                Open Saved for recall
+                Open My Learning
               </.link>
             <% else %>
               <.link
@@ -863,12 +907,17 @@ defmodule DialecticWeb.HomeLive do
           >
             How it works
           </h2>
+          <p id="home-learning-value" class="mt-4 text-lg leading-8 text-slate-700">
+            ChatGPT can give you a great answer. But how will you find it a day, a month, or a year later?
+            Build your knowledge in RationalGrid, with grids organised by topic and useful answers
+            ready to revisit in My Learning.
+          </p>
         </div>
 
         <ol id="home-learning-steps" class="mt-9 grid gap-8 md:grid-cols-3">
           <li id="home-learning-ask" class="flex min-w-0 flex-col border-t-2 border-sky-500 pt-5">
             <p class="text-xs font-bold uppercase tracking-[0.16em] text-sky-800">01 / Ask</p>
-            <h3 class="mt-2 text-xl font-semibold">Start with a little curiosity.</h3>
+            <h3 class="mt-2 text-xl font-semibold">Find answers to your questions.</h3>
             <p class="mt-3 text-sm leading-6 text-slate-600">
               Bring a big question, a passing thought, or something you’ve always wondered about.
               Your first answer starts the grid.
@@ -914,40 +963,47 @@ defmodule DialecticWeb.HomeLive do
             </div>
           </li>
           <li id="home-learning-return" class="flex min-w-0 flex-col border-t-2 border-teal-500 pt-5">
-            <p class="text-xs font-bold uppercase tracking-[0.16em] text-teal-800">03 / Return</p>
-            <h3 class="mt-2 text-xl font-semibold">Find your way back in.</h3>
+            <p class="text-xs font-bold uppercase tracking-[0.16em] text-teal-800">
+              03 / Organise & return
+            </p>
+            <h3 class="mt-2 text-xl font-semibold">Keep your learning organised.</h3>
             <p class="mt-3 text-sm leading-6 text-slate-600">
-              The grid keeps the path you took. Search for an idea, revisit a highlight, or open
-              a bookmark in Saved for recall, then keep exploring.
+              Put your Economics grids in one collection and your History grids in another,
+              just as you would organise study notes. My Learning keeps your grids, bookmarks,
+              and highlights together by topic, so you can find an answer and build on it.
             </p>
             <div
               id="home-return-tools"
               class="mt-5 flex-1 rounded-lg border border-slate-200 bg-white p-5"
             >
-              <p class="text-xs font-semibold text-slate-500">Three ways back to the context</p>
+              <p class="text-xs font-semibold text-slate-500">Your learning, ready to return to</p>
               <ul class="mt-4 space-y-4 text-sm leading-6">
                 <li class="flex items-start gap-3">
+                  <.icon name="hero-folder" class="mt-1 h-4 w-4 shrink-0 text-teal-700" />
+                  <span><strong class="block text-slate-900">Subject collections</strong><span class="text-slate-600">Start with topics from your grid tags. Drag grids into collections or create your own.</span></span>
+                </li>
+                <li class="flex items-start gap-3">
                   <.icon name="hero-magnifying-glass" class="mt-1 h-4 w-4 shrink-0 text-teal-700" />
-                  <span><strong class="block text-slate-900">Search</strong><span class="text-slate-600">Find an idea within your grid.</span></span>
+                  <span><strong class="block text-slate-900">Search</strong><span class="text-slate-600">Find your grids by title or tag, then explore the answers inside.</span></span>
                 </li>
                 <li class="flex items-start gap-3">
                   <.icon name="hero-pencil" class="mt-1 h-4 w-4 shrink-0 text-amber-700" />
-                  <span><strong class="block text-slate-900">Highlights</strong><span class="text-slate-600">Keep the passages that catch your attention.</span></span>
+                  <span><strong class="block text-slate-900">Highlights</strong><span class="text-slate-600">Keep useful passages with the grid they came from, ready to revisit in context.</span></span>
                 </li>
                 <li class="flex items-start gap-3">
                   <.icon name="hero-bookmark" class="mt-1 h-4 w-4 shrink-0 text-violet-700" />
-                  <span><strong class="block text-slate-900">Saved for recall</strong><span class="text-slate-600">Reopen bookmarks and highlights from your profile.</span></span>
+                  <span><strong class="block text-slate-900">My Learning</strong><span class="text-slate-600">Choose a topic, then browse its grids, bookmarks, or highlights together.</span></span>
                 </li>
               </ul>
               <p id="home-recall-account-note" class="mt-5 text-sm leading-6 text-slate-600">
-                A free account keeps your bookmarks and highlights together.
+                A free account keeps your grids, collections, bookmarks and highlights together in My Learning.
                 <.link
                   :if={@current_user}
-                  id="home-saved-for-recall-link"
-                  navigate={~p"/u/#{Dialectic.Accounts.User.effective_username(@current_user)}" <> "#profile-thinking-library"}
+                  id="home-learning-workspace-link"
+                  href={~p"/my/learning"}
                   class="font-semibold text-teal-800 underline decoration-teal-500 underline-offset-4 hover:text-teal-950"
                 >
-                  Open Saved for recall
+                  Open My Learning
                 </.link>
               </p>
             </div>
@@ -1145,7 +1201,7 @@ defmodule DialecticWeb.HomeLive do
           "url" => base_url,
           "image" => base_url <> ~p"/images/graph_live.webp",
           "description" =>
-            "A free AI-assisted learning and research tool. Build a connected grid as you ask questions, challenge answers, and explain technical terms, then return with search, highlights, and bookmarks.",
+            "An all-in-one AI learning workspace. Explore questions, organise grids into subject collections, and find your answers, bookmarks, and highlights together in My Learning.",
           "applicationCategory" => "EducationalApplication",
           "operatingSystem" => "Web",
           "isAccessibleForFree" => true,

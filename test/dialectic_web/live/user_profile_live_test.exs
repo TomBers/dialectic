@@ -205,29 +205,19 @@ defmodule DialecticWeb.UserProfileLiveTest do
   end
 
   describe "own profile vs other profile" do
-    test "defaults to the private library and can preview the public profile", %{conn: conn} do
+    test "always shows the public social profile, including for its owner", %{conn: conn} do
       user = create_user_with_username("ownprofile")
-
-      {:ok, lv, _html} =
-        conn
-        |> log_in_user(user)
-        |> live(~p"/u/ownprofile")
-
-      assert has_element?(lv, "#profile-view-switcher")
-      assert has_element?(lv, "#profile-library-tab", "My library")
-      assert has_element?(lv, "#profile-library-header", "Only you can see this")
-      assert has_element?(lv, "#profile-settings-link", "Settings")
-      assert has_element?(lv, "#profile-thinking-library")
-      refute has_element?(lv, "#public-grids-content")
-
-      lv
-      |> element("#profile-public-tab")
-      |> render_click()
-
-      assert has_element?(lv, "#profile-public-tab", "Public profile")
-      assert has_element?(lv, "#public-grids-content")
+      private = create_private_graph(user, "Private notes", slug: "private-notes", tags: [])
+      public = create_public_graph(user, "Public work", slug: "public-work", tags: [])
+      {:ok, lv, _} = conn |> log_in_user(user) |> live(~p"/u/ownprofile")
+      assert has_element?(lv, "#public-profile-header")
+      assert has_element?(lv, "#profile-settings-link", "Edit public profile")
+      assert has_element?(lv, "#profile-public-grid-row-#{public.slug}")
+      refute has_element?(lv, "#profile-public-grid-row-#{private.slug}")
+      refute has_element?(lv, "#profile-view-switcher")
       refute has_element?(lv, "#profile-thinking-library")
-      refute has_element?(lv, "#profile-settings-link")
+      refute has_element?(lv, "#profile-owned-grids")
+      refute has_element?(lv, "#delete-graph-modal")
     end
 
     test "does not show 'Account Settings' link when viewing another user's profile", %{
@@ -245,7 +235,7 @@ defmodule DialecticWeb.UserProfileLiveTest do
       assert has_element?(lv, "#public-grids-content")
     end
 
-    test "shows a start grid action only in the owner's library", %{conn: conn} do
+    test "keeps grid creation out of the public profile", %{conn: conn} do
       user = create_user_with_username("emptyown")
 
       {:ok, _lv, html} =
@@ -253,7 +243,7 @@ defmodule DialecticWeb.UserProfileLiveTest do
         |> log_in_user(user)
         |> live(~p"/u/emptyown")
 
-      assert html =~ "Start a grid"
+      refute html =~ "Start a grid"
     end
 
     test "does not show 'Create your first grid' on other user's empty profile", %{conn: conn} do
@@ -339,7 +329,7 @@ defmodule DialecticWeb.UserProfileLiveTest do
       assert render_click(lv, "unfollow_profile") =~ "Log in to manage followed profiles."
     end
 
-    test "shows the activity link on own profile", %{conn: conn} do
+    test "keeps private activity in My Learning", %{conn: conn} do
       user = create_user_with_username("activitylink")
 
       {:ok, lv, _html} =
@@ -347,10 +337,12 @@ defmodule DialecticWeb.UserProfileLiveTest do
         |> log_in_user(user)
         |> live(~p"/u/activitylink")
 
-      assert has_element?(lv, ~s(#profile-activity-link[href="/activity"]))
+      refute has_element?(lv, ~s(#profile-activity-link[href="/activity"]))
     end
 
-    test "shows noted nodes and saved highlights on own profile", %{conn: conn} do
+    test "saved bookmarks and highlights live in My Learning and never the public profile", %{
+      conn: conn
+    } do
       user = create_user_with_username("highlightprofile")
 
       graph =
@@ -380,53 +372,38 @@ defmodule DialecticWeb.UserProfileLiveTest do
           created_by_user_id: user.id
         })
 
-      {:ok, lv, html} =
-        conn
-        |> log_in_user(user)
-        |> live(~p"/u/highlightprofile")
-
-      assert html =~ "Bookmarks and highlights"
-      assert html =~ "Saved for recall"
-      assert html =~ "Saved grids"
-      refute has_element?(lv, "#profile-bookmark-groups")
-      refute has_element?(lv, "#profile-highlight-groups")
-
-      assert has_element?(lv, "#profile-saved-graph-quote-grid > summary", graph.title)
-      assert has_element?(lv, "#profile-saved-graph-quote-grid > summary", "1 bookmark")
-      assert has_element?(lv, "#profile-saved-graph-quote-grid > summary", "1 highlight")
-      refute has_element?(lv, "#profile-saved-graph-quote-grid > summary", "node")
+      conn = log_in_user(conn, user)
+      {:ok, profile, _} = live(conn, ~p"/u/highlightprofile")
+      refute has_element?(profile, "#profile-thinking-library")
+      refute has_element?(profile, "#learning-bookmark-#{note.id}")
+      refute has_element?(profile, "#learning-highlight-#{highlight.id}")
+      {:ok, learning, _} = live(conn, ~p"/my/learning")
+      assert has_element?(learning, "#learning-bookmark-#{note.id}", "Source Node Title")
 
       assert has_element?(
-               lv,
-               "#profile-saved-graph-quote-grid #profile-noted-note-#{note.id}"
+               learning,
+               "#learning-highlight-#{highlight.id}",
+               "This is a saved quote."
              )
 
-      assert has_element?(lv, "#profile-noted-title-#{note.id}", "Source Node Title")
-      refute html =~ "My Notes"
-      refute html =~ "Saved node"
-      refute html =~ "Saved passage"
-      assert has_element?(lv, "#profile-saved-graph-quote-grid section h4", "Source Node Title")
-
       assert has_element?(
-               lv,
-               "#profile-saved-graph-quote-grid #profile-highlight-#{highlight.id}"
-             )
-
-      assert has_element?(lv, "#profile-highlight-quote-#{highlight.id}")
-
-      assert has_element?(
-               lv,
-               "#profile-highlight-note-#{highlight.id}",
+               learning,
+               "#learning-highlight-#{highlight.id}",
                "A useful saved thought."
              )
 
-      assert render(lv) =~ "This is a saved quote."
-      assert render(lv) =~ "A useful saved thought."
-      assert render(lv) =~ "Source Node Title"
-      assert render(lv) =~ graph.title
+      assert has_element?(
+               learning,
+               ~s(#learning-bookmark-#{note.id}-open[href="/g/quote-grid?node=quote-node"])
+             )
+
+      assert has_element?(
+               learning,
+               ~s(#learning-highlight-#{highlight.id}-open[href="/g/quote-grid?node=quote-node&highlight=#{highlight.id}"])
+             )
     end
 
-    test "shows grids followed by the profile owner after the thinking library", %{conn: conn} do
+    test "followed grids live in My Learning", %{conn: conn} do
       user = create_user_with_username("followedgridprofile")
       graph_author = create_user_with_username("followedgridauthor")
 
@@ -438,20 +415,12 @@ defmodule DialecticWeb.UserProfileLiveTest do
 
       assert {:ok, _follow} = Follows.follow_graph(user, followed_graph)
 
-      {:ok, lv, _html} =
-        conn
-        |> log_in_user(user)
-        |> live(~p"/u/followedgridprofile")
-
-      assert has_element?(lv, "#profile-followed-grids")
-      assert has_element?(lv, "#profile-followed-grid-followed-grid-link")
-
-      assert has_element?(
-               lv,
-               ~s(#profile-followed-grid-followed-grid-link a[href="/g/followed-grid-link"])
-             )
-
-      assert has_element?(lv, "#profile-followed-grid-followed-grid-link", "followedgridauthor")
+      conn = log_in_user(conn, user)
+      {:ok, profile, _} = live(conn, ~p"/u/followedgridprofile")
+      refute has_element?(profile, "#profile-followed-grids")
+      {:ok, learning, _} = live(conn, ~p"/my/learning")
+      id = "learning-grid-" <> Base.url_encode64(followed_graph.title, padding: false)
+      assert has_element?(learning, "##{id}-open[href='/g/followed-grid-link']")
     end
   end
 
@@ -475,113 +444,6 @@ defmodule DialecticWeb.UserProfileLiveTest do
 
       # The graph card links to the slug-based route
       assert html =~ "/g/#{unique_slug}"
-    end
-  end
-
-  describe "graph deletion" do
-    test "shows only private grids in the private grids section", %{conn: conn} do
-      user = create_user_with_username("deleteuser")
-      public_graph = create_public_graph(user, "Public Graph", slug: "public-graph", tags: [])
-      private_graph = create_private_graph(user, "Private Graph", slug: "private-graph", tags: [])
-
-      {:ok, _lv, html} =
-        conn
-        |> log_in_user(user)
-        |> live(~p"/u/deleteuser")
-
-      assert html =~ "Private grids"
-      assert html =~ "delete-grid-btn-private-graph"
-      assert html =~ private_graph.title
-      refute html =~ "delete-grid-btn-public-graph"
-      assert html =~ public_graph.title
-    end
-
-    test "does not show delete button when viewing another user's profile", %{conn: conn} do
-      other_user = create_user_with_username("otherdeleteuser")
-      _graph = create_public_graph(other_user, "Other Graph", slug: "other-graph", tags: [])
-      viewer = user_fixture()
-
-      {:ok, _lv, html} =
-        conn
-        |> log_in_user(viewer)
-        |> live(~p"/u/otherdeleteuser")
-
-      # Delete button should not be visible
-      refute html =~ "delete-grid-btn-"
-      refute html =~ "delete-public-grid-btn-"
-    end
-
-    test "shows delete button in My Public Grids section on own profile", %{conn: conn} do
-      user = create_user_with_username("publicdeluser")
-      _graph = create_public_graph(user, "Public Graph", slug: "public-delete-test", tags: [])
-
-      {:ok, _lv, html} =
-        conn
-        |> log_in_user(user)
-        |> live(~p"/u/publicdeluser")
-
-      # Delete button should be visible in the public grids section
-      assert html =~ "delete-public-grid-btn-public-delete-test"
-    end
-
-    test "can delete own graph via confirmation modal", %{conn: conn} do
-      user = create_user_with_username("confirmdel")
-      graph = create_private_graph(user, "Deletable Graph", slug: "deletable", tags: [])
-
-      {:ok, lv, _html} =
-        conn
-        |> log_in_user(user)
-        |> live(~p"/u/confirmdel")
-
-      # Trigger the delete modal
-      lv
-      |> element("#delete-grid-btn-deletable")
-      |> render_click()
-
-      # Confirm the deletion
-      html =
-        lv
-        |> element("#confirm-delete-graph-btn")
-        |> render_click()
-
-      # Flash message should appear
-      assert html =~ "has been deleted"
-
-      # Verify in database that the graph is soft-deleted
-      updated_graph = Dialectic.Repo.get_by(Dialectic.Accounts.Graph, title: graph.title)
-      assert updated_graph.is_deleted == true
-
-      # Graph should no longer be visible in the Private grids section
-      # Note: The title might still be in the flash message, so we check specifically
-      # that the graph card is gone by checking for the delete button
-      refute html =~ "delete-grid-btn-deletable"
-    end
-
-    test "can cancel graph deletion", %{conn: conn} do
-      user = create_user_with_username("canceluser")
-      graph = create_private_graph(user, "Keep This Graph", slug: "keep-graph", tags: [])
-
-      {:ok, lv, _html} =
-        conn
-        |> log_in_user(user)
-        |> live(~p"/u/canceluser")
-
-      # Trigger the delete modal
-      lv
-      |> element("#delete-grid-btn-keep-graph")
-      |> render_click()
-
-      # Cancel the deletion
-      html =
-        lv
-        |> render_click("cancel_delete")
-
-      # Graph should still be visible
-      assert html =~ graph.title
-
-      # Verify in database that the graph is NOT deleted
-      unchanged_graph = Dialectic.Repo.get_by(Dialectic.Accounts.Graph, title: graph.title)
-      refute unchanged_graph.is_deleted
     end
   end
 end

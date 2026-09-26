@@ -51,6 +51,7 @@ import YouTubeFacadeHook from "./youtube_facade_hook.js";
 import DismissibleHintHook from "./dismissible_hint_hook.js";
 import GenerationStatusHook from "./generation_status_hook.js";
 import ProofCarouselHook from "./proof_carousel_hook.js";
+import LearningDrag from "./learning_drag_hook.js";
 import { syncGraphAppearanceStorage } from "./appearance_preferences.js";
 import {
   initAnalyticsEventTracking,
@@ -97,6 +98,7 @@ hooks.YouTubeFacade = YouTubeFacadeHook;
 hooks.DismissibleHint = DismissibleHintHook;
 hooks.GenerationStatus = GenerationStatusHook;
 hooks.ProofCarousel = ProofCarouselHook;
+hooks.LearningDrag = LearningDrag;
 hooks.GlobalModalLayer = {
   mounted() {
     this.opener = document.activeElement;

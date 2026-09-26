@@ -6,12 +6,12 @@ defmodule DialecticWeb.AboutLiveTest do
   test "renders the essential about-page content", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/about")
 
-    assert has_element?(view, "#about-value-proposition", "AI-assisted visual thinking tool")
+    assert has_element?(view, "#about-value-proposition", "AI learning workspace")
     assert has_element?(view, "#about-purpose", "Make learning more rewarding.")
     assert has_element?(view, "#about-tools", "What RationalGrid does")
     assert has_element?(view, "#about-tool-explore", "Explore connected ideas")
-    assert has_element?(view, "#about-tool-check", "Check claims and assumptions")
-    assert has_element?(view, "#about-tool-keep", "Keep and share the thinking")
+    assert has_element?(view, "#about-tool-organise", "Give each subject a home")
+    assert has_element?(view, "#about-tool-keep", "Find it again and build on it")
     assert has_element?(view, "#about-audiences", "Who RationalGrid is for")
     assert has_element?(view, "#about-team", "The team behind RationalGrid")
     assert has_element?(view, "#about-tom-berman", "one of the first engineers at Octopus Energy")

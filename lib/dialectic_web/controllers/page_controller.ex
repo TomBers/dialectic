@@ -1,31 +1,8 @@
 defmodule DialecticWeb.PageController do
   use DialecticWeb, :controller
 
-  alias Dialectic.DbActions.Notes
-  alias DialecticWeb.Utils.NodeTitleHelper
-
   def my_graphs(conn, _params) do
-    stats = Notes.get_my_stats(conn.assigns.current_user)
-
-    noted_notes =
-      stats.notes
-      |> Enum.filter(& &1.is_noted)
-      |> Enum.map(fn note ->
-        node_title =
-          (note.graph.data["nodes"] || [])
-          |> Enum.find_value(fn n ->
-            if n["id"] == note.node_id do
-              case NodeTitleHelper.extract_node_title(n) do
-                "Untitled" -> nil
-                title -> title
-              end
-            end
-          end)
-
-        Map.put(note, :node_title, node_title || "Node #{note.node_id}")
-      end)
-
-    render(conn, :my_graphs, page_title: "My Ideas", stats: stats, noted_notes: noted_notes)
+    redirect(conn, to: ~p"/my/learning")
   end
 
   def view_all(conn, params) do
