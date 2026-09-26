@@ -303,7 +303,7 @@ defmodule DialecticWeb.HomeLiveTest do
     {:ok, view, _html} = live(conn, ~p"/")
 
     assert has_element?(view, "#home-learning-loop h2#home-product-preview-title")
-    assert has_element?(view, "#home-learning-loop", "follow the reasoning again later")
+    assert has_element?(view, "#home-visible-learning", "follow the reasoning and build on it")
 
     assert has_element?(
              view,
@@ -400,7 +400,7 @@ defmodule DialecticWeb.HomeLiveTest do
     assert has_element?(
              view,
              "#home-faq-chat-assistants",
-             "organise those grids into subject collections"
+             "Organise them by topic in My Learning"
            )
 
     assert has_element?(

@@ -30,7 +30,7 @@ defmodule DialecticWeb.HomeLive do
       id: "chat-assistants",
       question: "Why not just use ChatGPT or Claude?",
       answer:
-        "ChatGPT can give you a great answer. But how will you find it a day, a month, or a year later? RationalGrid gives your learning a home: explore questions with AI in connected grids, organise those grids into subject collections, and keep bookmarks and highlights alongside them. When you return to a topic, your questions, answers, and saved passages are together in My Learning.",
+        "RationalGrid keeps questions, answers, and sources connected in grids. Organise them by topic in My Learning, with bookmarks and highlights alongside. Return to an idea, check your understanding, and build on it.",
       comparisons_link?: true
     },
     %{
@@ -454,9 +454,8 @@ defmodule DialecticWeb.HomeLive do
               A home for everything <span class="block text-teal-200">you’re learning.</span>
             </h1>
             <p id="home-hero-subheading" class="mt-6 max-w-xl text-lg leading-8 text-slate-200">
-              Find answers, organise your knowledge, and return to it—all in one AI learning workspace.
-              Organise your grids by subject, keep bookmarks and highlights alongside them,
-              and pick up where you left off in My Learning.
+              Explore questions with AI and other people. Organise your grids by subject in My Learning.
+              Return to useful answers and build on them.
             </p>
             <div id="start-here" class="mt-7 scroll-mt-24">
               <div id="home-start-panel" class="max-w-xl">
@@ -600,12 +599,9 @@ defmodule DialecticWeb.HomeLive do
             >
               Watch the tour
             </h2>
-            <p class="mt-5 max-w-xl text-base leading-7 text-slate-300">
-              Follow a surprising answer, ask for a challenge, or get a tricky term explained.
-              It all becomes part of the same grid, so you can follow the reasoning again later.
-            </p>
-            <p class="mt-4 max-w-xl text-base leading-7 text-slate-300">
-              Watch the product tour, or open the guide and explore at your own pace.
+            <p id="home-visible-learning" class="mt-5 max-w-xl text-base leading-7 text-slate-300">
+              AI is here. Make the learning visible: who asked, what was explored, and how ideas connect.
+              Share a grid so others can follow the reasoning and build on it.
             </p>
             <div class="mt-5 flex flex-wrap gap-x-5 gap-y-3">
               <.link
@@ -780,8 +776,7 @@ defmodule DialecticWeb.HomeLive do
               Find an answer today. Build on it tomorrow.
             </h2>
             <p class="mt-3 max-w-xl text-sm leading-6 text-slate-600">
-              Give each subject a home. Keep related grids, bookmarks, and highlights together,
-              ready for your next question, project, or revision session.
+              Recall what you learned. Check it. Ask your next question.
             </p>
           </div>
           <div class="flex flex-col items-start gap-3 lg:max-w-sm lg:shrink-0 lg:items-end">
@@ -909,8 +904,10 @@ defmodule DialecticWeb.HomeLive do
           </h2>
           <p id="home-learning-value" class="mt-4 text-lg leading-8 text-slate-700">
             ChatGPT can give you a great answer. But how will you find it a day, a month, or a year later?
-            Build your knowledge in RationalGrid, with grids organised by topic and useful answers
-            ready to revisit in My Learning.
+          </p>
+          <p id="home-learning-benefit" class="mt-4 text-base leading-7 text-slate-600">
+            Recall an idea before reopening the answer: it strengthens memory and reveals gaps.
+            Connect it to what you know to deepen your understanding.
           </p>
         </div>
 
@@ -919,8 +916,7 @@ defmodule DialecticWeb.HomeLive do
             <p class="text-xs font-bold uppercase tracking-[0.16em] text-sky-800">01 / Ask</p>
             <h3 class="mt-2 text-xl font-semibold">Find answers to your questions.</h3>
             <p class="mt-3 text-sm leading-6 text-slate-600">
-              Bring a big question, a passing thought, or something you’ve always wondered about.
-              Your first answer starts the grid.
+              Ask a question. Your answer starts a grid of connected ideas.
             </p>
             <div class="mt-5 flex-1 rounded-lg border border-slate-200 bg-slate-50 p-5">
               <p class="text-xs font-semibold text-slate-500">An example starting point</p>
@@ -941,10 +937,9 @@ defmodule DialecticWeb.HomeLive do
             class="flex min-w-0 flex-col border-t-2 border-violet-400 pt-5"
           >
             <p class="text-xs font-bold uppercase tracking-[0.16em] text-violet-800">02 / Explore</p>
-            <h3 class="mt-2 text-xl font-semibold">Let the question take you further.</h3>
+            <h3 class="mt-2 text-xl font-semibold">Take ideas further, together.</h3>
             <p class="mt-3 text-sm leading-6 text-slate-600">
-              Ask a follow-up, invite a counterargument, or explain a technical term.
-              Each branch stays linked to the idea that sparked it, all in the same grid.
+              Share a grid, add questions, and compare perspectives. Build on each other’s ideas.
             </p>
             <div class="mt-5 flex-1 rounded-lg border border-slate-200 bg-slate-50 p-5">
               <p class="text-xs font-semibold text-slate-500">Two directions from the same idea</p>
@@ -968,35 +963,34 @@ defmodule DialecticWeb.HomeLive do
             </p>
             <h3 class="mt-2 text-xl font-semibold">Keep your learning organised.</h3>
             <p class="mt-3 text-sm leading-6 text-slate-600">
-              Put your Economics grids in one collection and your History grids in another,
-              just as you would organise study notes. My Learning keeps your grids, bookmarks,
-              and highlights together by topic, so you can find an answer and build on it.
+              Keep related grids, bookmarks, and highlights together in My Learning.
+              Return to a topic and take your next step.
             </p>
             <div
               id="home-return-tools"
               class="mt-5 flex-1 rounded-lg border border-slate-200 bg-white p-5"
             >
-              <p class="text-xs font-semibold text-slate-500">Your learning, ready to return to</p>
+              <p class="text-xs font-semibold text-slate-500">My Learning</p>
               <ul class="mt-4 space-y-4 text-sm leading-6">
                 <li class="flex items-start gap-3">
                   <.icon name="hero-folder" class="mt-1 h-4 w-4 shrink-0 text-teal-700" />
-                  <span><strong class="block text-slate-900">Subject collections</strong><span class="text-slate-600">Start with topics from your grid tags. Drag grids into collections or create your own.</span></span>
+                  <span><strong class="block text-slate-900">Subject collections</strong><span class="text-slate-600">Topics from your tags. Drag grids into collections.</span></span>
                 </li>
                 <li class="flex items-start gap-3">
                   <.icon name="hero-magnifying-glass" class="mt-1 h-4 w-4 shrink-0 text-teal-700" />
-                  <span><strong class="block text-slate-900">Search</strong><span class="text-slate-600">Find your grids by title or tag, then explore the answers inside.</span></span>
+                  <span><strong class="block text-slate-900">Search</strong><span class="text-slate-600">Find grids by title or tag.</span></span>
                 </li>
                 <li class="flex items-start gap-3">
                   <.icon name="hero-pencil" class="mt-1 h-4 w-4 shrink-0 text-amber-700" />
-                  <span><strong class="block text-slate-900">Highlights</strong><span class="text-slate-600">Keep useful passages with the grid they came from, ready to revisit in context.</span></span>
+                  <span><strong class="block text-slate-900">Highlights</strong><span class="text-slate-600">Keep useful passages.</span></span>
                 </li>
                 <li class="flex items-start gap-3">
                   <.icon name="hero-bookmark" class="mt-1 h-4 w-4 shrink-0 text-violet-700" />
-                  <span><strong class="block text-slate-900">My Learning</strong><span class="text-slate-600">Choose a topic, then browse its grids, bookmarks, or highlights together.</span></span>
+                  <span><strong class="block text-slate-900">Bookmarks</strong><span class="text-slate-600">Save answers to revisit in context.</span></span>
                 </li>
               </ul>
               <p id="home-recall-account-note" class="mt-5 text-sm leading-6 text-slate-600">
-                A free account keeps your grids, collections, bookmarks and highlights together in My Learning.
+                Keep it all in My Learning with a free account.
                 <.link
                   :if={@current_user}
                   id="home-learning-workspace-link"
