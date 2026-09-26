@@ -33,6 +33,7 @@ defmodule DialecticWeb.LearningLive do
      )
      |> stream_configure(:grids, dom_id: &grid_id/1)
      |> stream(:grids, [])
+     |> stream(:topics, [])
      |> stream(:collections, []), layout: false}
   end
 
@@ -109,10 +110,13 @@ defmodule DialecticWeb.LearningLive do
 
   def handle_event("delete_collection", _params, socket) do
     case Learning.delete_collection(socket.assigns.current_user, collection_id(socket)) do
-      {:ok, _} ->
+      {:ok, collection} ->
         {:noreply,
          socket
-         |> put_flash(:info, "Collection deleted. Your grids have been kept.")
+         |> put_flash(
+           :info,
+           "#{String.capitalize(group_kind(collection))} deleted. Your grids have been kept."
+         )
          |> push_patch(to: ~p"/my/learning")}
 
       {:error, _} ->
@@ -240,10 +244,19 @@ defmodule DialecticWeb.LearningLive do
   end
 
   defp refresh_collections(socket) do
-    collections = Learning.list_collections(socket.assigns.current_user)
+    {topics, collections} =
+      socket.assigns.current_user
+      |> Learning.list_collections()
+      |> Enum.split_with(&(&1.origin == :tags))
+
+    options =
+      [{"Topics", topics}, {"Collections", collections}]
+      |> Enum.reject(fn {_label, items} -> items == [] end)
+      |> Enum.map(fn {label, items} -> {label, Enum.map(items, &{&1.name, &1.id})} end)
 
     socket
-    |> assign(:collection_options, Enum.map(collections, &{&1.name, &1.id}))
+    |> assign(:collection_options, options)
+    |> stream(:topics, topics, reset: true)
     |> stream(:collections, collections, reset: true)
   end
 
@@ -261,7 +274,11 @@ defmodule DialecticWeb.LearningLive do
 
       {:error, _} ->
         {:noreply,
-         put_flash(socket, :error, "Choose one of your collections and an available grid.")}
+         put_flash(
+           socket,
+           :error,
+           "Choose one of your topics or collections and an available grid."
+         )}
     end
   end
 
@@ -287,6 +304,61 @@ defmodule DialecticWeb.LearningLive do
   defp collection_id(_socket), do: nil
   defp grid_id(grid), do: "learning-grid-" <> Base.url_encode64(grid.title, padding: false)
 
+  defp group_kind(%{origin: :tags}), do: "topic"
+  defp group_kind(_collection), do: "collection"
+
+  attr :id, :string, required: true
+  attr :title, :string, required: true
+  attr :hint, :string, required: true
+  attr :empty_message, :string, required: true
+  attr :icon, :string, required: true
+  attr :items, :any, required: true
+  attr :selected, :any, required: true
+  attr :saved_kind, :string, required: true
+
+  defp learning_group_list(assigns) do
+    ~H"""
+    <section aria-labelledby={@id <> "-heading"}>
+      <h2
+        id={@id <> "-heading"}
+        class="mb-1 mt-6 px-3 text-xs font-bold uppercase tracking-wider text-slate-500"
+      >
+        {@title}
+      </h2>
+      <p class="mb-2 px-3 text-xs text-slate-500">{@hint}</p>
+      <div id={@id} phx-update="stream" class="space-y-1">
+        <p
+          id={@id <> "-empty"}
+          class="hidden px-3 py-2 text-sm leading-6 text-slate-600 only:block"
+        >
+          {@empty_message}
+        </p>
+        <.link
+          :for={{id, collection} <- @items}
+          id={id}
+          patch={filter_path(collection, @saved_kind)}
+          data-learning-drop={collection.id}
+          aria-current={if(@selected && @selected.id == collection.id, do: "page")}
+          class={[
+            "flex items-center gap-2 rounded-md px-3 py-3 text-sm data-[drag-over=true]:ring-2 data-[drag-over=true]:ring-teal-500",
+            if(@selected && @selected.id == collection.id,
+              do: "bg-teal-800 font-semibold text-white",
+              else: "hover:bg-white"
+            )
+          ]}
+        >
+          <.icon name={@icon} class="h-5 w-5 shrink-0" />
+          <span class="min-w-0 flex-1 break-words">{collection.name}</span>
+          <span
+            aria-label={"#{collection.grid_count} #{if(collection.grid_count == 1, do: "grid", else: "grids")}"}
+            class="text-xs tabular-nums"
+          >{collection.grid_count}</span>
+        </.link>
+      </div>
+    </section>
+    """
+  end
+
   defp filter_path(collection, kind) do
     params = if collection, do: %{collection: collection.id, saved: kind}, else: %{saved: kind}
     ~p"/my/learning?#{params}"
@@ -303,7 +375,7 @@ defmodule DialecticWeb.LearningLive do
         on_cancel={JS.push("cancel_organise")}
       >
         <h2 id="learning-organise-modal-title" class="text-xl font-semibold">
-          Add to a topic collection
+          Add to a topic or collection
         </h2>
         <p id="learning-organise-modal-description" class="mt-2 text-sm text-slate-600">
           {@organise_title}
@@ -318,9 +390,9 @@ defmodule DialecticWeb.LearningLive do
             field={@organise_form[:collection_id]}
             id="learning-organise-target"
             type="select"
-            label="Collection"
+            label="Topic or collection"
             options={@collection_options}
-            prompt="Choose a collection"
+            prompt="Choose a topic or collection"
             required
           />
           <p :if={@collection_options == []} class="text-sm text-slate-600">
@@ -392,7 +464,7 @@ defmodule DialecticWeb.LearningLive do
 
           <div class="mt-8 grid gap-8 lg:grid-cols-[16rem_minmax(0,1fr)]">
             <aside id="learning-sidebar" class="space-y-6">
-              <nav aria-label="Learning collections">
+              <nav aria-label="Topics and collections">
                 <.link
                   id="learning-all-grids"
                   patch={filter_path(nil, @saved_kind)}
@@ -404,38 +476,26 @@ defmodule DialecticWeb.LearningLive do
                 >
                   <.icon name="hero-squares-2x2" class="h-5 w-5" /> All grids
                 </.link>
-                <h2 class="mb-2 mt-6 px-3 text-xs font-bold uppercase tracking-wider text-slate-500">
-                  Topic collections
-                </h2>
-                <div id="learning-collections" phx-update="stream" class="space-y-1">
-                  <p
-                    id="learning-no-collections"
-                    class="hidden px-3 py-2 text-sm leading-6 text-slate-600 only:block"
-                  >
-                    Create a collection for a subject you’re learning.
-                  </p>
-                  <.link
-                    :for={{id, collection} <- @streams.collections}
-                    id={id}
-                    patch={filter_path(collection, @saved_kind)}
-                    data-learning-drop={collection.id}
-                    aria-current={if(@collection && @collection.id == collection.id, do: "page")}
-                    class={[
-                      "flex items-center gap-2 rounded-md px-3 py-3 text-sm data-[drag-over=true]:ring-2 data-[drag-over=true]:ring-teal-500",
-                      if(@collection && @collection.id == collection.id,
-                        do: "bg-teal-800 font-semibold text-white",
-                        else: "hover:bg-white"
-                      )
-                    ]}
-                  >
-                    <.icon name="hero-folder" class="h-5 w-5 shrink-0" />
-                    <span class="min-w-0 flex-1 break-words">{collection.name}</span>
-                    <span
-                      aria-label={"#{collection.grid_count} #{if(collection.grid_count == 1, do: "grid", else: "grids")}"}
-                      class="text-xs tabular-nums"
-                    >{collection.grid_count}</span>
-                  </.link>
-                </div>
+                <.learning_group_list
+                  id="learning-topics"
+                  title="Topics"
+                  hint="Started from your grid tags"
+                  empty_message="Topics appear when your grids have tags."
+                  icon="hero-tag"
+                  items={@streams.topics}
+                  selected={@collection}
+                  saved_kind={@saved_kind}
+                />
+                <.learning_group_list
+                  id="learning-collections"
+                  title="Collections"
+                  hint="Created by you"
+                  empty_message="Create a collection to group your grids."
+                  icon="hero-folder"
+                  items={@streams.collections}
+                  selected={@collection}
+                  saved_kind={@saved_kind}
+                />
               </nav>
 
               <details
@@ -475,8 +535,7 @@ defmodule DialecticWeb.LearningLive do
                 </.form>
               </details>
               <p class="px-3 text-xs leading-5 text-slate-500">
-                Your most common grid tags provide starter topics. Rename them or create your own.
-                Collections are personal; grids keep their sharing settings.
+                Topics and collections are personal. Grids keep their sharing settings.
               </p>
               <.link
                 id="learning-activity-link"
@@ -500,6 +559,17 @@ defmodule DialecticWeb.LearningLive do
                   <h2 id="learning-section-title" class="font-serif text-3xl font-semibold">
                     {if(@collection, do: @collection.name, else: "All your grids")}
                   </h2>
+                  <p
+                    :if={@collection}
+                    id="learning-collection-origin"
+                    data-origin={@collection.origin}
+                    class="mt-2 text-xs font-semibold text-teal-800"
+                  >
+                    {if(@collection.origin == :tags,
+                      do: "Topic · From your grid tags",
+                      else: "Collection · Created by you"
+                    )}
+                  </p>
                   <p
                     :if={@collection && @collection.description}
                     id="learning-collection-summary"
@@ -527,7 +597,9 @@ defmodule DialecticWeb.LearningLive do
                     patch={~p"/my/learning?collection=#{@collection.id}"}
                     class="rounded-md border border-teal-800 px-3 py-2 hover:bg-teal-50"
                   >Done</.link>
-                  <button id="learning-edit-button" type="button" phx-click="edit_collection">Edit collection</button>
+                  <button id="learning-edit-button" type="button" phx-click="edit_collection">Edit {group_kind(
+                    @collection
+                  )}</button>
                 </div>
               </div>
 
@@ -557,7 +629,7 @@ defmodule DialecticWeb.LearningLive do
                 >{label}</.link>
               </nav>
               <p id="learning-organise-hint" class="mt-3 text-xs leading-5 text-slate-500">
-                Drag a grid’s grip onto a topic to add it, or choose Organise. Bookmarks and highlights stay with their grid.
+                Drag a grid’s grip onto a topic or collection, or choose Organise. Bookmarks and highlights stay with their grid.
               </p>
 
               <.form
@@ -570,7 +642,7 @@ defmodule DialecticWeb.LearningLive do
                 <.input
                   field={@edit_form[:name]}
                   id="learning-edit-name"
-                  label="Collection name"
+                  label={"#{String.capitalize(group_kind(@collection))} name"}
                   required
                   maxlength="80"
                 />
@@ -592,9 +664,9 @@ defmodule DialecticWeb.LearningLive do
                     id="learning-delete-collection"
                     type="button"
                     phx-click="delete_collection"
-                    data-confirm="Delete this collection? Your grids will be kept."
+                    data-confirm={"Delete this #{group_kind(@collection)}? Your grids will be kept."}
                     class="text-red-700"
-                  >Delete collection</button>
+                  >Delete {group_kind(@collection)}</button>
                 </div>
               </.form>
 
@@ -603,7 +675,7 @@ defmodule DialecticWeb.LearningLive do
                 id="learning-adding-note"
                 class="mt-5 rounded-md bg-teal-50 px-4 py-3 text-sm text-teal-900"
               >
-                Choose grids to add to {@collection.name}. A grid can belong to more than one collection.
+                Choose grids to add to {@collection.name}. A grid can belong to multiple topics and collections.
               </p>
               <.form
                 for={@search_form}
@@ -619,7 +691,7 @@ defmodule DialecticWeb.LearningLive do
                   label={
                     if(@adding? || !@collection,
                       do: "Find a grid",
-                      else: "Find a grid in this collection"
+                      else: "Find a grid in this #{group_kind(@collection)}"
                     )
                   }
                   placeholder="Search grid titles or tags…"
@@ -652,7 +724,9 @@ defmodule DialecticWeb.LearningLive do
                         Open a grid and save an answer or highlight a passage. You’ll find it here with that grid.
                       </p>
                     <% @collection -> %>
-                      <h3 class="mt-4 text-lg font-semibold">Start building this collection</h3>
+                      <h3 class="mt-4 text-lg font-semibold">
+                        Start building this {group_kind(@collection)}
+                      </h3>
                       <p class="mt-2 text-sm leading-6 text-slate-600">
                         Add an existing grid or start a new one on this subject.
                       </p>
@@ -678,8 +752,8 @@ defmodule DialecticWeb.LearningLive do
                         data-grid-title={grid.title}
                         phx-click="organise_grid"
                         phx-value-title={grid.title}
-                        aria-label={"Organise #{grid.title}; drag to a topic or click to choose"}
-                        title="Drag to a topic or click to organise"
+                        aria-label={"Organise #{grid.title}; drag to a topic or collection, or click to choose"}
+                        title="Drag to a topic or collection, or click to organise"
                         class="mr-2 inline-flex cursor-grab rounded p-1 text-slate-400 hover:bg-teal-50 hover:text-teal-800 active:cursor-grabbing"
                       >
                         <.icon name="hero-bars-3" class="h-5 w-5" />
@@ -721,7 +795,7 @@ defmodule DialecticWeb.LearningLive do
                             phx-click="add_grid"
                             phx-value-title={grid.title}
                             class="rounded-md border border-teal-800 px-3 py-2 text-sm font-semibold text-teal-800 hover:bg-teal-50"
-                          >Add to collection</button>
+                          >Add to {group_kind(@collection)}</button>
                         <% @collection -> %>
                           <button
                             id={id <> "-remove"}
@@ -730,7 +804,7 @@ defmodule DialecticWeb.LearningLive do
                             phx-value-title={grid.title}
                             aria-label={"Remove #{grid.title} from #{@collection.name}"}
                             class="text-sm text-slate-500 hover:text-red-700"
-                          >Remove from collection</button>
+                          >Remove from {group_kind(@collection)}</button>
                         <% true -> %>
                           <.link
                             id={id <> "-continue"}

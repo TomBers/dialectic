@@ -5,6 +5,7 @@ defmodule Dialectic.Learning.Collection do
   schema "learning_collections" do
     field :name, :string
     field :description, :string
+    field :origin, Ecto.Enum, values: [:manual, :tags], default: :manual
     belongs_to :user, Dialectic.Accounts.User
     timestamps(type: :utc_datetime)
   end

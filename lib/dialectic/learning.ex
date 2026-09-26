@@ -33,7 +33,7 @@ defmodule Dialectic.Learning do
         Enum.each(topics, fn {name, titles} ->
           collection =
             Enum.find(existing, &(topic_key(&1.name) == name)) ||
-              Repo.insert!(%Collection{user_id: user.id, name: topic_name(name)})
+              Repo.insert!(%Collection{user_id: user.id, name: topic_name(name), origin: :tags})
 
           now = DateTime.utc_now() |> DateTime.truncate(:second)
 
@@ -118,6 +118,7 @@ defmodule Dialectic.Learning do
           id: c.id,
           name: c.name,
           description: c.description,
+          origin: c.origin,
           grid_count: count(graph.title)
         }
     )

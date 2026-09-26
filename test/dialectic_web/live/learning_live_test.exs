@@ -27,6 +27,8 @@ defmodule DialecticWeb.LearningLiveTest do
       {:ok, view, html} = live(conn, ~p"/my/learning")
       assert has_element?(view, "#learning-header")
       assert has_element?(view, "#learning-activity-link[href='/activity']")
+      assert has_element?(view, "#learning-topics-empty:only-child")
+      assert has_element?(view, "#learning-collections-empty:only-child")
 
       assert html
              |> LazyHTML.from_document()
@@ -45,6 +47,16 @@ defmodule DialecticWeb.LearningLiveTest do
       assert has_element?(view, "#learning-collection-summary", "How economies work")
       assert has_element?(view, "#collections-#{collection.id}[aria-current='page']")
 
+      assert has_element?(view, "#learning-collections #collections-#{collection.id}")
+      refute has_element?(view, "#learning-topics #collections-#{collection.id}")
+      refute has_element?(view, "#learning-collections-empty:only-child")
+
+      assert has_element?(
+               view,
+               "#learning-collection-origin[data-origin='manual']",
+               "Created by you"
+             )
+
       assert has_element?(
                view,
                "#learning-new-grid[href='/?collection=#{collection.id}&focus=grid#start-here']"
@@ -61,10 +73,13 @@ defmodule DialecticWeb.LearningLiveTest do
       assert has_element?(view, "#learning-section-title", "Economic history")
       {:ok, revisited, _} = live(conn, ~p"/my/learning?collection=#{collection.id}")
       assert has_element?(revisited, "#learning-collection-summary", "Reading notes")
+      assert has_element?(revisited, "#learning-collection-origin[data-origin='manual']")
+      assert has_element?(revisited, "#learning-collections #collections-#{collection.id}")
       revisited |> element("#learning-edit-button") |> render_click()
       revisited |> element("#learning-delete-collection") |> render_click()
       assert_patch(revisited, ~p"/my/learning")
       assert Learning.list_collections(user) == []
+      assert has_element?(revisited, "#learning-collections-empty:only-child")
     end
 
     test "adds existing grids, searches a collection, and removes membership without deleting the grid",
@@ -284,17 +299,81 @@ defmodule DialecticWeb.LearningLiveTest do
     user = user_fixture()
     grid = learning_grid_fixture(user, %{tags: ["economics"]})
     {:ok, bookmark} = Dialectic.DbActions.Notes.add_note(grid.title, "1", user)
+    {:ok, manual} = Learning.create_collection(user, %{name: "Revision"})
     conn = log_in_user(conn, user)
     {:ok, view, _} = live(conn, ~p"/my/learning")
-    [topic] = Learning.list_collections(user)
+    topic = Enum.find(Learning.list_collections(user), &(&1.origin == :tags))
     assert topic.name == "Economics"
     assert topic.grid_count == 1
-    view |> element("#collections-#{topic.id}") |> render_click()
+
+    assert has_element?(
+             view,
+             "#learning-topics #topics-#{topic.id}[data-learning-drop='#{topic.id}']"
+           )
+
+    assert has_element?(
+             view,
+             "#learning-collections #collections-#{manual.id}[data-learning-drop='#{manual.id}']"
+           )
+
+    refute has_element?(view, "#learning-collections #topics-#{topic.id}")
+    refute has_element?(view, "#learning-topics #collections-#{manual.id}")
+
+    view |> element("#topics-#{topic.id}") |> render_click()
+
+    assert has_element?(
+             view,
+             "#learning-collection-origin[data-origin='tags']",
+             "Topic · From your grid tags"
+           )
+
+    assert has_element?(view, "#learning-edit-button", "Edit topic")
+
+    view |> element("#learning-edit-button") |> render_click()
+
+    view
+    |> form("#learning-edit-collection", collection: %{name: "Economic thinking"})
+    |> render_submit()
+
+    assert has_element?(view, "#learning-section-title", "Economic thinking")
+    assert has_element?(view, "#learning-collection-origin[data-origin='tags']")
+    assert has_element?(view, "#learning-topics #topics-#{topic.id}", "Economic thinking")
     assert has_element?(view, grid_selector(grid))
     assert has_element?(view, "#learning-bookmark-#{bookmark.id}")
+
+    view |> element(grid_selector(grid, "-organise")) |> render_click()
+
+    assert has_element?(
+             view,
+             "#learning-organise-target optgroup[label='Topics'] option[value='#{topic.id}']"
+           )
+
+    assert has_element?(
+             view,
+             "#learning-organise-target optgroup[label='Collections'] option[value='#{manual.id}']"
+           )
+
+    view
+    |> form("#learning-organise-form", membership: %{collection_id: manual.id})
+    |> render_submit()
+
+    view |> element("#learning-filter-bookmarks") |> render_click()
+    view |> element("#collections-#{manual.id}") |> render_click()
+    assert_patch(view, ~p"/my/learning?collection=#{manual.id}&saved=bookmarks")
+    assert has_element?(view, "#learning-bookmark-#{bookmark.id}")
+    view |> element("#topics-#{topic.id}") |> render_click()
+    assert_patch(view, ~p"/my/learning?collection=#{topic.id}&saved=bookmarks")
+
+    view |> element(grid_selector(grid, "-remove")) |> render_click()
+    render_hook(view, "drop_grid", %{title: grid.title, collection_id: topic.id})
+    assert has_element?(view, grid_selector(grid))
     view |> element(grid_selector(grid, "-remove")) |> render_click()
     {:ok, revisited, _} = live(conn, ~p"/my/learning?collection=#{topic.id}")
+    assert has_element?(revisited, "#learning-collection-origin[data-origin='tags']")
     refute has_element?(revisited, grid_selector(grid))
+    assert has_element?(revisited, "#learning-topics #topics-#{topic.id}")
+    assert [%{title: title}] = Learning.list_grids(user, collection_id: manual.id)
+    assert title == grid.title
   end
 
   defp grid_selector(grid, suffix \\ ""),

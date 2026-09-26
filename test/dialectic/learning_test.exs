@@ -26,11 +26,15 @@ defmodule Dialectic.LearningTest do
     topics = Learning.list_collections(user)
     assert Enum.map(topics, & &1.name) == ["Economic History", "Economics"]
     assert Enum.find(topics, &(&1.id == collection.id)).grid_count == 2
+    assert Enum.find(topics, &(&1.id == collection.id)).origin == :manual
+    assert Enum.find(topics, &(&1.name == "Economic History")).origin == :tags
     :ok = Learning.remove_grid(user, collection.id, grid.title)
     {:ok, _} = Learning.update_collection(user, collection.id, %{name: "My economics"})
     {:ok, _} = Learning.delete_collection(user, hd(topics).id)
     assert {:ok, :already_initialized} = Learning.initialize_topics(user)
-    assert [%{name: "My economics", grid_count: 1}] = Learning.list_collections(user)
+
+    assert [%{name: "My economics", grid_count: 1, origin: :manual}] =
+             Learning.list_collections(user)
   end
 
   test "an empty workspace can be organized once tagged grids arrive", %{user: user} do
@@ -38,7 +42,28 @@ defmodule Dialectic.LearningTest do
     assert Learning.list_collections(user) == []
     learning_grid_fixture(user, %{tags: ["history"]})
     assert {:ok, :initialized} = Learning.initialize_topics(user)
-    assert [%{name: "History", grid_count: 1}] = Learning.list_collections(user)
+    assert [%{name: "History", grid_count: 1, origin: :tags}] = Learning.list_collections(user)
+  end
+
+  test "a generated collection keeps its origin after editing and changing its grids", %{
+    user: user
+  } do
+    grid = learning_grid_fixture(user, %{tags: ["history"]})
+    assert {:ok, :initialized} = Learning.initialize_topics(user)
+    [topic] = Learning.list_collections(user)
+
+    assert {:ok, edited} =
+             Learning.update_collection(user, topic.id, %{
+               name: "My reading",
+               description: "A personal selection",
+               origin: :manual
+             })
+
+    assert edited.origin == :tags
+    assert :ok = Learning.remove_grid(user, topic.id, grid.title)
+    assert {:ok, :already_initialized} = Learning.initialize_topics(user)
+    assert [%{name: "My reading", origin: :tags, grid_count: 0}] = Learning.list_collections(user)
+    assert Learning.get_collection(user, topic.id).origin == :tags
   end
 
   test "saved content is scoped to the viewer and disappears when access is revoked", %{
@@ -75,10 +100,15 @@ defmodule Dialectic.LearningTest do
     other: other
   } do
     assert {:ok, collection} =
-             Learning.create_collection(user, %{name: " Economics ", user_id: other.id})
+             Learning.create_collection(user, %{
+               name: " Economics ",
+               user_id: other.id,
+               origin: :tags
+             })
 
     assert collection.name == "Economics"
     assert collection.user_id == user.id
+    assert collection.origin == :manual
     assert {:error, duplicate} = Learning.create_collection(user, %{name: "economics"})
     assert errors_on(duplicate).name == ["has already been taken"]
     assert {:error, blank} = Learning.create_collection(user, %{name: "   "})
