@@ -38,7 +38,7 @@ defmodule DialecticWeb.LearningLiveTest do
              |> LazyHTML.attribute("href") == ["/my/learning"]
 
       view
-      |> form("#learning-create-collection",
+      |> form("#learning-collections-group #learning-create-collection",
         collection: %{name: "Economics", description: "How economies work"}
       )
       |> render_submit()

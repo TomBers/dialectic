@@ -4,6 +4,7 @@ defmodule Dialectic.Repo.Migrations.CreateLearning do
   def change do
     create table(:learning_collections) do
       add :user_id, references(:users, on_delete: :delete_all), null: false
+      add :parent_id, references(:learning_collections, on_delete: :delete_all)
       add :name, :string, null: false
       add :description, :text
       add :origin, :string, null: false, default: "manual"
@@ -14,7 +15,15 @@ defmodule Dialectic.Repo.Migrations.CreateLearning do
              check: "origin IN ('manual', 'tags')"
            )
 
-    create unique_index(:learning_collections, [:user_id, "lower(name)"],
+    create constraint(:learning_collections, :learning_collections_parent_check,
+             check: "parent_id IS NULL OR (parent_id <> id AND origin = 'manual')"
+           )
+
+    create index(:learning_collections, [:parent_id])
+
+    create unique_index(
+             :learning_collections,
+             [:user_id, "COALESCE(parent_id, 0)", "lower(name)"],
              name: :learning_collections_user_name_index
            )
 

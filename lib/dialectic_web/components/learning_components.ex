@@ -4,10 +4,11 @@ defmodule DialecticWeb.LearningComponents do
   attr :items, :any, required: true
   attr :selected, :any, required: true
   attr :saved_kind, :string, required: true
+  slot :inner_block
 
   def folder_tree(assigns) do
     ~H"""
-    <section aria-labelledby="learning-collections-heading">
+    <section id="learning-collections-group" aria-labelledby="learning-collections-heading">
       <h2
         id="learning-collections-heading"
         data-learning-folder-drop="root"
@@ -67,6 +68,7 @@ defmodule DialecticWeb.LearningComponents do
           </.link>
         </div>
       </div>
+      {render_slot(@inner_block)}
     </section>
     """
   end

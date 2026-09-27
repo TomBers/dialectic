@@ -835,7 +835,44 @@ defmodule DialecticWeb.LearningLive do
                   items={@streams.collections}
                   selected={@collection}
                   saved_kind={@saved_kind}
-                />
+                >
+                  <details
+                    id="learning-create-panel"
+                    class="mt-3 rounded-md border border-stone-300 bg-white p-4"
+                  >
+                    <summary class="cursor-pointer text-sm font-semibold text-teal-800">
+                      + New collection
+                    </summary>
+                    <.form
+                      for={@collection_form}
+                      id="learning-create-collection"
+                      phx-submit="create_collection"
+                      class="mt-4 space-y-3"
+                    >
+                      <.input
+                        field={@collection_form[:name]}
+                        id="learning-collection-name"
+                        label="Collection name"
+                        placeholder="e.g. Economics"
+                        required
+                        maxlength="80"
+                      />
+                      <.input
+                        field={@collection_form[:description]}
+                        id="learning-collection-description"
+                        type="textarea"
+                        label="Description (optional)"
+                        maxlength="500"
+                      />
+                      <button
+                        id="learning-create-submit"
+                        type="submit"
+                        phx-disable-with="Creating…"
+                        class="rounded-md bg-teal-800 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-900"
+                      >Create collection</button>
+                    </.form>
+                  </details>
+                </LearningComponents.folder_tree>
                 <.learning_group_list
                   id="learning-topics"
                   title="Topics"
@@ -847,43 +884,6 @@ defmodule DialecticWeb.LearningLive do
                   saved_kind={@saved_kind}
                 />
               </nav>
-
-              <details
-                id="learning-create-panel"
-                class="rounded-md border border-stone-300 bg-white p-4"
-              >
-                <summary class="cursor-pointer text-sm font-semibold text-teal-800">
-                  + New collection
-                </summary>
-                <.form
-                  for={@collection_form}
-                  id="learning-create-collection"
-                  phx-submit="create_collection"
-                  class="mt-4 space-y-3"
-                >
-                  <.input
-                    field={@collection_form[:name]}
-                    id="learning-collection-name"
-                    label="Collection name"
-                    placeholder="e.g. Economics"
-                    required
-                    maxlength="80"
-                  />
-                  <.input
-                    field={@collection_form[:description]}
-                    id="learning-collection-description"
-                    type="textarea"
-                    label="Description (optional)"
-                    maxlength="500"
-                  />
-                  <button
-                    id="learning-create-submit"
-                    type="submit"
-                    phx-disable-with="Creating…"
-                    class="rounded-md bg-teal-800 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-900"
-                  >Create collection</button>
-                </.form>
-              </details>
               <p class="px-3 text-xs leading-5 text-slate-500">
                 Topics and collections are personal. Grids keep their sharing settings.
               </p>
