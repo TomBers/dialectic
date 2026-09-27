@@ -9,6 +9,7 @@ defmodule Dialectic.Learning do
 
   def initialize_topics(%User{} = user) do
     Repo.transact(fn ->
+      lock_folders(user)
       Repo.insert!(%Workspace{user_id: user.id}, on_conflict: :nothing)
       workspace = Repo.one!(from w in Workspace, where: w.user_id == ^user.id, lock: "FOR UPDATE")
 
@@ -28,7 +29,12 @@ defmodule Dialectic.Learning do
           |> Enum.sort_by(fn {name, titles} -> {-length(titles), name} end)
           |> Enum.take(12)
 
-        existing = Repo.all(from c in Collection, where: c.user_id == ^user.id, order_by: c.id)
+        existing =
+          Repo.all(
+            from c in Collection,
+              where: c.user_id == ^user.id and is_nil(c.parent_id),
+              order_by: c.id
+          )
 
         Enum.each(topics, fn {name, titles} ->
           collection =
@@ -70,10 +76,16 @@ defmodule Dialectic.Learning do
     Collection.changeset(collection, attrs)
   end
 
-  def create_collection(%User{} = user, attrs) do
-    %Collection{user_id: user.id}
-    |> change_collection(attrs)
-    |> Repo.insert()
+  def create_collection(%User{} = user, attrs, parent_id \\ nil) do
+    Repo.transact(fn ->
+      lock_folders(user)
+
+      with {:ok, parent} <- folder_parent(user, parent_id) do
+        %Collection{user_id: user.id, parent_id: parent && parent.id}
+        |> change_collection(attrs)
+        |> Repo.insert()
+      end
+    end)
   end
 
   def get_collection(%User{} = user, id) do
@@ -89,16 +101,131 @@ defmodule Dialectic.Learning do
   def get_collection(_user, _id), do: nil
 
   def update_collection(user, id, attrs) do
-    case get_collection(user, id) do
-      nil -> {:error, :not_found}
-      collection -> collection |> change_collection(attrs) |> Repo.update()
-    end
+    Repo.transact(fn ->
+      lock_folders(user)
+
+      case get_collection(user, id) do
+        nil -> {:error, :not_found}
+        collection -> collection |> change_collection(attrs) |> Repo.update()
+      end
+    end)
   end
 
   def delete_collection(user, id) do
+    Repo.transact(fn ->
+      lock_folders(user)
+
+      case get_collection(user, id) do
+        nil -> {:error, :not_found}
+        collection -> Repo.delete(collection)
+      end
+    end)
+  end
+
+  def move_collection(user, id, parent_id) do
+    Repo.transact(fn ->
+      lock_folders(user)
+
+      with %Collection{origin: :manual} = collection <- get_collection(user, id),
+           {:ok, parent} <- folder_parent(user, parent_id) do
+        if parent && parent.id in descendant_ids(user, collection.id) do
+          {:error, :cycle}
+        else
+          collection
+          |> change_collection()
+          |> Ecto.Changeset.put_change(:parent_id, parent && parent.id)
+          |> Repo.update()
+          |> case do
+            {:ok, moved} ->
+              moved_ids = descendant_ids(user, moved.id)
+
+              titles =
+                from m in CollectionGrid,
+                  where: m.collection_id in ^moved_ids,
+                  select: m.graph_title
+
+              other_ids = collection_tree_ids(user, moved) -- moved_ids
+
+              Repo.delete_all(
+                from m in CollectionGrid,
+                  where: m.collection_id in ^other_ids and m.graph_title in subquery(titles)
+              )
+
+              {:ok, moved}
+
+            error ->
+              error
+          end
+        end
+      else
+        _ -> {:error, :invalid_parent}
+      end
+    end)
+  end
+
+  defp folder_parent(_user, id) when id in [nil, "", "root"], do: {:ok, nil}
+
+  defp folder_parent(user, id) do
     case get_collection(user, id) do
-      nil -> {:error, :not_found}
-      collection -> Repo.delete(collection)
+      %Collection{origin: :manual} = parent -> {:ok, parent}
+      _ -> {:error, :invalid_parent}
+    end
+  end
+
+  defp lock_folders(user) do
+    Repo.one!(from u in User, where: u.id == ^user.id, lock: "FOR UPDATE")
+  end
+
+  defp descendant_ids(user, id) do
+    rows =
+      Repo.all(
+        from c in Collection,
+          where: c.user_id == ^user.id,
+          select: %{id: c.id, parent_id: c.parent_id}
+      )
+
+    case Ecto.Type.cast(:id, id) do
+      {:ok, id} ->
+        if Enum.any?(rows, &(&1.id == id)),
+          do: collect_descendants([id], Enum.group_by(rows, & &1.parent_id), MapSet.new()),
+          else: []
+
+      _ ->
+        []
+    end
+  end
+
+  defp collect_descendants([], _children, visited), do: MapSet.to_list(visited)
+
+  defp collect_descendants([id | rest], children, visited) do
+    if MapSet.member?(visited, id) do
+      collect_descendants(rest, children, visited)
+    else
+      next = Enum.map(Map.get(children, id, []), & &1.id)
+      collect_descendants(next ++ rest, children, MapSet.put(visited, id))
+    end
+  end
+
+  defp with_collection_paths(collections) do
+    by_id = Map.new(collections, &{&1.id, &1})
+
+    Enum.map(collections, fn collection ->
+      ancestors = collection_ancestors(collection.parent_id, by_id, [])
+
+      Map.merge(collection, %{
+        ancestor_ids: Enum.map(ancestors, & &1.id),
+        depth: length(ancestors),
+        path: Enum.map_join(ancestors ++ [collection], " / ", & &1.name)
+      })
+    end)
+  end
+
+  defp collection_ancestors(nil, _by_id, acc), do: acc
+
+  defp collection_ancestors(id, by_id, acc) do
+    case Map.get(by_id, id) do
+      nil -> acc
+      parent -> collection_ancestors(parent.parent_id, by_id, [parent | acc])
     end
   end
 
@@ -119,23 +246,54 @@ defmodule Dialectic.Learning do
           name: c.name,
           description: c.description,
           origin: c.origin,
+          parent_id: c.parent_id,
           grid_count: count(graph.title)
         }
     )
+    |> with_collection_paths()
   end
 
   def add_grid(user, collection_id, graph_title) when is_binary(graph_title) do
-    with %Collection{} = collection <- get_collection(user, collection_id),
-         true <- Repo.exists?(from g in accessible_grids(user), where: g.title == ^graph_title) do
-      %CollectionGrid{collection_id: collection.id, graph_title: graph_title}
-      |> Ecto.Changeset.change()
-      |> Ecto.Changeset.foreign_key_constraint(:collection_id)
-      |> Ecto.Changeset.foreign_key_constraint(:graph_title)
-      |> Repo.insert(on_conflict: :nothing, conflict_target: [:collection_id, :graph_title])
-    else
-      _ -> {:error, :not_found}
-    end
+    Repo.transact(fn ->
+      lock_folders(user)
+
+      with %Collection{} = collection <- get_collection(user, collection_id),
+           true <- Repo.exists?(from g in accessible_grids(user), where: g.title == ^graph_title),
+           {:ok, membership} <-
+             %CollectionGrid{collection_id: collection.id, graph_title: graph_title}
+             |> Ecto.Changeset.change()
+             |> Ecto.Changeset.foreign_key_constraint(:collection_id)
+             |> Ecto.Changeset.foreign_key_constraint(:graph_title)
+             |> Repo.insert(
+               on_conflict: :nothing,
+               conflict_target: [:collection_id, :graph_title]
+             ) do
+        if collection.origin == :manual do
+          other_ids = collection_tree_ids(user, collection) -- [collection.id]
+
+          Repo.delete_all(
+            from m in CollectionGrid,
+              where: m.collection_id in ^other_ids and m.graph_title == ^graph_title
+          )
+        end
+
+        {:ok, membership}
+      else
+        {:error, reason} -> {:error, reason}
+        _ -> {:error, :not_found}
+      end
+    end)
   end
+
+  defp collection_tree_ids(user, collection) do
+    root = collection_root(user, collection)
+    descendant_ids(user, root.id)
+  end
+
+  defp collection_root(_user, %Collection{parent_id: nil} = collection), do: collection
+
+  defp collection_root(user, collection),
+    do: collection_root(user, get_collection(user, collection.parent_id))
 
   def remove_grid(user, collection_id, graph_title) when is_binary(graph_title) do
     case get_collection(user, collection_id) do
@@ -179,11 +337,19 @@ defmodule Dialectic.Learning do
           query
 
         id ->
-          from g in query,
-            join: m in CollectionGrid,
-            on: m.graph_title == g.title and m.collection_id == ^id,
-            join: c in Collection,
-            on: c.id == m.collection_id and c.user_id == ^user.id
+          ids =
+            if Keyword.get(opts, :include_subfolders, false),
+              do: descendant_ids(user, id),
+              else: [id]
+
+          titles =
+            from m in CollectionGrid,
+              join: c in Collection,
+              on: c.id == m.collection_id,
+              where: c.id in ^ids and c.user_id == ^user.id,
+              select: m.graph_title
+
+          from g in query, where: g.title in subquery(titles)
       end
 
     query =
@@ -255,6 +421,15 @@ defmodule Dialectic.Learning do
   defp with_saved_items(grids, user) do
     titles = Enum.map(grids, & &1.title)
 
+    paths =
+      Repo.all(
+        from c in Collection,
+          where: c.user_id == ^user.id,
+          select: map(c, [:id, :name, :parent_id])
+      )
+      |> with_collection_paths()
+      |> Map.new(&{&1.id, &1.path})
+
     bookmarks =
       Repo.all(
         from n in Note,
@@ -289,6 +464,7 @@ defmodule Dialectic.Learning do
           order_by: c.name,
           select: %{graph_title: m.graph_title, id: c.id, name: c.name}
       )
+      |> Enum.map(&Map.put(&1, :path, Map.get(paths, &1.id, &1.name)))
       |> Enum.group_by(& &1.graph_title)
 
     Enum.map(grids, fn grid ->

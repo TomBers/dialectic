@@ -7,6 +7,7 @@ defmodule Dialectic.Learning.Collection do
     field :description, :string
     field :origin, Ecto.Enum, values: [:manual, :tags], default: :manual
     belongs_to :user, Dialectic.Accounts.User
+    belongs_to :parent, __MODULE__
     timestamps(type: :utc_datetime)
   end
 
@@ -19,6 +20,8 @@ defmodule Dialectic.Learning.Collection do
     |> validate_length(:name, max: 80)
     |> validate_length(:description, max: 500)
     |> unique_constraint(:name, name: :learning_collections_user_name_index)
+    |> foreign_key_constraint(:parent_id)
+    |> check_constraint(:parent_id, name: :learning_collections_parent_check)
   end
 
   defp trim(value) when is_binary(value), do: String.trim(value)

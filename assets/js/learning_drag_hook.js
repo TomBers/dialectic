@@ -2,6 +2,7 @@ const LearningDrag = {
   mounted() {
     this.workspace = this.el.closest("#learning-workspace");
     this.draggedTitle = null;
+    this.draggedFolderId = null;
 
     this.clearTarget = () => {
       this.workspace.querySelectorAll("[data-drag-over]").forEach((target) => {
@@ -10,6 +11,15 @@ const LearningDrag = {
     };
 
     this.onDragStart = (event) => {
+      this.draggedTitle = null;
+      this.draggedFolderId = null;
+      const folder = event.target.closest("[data-learning-folder-drag]");
+      if (folder && event.dataTransfer) {
+        this.draggedFolderId = folder.dataset.learningFolderDrag;
+        event.dataTransfer.setData("application/x-learning-folder", this.draggedFolderId);
+        event.dataTransfer.effectAllowed = "move";
+        return;
+      }
       const handle = event.target.closest("[data-learning-drag]");
       if (!handle || !event.dataTransfer) return;
       this.draggedTitle = handle.dataset.gridTitle;
@@ -17,34 +27,49 @@ const LearningDrag = {
       event.dataTransfer.effectAllowed = "copy";
     };
 
+    this.dropTarget = (event) => {
+      if (this.draggedFolderId) {
+        const target = event.target.closest("[data-learning-folder-drop]");
+        return target?.dataset.learningFolderDrop !== this.draggedFolderId ? target : null;
+      }
+      return this.draggedTitle ? event.target.closest("[data-learning-drop]") : null;
+    };
+
     this.onDragOver = (event) => {
-      const target = event.target.closest("[data-learning-drop]");
-      if (!this.draggedTitle || !target) return;
-      event.preventDefault();
-      event.dataTransfer.dropEffect = "copy";
+      const target = this.dropTarget(event);
       this.clearTarget();
+      if (!target) return;
+      event.preventDefault();
+      event.dataTransfer.dropEffect = this.draggedFolderId ? "move" : "copy";
       target.dataset.dragOver = "true";
     };
 
     this.onDragLeave = (event) => {
-      const target = event.target.closest("[data-learning-drop]");
+      const target = event.target.closest("[data-drag-over]");
       if (target && !target.contains(event.relatedTarget)) delete target.dataset.dragOver;
     };
 
     this.onDrop = (event) => {
-      const target = event.target.closest("[data-learning-drop]");
-      if (!this.draggedTitle || !target) return;
+      const target = this.dropTarget(event);
+      if (!target) return;
       event.preventDefault();
-      this.pushEvent("drop_grid", {
-        title: this.draggedTitle,
-        collection_id: target.dataset.learningDrop,
-      });
-      this.draggedTitle = null;
-      this.clearTarget();
+      if (this.draggedFolderId) {
+        this.pushEvent("drop_folder", {
+          collection_id: this.draggedFolderId,
+          parent_id: target.dataset.learningFolderDrop,
+        });
+      } else {
+        this.pushEvent("drop_grid", {
+          title: this.draggedTitle,
+          collection_id: target.dataset.learningDrop,
+        });
+      }
+      this.onDragEnd();
     };
 
     this.onDragEnd = () => {
       this.draggedTitle = null;
+      this.draggedFolderId = null;
       this.clearTarget();
     };
 
