@@ -30,7 +30,7 @@ defmodule DialecticWeb.HomeLive do
       id: "chat-assistants",
       question: "Why not just use ChatGPT or Claude?",
       answer:
-        "RationalGrid keeps questions, answers, and sources connected in grids. Organise them by topic in My Learning, with bookmarks and highlights alongside. Return to an idea, check your understanding, and build on it.",
+        "RationalGrid is your AI workshop: tools to question, explain, and challenge ideas, with a place to keep the work. Grids connect questions, answers, and sources. Organise them by topic in My Learning, then return and build on them together.",
       comparisons_link?: true
     },
     %{
@@ -79,7 +79,7 @@ defmodule DialecticWeb.HomeLive do
        homepage_faqs: @homepage_faqs,
        json_ld: homepage_json_ld(),
        page_description:
-         "An all-in-one AI learning workspace. Organise grids by topic, keep bookmarks and highlights alongside them, and find useful answers again in My Learning."
+         "Your AI workshop. Tools to explore questions, organise knowledge, and build understanding together. Keep your work ready to return to in My Learning."
      )
      |> stream_configure(:partner_grids,
        dom_id: fn item ->
@@ -235,6 +235,7 @@ defmodule DialecticWeb.HomeLive do
       end
 
     Dialectic.Graph.Creator.create(answer, current_user, user_identity,
+      is_public: true,
       mode: mode,
       title: title,
       actor_id: actor_id,
@@ -451,21 +452,21 @@ defmodule DialecticWeb.HomeLive do
               id="home-hero-title"
               class="mt-7 text-4xl font-semibold leading-[1.08] tracking-[-0.035em] text-white sm:text-5xl xl:text-6xl"
             >
-              A home for everything <span class="block text-teal-200">you’re learning.</span>
+              Your <span class="text-teal-200">AI workshop.</span>
             </h1>
             <p id="home-hero-subheading" class="mt-6 max-w-xl text-lg leading-8 text-slate-200">
-              Explore questions with AI and other people. Organise your grids by subject in My Learning.
-              Return to useful answers and build on them.
+              A place to explore questions, organise knowledge, and build understanding together.
             </p>
             <div id="start-here" class="mt-7 scroll-mt-24">
               <div id="home-start-panel" class="max-w-xl">
-                <label
-                  id="home-question-label"
-                  for="new-idea-input"
-                  class="mb-3 block text-base font-semibold text-white"
-                >
-                  What would you like to learn?
-                </label>
+                <p id="home-public-creation-note" class="mb-3 text-sm text-teal-200">
+                  Start a public grid anyone can explore and build on.
+                  For a private grid, use <.link
+                    id="home-private-grid-link"
+                    href={~p"/my/learning"}
+                    class="underline"
+                  >My Learning</.link>.
+                </p>
                 <p
                   :if={@learning_collection}
                   id="home-collection-context"
@@ -480,15 +481,15 @@ defmodule DialecticWeb.HomeLive do
                 </p>
                 <div class="rounded-xl bg-white/10 p-2 text-slate-950 ring-1 ring-white/20">
                   <.live_component
-                    module={DialecticWeb.NewIdeaFormComp}
+                    module={DialecticWeb.NewGridForm}
                     id="new-idea-form"
                     form={@form}
                     placeholder="Ask a question or name a topic"
                     submit_label="Continue"
+                    create_label="Create public grid"
                     autofocus={@focus_new_grid}
                     minimal={true}
                     authenticated={!is_nil(@current_user)}
-                    public_grid_warning="New grids are public and editable by default."
                   />
                 </div>
               </div>
@@ -597,7 +598,7 @@ defmodule DialecticWeb.HomeLive do
               id="home-product-preview-title"
               class="text-xs font-semibold uppercase tracking-[0.16em] text-teal-200"
             >
-              Watch the tour
+              Take a workshop tour
             </h2>
             <p id="home-visible-learning" class="mt-5 max-w-xl text-base leading-7 text-slate-300">
               AI is here. Make the learning visible: who asked, what was explored, and how ideas connect.
@@ -770,7 +771,7 @@ defmodule DialecticWeb.HomeLive do
         <div class="mx-auto flex w-full max-w-5xl flex-col gap-6 px-5 py-12 sm:px-8 sm:py-14 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
-              A workspace that grows with you
+              A workshop that grows with you
             </p>
             <h2 class="mt-2 font-serif text-3xl font-semibold tracking-tight sm:text-4xl">
               Find an answer today. Build on it tomorrow.
@@ -819,7 +820,7 @@ defmodule DialecticWeb.HomeLive do
             />
             <div>
               <p class="font-semibold text-white">RationalGrid</p>
-              <p class="text-xs text-slate-400">See what you think.</p>
+              <p class="text-xs text-slate-400">Your AI workshop.</p>
             </div>
           </div>
           <nav aria-label="Homepage footer" class="flex flex-wrap gap-x-5 gap-y-2 text-sm">
@@ -900,7 +901,7 @@ defmodule DialecticWeb.HomeLive do
             id="home-learning-title"
             class="text-xs font-semibold uppercase tracking-[0.18em] text-teal-800"
           >
-            How it works
+            Tools to think with. A place to build.
           </h2>
           <p id="home-learning-value" class="mt-4 text-lg leading-8 text-slate-700">
             ChatGPT can give you a great answer. But how will you find it a day, a month, or a year later?
@@ -916,7 +917,7 @@ defmodule DialecticWeb.HomeLive do
             <p class="text-xs font-bold uppercase tracking-[0.16em] text-sky-800">01 / Ask</p>
             <h3 class="mt-2 text-xl font-semibold">Find answers to your questions.</h3>
             <p class="mt-3 text-sm leading-6 text-slate-600">
-              Ask a question. Your answer starts a grid of connected ideas.
+              Use AI tools to explain, challenge, and compare. Keep the exploration connected in a grid.
             </p>
             <div class="mt-5 flex-1 rounded-lg border border-slate-200 bg-slate-50 p-5">
               <p class="text-xs font-semibold text-slate-500">An example starting point</p>
@@ -974,7 +975,7 @@ defmodule DialecticWeb.HomeLive do
               <ul class="mt-4 space-y-4 text-sm leading-6">
                 <li class="flex items-start gap-3">
                   <.icon name="hero-folder" class="mt-1 h-4 w-4 shrink-0 text-teal-700" />
-                  <span><strong class="block text-slate-900">Subject collections</strong><span class="text-slate-600">Topics from your tags. Drag grids into collections.</span></span>
+                  <span><strong class="block text-slate-900">Topics & Collections</strong><span class="text-slate-600">Topics from your tags. Collections you create.</span></span>
                 </li>
                 <li class="flex items-start gap-3">
                   <.icon name="hero-magnifying-glass" class="mt-1 h-4 w-4 shrink-0 text-teal-700" />
@@ -1185,7 +1186,7 @@ defmodule DialecticWeb.HomeLive do
           "url" => base_url,
           "logo" => base_url <> ~p"/images/brandmark.svg",
           "description" =>
-            "RationalGrid is a not-for-profit project for mapping questions, arguments, and sources.",
+            "RationalGrid is a not-for-profit project building an AI workshop for thinking and learning together.",
           "sameAs" => ["https://github.com/TomBers/dialectic"]
         },
         %{
@@ -1195,7 +1196,7 @@ defmodule DialecticWeb.HomeLive do
           "url" => base_url,
           "image" => base_url <> ~p"/images/graph_live.webp",
           "description" =>
-            "An all-in-one AI learning workspace. Explore questions, organise grids into subject collections, and find your answers, bookmarks, and highlights together in My Learning.",
+            "Your AI workshop. Tools to explore questions, organise knowledge, and build understanding together. Keep grids, bookmarks, and highlights in My Learning.",
           "applicationCategory" => "EducationalApplication",
           "operatingSystem" => "Web",
           "isAccessibleForFree" => true,

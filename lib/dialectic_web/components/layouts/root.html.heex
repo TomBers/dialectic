@@ -10,7 +10,7 @@
       name="description"
       content={
         assigns[:page_description] ||
-          "Ask a question, map the answer, and challenge any branch while keeping its original context with RationalGrid."
+          "RationalGrid is your AI workshop. Explore questions, organise knowledge, and build understanding together."
       }
     />
     <%= if assigns[:noindex] do %>
@@ -22,13 +22,13 @@
     <meta property="og:type" content={assigns[:og_type] || "website"} />
     <meta
       property="og:title"
-      content={assigns[:page_title] || "RationalGrid — See what you think"}
+      content={assigns[:page_title] || "RationalGrid — Your AI workshop"}
     />
     <meta
       property="og:description"
       content={
         assigns[:page_description] ||
-          "Ask a question, map the answer, and challenge any branch while keeping its original context with RationalGrid."
+          "RationalGrid is your AI workshop. Explore questions, organise knowledge, and build understanding together."
       }
     />
     <%= if assigns[:og_image] do %>
@@ -39,13 +39,13 @@
     <meta name="twitter:url" content={canonical_url} />
     <meta
       name="twitter:title"
-      content={assigns[:page_title] || "RationalGrid — See what you think"}
+      content={assigns[:page_title] || "RationalGrid — Your AI workshop"}
     />
     <meta
       name="twitter:description"
       content={
         assigns[:page_description] ||
-          "Ask a question, map the answer, and challenge any branch while keeping its original context with RationalGrid."
+          "RationalGrid is your AI workshop. Explore questions, organise knowledge, and build understanding together."
       }
     />
 
@@ -57,7 +57,7 @@
 
     <.live_title
       default="RationalGrid"
-      suffix={assigns[:page_title_suffix] || " — See what you think"}
+      suffix={assigns[:page_title_suffix] || " — Your AI workshop"}
     >
       {assigns[:page_title]}
     </.live_title>

@@ -6,9 +6,9 @@ defmodule DialecticWeb.AboutLiveTest do
   test "renders the essential about-page content", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/about")
 
-    assert has_element?(view, "#about-value-proposition", "AI learning workspace")
+    assert has_element?(view, "#about-value-proposition", "AI workshop")
     assert has_element?(view, "#about-purpose", "Remember more. Understand more.")
-    assert has_element?(view, "#about-tools", "What RationalGrid does")
+    assert has_element?(view, "#about-tools", "Tools and a place to use them")
     assert has_element?(view, "#about-tool-explore", "Learn with others")
     assert has_element?(view, "#about-tool-organise", "Give each subject a home")
     assert has_element?(view, "#about-tool-keep", "Find it again and build on it")

@@ -52,22 +52,30 @@ defmodule Dialectic.DbActions.Graphs do
     if sanitized == "", do: "untitled-idea", else: sanitized
   end
 
-  def create_unique_graph(title, user, prompt_mode) do
-    create_unique_graph(title, title, user, prompt_mode, 5)
+  def create_unique_graph(title, user, prompt_mode, opts \\ []) do
+    create_unique_graph(title, title, user, prompt_mode, opts, 5)
   end
 
-  defp create_unique_graph(_title, _candidate, _user, _prompt_mode, 0),
+  defp create_unique_graph(_title, _candidate, _user, _prompt_mode, _opts, 0),
     do: {:error, :title_conflict}
 
-  defp create_unique_graph(title, candidate, user, prompt_mode, attempts) do
-    case create_new_graph(candidate, user, prompt_mode) do
+  defp create_unique_graph(title, candidate, user, prompt_mode, opts, attempts) do
+    case create_new_graph(candidate, user, prompt_mode, opts) do
       {:error, %Ecto.Changeset{} = changeset} = error ->
         if Enum.any?(changeset.errors, fn
              {:title, {_message, metadata}} -> metadata[:constraint] == :unique
              _ -> false
            end) do
           suffix = :crypto.strong_rand_bytes(4) |> Base.encode16(case: :lower)
-          create_unique_graph(title, "#{title} (#{suffix})", user, prompt_mode, attempts - 1)
+
+          create_unique_graph(
+            title,
+            "#{title} (#{suffix})",
+            user,
+            prompt_mode,
+            opts,
+            attempts - 1
+          )
         else
           error
         end
@@ -80,7 +88,7 @@ defmodule Dialectic.DbActions.Graphs do
   @doc """
   Creates a new graph with the given title.
   """
-  def create_new_graph(title, user \\ nil, prompt_mode \\ "university") do
+  def create_new_graph(title, user \\ nil, prompt_mode \\ "university", opts \\ []) do
     data = %{
       "nodes" => [
         %{
@@ -101,12 +109,11 @@ defmodule Dialectic.DbActions.Graphs do
     slug = generate_unique_slug(title)
 
     changeset =
-      %Graph{}
+      %Graph{user_id: user && user.id}
       |> Graph.changeset(%{
         title: title,
-        user_id: user && user.id,
         data: data,
-        is_public: true,
+        is_public: Keyword.get(opts, :is_public, true),
         is_locked: false,
         is_deleted: false,
         is_published: true,
@@ -114,6 +121,7 @@ defmodule Dialectic.DbActions.Graphs do
         slug: slug,
         prompt_mode: prompt_mode
       })
+      |> require_private_owner()
 
     result = Repo.transact(fn -> Repo.insert(changeset, mode: :savepoint) end)
 
@@ -125,6 +133,14 @@ defmodule Dialectic.DbActions.Graphs do
 
       error ->
         error
+    end
+  end
+
+  defp require_private_owner(changeset) do
+    if Ecto.Changeset.get_field(changeset, :is_public) == false do
+      Ecto.Changeset.validate_required(changeset, [:user_id])
+    else
+      changeset
     end
   end
 

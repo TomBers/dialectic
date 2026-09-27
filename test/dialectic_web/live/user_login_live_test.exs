@@ -18,13 +18,8 @@ defmodule DialecticWeb.UserLoginLiveTest do
     end
 
     test "redirects if already logged in", %{conn: conn} do
-      result =
-        conn
-        |> log_in_user(user_fixture())
-        |> live(~p"/users/log_in")
-        |> follow_redirect(conn, "/")
-
-      assert {:ok, _conn} = result
+      conn = log_in_user(conn, user_fixture())
+      assert {:error, {:redirect, %{to: "/my/learning"}}} = live(conn, ~p"/users/log_in")
     end
   end
 
@@ -40,7 +35,7 @@ defmodule DialecticWeb.UserLoginLiveTest do
 
       conn = submit_form(form, conn)
 
-      assert redirected_to(conn) == ~p"/"
+      assert redirected_to(conn) == ~p"/my/learning"
     end
 
     test "redirects to login page with a flash error if there are no valid credentials", %{

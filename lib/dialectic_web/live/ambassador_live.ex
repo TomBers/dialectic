@@ -10,7 +10,7 @@ defmodule DialecticWeb.AmbassadorLive do
        page_title: "The Ambassador Programme — RationalGrid",
        page_title_suffix: "",
        page_description:
-         "See how students use AI through shared grids. Organise learning, guide questions, and help students build understanding with RationalGrid’s proposed ambassador programme.",
+         "Bring an AI workshop to your students. See their shared grids, guide their questions, and help shape RationalGrid’s proposed ambassador programme.",
        form: to_form(Ambassadors.change_interest(), as: :interest),
        joined?: false,
        signup_available?: Ambassadors.configured?(),
@@ -104,10 +104,10 @@ defmodule DialecticWeb.AmbassadorLive do
         <section id="ambassador-hero" class="amb-hero amb-container" aria-labelledby="amb-hero-title">
           <div class="amb-hero-copy">
             <p class="amb-eyebrow"><span class="amb-status-dot"></span> THE AMBASSADOR PROGRAMME</p>
-            <h1 id="amb-hero-title">We’re RationalGrid.<br />Teach. Guide. <em>Earn.</em></h1>
+            <h1 id="amb-hero-title">An AI workshop<br />for <em>your students.</em></h1>
             <p id="amb-hero-description" class="amb-hero-description">
-              An AI learning workspace for your students—and a view of the work they share.
-              See what they ask, guide their next questions, and help their learning last.
+              Give students tools to ask, challenge, and compare—and a place to build understanding together.
+              See the work they share and guide their next questions.
               Our proposed programme adds branded hubs and a share of eligible subscription revenue.
             </p>
             <div class="amb-hero-actions">
@@ -136,13 +136,13 @@ defmodule DialecticWeb.AmbassadorLive do
             <div class="amb-hub">
               <div class="amb-hub-browser">
                 <span class="amb-browser-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-                <span><.icon name="hero-lock-closed" class="h-3 w-3" /> your learning space</span>
+                <span><.icon name="hero-lock-closed" class="h-3 w-3" /> your AI workshop</span>
                 <.icon name="hero-ellipsis-horizontal" class="h-4 w-4" />
               </div>
               <div class="amb-hub-header">
                 <span class="amb-hub-monogram">JL</span>
                 <div>
-                  <strong>Jamie’s Learning Studio</strong><span>Powered by RationalGrid</span>
+                  <strong>Jamie’s AI Workshop</strong><span>Powered by RationalGrid</span>
                 </div>
                 <span class="amb-hub-avatar">J</span>
               </div>
@@ -500,8 +500,8 @@ defmodule DialecticWeb.AmbassadorLive do
                 How does my hub connect to RationalGrid?<.icon name="hero-plus" class="h-4 w-4" />
               </summary>
               <p>
-                The proposed hub would bring RationalGrid’s shared grids and organised workspace
-                into a space with your branding and guidance. You can use RationalGrid today
+                The proposed hub would bring RationalGrid’s AI workshop—its tools, shared grids,
+                and My Learning—into a space with your branding. You can use RationalGrid today
                 while we develop hubs with early educators.
               </p>
             </details>

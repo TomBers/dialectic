@@ -21,9 +21,18 @@ defmodule DialecticWeb.PageControllerTest do
 
     html = html_response(conn, 200)
 
-    assert html =~ "Turn one question into a map of ideas you can explore and share."
+    assert html
+           |> LazyHTML.from_document()
+           |> LazyHTML.query("#guide-hero h1")
+           |> LazyHTML.text() =~ "Get to know your AI workshop."
+
     assert html =~ ~s(id="guide-hero")
-    assert html =~ "when the first answer is not quite enough"
+
+    assert html
+           |> LazyHTML.from_document()
+           |> LazyHTML.query("#guide-hero p")
+           |> LazyHTML.text() =~ "Use tools to question, explain, and challenge ideas."
+
     assert html =~ "What makes a life feel meaningful?"
     assert html =~ ~s(id="guide-new-grid-privacy")
     assert html =~ "Step 2 · Read"

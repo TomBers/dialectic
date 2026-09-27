@@ -137,7 +137,7 @@ defmodule DialecticWeb.PageController do
     render(conn, :how,
       page_title: "Guide to RationalGrid",
       page_description:
-        "Use AI and critical thinking tools to compare views, work out what you think, keep the useful parts, and share the path."
+        "Get to know your AI workshop. Use tools to question, explain, and challenge ideas, then organise and share your work with RationalGrid."
     )
   end
 

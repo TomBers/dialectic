@@ -3,12 +3,13 @@ defmodule DialecticWeb.LearningLive do
 
   alias Dialectic.Learning
   alias Dialectic.DbActions.Graphs
+  alias Dialectic.Graph.Creator
   alias Dialectic.Learning.CollectionGrid
 
   @page_size 24
 
   @impl true
-  def mount(_params, _session, socket) do
+  def mount(_params, session, socket) do
     {:ok, _} = Learning.initialize_topics(socket.assigns.current_user)
 
     {:ok,
@@ -21,6 +22,11 @@ defmodule DialecticWeb.LearningLive do
        editing?: false,
        search: "",
        search_form: to_form(%{"q" => ""}),
+       new_grid_form: to_form(new_grid_changeset(), as: :vertex),
+       creating_grid?: false,
+       new_grid_requested?: false,
+       show_new_grid?: false,
+       llm_actor_id: session["llm_actor_id"] || "learning:#{socket.id}",
        collection_form: to_form(Learning.change_collection()),
        edit_form: nil,
        saved_kind: "all",
@@ -53,6 +59,7 @@ defmodule DialecticWeb.LearningLive do
        socket
        |> assign(
          collection: collection,
+         new_grid_requested?: params["new"] == "true",
          saved_kind:
            if(params["saved"] in ["bookmarks", "highlights"], do: params["saved"], else: "all"),
          adding?: not is_nil(collection) and params["add"] == "true",
@@ -282,6 +289,95 @@ defmodule DialecticWeb.LearningLive do
     end
   end
 
+  @impl true
+  def handle_info(
+        {:submit_new_grid, _content, _mode},
+        %{assigns: %{creating_grid?: true}} = socket
+      ) do
+    {:noreply, socket}
+  end
+
+  def handle_info({:submit_new_grid, content, mode}, socket) do
+    changeset = new_grid_changeset(%{"content" => content, "mode" => mode})
+
+    case Ecto.Changeset.apply_action(changeset, :insert) do
+      {:ok, %{content: question, mode: mode}} ->
+        user = socket.assigns.current_user
+        actor_id = socket.assigns.llm_actor_id
+        collection_id = collection_id(socket)
+
+        mode =
+          %{"high_school" => :high_school, "university" => :university, "expert" => :expert}[mode]
+
+        {:noreply,
+         socket
+         |> assign(:creating_grid?, true)
+         |> start_async(:create_private_grid, fn ->
+           case Creator.create(question, user, user.email,
+                  is_public: false,
+                  mode: mode,
+                  actor_id: actor_id
+                ) do
+             {:ok, title} -> {:ok, title, collection_id}
+             error -> error
+           end
+         end)}
+
+      {:error, _changeset} ->
+        {:noreply,
+         put_flash(socket, :error, "Please enter a question and choose an answer depth.")}
+    end
+  end
+
+  @impl true
+  def handle_async(:create_private_grid, {:ok, {:ok, title, collection_id}}, socket) do
+    case Graphs.get_graph_by_title(title) do
+      nil ->
+        private_grid_creation_failed(socket)
+
+      graph ->
+        {:noreply,
+         socket
+         |> file_new_grid(collection_id, graph)
+         |> redirect(to: learning_grid_path(graph))}
+    end
+  end
+
+  def handle_async(:create_private_grid, _result, socket) do
+    private_grid_creation_failed(socket)
+  end
+
+  defp private_grid_creation_failed(socket) do
+    {:noreply,
+     socket
+     |> assign(:creating_grid?, false)
+     |> put_flash(:error, "Could not finish creating your private grid. Please try again.")}
+  end
+
+  defp file_new_grid(socket, nil, _graph), do: socket
+
+  defp file_new_grid(socket, collection_id, graph) do
+    case Learning.add_grid(socket.assigns.current_user, collection_id, graph.title) do
+      {:ok, _membership} ->
+        socket
+
+      {:error, _reason} ->
+        put_flash(
+          socket,
+          :error,
+          "Your private grid was created, but could not be added to that topic or collection. Find it in My Learning."
+        )
+    end
+  end
+
+  defp new_grid_changeset(params \\ %{}) do
+    {%{content: "", mode: "high_school"}, %{content: :string, mode: :string}}
+    |> Ecto.Changeset.cast(params, [:content, :mode])
+    |> Ecto.Changeset.update_change(:content, &String.trim(&1 || ""))
+    |> Ecto.Changeset.validate_required([:content, :mode])
+    |> Ecto.Changeset.validate_inclusion(:mode, ["high_school", "university", "expert"])
+  end
+
   defp load_grids(socket, reset?) do
     offset = if reset?, do: 0, else: socket.assigns.offset
 
@@ -296,13 +392,24 @@ defmodule DialecticWeb.LearningLive do
       )
 
     socket
-    |> assign(more?: length(results) > @page_size, offset: offset + @page_size)
+    |> assign(
+      more?: length(results) > @page_size,
+      offset: offset + @page_size,
+      show_new_grid?:
+        socket.assigns.new_grid_requested? or
+          (reset? and results == [] and socket.assigns.saved_kind == "all" and
+             String.trim(socket.assigns.search) == "" and not socket.assigns.adding?)
+    )
     |> stream(:grids, Enum.take(results, @page_size), reset: reset?)
   end
 
   defp collection_id(%{assigns: %{collection: %{id: id}}}), do: id
   defp collection_id(_socket), do: nil
   defp grid_id(grid), do: "learning-grid-" <> Base.url_encode64(grid.title, padding: false)
+
+  defp learning_grid_path(grid, node \\ nil, params \\ []) do
+    graph_path(%{slug: grid.slug}, node, params)
+  end
 
   defp group_kind(%{origin: :tags}), do: "topic"
   defp group_kind(_collection), do: "collection"
@@ -361,6 +468,11 @@ defmodule DialecticWeb.LearningLive do
 
   defp filter_path(collection, kind) do
     params = if collection, do: %{collection: collection.id, saved: kind}, else: %{saved: kind}
+    ~p"/my/learning?#{params}"
+  end
+
+  defp new_grid_path(collection) do
+    params = if collection, do: %{collection: collection.id, new: true}, else: %{new: true}
     ~p"/my/learning?#{params}"
   end
 
@@ -436,30 +548,11 @@ defmodule DialecticWeb.LearningLive do
         <div class="mx-auto max-w-7xl px-4 py-8 sm:px-8 sm:py-12">
           <header
             id="learning-header"
-            class="flex flex-col gap-5 border-b border-stone-300 pb-8 sm:flex-row sm:items-end sm:justify-between"
+            class="border-b border-stone-300 pb-8"
           >
-            <div>
-              <p class="text-xs font-semibold uppercase tracking-[0.16em] text-teal-800">
-                Your learning workspace
-              </p>
-              <h1 class="mt-3 font-serif text-4xl font-semibold sm:text-5xl">My Learning</h1>
-              <p class="mt-3 max-w-xl text-base leading-7 text-slate-600">
-                Find your grids, organise them by subject, and pick up where you left off.
-              </p>
-            </div>
-            <.link
-              id="learning-new-grid"
-              href={
-                if(@collection,
-                  do: ~p"/?collection=#{@collection.id}&focus=grid#start-here",
-                  else: ~p"/?focus=grid#start-here"
-                )
-              }
-              class="inline-flex items-center justify-center gap-2 rounded-md bg-teal-800 px-5 py-3 font-semibold text-white hover:bg-teal-900"
-            >
-              <.icon name="hero-plus" class="h-5 w-5" />
-              {if(@collection, do: "New grid in #{@collection.name}", else: "New grid")}
-            </.link>
+            <h1 id="learning-title" class="font-serif text-4xl font-semibold sm:text-5xl">
+              My Learning
+            </h1>
           </header>
 
           <div class="mt-8 grid gap-8 lg:grid-cols-[16rem_minmax(0,1fr)]">
@@ -554,10 +647,10 @@ defmodule DialecticWeb.LearningLive do
             </aside>
 
             <section id="learning-content" class="min-w-0">
-              <div class="flex flex-wrap items-start justify-between gap-4">
+              <div :if={@collection} class="flex flex-wrap items-start justify-between gap-4">
                 <div>
                   <h2 id="learning-section-title" class="font-serif text-3xl font-semibold">
-                    {if(@collection, do: @collection.name, else: "All your grids")}
+                    {@collection.name}
                   </h2>
                   <p
                     :if={@collection}
@@ -576,9 +669,6 @@ defmodule DialecticWeb.LearningLive do
                     class="mt-2 max-w-2xl whitespace-pre-line text-sm leading-6 text-slate-600"
                   >
                     {@collection.description}
-                  </p>
-                  <p :if={!@collection} class="mt-2 text-sm leading-6 text-slate-600">
-                    Your own, saved, followed, and shared grids, with your bookmarks and highlights.
                   </p>
                 </div>
                 <div
@@ -606,7 +696,10 @@ defmodule DialecticWeb.LearningLive do
               <nav
                 id="learning-content-filters"
                 aria-label="Learning content"
-                class="mt-6 flex flex-wrap gap-2 border-b border-stone-300 pb-3"
+                class={[
+                  "flex flex-wrap gap-2 border-b border-stone-300 pb-3",
+                  @collection && "mt-6"
+                ]}
               >
                 <.link
                   :for={
@@ -618,19 +711,46 @@ defmodule DialecticWeb.LearningLive do
                   }
                   id={"learning-filter-#{kind}"}
                   patch={filter_path(@collection, kind)}
-                  aria-current={if(@saved_kind == kind, do: "page")}
+                  aria-current={if(@saved_kind == kind and !@show_new_grid?, do: "page")}
                   class={[
                     "rounded-md px-4 py-2 text-sm font-semibold",
-                    if(@saved_kind == kind,
+                    if(@saved_kind == kind and !@show_new_grid?,
                       do: "bg-slate-950 text-white",
                       else: "text-slate-600 hover:bg-white"
                     )
                   ]}
                 >{label}</.link>
+                <.link
+                  id="learning-new-grid-tab"
+                  patch={new_grid_path(@collection)}
+                  aria-current={if(@show_new_grid?, do: "page")}
+                  class={[
+                    "inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold",
+                    if(@show_new_grid?,
+                      do: "bg-slate-950 text-white",
+                      else: "text-slate-600 hover:bg-white"
+                    )
+                  ]}
+                >
+                  <.icon name="hero-plus" class="h-4 w-4" /> New grid
+                </.link>
               </nav>
-              <p id="learning-organise-hint" class="mt-3 text-xs leading-5 text-slate-500">
-                Drag a grid’s grip onto a topic or collection, or choose Organise. Bookmarks and highlights stay with their grid.
-              </p>
+
+              <div :if={@show_new_grid?} id="learning-create-grid" class="mt-6 max-w-xl">
+                <.live_component
+                  module={DialecticWeb.NewGridForm}
+                  id="learning-new-grid-form"
+                  form={@new_grid_form}
+                  label="Start a private grid"
+                  context={@collection && "Added to #{group_kind(@collection)}: #{@collection.name}"}
+                  busy={@creating_grid?}
+                  placeholder="Ask a question or name a topic"
+                  submit_label="Continue"
+                  create_label="Create private grid"
+                  minimal={true}
+                  authenticated={true}
+                />
+              </div>
 
               <.form
                 :if={@editing? && @edit_form}
@@ -670,261 +790,273 @@ defmodule DialecticWeb.LearningLive do
                 </div>
               </.form>
 
-              <p
-                :if={@adding?}
-                id="learning-adding-note"
-                class="mt-5 rounded-md bg-teal-50 px-4 py-3 text-sm text-teal-900"
-              >
-                Choose grids to add to {@collection.name}. A grid can belong to multiple topics and collections.
-              </p>
-              <.form
-                for={@search_form}
-                id="learning-search"
-                phx-change="search"
-                phx-submit="search"
-                class="mt-6"
-              >
-                <.input
-                  field={@search_form[:q]}
-                  id="learning-search-input"
-                  type="search"
-                  label={
-                    if(@adding? || !@collection,
-                      do: "Find a grid",
-                      else: "Find a grid in this #{group_kind(@collection)}"
-                    )
-                  }
-                  placeholder="Search grid titles or tags…"
-                  phx-debounce="300"
-                  maxlength="200"
-                />
-              </.form>
-
-              <div
-                id="learning-grids"
-                phx-update="stream"
-                class="mt-5 divide-y divide-stone-200 overflow-hidden rounded-md border border-stone-300 bg-white"
-              >
-                <div id="learning-no-grids" class="hidden px-6 py-12 text-center only:block">
-                  <.icon name="hero-folder-open" class="mx-auto h-8 w-8 text-teal-700" />
-                  <%= cond do %>
-                    <% @search != "" -> %>
-                      <h3 class="mt-4 text-lg font-semibold">No matching grids</h3>
-                      <p class="mt-2 text-sm leading-6 text-slate-600">
-                        Try a different title or tag.
-                      </p>
-                    <% @adding? -> %>
-                      <h3 class="mt-4 text-lg font-semibold">No more grids to add</h3>
-                      <p class="mt-2 text-sm leading-6 text-slate-600">
-                        Create a new grid, or bookmark a community grid to find it here.
-                      </p>
-                    <% @saved_kind != "all" -> %>
-                      <h3 class="mt-4 text-lg font-semibold">No {@saved_kind} here yet</h3>
-                      <p class="mt-2 text-sm leading-6 text-slate-600">
-                        Open a grid and save an answer or highlight a passage. You’ll find it here with that grid.
-                      </p>
-                    <% @collection -> %>
-                      <h3 class="mt-4 text-lg font-semibold">
-                        Start building this {group_kind(@collection)}
-                      </h3>
-                      <p class="mt-2 text-sm leading-6 text-slate-600">
-                        Add an existing grid or start a new one on this subject.
-                      </p>
-                    <% true -> %>
-                      <h3 class="mt-4 text-lg font-semibold">Your learning starts with a question</h3>
-                      <p class="mt-2 text-sm leading-6 text-slate-600">
-                        Start a grid above, or bookmark a grid from the community.
-                      </p>
-                  <% end %>
-                </div>
-                <article
-                  :for={{id, grid} <- @streams.grids}
-                  id={id}
-                  class="px-5 py-6"
+              <div :if={!@show_new_grid?} id="learning-grid-browser">
+                <p id="learning-organise-hint" class="mt-3 text-xs leading-5 text-slate-500">
+                  Drag a grid’s grip onto a topic or collection, or choose Organise. Bookmarks and highlights stay with their grid.
+                </p>
+                <p
+                  :if={@adding?}
+                  id="learning-adding-note"
+                  class="mt-5 rounded-md bg-teal-50 px-4 py-3 text-sm text-teal-900"
                 >
-                  <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div class="min-w-0 flex-1">
-                      <button
-                        id={id <> "-drag"}
-                        type="button"
-                        draggable="true"
-                        data-learning-drag
-                        data-grid-title={grid.title}
-                        phx-click="organise_grid"
-                        phx-value-title={grid.title}
-                        aria-label={"Organise #{grid.title}; drag to a topic or collection, or click to choose"}
-                        title="Drag to a topic or collection, or click to organise"
-                        class="mr-2 inline-flex cursor-grab rounded p-1 text-slate-400 hover:bg-teal-50 hover:text-teal-800 active:cursor-grabbing"
-                      >
-                        <.icon name="hero-bars-3" class="h-5 w-5" />
-                      </button>
-                      <.link
-                        id={id <> "-open"}
-                        href={graph_path(grid)}
-                        class="break-words font-serif text-xl font-semibold leading-7 text-slate-950 hover:text-teal-800"
-                      >{grid.title}</.link>
-                      <p class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
-                        <span>Updated {Calendar.strftime(grid.updated_at, "%d %b %Y")}</span>
-                        <span>{if(grid.is_public, do: "Public grid", else: "Private grid")}</span>
-                      </p>
-                      <p :if={grid.tags != [] && grid.tags != nil} class="mt-2 text-xs text-slate-600">
-                        {Enum.map_join(grid.tags, " · ", &tag_label/1)}
-                      </p>
-                      <div :if={grid.collections != []} class="mt-3 flex flex-wrap gap-2">
+                  Choose grids to add to {@collection.name}. A grid can belong to multiple topics and collections.
+                </p>
+                <.form
+                  for={@search_form}
+                  id="learning-search"
+                  phx-change="search"
+                  phx-submit="search"
+                  class="mt-6"
+                >
+                  <.input
+                    field={@search_form[:q]}
+                    id="learning-search-input"
+                    type="search"
+                    label={
+                      if(@adding? || !@collection,
+                        do: "Find a grid",
+                        else: "Find a grid in this #{group_kind(@collection)}"
+                      )
+                    }
+                    placeholder="Search grid titles or tags…"
+                    phx-debounce="300"
+                    maxlength="200"
+                  />
+                </.form>
+
+                <div
+                  id="learning-grids"
+                  phx-update="stream"
+                  class="mt-5 divide-y divide-stone-200 overflow-hidden rounded-md border border-stone-300 bg-white"
+                >
+                  <div id="learning-no-grids" class="hidden px-6 py-12 text-center only:block">
+                    <.icon name="hero-folder-open" class="mx-auto h-8 w-8 text-teal-700" />
+                    <%= cond do %>
+                      <% @search != "" -> %>
+                        <h3 class="mt-4 text-lg font-semibold">No matching grids</h3>
+                        <p class="mt-2 text-sm leading-6 text-slate-600">
+                          Try a different title or tag.
+                        </p>
+                      <% @adding? -> %>
+                        <h3 class="mt-4 text-lg font-semibold">No more grids to add</h3>
+                        <p class="mt-2 text-sm leading-6 text-slate-600">
+                          Create a new grid, or bookmark a community grid to find it here.
+                        </p>
+                      <% @saved_kind != "all" -> %>
+                        <h3 class="mt-4 text-lg font-semibold">No {@saved_kind} here yet</h3>
+                        <p class="mt-2 text-sm leading-6 text-slate-600">
+                          Open a grid and save an answer or highlight a passage. You’ll find it here with that grid.
+                        </p>
+                      <% @collection -> %>
+                        <h3 class="mt-4 text-lg font-semibold">
+                          Start building this {group_kind(@collection)}
+                        </h3>
+                        <p class="mt-2 text-sm leading-6 text-slate-600">
+                          Add an existing grid or start a new one on this subject.
+                        </p>
+                      <% true -> %>
+                        <h3 class="mt-4 text-lg font-semibold">
+                          Your learning starts with a question
+                        </h3>
+                        <p class="mt-2 text-sm leading-6 text-slate-600">
+                          Choose New grid, or bookmark a grid from the community.
+                        </p>
+                    <% end %>
+                  </div>
+                  <article
+                    :for={{id, grid} <- @streams.grids}
+                    id={id}
+                    class="px-5 py-6"
+                  >
+                    <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                      <div class="min-w-0 flex-1">
+                        <button
+                          id={id <> "-drag"}
+                          type="button"
+                          draggable="true"
+                          data-learning-drag
+                          data-grid-title={grid.title}
+                          phx-click="organise_grid"
+                          phx-value-title={grid.title}
+                          aria-label={"Organise #{grid.title}; drag to a topic or collection, or click to choose"}
+                          title="Drag to a topic or collection, or click to organise"
+                          class="mr-2 inline-flex cursor-grab rounded p-1 text-slate-400 hover:bg-teal-50 hover:text-teal-800 active:cursor-grabbing"
+                        >
+                          <.icon name="hero-bars-3" class="h-5 w-5" />
+                        </button>
                         <.link
-                          :for={collection <- grid.collections}
-                          id={id <> "-topic-#{collection.id}"}
-                          patch={filter_path(collection, @saved_kind)}
-                          class="rounded bg-teal-50 px-2 py-1 text-xs font-medium text-teal-800"
-                        >{collection.name}</.link>
+                          id={id <> "-open"}
+                          href={learning_grid_path(grid)}
+                          class="break-words font-serif text-xl font-semibold leading-7 text-slate-950 hover:text-teal-800"
+                        >{grid.title}</.link>
+                        <p class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
+                          <span>Updated {Calendar.strftime(grid.updated_at, "%d %b %Y")}</span>
+                          <span>{if(grid.is_public, do: "Public grid", else: "Private grid")}</span>
+                        </p>
+                        <p
+                          :if={grid.tags != [] && grid.tags != nil}
+                          class="mt-2 text-xs text-slate-600"
+                        >
+                          {Enum.map_join(grid.tags, " · ", &tag_label/1)}
+                        </p>
+                        <div :if={grid.collections != []} class="mt-3 flex flex-wrap gap-2">
+                          <.link
+                            :for={collection <- grid.collections}
+                            id={id <> "-topic-#{collection.id}"}
+                            patch={filter_path(collection, @saved_kind)}
+                            class="rounded bg-teal-50 px-2 py-1 text-xs font-medium text-teal-800"
+                          >{collection.name}</.link>
+                        </div>
+                      </div>
+                      <div class="flex shrink-0 flex-wrap items-center gap-3">
+                        <button
+                          id={id <> "-organise"}
+                          type="button"
+                          phx-click="organise_grid"
+                          phx-value-title={grid.title}
+                          class="text-sm font-semibold text-teal-800"
+                        >Organise</button>
+                        <%= cond do %>
+                          <% @adding? -> %>
+                            <button
+                              id={id <> "-add"}
+                              type="button"
+                              phx-click="add_grid"
+                              phx-value-title={grid.title}
+                              class="rounded-md border border-teal-800 px-3 py-2 text-sm font-semibold text-teal-800 hover:bg-teal-50"
+                            >Add to {group_kind(@collection)}</button>
+                          <% @collection -> %>
+                            <button
+                              id={id <> "-remove"}
+                              type="button"
+                              phx-click="remove_grid"
+                              phx-value-title={grid.title}
+                              aria-label={"Remove #{grid.title} from #{@collection.name}"}
+                              class="text-sm text-slate-500 hover:text-red-700"
+                            >Remove from {group_kind(@collection)}</button>
+                          <% true -> %>
+                            <.link
+                              id={id <> "-continue"}
+                              href={learning_grid_path(grid)}
+                              class="inline-flex items-center gap-2 text-sm font-semibold text-teal-800"
+                            >Continue <.icon name="hero-arrow-right" class="h-4 w-4" /></.link>
+                        <% end %>
                       </div>
                     </div>
-                    <div class="flex shrink-0 flex-wrap items-center gap-3">
-                      <button
-                        id={id <> "-organise"}
-                        type="button"
-                        phx-click="organise_grid"
-                        phx-value-title={grid.title}
-                        class="text-sm font-semibold text-teal-800"
-                      >Organise</button>
-                      <%= cond do %>
-                        <% @adding? -> %>
-                          <button
-                            id={id <> "-add"}
-                            type="button"
-                            phx-click="add_grid"
-                            phx-value-title={grid.title}
-                            class="rounded-md border border-teal-800 px-3 py-2 text-sm font-semibold text-teal-800 hover:bg-teal-50"
-                          >Add to {group_kind(@collection)}</button>
-                        <% @collection -> %>
-                          <button
-                            id={id <> "-remove"}
-                            type="button"
-                            phx-click="remove_grid"
-                            phx-value-title={grid.title}
-                            aria-label={"Remove #{grid.title} from #{@collection.name}"}
-                            class="text-sm text-slate-500 hover:text-red-700"
-                          >Remove from {group_kind(@collection)}</button>
-                        <% true -> %>
-                          <.link
-                            id={id <> "-continue"}
-                            href={graph_path(grid)}
-                            class="inline-flex items-center gap-2 text-sm font-semibold text-teal-800"
-                          >Continue <.icon name="hero-arrow-right" class="h-4 w-4" /></.link>
-                      <% end %>
-                    </div>
-                  </div>
 
-                  <details
-                    :if={grid.bookmarks != [] || grid.highlights != []}
-                    id={id <> "-saved"}
-                    open={@saved_kind != "all"}
-                    class="mt-4 rounded-md border border-stone-200 bg-stone-50"
-                  >
-                    <summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-700">
-                      Saved in this grid · {length(grid.bookmarks)} bookmarks · {length(
-                        grid.highlights
-                      )} highlights
-                    </summary>
-                    <div class="space-y-4 border-t border-stone-200 p-4">
-                      <section
-                        :if={@saved_kind != "highlights" && grid.bookmarks != []}
-                        aria-label="Bookmarks"
-                        class="space-y-3"
-                      >
-                        <div
-                          :for={bookmark <- grid.bookmarks}
-                          id={"learning-bookmark-#{bookmark.id}"}
-                          class="flex items-start justify-between gap-3"
+                    <details
+                      :if={grid.bookmarks != [] || grid.highlights != []}
+                      id={id <> "-saved"}
+                      open={@saved_kind != "all"}
+                      class="mt-4 rounded-md border border-stone-200 bg-stone-50"
+                    >
+                      <summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-700">
+                        Saved in this grid · {length(grid.bookmarks)} bookmarks · {length(
+                          grid.highlights
+                        )} highlights
+                      </summary>
+                      <div class="space-y-4 border-t border-stone-200 p-4">
+                        <section
+                          :if={@saved_kind != "highlights" && grid.bookmarks != []}
+                          aria-label="Bookmarks"
+                          class="space-y-3"
                         >
-                          <.link
-                            id={"learning-bookmark-#{bookmark.id}-open"}
-                            href={graph_path(grid, bookmark.node_id)}
-                            class="inline-flex items-start gap-2 text-sm font-semibold text-teal-800"
+                          <div
+                            :for={bookmark <- grid.bookmarks}
+                            id={"learning-bookmark-#{bookmark.id}"}
+                            class="flex items-start justify-between gap-3"
                           >
-                            <.icon name="hero-bookmark" class="mt-0.5 h-4 w-4 shrink-0" /> {bookmark.title}
-                          </.link>
-                          <button
-                            id={"learning-bookmark-#{bookmark.id}-remove"}
-                            type="button"
-                            phx-click="remove_bookmark"
-                            phx-value-id={bookmark.id}
-                            aria-label={"Remove bookmark: #{bookmark.title}"}
-                            class="text-xs text-slate-500 hover:text-red-700"
-                          >Remove</button>
-                        </div>
-                      </section>
-                      <section
-                        :if={@saved_kind != "bookmarks" && grid.highlights != []}
-                        aria-label="Highlights"
-                        class="space-y-3"
-                      >
-                        <div
-                          :for={highlight <- grid.highlights}
-                          id={"learning-highlight-#{highlight.id}"}
-                          class="border-l-2 border-amber-400 pl-3"
-                        >
-                          <.link
-                            id={"learning-highlight-#{highlight.id}-open"}
-                            aria-label={"Open highlight: #{String.slice(highlight.selected_text_snapshot || "", 0, 120)}"}
-                            href={graph_path(grid, highlight.node_id, highlight: highlight.id)}
-                            class="block text-sm leading-6 text-slate-800 hover:text-teal-800"
-                          >
-                            <blockquote>{highlight.selected_text_snapshot}</blockquote>
-                            <p
-                              :if={highlight.note && highlight.note != ""}
-                              class="mt-1 text-xs text-slate-500"
+                            <.link
+                              id={"learning-bookmark-#{bookmark.id}-open"}
+                              href={learning_grid_path(grid, bookmark.node_id)}
+                              class="inline-flex items-start gap-2 text-sm font-semibold text-teal-800"
                             >
-                              {highlight.note}
-                            </p>
-                          </.link>
-                          <button
-                            id={"learning-highlight-#{highlight.id}-remove"}
-                            type="button"
-                            phx-click="remove_highlight"
-                            phx-value-id={highlight.id}
-                            data-confirm="Remove this saved highlight?"
-                            class="mt-1 text-xs text-slate-500 hover:text-red-700"
-                          >Remove highlight</button>
-                        </div>
-                      </section>
-                    </div>
-                  </details>
+                              <.icon name="hero-bookmark" class="mt-0.5 h-4 w-4 shrink-0" /> {bookmark.title}
+                            </.link>
+                            <button
+                              id={"learning-bookmark-#{bookmark.id}-remove"}
+                              type="button"
+                              phx-click="remove_bookmark"
+                              phx-value-id={bookmark.id}
+                              aria-label={"Remove bookmark: #{bookmark.title}"}
+                              class="text-xs text-slate-500 hover:text-red-700"
+                            >Remove</button>
+                          </div>
+                        </section>
+                        <section
+                          :if={@saved_kind != "bookmarks" && grid.highlights != []}
+                          aria-label="Highlights"
+                          class="space-y-3"
+                        >
+                          <div
+                            :for={highlight <- grid.highlights}
+                            id={"learning-highlight-#{highlight.id}"}
+                            class="border-l-2 border-amber-400 pl-3"
+                          >
+                            <.link
+                              id={"learning-highlight-#{highlight.id}-open"}
+                              aria-label={"Open highlight: #{String.slice(highlight.selected_text_snapshot || "", 0, 120)}"}
+                              href={
+                                learning_grid_path(grid, highlight.node_id, highlight: highlight.id)
+                              }
+                              class="block text-sm leading-6 text-slate-800 hover:text-teal-800"
+                            >
+                              <blockquote>{highlight.selected_text_snapshot}</blockquote>
+                              <p
+                                :if={highlight.note && highlight.note != ""}
+                                class="mt-1 text-xs text-slate-500"
+                              >
+                                {highlight.note}
+                              </p>
+                            </.link>
+                            <button
+                              id={"learning-highlight-#{highlight.id}-remove"}
+                              type="button"
+                              phx-click="remove_highlight"
+                              phx-value-id={highlight.id}
+                              data-confirm="Remove this saved highlight?"
+                              class="mt-1 text-xs text-slate-500 hover:text-red-700"
+                            >Remove highlight</button>
+                          </div>
+                        </section>
+                      </div>
+                    </details>
 
-                  <div
-                    :if={grid.user_id == @current_user.id}
-                    class="mt-4 flex flex-wrap items-center gap-4 border-t border-stone-100 pt-3 text-xs font-semibold"
-                  >
-                    <.link id={id <> "-edit"} href={graph_editor_path(grid)} class="text-teal-800">Open grid editor</.link>
-                    <button
-                      id={id <> "-visibility"}
-                      type="button"
-                      phx-click="toggle_visibility"
-                      phx-value-title={grid.title}
-                      data-confirm={
-                        if(!grid.is_public,
-                          do: "Make this grid public? Anyone will be able to view it."
-                        )
-                      }
-                      class="text-slate-600"
-                    >{if(grid.is_public, do: "Make private", else: "Make public")}</button>
-                    <button
-                      id={id <> "-delete"}
-                      type="button"
-                      phx-click="show_delete_grid"
-                      phx-value-title={grid.title}
-                      class="text-red-700"
-                    >Delete grid</button>
-                  </div>
-                </article>
+                    <div
+                      :if={grid.user_id == @current_user.id}
+                      class="mt-4 flex flex-wrap items-center gap-4 border-t border-stone-100 pt-3 text-xs font-semibold"
+                    >
+                      <.link id={id <> "-edit"} href={graph_editor_path(grid)} class="text-teal-800">Open grid editor</.link>
+                      <button
+                        id={id <> "-visibility"}
+                        type="button"
+                        phx-click="toggle_visibility"
+                        phx-value-title={grid.title}
+                        data-confirm={
+                          if(!grid.is_public,
+                            do: "Make this grid public? Anyone will be able to view it."
+                          )
+                        }
+                        class="text-slate-600"
+                      >{if(grid.is_public, do: "Make private", else: "Make public")}</button>
+                      <button
+                        id={id <> "-delete"}
+                        type="button"
+                        phx-click="show_delete_grid"
+                        phx-value-title={grid.title}
+                        class="text-red-700"
+                      >Delete grid</button>
+                    </div>
+                  </article>
+                </div>
+                <button
+                  :if={@more?}
+                  id="learning-load-more"
+                  type="button"
+                  phx-click="load_more"
+                  class="mt-5 rounded-md border border-stone-400 px-4 py-2 text-sm font-semibold hover:bg-white"
+                >Load more grids</button>
               </div>
-              <button
-                :if={@more?}
-                id="learning-load-more"
-                type="button"
-                phx-click="load_more"
-                class="mt-5 rounded-md border border-stone-400 px-4 py-2 text-sm font-semibold hover:bg-white"
-              >Load more grids</button>
             </section>
           </div>
         </div>

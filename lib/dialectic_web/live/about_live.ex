@@ -10,7 +10,7 @@ defmodule DialecticWeb.AboutLive do
        page_title: "About RationalGrid",
        contact_mailto: "mailto:hello@rationalgrid.ai",
        page_description:
-         "RationalGrid is a free AI learning workspace. Explore questions, organise grids by topic, and find your answers, bookmarks, and highlights together in My Learning."
+         "RationalGrid is your free AI workshop: tools for thinking and a place to organise your work, learn with others, and build on ideas over time."
      ), layout: false}
   end
 
@@ -26,11 +26,11 @@ defmodule DialecticWeb.AboutLive do
                 About RationalGrid
               </p>
               <h1 class="mt-5 font-serif text-5xl font-semibold leading-[1.02] tracking-tight sm:text-7xl">
-                Make your learning last.
+                Your AI workshop.
               </h1>
               <p id="about-value-proposition" class="mt-5 max-w-3xl text-lg leading-8 text-slate-600">
-                A free AI learning workspace. Explore questions together, organise grids by topic,
-                and return to what matters in My Learning.
+                RationalGrid is your free AI workshop: tools to question, explain, and challenge ideas,
+                with a place to organise your work and build on it together.
               </p>
             </div>
             <div class="border-t border-slate-400 pt-4">
@@ -131,11 +131,11 @@ defmodule DialecticWeb.AboutLive do
                   id="about-tools-heading"
                   class="mt-2 font-serif text-4xl font-semibold tracking-tight"
                 >
-                  What RationalGrid does
+                  Tools and a place to use them
                 </h2>
               </div>
               <p class="text-sm leading-6 text-slate-600">
-                Your questions, sources, and saved passages in one place.
+                Explore in grids. Organise in My Learning. Build with others.
               </p>
             </div>
 
@@ -143,15 +143,15 @@ defmodule DialecticWeb.AboutLive do
               <article id="about-tool-explore" class="border-t-2 border-violet-600 pt-4">
                 <h3 class="font-serif text-xl font-semibold">Learn with others</h3>
                 <p class="mt-2 text-sm leading-6 text-slate-600">
-                  Share a grid, add questions together, and compare perspectives.
-                  Build on what others have explored.
+                  Explain, challenge, and compare ideas in a shared grid.
+                  Add questions and build on each other’s work.
                 </p>
               </article>
               <article id="about-tool-organise" class="border-t-2 border-teal-600 pt-4">
                 <h3 class="font-serif text-xl font-semibold">Give each subject a home</h3>
                 <p class="mt-2 text-sm leading-6 text-slate-600">
-                  Group grids into subjects like Economics. Start with topics from tags,
-                  then drag grids into collections.
+                  Topics start from grid tags. Create Collections for subjects, projects,
+                  or anything you’re exploring.
                 </p>
               </article>
               <article id="about-tool-keep" class="border-t-2 border-amber-600 pt-4">
@@ -333,7 +333,7 @@ defmodule DialecticWeb.AboutLive do
               </div>
               <div class="grid gap-1 px-4 py-3 sm:grid-cols-[13rem_1fr]">
                 <dt class="font-semibold">Core offering</dt><dd>
-                  AI learning workspace with grids, topic collections, bookmarks, and highlights
+                  AI workshop with thinking tools, shared grids, and My Learning to organise your work
                 </dd>
               </div>
               <div class="grid gap-1 px-4 py-3 sm:grid-cols-[13rem_1fr]">

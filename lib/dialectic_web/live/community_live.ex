@@ -18,7 +18,8 @@ defmodule DialecticWeb.CommunityLive do
       socket
       |> assign(
         page_title: "Community Grids",
-        page_description: "Explore community grids built with RationalGrid.",
+        page_description:
+          "Explore work shared from the RationalGrid AI workshop. Follow questions, compare perspectives, and build on ideas together.",
         search_term: "",
         active_tag: nil,
         active_category: nil,
@@ -235,7 +236,7 @@ defmodule DialecticWeb.CommunityLive do
                   id="community-introduction"
                   class="mt-2 max-w-2xl text-sm leading-6 text-slate-600"
                 >
-                  Share your questions and thinking to help others see something new.
+                  See what others are exploring in the AI workshop. Share a grid and build on each other’s ideas.
                 </p>
               </div>
               <.link
@@ -785,7 +786,9 @@ defmodule DialecticWeb.CommunityLive do
     end
   end
 
-  defp page_description(nil), do: "Explore community grids built with RationalGrid."
+  defp page_description(nil),
+    do:
+      "Explore work shared from the RationalGrid AI workshop. Follow questions, compare perspectives, and build on ideas together."
 
   defp page_description(tag) do
     "Explore community grids about #{tag_label(tag)}. Follow questions, compare perspectives, and examine sources shared by the RationalGrid community."

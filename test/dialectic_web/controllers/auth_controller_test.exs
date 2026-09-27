@@ -57,5 +57,6 @@ defmodule DialecticWeb.AuthControllerTest do
       |> AuthController.callback(%{})
 
     assert Phoenix.Flash.get(conn.assigns.flash, :analytics_auth_event) == "login_completed"
+    assert redirected_to(conn) == ~p"/my/learning"
   end
 end

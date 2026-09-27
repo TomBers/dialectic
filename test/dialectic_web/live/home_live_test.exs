@@ -191,11 +191,12 @@ defmodule DialecticWeb.HomeLiveTest do
     {:ok, view, _html} = live(conn, ~p"/")
 
     assert has_element?(view, "#home-video-hero #start-here #new-idea-form")
+    assert has_element?(view, "#home-public-creation-note", "public grid")
+    assert has_element?(view, "#home-private-grid-link[href='/my/learning']", "My Learning")
 
     assert has_element?(
              view,
-             ~s(#home-question-label[for="new-idea-input"]),
-             "What would you like to learn?"
+             ~s(#new-idea-input[aria-label="What would you like to learn?"])
            )
 
     assert view |> element("#new-idea-form") |> render()
@@ -213,12 +214,12 @@ defmodule DialecticWeb.HomeLiveTest do
 
     assert has_element?(view, "#home-hero-logo")
     assert has_element?(view, "#home-hero-brand", "RationalGrid")
-    assert has_element?(view, "#home-hero-title", "A home for everything you’re learning.")
+    assert has_element?(view, "#home-hero-title", "Your AI workshop.")
 
     assert has_element?(
              view,
              "#home-hero-subheading",
-             "Organise your grids by subject"
+             "A place to explore questions, organise knowledge, and build understanding together."
            )
 
     assert has_element?(view, "#home-video-hero #new-idea-input")
@@ -412,7 +413,7 @@ defmodule DialecticWeb.HomeLiveTest do
     assert has_element?(
              view,
              "footer p.text-slate-400",
-             "See what you think."
+             "Your AI workshop."
            )
   end
 
@@ -500,7 +501,8 @@ defmodule DialecticWeb.HomeLiveTest do
     |> render_submit()
 
     assert has_element?(view, "#home-video-hero #new-idea-level-step")
-    assert has_element?(view, "#home-public-grid-note", "public and editable by default")
+    assert has_element?(view, "#new-idea-create-submit", "Create public grid")
+    refute has_element?(view, "#home-public-grid-note")
   end
 
   test "explains each answer depth in the start form", %{conn: conn} do
@@ -517,8 +519,7 @@ defmodule DialecticWeb.HomeLiveTest do
     assert has_element?(view, "#new-idea-mode-university", "Expanded")
     assert has_element?(view, "#new-idea-mode-expert", "In-depth")
     assert has_element?(view, "#new-idea-mode-expert", "Rigorous analysis")
-    assert has_element?(view, "#new-idea-level-step #home-public-grid-note")
-    assert has_element?(view, "#home-public-grid-note", "public and editable by default")
+    refute has_element?(view, "#home-public-grid-note")
     assert has_element?(view, "#new-idea-mode-university[data-requires-login='true']")
     assert has_element?(view, "#new-idea-mode-expert[data-requires-login='true']")
 

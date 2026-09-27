@@ -26,6 +26,8 @@ defmodule DialecticWeb.LearningLiveTest do
     test "creates, edits, and deletes a collection through its forms", %{conn: conn, user: user} do
       {:ok, view, html} = live(conn, ~p"/my/learning")
       assert has_element?(view, "#learning-header")
+      assert has_element?(view, "#learning-title", "My Learning")
+      refute has_element?(view, "#learning-section-title")
       assert has_element?(view, "#learning-activity-link[href='/activity']")
       assert has_element?(view, "#learning-topics-empty:only-child")
       assert has_element?(view, "#learning-collections-empty:only-child")
@@ -59,7 +61,8 @@ defmodule DialecticWeb.LearningLiveTest do
 
       assert has_element?(
                view,
-               "#learning-new-grid[href='/?collection=#{collection.id}&focus=grid#start-here']"
+               "#learning-new-grid-form-panel #learning-new-grid-form-context",
+               "Economics"
              )
 
       view |> element("#learning-edit-button") |> render_click()
@@ -165,16 +168,16 @@ defmodule DialecticWeb.LearningLiveTest do
              |> Enum.count() == 1
     end
 
-    test "new grids started in a collection are filed there", %{conn: conn, user: user} do
+    test "private grids started in a collection are filed there", %{conn: conn, user: user} do
       {:ok, collection} = Learning.create_collection(user, %{name: "Economics"})
       question = "Economics question #{System.unique_integer([:positive])}"
-      {:ok, view, _} = live(conn, ~p"/?collection=#{collection.id}&focus=grid")
-      assert has_element?(view, "#home-collection-context", "Economics")
-      view |> form("#new-idea-form", vertex: %{content: question}) |> render_submit()
-      view |> form("#new-idea-form", vertex: %{content: question}) |> render_submit()
+      {:ok, view, _} = live(conn, ~p"/my/learning?collection=#{collection.id}")
+      assert has_element?(view, "#learning-new-grid-form-context", "Economics")
+      view |> form("#learning-new-grid-form", vertex: %{content: question}) |> render_submit()
+      view |> form("#learning-new-grid-form", vertex: %{content: question}) |> render_submit()
       {path, _flash} = assert_redirect(view, 2_000)
 
-      assert [%{title: ^question, slug: slug}] =
+      assert [%{title: ^question, slug: slug, is_public: false}] =
                Learning.list_grids(user, collection_id: collection.id)
 
       assert path == "/g/#{slug}"
@@ -276,6 +279,8 @@ defmodule DialecticWeb.LearningLiveTest do
       refute has_element?(view, grid_selector(grid))
       assert Dialectic.Repo.get!(Dialectic.Accounts.Graph, grid.title).is_deleted
       assert [%{grid_count: 0}] = Learning.list_collections(user)
+      assert has_element?(view, "#learning-new-grid-form")
+      refute has_element?(view, "#learning-grid-browser")
     end
 
     test "cannot manage someone else's grid even with crafted events", %{conn: conn, user: user} do
@@ -359,10 +364,12 @@ defmodule DialecticWeb.LearningLiveTest do
 
     view |> element("#learning-filter-bookmarks") |> render_click()
     view |> element("#collections-#{manual.id}") |> render_click()
-    assert_patch(view, ~p"/my/learning?collection=#{manual.id}&saved=bookmarks")
+    assert has_element?(view, "#collections-#{manual.id}[aria-current='page']")
+    assert has_element?(view, "#learning-filter-bookmarks[aria-current='page']")
     assert has_element?(view, "#learning-bookmark-#{bookmark.id}")
     view |> element("#topics-#{topic.id}") |> render_click()
-    assert_patch(view, ~p"/my/learning?collection=#{topic.id}&saved=bookmarks")
+    assert has_element?(view, "#topics-#{topic.id}[aria-current='page']")
+    assert has_element?(view, "#learning-filter-bookmarks[aria-current='page']")
 
     view |> element(grid_selector(grid, "-remove")) |> render_click()
     render_hook(view, "drop_grid", %{title: grid.title, collection_id: topic.id})
