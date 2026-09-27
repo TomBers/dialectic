@@ -104,6 +104,18 @@ defmodule Dialectic.DbActions.GraphsTest do
       assert Keyword.has_key?(changeset.errors, :user_id)
       refute Graphs.get_graph_by_title(title)
     end
+
+    test "rejects missing visibility rather than inserting a graph with ambiguous access" do
+      for owner <- [nil, user_fixture()], visibility <- [nil, ""] do
+        title = unique_title("missing-visibility")
+
+        assert {:error, changeset} =
+                 Graphs.create_new_graph(title, owner, "high_school", is_public: visibility)
+
+        assert {_message, validation: :required} = Keyword.fetch!(changeset.errors, :is_public)
+        refute Graphs.get_graph_by_title(title)
+      end
+    end
   end
 
   describe "get_graph_by_title/1" do

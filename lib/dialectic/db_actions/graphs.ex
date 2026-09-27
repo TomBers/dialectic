@@ -121,6 +121,7 @@ defmodule Dialectic.DbActions.Graphs do
         slug: slug,
         prompt_mode: prompt_mode
       })
+      |> Ecto.Changeset.validate_required([:is_public])
       |> require_private_owner()
 
     result = Repo.transact(fn -> Repo.insert(changeset, mode: :savepoint) end)
