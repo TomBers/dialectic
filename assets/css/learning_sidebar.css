@@ -1,0 +1,53 @@
+#learning-sidebar-controller,
+#learning-sidebar-backdrop {
+    display: none;
+}
+
+@media (max-width: 1023px) {
+    .learning-sidebar-open {
+        overflow: hidden;
+    }
+
+    #learning-sidebar {
+        position: fixed;
+        z-index: 10001;
+        inset: 0 auto 0 0;
+        width: min(22rem, calc(100vw - 3rem));
+        height: 100dvh;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        padding: max(1rem, env(safe-area-inset-top)) 1rem max(1.5rem, env(safe-area-inset-bottom));
+        background: #f4f1e9;
+        visibility: hidden;
+        transform: translateX(-100%);
+        transition: transform 180ms ease-out, visibility 180ms;
+    }
+
+    #learning-sidebar[data-open="true"] {
+        visibility: visible;
+        transform: translateX(0);
+    }
+
+    #learning-sidebar-backdrop {
+        display: block;
+        position: fixed;
+        z-index: 10000;
+        inset: 0;
+        background: rgb(15 23 42 / 40%);
+        visibility: hidden;
+        opacity: 0;
+        transition: opacity 180ms ease-out, visibility 180ms;
+    }
+
+    #learning-sidebar-backdrop[data-open="true"] {
+        visibility: visible;
+        opacity: 1;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #learning-sidebar,
+    #learning-sidebar-backdrop {
+        transition: none;
+    }
+}

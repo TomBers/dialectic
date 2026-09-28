@@ -52,7 +52,8 @@ defmodule Dialectic.Graph.Creator do
       actor_id,
       callback,
       await_response?,
-      response_timeout
+      response_timeout,
+      Keyword.take(opts, [:is_public])
     )
   end
 
@@ -65,9 +66,10 @@ defmodule Dialectic.Graph.Creator do
          actor_id,
          callback,
          await_response?,
-         response_timeout
+         response_timeout,
+         graph_options
        ) do
-    case Graphs.create_unique_graph(title, user, Atom.to_string(mode)) do
+    case Graphs.create_unique_graph(title, user, Atom.to_string(mode), graph_options) do
       {:ok, graph} ->
         title = graph.title
         ModeServer.set_mode(title, mode)

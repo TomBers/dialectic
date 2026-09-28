@@ -84,7 +84,7 @@ defmodule DialecticWeb.ComparisonControllerTest do
       title = document |> LazyHTML.query("title") |> LazyHTML.text() |> String.trim()
 
       assert String.ends_with?(title, "| RationalGrid")
-      refute title =~ "See what you think"
+      refute title =~ "Your AI workshop"
     end
   end
 

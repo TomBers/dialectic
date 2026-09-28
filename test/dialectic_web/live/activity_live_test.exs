@@ -65,7 +65,12 @@ defmodule DialecticWeb.ActivityLiveTest do
       |> live(~p"/activity")
 
     refute has_element?(lv, "#activity-topic-follow-form")
-    assert html =~ ~s(href="/activity")
+
+    assert html
+           |> LazyHTML.from_document()
+           |> LazyHTML.query("#userHeader a[href='/activity']")
+           |> LazyHTML.attribute("href") == []
+
     assert has_element?(lv, "#activity-summary")
     assert has_element?(lv, "#activity-tabs")
     assert has_element?(lv, "#activity-tab-feed")

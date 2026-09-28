@@ -29,6 +29,7 @@ defmodule DialecticWeb.HomeCreationTest do
     assert graph.title != original.title
     assert graph.slug != original.slug
     assert graph.user_id == learner.id
+    assert graph.is_public
     assert graph.prompt_mode == "expert"
     assert GraphManager.find_node_by_id(graph.title, "1").content == "## " <> question
     assert GraphManager.find_node_by_id(graph.title, "2").response_level == "expert"

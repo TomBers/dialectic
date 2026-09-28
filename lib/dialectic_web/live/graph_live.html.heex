@@ -27,7 +27,7 @@
       graph_path(
         @graph_struct,
         Map.get(@node || %{}, :id),
-        if(@token, do: [token: @token], else: [])
+        graph_nav_params(@token, @reader_path_endpoint, @learning_return)
       )
     }
   >
@@ -41,6 +41,7 @@
       follow_id_prefix="graph"
       current_user={@current_user}
       following_graph?={@following_graph?}
+      learning_return={@learning_return}
       menu_class={[@mobile_inquiry? && "hidden md:flex"]}
     >
       <:heading_actions>
@@ -62,7 +63,7 @@
           mode={:graph}
           graph_struct={@graph_struct}
           node_id={Map.get(@node || %{}, :id)}
-          nav_params={graph_nav_params(@token, @reader_path_endpoint)}
+          nav_params={graph_nav_params(@token, @reader_path_endpoint, @learning_return)}
           show_search
           search_click="open_search_overlay_click"
           highlights_click={
@@ -302,7 +303,7 @@
                   graph_path(
                     @graph_struct,
                     Map.get(@node || %{}, :id),
-                    if(@token, do: [token: @token], else: [])
+                    graph_nav_params(@token, @reader_path_endpoint, @learning_return)
                   )
                 }
                 class="mt-4 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3.5 py-2 text-sm font-semibold text-slate-900"
@@ -322,7 +323,13 @@
     >
       <.link
         id="mobile-inquiry-reader-link"
-        navigate={graph_path(@graph_struct, @node.id, if(@token, do: [token: @token], else: []))}
+        navigate={
+          graph_path(
+            @graph_struct,
+            @node.id,
+            graph_nav_params(@token, @reader_path_endpoint, @learning_return)
+          )
+        }
         class="inline-flex min-h-11 items-center gap-2 rounded-lg px-2 text-sm font-semibold text-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-600"
       >
         <.icon name="hero-arrow-left" class="h-4 w-4" /> Back to discussion

@@ -4,8 +4,6 @@ defmodule DialecticWeb.UserRegistrationLiveTest do
   import Phoenix.LiveViewTest
   import Dialectic.AccountsFixtures
 
-  alias Dialectic.Accounts.User
-
   describe "Registration page" do
     test "renders registration page", %{conn: conn} do
       {:ok, lv, html} = live(conn, ~p"/users/register")
@@ -20,13 +18,8 @@ defmodule DialecticWeb.UserRegistrationLiveTest do
     end
 
     test "redirects if already logged in", %{conn: conn} do
-      result =
-        conn
-        |> log_in_user(user_fixture())
-        |> live(~p"/users/register")
-        |> follow_redirect(conn, "/")
-
-      assert {:ok, _conn} = result
+      conn = log_in_user(conn, user_fixture())
+      assert {:error, {:redirect, %{to: "/my/learning"}}} = live(conn, ~p"/users/register")
     end
 
     test "renders errors for invalid data", %{conn: conn} do
@@ -52,14 +45,18 @@ defmodule DialecticWeb.UserRegistrationLiveTest do
       render_submit(form)
       conn = follow_trigger_action(form, conn)
 
-      assert redirected_to(conn) == ~p"/u/#{User.default_username_from_email(email)}"
-      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "personal thinking homepage"
+      assert redirected_to(conn) == ~p"/my/learning"
+      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "Get started in My Learning"
 
       # Now do a logged in request and assert on the menu
       conn = get(conn, "/")
       response = html_response(conn, 200)
       assert response =~ "My Profile"
-      refute response =~ ~s(href="/users/settings")
+
+      assert response
+             |> LazyHTML.from_document()
+             |> LazyHTML.query("#account-menu #account-settings-link")
+             |> LazyHTML.attribute("href") == ["/users/settings"]
     end
 
     test "renders errors for duplicated email", %{conn: conn} do

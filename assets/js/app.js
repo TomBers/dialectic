@@ -20,6 +20,7 @@ import { LiveSocket } from "phoenix_live_view";
 
 import topbar from "../vendor/topbar";
 import { initAuthReturn } from "./auth_return.js";
+import NewGridDraft from "./new_grid_draft_hook.js";
 import textSelectionHook from "./text_selection_hook.js";
 import SelectionActionsHook from "./selection_actions_hook.js";
 import graphHook from "./graph_hook.js";
@@ -51,6 +52,8 @@ import YouTubeFacadeHook from "./youtube_facade_hook.js";
 import DismissibleHintHook from "./dismissible_hint_hook.js";
 import GenerationStatusHook from "./generation_status_hook.js";
 import ProofCarouselHook from "./proof_carousel_hook.js";
+import LearningDrag from "./learning_drag_hook.js";
+import LearningSidebar from "./learning_sidebar_hook.js";
 import { syncGraphAppearanceStorage } from "./appearance_preferences.js";
 import {
   initAnalyticsEventTracking,
@@ -66,6 +69,7 @@ initAnalyticsEventTracking();
 initProductAnalytics();
 
 let hooks = {};
+hooks.NewGridDraft = NewGridDraft;
 
 // Hook - handles all positioning logic
 hooks.TextSelectionHook = textSelectionHook;
@@ -97,6 +101,8 @@ hooks.YouTubeFacade = YouTubeFacadeHook;
 hooks.DismissibleHint = DismissibleHintHook;
 hooks.GenerationStatus = GenerationStatusHook;
 hooks.ProofCarousel = ProofCarouselHook;
+hooks.LearningDrag = LearningDrag;
+hooks.LearningSidebar = LearningSidebar;
 hooks.GlobalModalLayer = {
   mounted() {
     this.opener = document.activeElement;

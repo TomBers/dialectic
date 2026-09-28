@@ -74,6 +74,13 @@ defmodule DialecticWeb.CommunityBrowsingTest do
     view |> form("#community-search-form", %{search: grid.title}) |> render_change()
     assert has_element?(view, ~s(#community-format-all[aria-current="page"]))
     assert has_element?(view, "#community-grid-#{grid.slug}")
+
+    {:ok, search, _} =
+      view |> element("#community-search-content-link") |> render_click() |> follow_redirect(conn)
+
+    assert has_element?(search, "#global-search-input[value='#{grid.title}']")
+    {:ok, community, _} = live(conn, ~p"/community?#{%{search: grid.title}}")
+    assert has_element?(community, "#community-grid-#{grid.slug}")
   end
 
   test "curated and all-grid directories have distinct indexable canonical URLs", %{conn: conn} do

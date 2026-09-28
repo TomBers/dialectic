@@ -78,6 +78,44 @@ defmodule Dialectic.DbActions.GraphsTest do
       {:ok, graph} = Graphs.create_new_graph(title, user)
       assert graph.user_id == user.id
     end
+
+    test "inserts private grids with an owner and preserves privacy after a title collision" do
+      owner = user_fixture()
+      title = unique_title("private")
+      {:ok, public} = Graphs.create_new_graph(title, owner)
+
+      assert {:ok, private} =
+               Graphs.create_unique_graph(title, owner, "expert", is_public: false)
+
+      refute private.is_public
+      refute Repo.reload!(private).is_public
+      assert private.user_id == owner.id
+      assert private.title != public.title
+      assert Repo.reload!(public).is_public
+      assert Graphs.all_graphs_with_notes(private.title) == []
+    end
+
+    test "cannot create an ownerless private grid" do
+      title = unique_title("ownerless")
+
+      assert {:error, changeset} =
+               Graphs.create_new_graph(title, nil, "high_school", is_public: false)
+
+      assert Keyword.has_key?(changeset.errors, :user_id)
+      refute Graphs.get_graph_by_title(title)
+    end
+
+    test "rejects missing visibility rather than inserting a graph with ambiguous access" do
+      for owner <- [nil, user_fixture()], visibility <- [nil, ""] do
+        title = unique_title("missing-visibility")
+
+        assert {:error, changeset} =
+                 Graphs.create_new_graph(title, owner, "high_school", is_public: visibility)
+
+        assert {_message, validation: :required} = Keyword.fetch!(changeset.errors, :is_public)
+        refute Graphs.get_graph_by_title(title)
+      end
+    end
   end
 
   describe "get_graph_by_title/1" do

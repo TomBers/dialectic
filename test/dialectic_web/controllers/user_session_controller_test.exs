@@ -3,13 +3,42 @@ defmodule DialecticWeb.UserSessionControllerTest do
 
   import Dialectic.AccountsFixtures
 
-  alias Dialectic.Accounts.User
-
   setup do
     %{user: user_fixture()}
   end
 
   describe "POST /users/log_in" do
+    test "private-grid signup keeps its destination when switching to login", %{
+      conn: conn,
+      user: user
+    } do
+      return_to = "/my/learning?new=true"
+      conn = get(conn, ~p"/users/register?#{%{return_to: return_to}}")
+      assert get_session(conn, :user_return_to) == return_to
+      conn = get(recycle(conn), ~p"/users/log_in")
+
+      conn =
+        post(recycle(conn), ~p"/users/log_in", %{
+          "user" => %{"email" => user.email, "password" => valid_user_password()}
+        })
+
+      assert redirected_to(conn) == return_to
+    end
+
+    test "resumes homepage creation after switching to registration", %{conn: conn, user: user} do
+      return_to = "/?resume=grid#start-here"
+      conn = get(conn, ~p"/users/log_in?#{%{return_to: return_to}}")
+      assert get_session(conn, :user_return_to) == return_to
+      conn = get(recycle(conn), ~p"/users/register")
+
+      conn =
+        post(recycle(conn), ~p"/users/log_in", %{
+          "user" => %{"email" => user.email, "password" => valid_user_password()}
+        })
+
+      assert redirected_to(conn) == return_to
+    end
+
     test "returns to the selected response after an unsuccessful login and retry", %{
       conn: conn,
       user: user
@@ -71,13 +100,17 @@ defmodule DialecticWeb.UserSessionControllerTest do
         })
 
       assert get_session(conn, :user_token)
-      assert redirected_to(conn) == ~p"/"
+      assert redirected_to(conn) == ~p"/my/learning"
 
       # Now do a logged in request and assert on the menu
       conn = get(conn, ~p"/")
       response = html_response(conn, 200)
       assert response =~ "My Profile"
-      refute response =~ ~s(href="/users/settings")
+
+      assert response
+             |> LazyHTML.from_document()
+             |> LazyHTML.query("#account-menu #account-settings-link")
+             |> LazyHTML.attribute("href") == ["/users/settings"]
     end
 
     test "logs the user in with remember me", %{conn: conn, user: user} do
@@ -91,7 +124,7 @@ defmodule DialecticWeb.UserSessionControllerTest do
         })
 
       assert conn.resp_cookies["_dialectic_web_user_remember_me"]
-      assert redirected_to(conn) == ~p"/"
+      assert redirected_to(conn) == ~p"/my/learning"
     end
 
     test "logs the user in with return to", %{conn: conn, user: user} do
@@ -120,10 +153,10 @@ defmodule DialecticWeb.UserSessionControllerTest do
           }
         })
 
-      assert redirected_to(conn) == ~p"/u/#{User.effective_username(user)}"
+      assert redirected_to(conn) == ~p"/my/learning"
 
       assert Phoenix.Flash.get(conn.assigns.flash, :info) =~
-               "Your profile is your personal thinking homepage"
+               "Get started in My Learning"
     end
 
     test "login following password update", %{conn: conn, user: user} do

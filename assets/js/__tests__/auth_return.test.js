@@ -1,9 +1,10 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { preserveAuthReturn } from "../auth_return.js";
+import { GRID_DRAFT_KEY, preserveAuthReturn } from "../auth_return.js";
 
 afterEach(() => {
   document.body.replaceChildren();
   window.history.replaceState({}, "", "/");
+  sessionStorage.clear();
 });
 
 function prepareLink(path = "/users/log_in") {
@@ -12,6 +13,33 @@ function prepareLink(path = "/users/log_in") {
 }
 
 describe("authentication return links", () => {
+  it("keeps private-grid signup separate from an unfinished public question", () => {
+    const link = prepareLink("/users/register?return_to=%2Fmy%2Flearning%3Fnew%3Dtrue");
+    link.dataset.preserveAuthReturn = "false";
+    const form = document.createElement("form");
+    form.id = "new-idea-form";
+    form.innerHTML = '<textarea name="vertex[content]">An unfinished question</textarea>';
+    document.body.append(form);
+    preserveAuthReturn({target: link});
+    expect(new URL(link.href).searchParams.get("return_to")).toBe("/my/learning?new=true");
+    expect(sessionStorage.getItem(GRID_DRAFT_KEY)).toBeNull();
+  });
+
+  it("keeps a homepage question and depth out of the URL while arranging its return", () => {
+    const link = prepareLink();
+    const form = document.createElement("form");
+    form.id = "new-idea-form";
+    form.dataset.selectedMode = "expert";
+    form.innerHTML = '<textarea name="vertex[content]">Why do ideas spread?</textarea>';
+    document.body.append(form);
+    preserveAuthReturn({target: link});
+    expect(new URL(link.href).searchParams.get("return_to")).toBe("/?resume=grid#start-here");
+    expect(link.href).not.toContain("ideas");
+    expect(JSON.parse(sessionStorage.getItem(GRID_DRAFT_KEY))).toMatchObject({
+      content: "Why do ideas spread?", mode: "expert",
+    });
+  });
+
   it("captures the selected passage's node and uses a full authentication request", () => {
     window.history.replaceState({}, "", "/g/my-grid?node=16&path=1,16");
     const link = prepareLink();

@@ -11,6 +11,7 @@ defmodule DialecticWeb.WorkspaceBarComp do
   attr :follow_id_prefix, :string, required: true
   attr :current_user, :any, required: true
   attr :following_graph?, :boolean, required: true
+  attr :learning_return, :map, default: nil
   slot :heading_actions
   slot :navigation, required: true
   slot :tools
@@ -19,6 +20,16 @@ defmodule DialecticWeb.WorkspaceBarComp do
     ~H"""
     <header id={@id} class="workspace-header">
       <div id={@heading_id} class="workspace-heading">
+        <.link
+          :if={@learning_return}
+          id={@id <> "-back-to-learning"}
+          href={@learning_return.path}
+          title={"Back to #{@learning_return.label}"}
+          class="inline-flex min-w-0 max-w-[60%] shrink-0 items-center gap-1 text-xs font-semibold text-teal-800 hover:underline"
+        >
+          <.icon name="hero-arrow-left" class="h-4 w-4 shrink-0" />
+          <span class="truncate">Back to {@learning_return.label}</span>
+        </.link>
         <h1
           id={@title_id}
           class="min-w-0 truncate text-sm font-semibold text-slate-700"

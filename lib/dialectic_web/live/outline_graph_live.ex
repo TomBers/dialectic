@@ -79,6 +79,18 @@ defmodule DialecticWeb.OutlineGraphLive do
 
   @impl true
   def handle_params(params, _uri, socket) do
+    socket = DialecticWeb.LearningNavigation.assign_return(socket, params)
+
+    socket =
+      assign(
+        socket,
+        :nav_params,
+        DialecticWeb.LearningNavigation.with_return(
+          socket.assigns.nav_params,
+          socket.assigns.learning_return
+        )
+      )
+
     path_endpoint = current_selected_node(socket.assigns.graph_id, params["path"])
 
     selected_node =
