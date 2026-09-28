@@ -4,7 +4,7 @@ defmodule Dialectic.Learning.Search do
   alias Dialectic.Accounts.Graph
   alias Dialectic.Highlights.Highlight
   alias Dialectic.Repo
-  alias DialecticWeb.NodeSearch
+  alias DialecticWeb.{ColUtils, NodeSearch}
 
   def filter(query, _user, ""), do: query
 
@@ -78,7 +78,7 @@ defmodule Dialectic.Learning.Search do
               %{
                 node_id: node["id"],
                 highlight_id: nil,
-                label: if(field == "content", do: "Answer", else: "Source"),
+                label: match_label(field, node["class"]),
                 preview: preview(node[field], term)
               }
             ]
@@ -90,6 +90,10 @@ defmodule Dialectic.Learning.Search do
       Map.put(grid, :search_matches, Enum.take(highlight_matches ++ node_matches, 3))
     end)
   end
+
+  defp match_label("source_text", _class), do: "Source"
+  defp match_label("content", "origin"), do: "Starting question"
+  defp match_label("content", class), do: ColUtils.node_type_label(class)
 
   defp matches?(text, term) when is_binary(text),
     do: String.contains?(String.downcase(text), String.downcase(term))
