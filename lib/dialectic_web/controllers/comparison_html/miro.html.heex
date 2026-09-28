@@ -1,0 +1,108 @@
+<div class="min-h-screen bg-[#f4f1e9] text-slate-950">
+  <header id="miro-comparison-hero" class="border-b border-stone-300 bg-white">
+    <div class="mx-auto max-w-6xl px-5 py-14 sm:px-8 sm:py-20">
+      <p class="border-l-2 border-teal-700 pl-3 text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
+        RationalGrid and Miro
+      </p>
+      <h1 class="mt-5 max-w-4xl font-serif text-5xl font-semibold leading-[1.02] tracking-tight sm:text-7xl">
+        Which helps you take an idea further?
+      </h1>
+      <p class="mt-5 max-w-3xl text-lg leading-8 text-slate-600">
+        Miro offers a flexible canvas for working together. RationalGrid focuses on connected
+        questions, answers, challenges and sources—so you can return to a specific idea and keep exploring.
+      </p>
+      <.link
+        id="miro-start-cta"
+        href={~p"/?focus=grid#start-here"}
+        data-analytics-event="comparison_start_grid_clicked"
+        data-analytics-comparison="miro"
+        data-analytics-placement="hero"
+        class="mt-8 inline-flex items-center gap-2 rounded-md bg-slate-950 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800"
+      >Start a grid <.icon name="hero-arrow-right" class="h-4 w-4" /></.link>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-6xl px-5 py-12 sm:px-8 sm:py-16">
+    <section id="miro-verdict" aria-labelledby="miro-verdict-heading" class="max-w-3xl">
+      <h2 id="miro-verdict-heading" class="font-serif text-3xl font-semibold">
+        Both help you think with AI. Try the workflow.
+      </h2>
+      <p class="mt-4 leading-7 text-slate-600">
+        Miro includes AI Sidekicks that work with board content, challenge assumptions and suggest
+        improvements. Its canvas supports shared planning, workshops and visual collaboration.
+        <a
+          id="miro-official-source"
+          href="https://help.miro.com/hc/en-us/articles/29902701849618-Sidekicks-overview"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-teal-800 underline underline-offset-4"
+        >See Miro’s Sidekicks overview.</a>
+      </p>
+      <p class="mt-4 leading-7 text-slate-600">
+        In RationalGrid, select an idea and ask a follow-up, challenge it, or explore its sources.
+        Each branch stays attached to the point it addresses. In My Learning, organise grids
+        by topic or into collections and folders. Use bookmarks, highlights and search to find
+        your place, then continue the exploration with others.
+      </p>
+    </section>
+
+    <section class="mt-12" aria-labelledby="miro-table-heading">
+      <h2 id="miro-table-heading" class="font-serif text-3xl font-semibold">
+        Choose by the work you want to do
+      </h2>
+      <div class="mt-6 overflow-x-auto border border-stone-300 bg-white">
+        <table id="miro-comparison-table" class="w-full min-w-[40rem] border-collapse text-left">
+          <thead>
+            <tr class="border-b border-stone-300 bg-stone-100">
+              <th scope="col" class="px-5 py-4 text-sm font-semibold">Your task</th>
+              <th scope="col" class="px-5 py-4 text-sm font-semibold">Miro</th>
+              <th scope="col" class="bg-teal-950 px-5 py-4 text-sm font-semibold text-white">
+                RationalGrid
+              </th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-stone-300 text-sm leading-6">
+            <%= for {task, miro, grid} <- [
+              {"Plan and brainstorm together", "Arrange and develop work on a shared canvas, with AI assistance.", "Explore a question through connected answers and follow-up branches."},
+              {"Examine an idea", "Bring board content into a Sidekick conversation for feedback.", "Attach a question, challenge or source to the exact idea it addresses."},
+              {"Pick up the work later", "Continue working with your team on the board.", "Find grids, bookmarks and highlights in My Learning, then return to a specific idea."}
+            ] do %>
+              <tr>
+                <th scope="row" class="bg-[#f8f6f0] px-5 py-4 font-semibold">{task}</th>
+                <td class="px-5 py-4 text-slate-600">{miro}</td>
+                <td class="px-5 py-4 text-slate-700">{grid}</td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="miro-example" class="mt-12 border-l-4 border-teal-700 pl-6">
+      <h2 class="font-serif text-3xl font-semibold">One article. 35 connected ideas.</h2>
+      <p class="mt-3 max-w-3xl leading-7 text-slate-600">
+        Explore the grid based on Ignacio Gonzalez’s Philosophy Now article. Choose a point,
+        follow its questions and challenges, and see where you would take it next.
+      </p>
+      <a
+        id="miro-example-link"
+        href="https://rationalgrid.ai/g/inspired-by-the-philosophy-now-article-a-memetic-664759?node=1"
+        data-analytics-event="case_study_clicked"
+        data-analytics-location="miro_comparison"
+        class="mt-4 inline-flex items-center gap-2 font-semibold text-teal-800 underline underline-offset-4"
+      >Explore an idea <.icon name="hero-arrow-up-right" class="h-4 w-4" /></a>
+    </section>
+
+    <nav
+      id="miro-related-comparisons"
+      class="mt-12 flex flex-wrap gap-6 border-t border-stone-300 pt-6"
+      aria-label="Related comparisons"
+    >
+      <.link
+        href={~p"/compare/chatgpt"}
+        class="font-semibold text-teal-800 underline underline-offset-4"
+      >Compare with ChatGPT</.link>
+      <.link href={~p"/compare"} class="font-semibold text-teal-800 underline underline-offset-4">All comparisons</.link>
+    </nav>
+  </main>
+</div>

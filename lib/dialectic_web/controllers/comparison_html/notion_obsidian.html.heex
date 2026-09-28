@@ -5,10 +5,12 @@
         RationalGrid with Notion and Obsidian
       </p>
       <h1 class="mt-5 max-w-4xl font-serif text-5xl font-semibold leading-[1.02] tracking-tight sm:text-7xl">
-        Explore first. Organise what matters.
+        Explore, organise and keep building.
       </h1>
       <p class="mt-5 text-lg leading-8 text-slate-600">
-        Use RationalGrid to open a research question, compare views, and connect evidence to the ideas it concerns. When the shape of the inquiry becomes clearer, export it as Markdown and continue developing your notes in Notion or Obsidian.
+        Explore questions with AI and keep the reasoning connected. Organise grids in My Learning,
+        save useful points and return to develop them with others. If you already use Notion or
+        Obsidian, Markdown export lets you bring the work into your notes too.
       </p>
       <div class="mt-8 flex flex-wrap gap-3">
         <a
@@ -41,10 +43,13 @@
         id="notion-obsidian-verdict-heading"
         class="mt-2 font-serif text-4xl font-semibold tracking-tight"
       >
-        RationalGrid is the exploratory step, not a replacement for your notes.
+        Keep your learning here, or connect it to your notes.
       </h2>
       <p class="mt-4 leading-7 text-slate-600">
-        Notion and Obsidian are strong places to maintain knowledge and develop finished work. RationalGrid can sit before them: use it while you are still discovering the important questions, disagreements, and sources, then move the useful result into the system where your long-term work already lives.
+        Notion and Obsidian offer flexible systems for writing and managing knowledge.
+        RationalGrid keeps the questions, challenges and sources behind an idea connected.
+        My Learning adds topics, collections, folders and search, with bookmarks and highlights
+        to find your place. Export when it suits your workflow; your grids remain useful here.
       </p>
     </section>
 
@@ -76,9 +81,9 @@
             <%= for {stage, grid, notion, obsidian} <- [
               {"Open the topic", "Ask a question and branch into answers, challenges, evidence, and sources.", "Capture a project brief or initial research page.", "Create a seed note and connect it to existing ideas."},
               {"Explore uncertainty", "Follow competing explanations without losing the point that prompted each branch.", "Develop organised pages, tables, and collaborative project material.", "Develop linked personal notes and connections across a vault."},
-              {"Curate the result", "Check sources, remove weak paths, add notes, and decide what is worth keeping.", "Turn selected material into durable project documentation.", "Split durable ideas into focused notes and backlinks."},
-              {"Handoff", "Export a readable Markdown version of the grid.", "Import or copy Markdown into the relevant workspace.", "Place the Markdown file in a vault and adapt it to local conventions."},
-              {"Long-term role", "Retain the interactive branching context and return when the inquiry needs to grow.", "Coordinate, present, and maintain shared or structured work.", "Maintain a linked, file-based personal knowledge base."}
+              {"Curate the result", "Bookmark useful points, highlight passages and add your own notes.", "Turn selected material into durable project documentation.", "Split durable ideas into focused notes and backlinks."},
+              {"Optional handoff", "Export a readable Markdown version of the grid.", "Import or copy Markdown into the relevant workspace.", "Place the Markdown file in a vault and adapt it to local conventions."},
+              {"Long-term role", "Organise and search grids in My Learning; return to saved ideas and build on them with others.", "Coordinate, present, and maintain shared or structured work.", "Maintain a linked, file-based personal knowledge base."}
             ] do %>
               <tr>
                 <th scope="row" class="bg-[#f8f6f0] px-5 py-4 align-top font-semibold">
@@ -108,11 +113,11 @@
             id="notion-obsidian-workflow-heading"
             class="mt-2 font-serif text-4xl font-semibold tracking-tight sm:text-5xl"
           >
-            A practical research handoff.
+            From exploration to something you can return to.
           </h2>
         </div>
         <p class="text-sm leading-6 text-slate-600">
-          The goal is not to export every branch. It is to discover and select what deserves a permanent place in your notes.
+          Keep useful ideas easy to find in My Learning. Export a copy whenever your wider work calls for it.
         </p>
       </div>
 
@@ -120,8 +125,8 @@
         <%= for {number, id, title, copy, colour} <- [
           {"1", "explore", "Explore", "Start with the question, then branch into answers, challenges, evidence, sources, and follow-up questions.", "border-sky-600 text-sky-800"},
           {"2", "evaluate", "Evaluate", "Inspect important sources, distinguish evidence from interpretation, and challenge weak assumptions.", "border-violet-600 text-violet-800"},
-          {"3", "curate", "Curate", "Remove dead ends, add notes explaining significance, and keep the paths worth developing.", "border-amber-600 text-amber-800"},
-          {"4", "export", "Export", "Download the grid as Markdown, then continue the selected material in Notion or Obsidian.", "border-emerald-600 text-emerald-800"}
+          {"3", "curate", "Save", "File the grid in My Learning, bookmark a point and highlight passages worth revisiting.", "border-amber-600 text-amber-800"},
+          {"4", "export", "Build on it", "Return to extend the grid with others, or export Markdown to continue in Notion or Obsidian.", "border-emerald-600 text-emerald-800"}
         ] do %>
           <li id={"notion-obsidian-step-#{id}"} class={["border-t-4 bg-white p-5", colour]}>
             <span class="font-mono text-xs font-bold">STEP {number}</span>
@@ -174,7 +179,7 @@
         <%= for {question, answer} <- [
           {"Does RationalGrid integrate directly with Notion or Obsidian?", "Not currently. The workflow uses a Markdown export rather than direct synchronisation or an API integration."},
           {"Does exporting remove the original RationalGrid grid?", "No. The export gives you a separate Markdown representation. The original grid remains available subject to its access settings."},
-          {"Should I export every branch?", "Usually not. Review the grid first, check important evidence, remove irrelevant paths, and add context that will help when the material reaches your notes."},
+          {"Do I need another app to keep my work?", "No. My Learning keeps your grids organised in topics, collections and folders, alongside bookmarks and highlights. Search or return to a saved point whenever you want to continue. Export is optional."},
           {"Which note-taking tool should I use?", "Use the one that fits your established workflow. Notion may suit collaborative projects and structured workspaces; Obsidian may suit linked, file-based personal notes. RationalGrid can feed either approach."},
           {"Can I return to RationalGrid after exporting?", "Yes. Keep the grid as the explorable source and return when a note raises another question or the inquiry needs a new branch."}
         ] do %>
@@ -212,10 +217,11 @@
 
     <section id="notion-obsidian-final-cta" class="mt-14 bg-teal-950 p-7 text-white sm:p-10">
       <h2 class="font-serif text-4xl font-semibold">
-        Start before you know how the notes should be organised.
+        Learn today. Remember tomorrow.
       </h2>
       <p class="mt-3 leading-7 text-teal-100">
-        Explore the question first. Export the useful structure when you are ready to make it part of your long-term system.
+        Keep your questions, sources and saved ideas together. Return to explain, challenge
+        and extend them, on your own or with others.
       </p>
       <a
         id="notion-obsidian-final-cta-link"

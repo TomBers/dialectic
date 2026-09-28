@@ -10,7 +10,7 @@ defmodule DialecticWeb.AboutLive do
        page_title: "About RationalGrid",
        contact_mailto: "mailto:hello@rationalgrid.ai",
        page_description:
-         "RationalGrid is your free AI workshop: tools for thinking and a place to organise your work, learn with others, and build on ideas over time."
+         "Learn today. Remember tomorrow. RationalGrid is your free AI workshop for exploring questions, organising knowledge and learning together."
      ), layout: false}
   end
 
@@ -26,11 +26,11 @@ defmodule DialecticWeb.AboutLive do
                 About RationalGrid
               </p>
               <h1 class="mt-5 font-serif text-5xl font-semibold leading-[1.02] tracking-tight sm:text-7xl">
-                Your AI workshop.
+                Learn today. Remember tomorrow.
               </h1>
               <p id="about-value-proposition" class="mt-5 max-w-3xl text-lg leading-8 text-slate-600">
-                RationalGrid is your free AI workshop: tools to question, explain, and challenge ideas,
-                with a place to organise your work and build on it together.
+                Your free AI workshop. Explore questions, keep ideas and sources connected,
+                and return to build understanding together.
               </p>
             </div>
             <div class="border-t border-slate-400 pt-4">

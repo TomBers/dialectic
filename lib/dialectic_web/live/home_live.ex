@@ -30,8 +30,15 @@ defmodule DialecticWeb.HomeLive do
       id: "chat-assistants",
       question: "Why not just use ChatGPT or Claude?",
       answer:
-        "RationalGrid is your AI workshop: tools to question, explain, and challenge ideas, with a place to keep the work. Grids connect questions, answers, and sources. Organise them by topic in My Learning, then return and build on them together.",
+        "Use RationalGrid when you want to return to a specific idea and keep exploring. Questions, answers, challenges and sources stay connected in grids. Organise them by topic in My Learning, then pick up where you left off with others.",
       comparisons_link?: true
+    },
+    %{
+      id: "miro",
+      question: "Why not just use Miro?",
+      answer:
+        "Miro offers a flexible canvas with AI tools. RationalGrid keeps questions, challenges and sources connected to specific ideas, so you can return and build on them.",
+      miro_link?: true
     },
     %{
       id: "notion-obsidian",
@@ -80,7 +87,7 @@ defmodule DialecticWeb.HomeLive do
        homepage_faqs: @homepage_faqs,
        json_ld: homepage_json_ld(),
        page_description:
-         "Your AI workshop. Tools to explore questions, organise knowledge, and build understanding together. Keep your work ready to return to in My Learning."
+         "Learn today. Remember tomorrow. Your AI workshop for connected ideas, sources and challenges, organised and ready to revisit with others."
      )
      |> stream_configure(:partner_grids,
        dom_id: fn item ->
@@ -448,15 +455,19 @@ defmodule DialecticWeb.HomeLive do
                 class="h-9 w-9 shrink-0"
               />
               <span id="home-hero-brand">RationalGrid</span>
+              <span id="home-hero-descriptor" class="text-sm font-normal text-teal-200">
+                Your AI workshop
+              </span>
             </p>
             <h1
               id="home-hero-title"
               class="mt-7 text-4xl font-semibold leading-[1.08] tracking-[-0.035em] text-white sm:text-5xl xl:text-6xl"
             >
-              Your <span class="text-teal-200">AI workshop.</span>
+              Learn today. <span class="text-teal-200">Remember tomorrow.</span>
             </h1>
             <p id="home-hero-subheading" class="mt-6 max-w-xl text-lg leading-8 text-slate-200">
-              A place to explore questions, organise knowledge, and build understanding together.
+              Explore questions with AI. Keep ideas, sources and challenges connected,
+              organised and ready to revisit—with others.
             </p>
             <div id="start-here" class="mt-7 scroll-mt-24">
               <div id="home-start-panel" class="max-w-xl">
@@ -545,56 +556,26 @@ defmodule DialecticWeb.HomeLive do
               <span>See where it helps—and where it can go wrong.</span>
               <.icon name="hero-arrow-right" class="h-4 w-4 transition group-hover:translate-x-0.5" />
             </.link>
+            <.link
+              id="home-hero-comparisons-link"
+              navigate={~p"/compare"}
+              class="group mt-3 flex w-fit flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-400 transition hover:text-slate-200"
+            >
+              <span class="font-semibold text-slate-200 group-hover:text-teal-200">
+                Why not use the tools I already have?
+              </span>
+              <span>See what makes RationalGrid different.</span>
+              <.icon name="hero-arrow-right" class="h-4 w-4 transition group-hover:translate-x-0.5" />
+            </.link>
           </div>
 
-          <div id="home-grid-preview" class="mx-auto hidden w-full max-w-md lg:mt-16 lg:block">
-            <h2
-              id="home-grid-preview-title"
-              class="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-teal-200"
-            >
-              Example grid
-            </h2>
-            <div class="overflow-hidden rounded-xl border border-white/20 bg-white text-slate-950 shadow-2xl">
-              <div class="px-4 py-5 sm:px-5">
-                <div class="rounded-lg border border-sky-200 border-l-4 border-l-sky-500 bg-sky-50 px-4 py-3">
-                  <p class="text-xs font-semibold text-sky-800">Ask</p>
-                  <p class="mt-1 text-base font-semibold">Does AI make us better thinkers?</p>
-                </div>
-                <div aria-hidden="true" class="mx-auto h-5 w-px bg-slate-300"></div>
-                <div class="rounded-lg border border-teal-200 border-l-4 border-l-teal-500 bg-teal-50 px-4 py-3">
-                  <p class="text-xs font-semibold text-teal-800">Answer</p>
-                  <p class="mt-1 text-sm leading-6">
-                    Better output and better thinking are different achievements.
-                  </p>
-                </div>
-                <div aria-hidden="true" class="mx-auto h-5 w-px bg-slate-300"></div>
-                <div class="relative -mx-1.5 grid grid-cols-2">
-                  <div aria-hidden="true" class="absolute inset-x-1/4 top-0 border-t border-slate-300">
-                  </div>
-                  <div class="px-1.5">
-                    <div aria-hidden="true" class="mx-auto h-5 w-px bg-slate-300"></div>
-                    <div class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-3">
-                      <p class="text-xs font-semibold text-amber-800">Challenge</p>
-                      <p class="mt-1 text-sm leading-6">Could AI make us less independent?</p>
-                    </div>
-                  </div>
-                  <div class="px-1.5">
-                    <div aria-hidden="true" class="mx-auto h-5 w-px bg-slate-300"></div>
-                    <div class="rounded-lg border border-violet-200 bg-violet-50 px-3 py-3">
-                      <p class="text-xs font-semibold text-violet-800">Explain a term</p>
-                      <p class="mt-1 text-sm leading-6">What is “cognitive offloading”?</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <DialecticWeb.LearningPreview.preview />
         </div>
       </section>
 
-      <.learning_journey current_user={@current_user} />
-
       <.proof_carousel />
+
+      <.learning_journey current_user={@current_user} />
 
       <section
         id="home-product-preview"
@@ -758,6 +739,15 @@ defmodule DialecticWeb.HomeLive do
                     See how RationalGrid compares with other tools and approaches.
                   </.link>
                 <% end %>
+                <%= if Map.get(faq, :miro_link?, false) do %>
+                  <.link
+                    id="home-faq-miro-link"
+                    navigate={~p"/compare/miro"}
+                    class="font-semibold text-teal-200 underline decoration-teal-400/50 underline-offset-4 hover:text-white"
+                  >
+                    Compare with Miro.
+                  </.link>
+                <% end %>
                 <%= if Map.get(faq, :notion_obsidian_link?, false) do %>
                   <.link
                     id="home-faq-notion-obsidian-link"
@@ -784,10 +774,10 @@ defmodule DialecticWeb.HomeLive do
         <div class="mx-auto flex w-full max-w-5xl flex-col gap-6 px-5 py-12 sm:px-8 sm:py-14 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
-              A workshop that grows with you
+              Your next question
             </p>
             <h2 class="mt-2 font-serif text-3xl font-semibold tracking-tight sm:text-4xl">
-              Find an answer today. Build on it tomorrow.
+              Start something worth returning to.
             </h2>
             <p class="mt-3 max-w-xl text-sm leading-6 text-slate-600">
               Recall what you learned. Check it. Ask your next question.
@@ -914,7 +904,7 @@ defmodule DialecticWeb.HomeLive do
             id="home-learning-title"
             class="text-xs font-semibold uppercase tracking-[0.18em] text-teal-800"
           >
-            Tools to think with. A place to build.
+            Ask. Organise. Return.
           </h2>
           <p id="home-learning-value" class="mt-4 text-lg leading-8 text-slate-700">
             ChatGPT can give you a great answer. But how will you find it a day, a month, or a year later?
@@ -1073,22 +1063,22 @@ defmodule DialecticWeb.HomeLive do
           >
             <div>
               <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
-                Research case study
-              </p>
-              <h3 class="mt-3 font-serif text-3xl font-semibold tracking-tight">
-                How
+                From an article in
                 <a
                   id="home-case-study-heading-organization-link"
                   href="https://philosophynow.org/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="text-teal-800 underline decoration-teal-500 underline-offset-4 transition hover:text-teal-950 hover:decoration-teal-700"
+                  class="underline underline-offset-4"
                 >Philosophy Now</a>
-                mapped one article into 35 connected ideas.
+              </p>
+              <h3 class="mt-3 font-serif text-3xl font-semibold tracking-tight">
+                One article. 35 connected ideas.
               </h3>
             </div>
             <div class="border-l-2 border-teal-600 pl-5 sm:pl-7">
               <p class="text-base leading-7 text-slate-700">
+                Explore Ignacio Gonzalez’s article in
                 <a
                   id="home-case-study-organization-link"
                   href="https://philosophynow.org/"
@@ -1096,12 +1086,8 @@ defmodule DialecticWeb.HomeLive do
                   rel="noopener noreferrer"
                   class="font-semibold text-slate-900 underline decoration-stone-400 underline-offset-4 hover:decoration-teal-700 hover:text-teal-800"
                 >Philosophy Now</a>
-                began with physicist and former semiconductor researcher Ignacio Gonzalez’s article
-                about why some narratives spread and survive. Using RationalGrid, it turned the
-                argument into a 35-point map branching into memetic fitness, human agency,
-                psychological susceptibility, narrative complexity, talking points, and moral
-                motivation. The result keeps competing explanations and follow-up questions
-                connected, giving readers paths to inspect instead of a single linear summary.
+                as a grid. Choose one idea to question or challenge, follow its connections,
+                and return to build on it later.
               </p>
               <div class="mt-5 flex flex-wrap gap-5 text-sm font-semibold">
                 <a
@@ -1111,7 +1097,7 @@ defmodule DialecticWeb.HomeLive do
                   data-analytics-location="home_proof_carousel"
                   class="inline-flex items-center gap-2 border-b border-slate-500 pb-1 text-slate-900 hover:border-teal-700 hover:text-teal-800"
                 >
-                  Explore the 35-point grid <.icon name="hero-arrow-up-right" class="h-4 w-4" />
+                  Explore an idea <.icon name="hero-arrow-up-right" class="h-4 w-4" />
                 </a>
                 <a
                   id="home-case-study-source-link"
@@ -1205,7 +1191,7 @@ defmodule DialecticWeb.HomeLive do
           "url" => base_url,
           "image" => base_url <> ~p"/images/graph_live.webp",
           "description" =>
-            "Your AI workshop. Tools to explore questions, organise knowledge, and build understanding together. Keep grids, bookmarks, and highlights in My Learning.",
+            "Learn today. Remember tomorrow. Your AI workshop for connected ideas, sources and challenges, organised and ready to revisit with others.",
           "applicationCategory" => "EducationalApplication",
           "operatingSystem" => "Web",
           "isAccessibleForFree" => true,
