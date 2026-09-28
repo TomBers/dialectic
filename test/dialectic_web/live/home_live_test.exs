@@ -70,7 +70,7 @@ defmodule DialecticWeb.HomeLiveTest do
              "Product" in List.wrap(Map.get(entity, "@type"))
            end)
 
-    assert length(faq_page["mainEntity"]) == 5
+    assert length(faq_page["mainEntity"]) == 6
 
     assert Enum.any?(faq_page["mainEntity"], fn question ->
              question["name"] == "What are the AI usage limits?" and
@@ -219,12 +219,14 @@ defmodule DialecticWeb.HomeLiveTest do
 
     assert has_element?(view, "#home-hero-logo")
     assert has_element?(view, "#home-hero-brand", "RationalGrid")
-    assert has_element?(view, "#home-hero-title", "Your AI workshop.")
+    assert has_element?(view, "#home-hero-title", "Explore today. Build tomorrow.")
+    assert has_element?(view, "#home-hero-descriptor", "Your AI workshop")
+    assert has_element?(view, "#home-hero-comparisons-link[href='/compare']")
 
     assert has_element?(
              view,
              "#home-hero-subheading",
-             "A place to explore questions, organise knowledge, and build understanding together."
+             "Explore questions with AI. Keep ideas, sources and challenges connected, organised and ready to revisit—with others."
            )
 
     assert has_element?(view, "#home-video-hero #new-idea-input")
@@ -365,11 +367,16 @@ defmodule DialecticWeb.HomeLiveTest do
     assert has_element?(
              view,
              "#home-research-case-study",
-             "How Philosophy Now mapped one article into 35 connected ideas."
+             "One article. 35 connected ideas."
            )
 
     assert has_element?(view, "#home-research-case-study", "Ignacio Gonzalez")
-    assert has_element?(view, "#home-research-case-study", "psychological susceptibility")
+
+    assert has_element?(
+             view,
+             "#home-research-case-study",
+             "Choose one idea to question or challenge"
+           )
 
     assert has_element?(
              view,
@@ -380,7 +387,7 @@ defmodule DialecticWeb.HomeLiveTest do
     assert has_element?(
              view,
              ~s(#home-case-study-grid-link[href*="inspired-by-the-philosophy-now-article"]),
-             "Explore the 35-point grid"
+             "Explore an idea"
            )
 
     assert has_element?(
@@ -429,7 +436,7 @@ defmodule DialecticWeb.HomeLiveTest do
 
     assert has_element?(
              view,
-             "#home-video-hero + #home-learning-journey + #home-proof-carousel + #home-product-preview + #popular-grids + #home-ai-limits-faq + #home-final-cta + footer"
+             "#home-video-hero + #home-proof-carousel + #home-learning-journey + #home-product-preview + #popular-grids + #home-ai-limits-faq + #home-final-cta + footer"
            )
 
     for location <- ["learning", "final"] do

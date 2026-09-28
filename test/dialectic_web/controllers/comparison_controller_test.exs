@@ -3,6 +3,7 @@ defmodule DialecticWeb.ComparisonControllerTest do
 
   @pages [
     {"chatgpt", "chatgpt-comparison-hero", "chatgpt-comparison-table", "chatgpt-start-cta"},
+    {"miro", "miro-comparison-hero", "miro-comparison-table", "miro-start-cta"},
     {"elicit", "elicit-comparison-hero", "elicit-comparison-table", "elicit-start-cta"},
     {"kialo", "kialo-comparison-hero", "kialo-comparison-table", "kialo-start-cta"},
     {"mind-maps", "mind-maps-comparison-hero", "mind-maps-comparison-table",
@@ -29,6 +30,7 @@ defmodule DialecticWeb.ComparisonControllerTest do
            |> LazyHTML.query("#comparison-index-pages a[id^='comparison-index-']")
            |> LazyHTML.attribute("id") == [
              "comparison-index-chatgpt",
+             "comparison-index-miro",
              "comparison-index-notebooklm",
              "comparison-index-elicit",
              "comparison-index-kialo",
@@ -46,7 +48,7 @@ defmodule DialecticWeb.ComparisonControllerTest do
     assert document
            |> LazyHTML.query("meta[name=description]")
            |> LazyHTML.attribute("content") == [
-             "Compare RationalGrid with ChatGPT, Elicit, Kialo, Gemini Notebook (formerly NotebookLM) and mind maps, or explore a Notion and Obsidian workflow."
+             "Compare RationalGrid with ChatGPT, Miro and other research tools. Find the workflow that helps you explore ideas, organise your work and return to it."
            ]
   end
 
@@ -94,6 +96,7 @@ defmodule DialecticWeb.ComparisonControllerTest do
              "elicit",
              "kialo",
              "mind-maps",
+             "miro",
              "notebooklm",
              "notion-obsidian"
            ]

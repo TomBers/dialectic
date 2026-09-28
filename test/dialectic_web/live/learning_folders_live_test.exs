@@ -30,7 +30,14 @@ defmodule DialecticWeb.LearningFoldersLiveTest do
     assert has_element?(view, "#learning-create-folder", "has already been taken")
     view |> form("#learning-create-folder", folder: %{name: "Employment"}) |> render_submit()
     folder = Enum.find(Learning.list_collections(user), &(&1.name == "Employment"))
-    assert_patch(view, ~p"/my/learning?collection=#{folder.id}&saved=all")
+    destination = view |> assert_patch() |> URI.parse()
+    assert destination.path == "/my/learning"
+
+    assert URI.decode_query(destination.query) == %{
+             "collection" => to_string(folder.id),
+             "saved" => "all"
+           }
+
     assert folder.parent_id == child.id
     assert has_element?(view, "#breadcrumbs-#{root.id}", "Economics")
     assert has_element?(view, "#breadcrumbs-#{child.id}", "Macro")
