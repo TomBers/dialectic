@@ -44,8 +44,9 @@ defmodule Dialectic.Learning do
           now = DateTime.utc_now() |> DateTime.truncate(:second)
 
           rows =
-            Enum.map(
-              titles,
+            user
+            |> unfiled_topic_titles(collection, titles)
+            |> Enum.map(
               &%{collection_id: collection.id, graph_title: &1, inserted_at: now, updated_at: now}
             )
 
@@ -64,6 +65,22 @@ defmodule Dialectic.Learning do
       end
     end)
   end
+
+  defp unfiled_topic_titles(user, %Collection{origin: :manual} = collection, titles) do
+    tree_ids = collection_tree_ids(user, collection)
+
+    filed_titles =
+      Repo.all(
+        from membership in CollectionGrid,
+          where: membership.collection_id in ^tree_ids and membership.graph_title in ^titles,
+          select: membership.graph_title
+      )
+      |> MapSet.new()
+
+    Enum.reject(titles, &MapSet.member?(filed_titles, &1))
+  end
+
+  defp unfiled_topic_titles(_user, _collection, titles), do: titles
 
   defp topic_key(tag) when is_binary(tag),
     do: tag |> String.trim() |> String.downcase() |> String.replace(~r/[\s_-]+/u, " ")

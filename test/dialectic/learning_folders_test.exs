@@ -204,6 +204,59 @@ defmodule Dialectic.LearningFoldersTest do
     assert id == leaf.id
   end
 
+  test "initializing topics preserves manual filing at every depth", %{
+    user: user,
+    root: root,
+    child: child,
+    leaf: leaf
+  } do
+    assert {:ok, :initialized} = Learning.initialize_topics(user)
+
+    filed =
+      for folder <- [root, child, leaf] do
+        grid = learning_grid_fixture(user, %{tags: [" ECONOMICS "]})
+        {:ok, _} = Learning.add_grid(user, folder.id, grid.title)
+        {folder, grid}
+      end
+
+    assert {:ok, :initialized} = Learning.initialize_topics(user)
+    assert {:ok, :already_initialized} = Learning.initialize_topics(user)
+
+    for {folder, grid} <- filed do
+      assert [row] = Learning.list_grids(user, collection_id: folder.id)
+      assert row.title == grid.title
+      assert Enum.map(row.collections, & &1.id) == [folder.id]
+    end
+  end
+
+  test "topic initialization skips only grids already filed in the matching collection tree", %{
+    user: user,
+    root: root,
+    leaf: leaf
+  } do
+    {:ok, revision} = Learning.create_collection(user, %{name: "Revision"})
+    filed = learning_grid_fixture(user, %{tags: ["economics", "history"]})
+    unfiled = learning_grid_fixture(user, %{tags: ["economics", "history"]})
+    {:ok, _} = Learning.add_grid(user, leaf.id, filed.title)
+    {:ok, _} = Learning.add_grid(user, revision.id, filed.title)
+    {:ok, _} = Learning.add_grid(user, revision.id, unfiled.title)
+
+    assert {:ok, :initialized} = Learning.initialize_topics(user)
+
+    assert [root_row] = Learning.list_grids(user, collection_id: root.id)
+    assert root_row.title == unfiled.title
+    assert [leaf_row] = Learning.list_grids(user, collection_id: leaf.id)
+    assert leaf_row.title == filed.title
+
+    history = Enum.find(Learning.list_collections(user), &(&1.name == "History"))
+    assert history.origin == :tags
+
+    for collection <- [revision, history] do
+      titles = Learning.list_grids(user, collection_id: collection.id) |> Enum.map(& &1.title)
+      assert MapSet.new(titles) == MapSet.new([filed.title, unfiled.title])
+    end
+  end
+
   test "initializing topics does not turn a same-named nested folder into a topic", %{
     user: user,
     leaf: leaf
