@@ -809,18 +809,28 @@ defmodule DialecticWeb.LearningLive do
       </.modal>
       <div id="learning-workspace" class="min-h-screen bg-[#f4f1e9] text-slate-950">
         <div id="learning-drag-controller" phx-hook="LearningDrag" phx-update="ignore"></div>
-        <div class="mx-auto max-w-7xl px-4 py-8 sm:px-8 sm:py-12">
+        <div class="mx-auto max-w-7xl px-4 pb-8 pt-4 sm:px-8 sm:pb-12 sm:pt-5">
           <header
             id="learning-header"
-            class="border-b border-stone-300 pb-8"
+            class="flex items-center justify-between gap-3 border-b border-stone-300 pb-3"
           >
-            <h1 id="learning-title" class="font-serif text-4xl font-semibold sm:text-5xl">
+            <h1 id="learning-title" class="font-serif text-xl font-semibold sm:text-2xl">
               My Learning
             </h1>
+            <button
+              id="learning-browse-toggle"
+              type="button"
+              aria-controls="learning-sidebar"
+              aria-expanded="false"
+              aria-haspopup="dialog"
+              class="inline-flex min-h-11 items-center gap-2 rounded-md border border-stone-300 px-3 text-sm font-semibold text-teal-800 hover:bg-white lg:hidden"
+            >
+              <.icon name="hero-bars-3" class="h-5 w-5" /> Browse
+            </button>
           </header>
 
-          <div class="mt-8 grid gap-8 lg:grid-cols-[16rem_minmax(0,1fr)]">
-            <aside id="learning-sidebar" class="space-y-6">
+          <div class="mt-4 grid gap-6 lg:grid-cols-[16rem_minmax(0,1fr)] lg:gap-8">
+            <LearningComponents.sidebar>
               <nav aria-label="Topics and collections">
                 <.link
                   id="learning-all-grids"
@@ -903,7 +913,7 @@ defmodule DialecticWeb.LearningLive do
               >
                 <.icon name="hero-cog-6-tooth" class="h-4 w-4" /> Settings
               </.link>
-            </aside>
+            </LearningComponents.sidebar>
 
             <section id="learning-content" class="min-w-0">
               <nav :if={@collection} aria-label="Folder location" class="mb-4">
@@ -982,7 +992,7 @@ defmodule DialecticWeb.LearningLive do
                 id="learning-content-filters"
                 aria-label="Learning content"
                 class={[
-                  "flex flex-wrap gap-2 border-b border-stone-300 pb-3",
+                  "flex flex-wrap items-center gap-2 border-b border-stone-300 pb-3",
                   @collection && "mt-6"
                 ]}
               >
@@ -1019,6 +1029,29 @@ defmodule DialecticWeb.LearningLive do
                 >
                   <.icon name="hero-plus" class="h-4 w-4" /> New grid
                 </.link>
+                <.form
+                  :if={!@show_new_grid?}
+                  for={@search_form}
+                  id="learning-search"
+                  role="search"
+                  aria-label="Search learning content"
+                  phx-change="search"
+                  phx-submit="search"
+                  class="w-full min-w-0 sm:ml-auto sm:w-64"
+                >
+                  <.input
+                    field={@search_form[:q]}
+                    id="learning-search-input"
+                    type="search"
+                    aria-label={
+                      if(@collection, do: "Search #{@collection.name}", else: "Search My Learning")
+                    }
+                    placeholder="Search"
+                    phx-debounce="300"
+                    maxlength="200"
+                    class="block h-9 w-full rounded-md border border-stone-300 bg-white px-3 text-sm text-slate-950 shadow-sm placeholder:text-slate-500 focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
+                  />
+                </.form>
               </nav>
 
               <.form
@@ -1076,7 +1109,7 @@ defmodule DialecticWeb.LearningLive do
                 :if={@show_new_grid?}
                 hidden={@creating_folder? || @editing?}
                 id="learning-create-grid"
-                class="mt-6 max-w-xl"
+                class="mt-4 max-w-xl"
               >
                 <.live_component
                   module={DialecticWeb.NewGridForm}
@@ -1168,33 +1201,10 @@ defmodule DialecticWeb.LearningLive do
                 >
                   Choose grids to add to {@collection.name}. A grid can belong to multiple topics and collections.
                 </p>
-                <.form
-                  for={@search_form}
-                  id="learning-search"
-                  phx-change="search"
-                  phx-submit="search"
-                  class="mt-6"
-                >
-                  <.input
-                    field={@search_form[:q]}
-                    id="learning-search-input"
-                    type="search"
-                    label={
-                      if(@adding? || !@collection,
-                        do: "Find a grid",
-                        else: "Find a grid in this #{group_kind(@collection)}"
-                      )
-                    }
-                    placeholder="Search titles, answers, sources or highlights…"
-                    phx-debounce="300"
-                    maxlength="200"
-                  />
-                </.form>
-
                 <div
                   id="learning-grids"
                   phx-update="stream"
-                  class="mt-5 divide-y divide-stone-200 overflow-hidden rounded-md border border-stone-300 bg-white"
+                  class="mt-4 divide-y divide-stone-200 overflow-hidden rounded-md border border-stone-300 bg-white"
                 >
                   <div id="learning-no-grids" class="hidden px-6 py-12 text-center only:block">
                     <.icon name="hero-folder-open" class="mx-auto h-8 w-8 text-teal-700" />

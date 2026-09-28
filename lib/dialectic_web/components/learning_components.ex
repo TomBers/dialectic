@@ -1,6 +1,33 @@
 defmodule DialecticWeb.LearningComponents do
   use DialecticWeb, :html
 
+  slot :inner_block, required: true
+
+  def sidebar(assigns) do
+    ~H"""
+    <div id="learning-sidebar-shell" class="contents">
+      <div id="learning-sidebar-controller" phx-hook="LearningSidebar" phx-update="ignore"></div>
+      <div id="learning-sidebar-backdrop" aria-hidden="true"></div>
+      <aside id="learning-sidebar" aria-label="Topics and collections" class="space-y-6">
+        <div class="flex items-center justify-between gap-3 lg:hidden">
+          <h2 id="learning-browse-title" class="font-serif text-xl font-semibold">
+            Browse My Learning
+          </h2>
+          <button
+            id="learning-browse-close"
+            type="button"
+            aria-label="Close topics and collections"
+            class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-slate-600 hover:bg-white"
+          >
+            <.icon name="hero-x-mark" class="h-5 w-5" />
+          </button>
+        </div>
+        {render_slot(@inner_block)}
+      </aside>
+    </div>
+    """
+  end
+
   attr :items, :any, required: true
   attr :selected, :any, required: true
   attr :saved_kind, :string, required: true
@@ -35,7 +62,7 @@ defmodule DialecticWeb.LearningComponents do
             phx-value-id={folder.id}
             aria-expanded={to_string(folder.expanded?)}
             aria-label={"#{if(folder.expanded?, do: "Collapse", else: "Expand")} #{folder.name}"}
-            class="shrink-0 rounded p-1 text-slate-500 hover:bg-white"
+            class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded text-slate-500 hover:bg-white lg:h-auto lg:w-auto lg:p-1"
           >
             <.icon
               name={if(folder.expanded?, do: "hero-chevron-down", else: "hero-chevron-right")}

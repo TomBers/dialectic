@@ -3,6 +3,7 @@
 @import "tailwindcss/utilities";
 @import "katex/dist/katex.min.css";
 @import "./ambassadors.css";
+@import "./learning_sidebar.css";
 
 [data-shortcut-label="mac"] {
     display: none;
