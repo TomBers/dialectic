@@ -73,6 +73,7 @@ defmodule DialecticWeb.HomeLive do
        ask_question: true,
        graph_id: nil,
        focus_new_grid: params["focus"] == "grid",
+       resume_grid_draft: params["resume"] == "grid" && !is_nil(socket.assigns.current_user),
        learning_collection:
          Learning.get_collection(socket.assigns.current_user, params["collection"]),
        partner_grids_empty?: true,
@@ -460,12 +461,23 @@ defmodule DialecticWeb.HomeLive do
             <div id="start-here" class="mt-7 scroll-mt-24">
               <div id="home-start-panel" class="max-w-xl">
                 <p id="home-public-creation-note" class="mb-3 text-sm text-teal-200">
-                  Start a public grid anyone can explore and build on.
-                  For a private grid, use <.link
-                    id="home-private-grid-link"
-                    href={~p"/my/learning"}
-                    class="underline"
-                  >My Learning</.link>.
+                  Create a public grid anyone can explore and build on, or
+                  <%= if @current_user do %>
+                    <.link
+                      id="home-private-grid-link"
+                      href={~p"/my/learning?new=true"}
+                      class="underline"
+                    >start privately in My Learning</.link>.
+                  <% else %>
+                    <.link
+                      id="home-private-grid-signup-link"
+                      href={~p"/users/register?#{%{return_to: ~p"/my/learning?new=true"}}"}
+                      data-preserve-auth-return="false"
+                      data-analytics-event="sign_up_cta_clicked"
+                      data-analytics-location="home_private_grid"
+                      class="underline"
+                    >create a free account for private grids</.link>.
+                  <% end %>
                 </p>
                 <p
                   :if={@learning_collection}
@@ -487,6 +499,7 @@ defmodule DialecticWeb.HomeLive do
                     placeholder="Ask a question or name a topic"
                     submit_label="Continue"
                     create_label="Create public grid"
+                    resume_draft={@resume_grid_draft}
                     autofocus={@focus_new_grid}
                     minimal={true}
                     authenticated={!is_nil(@current_user)}
@@ -905,10 +918,6 @@ defmodule DialecticWeb.HomeLive do
           </h2>
           <p id="home-learning-value" class="mt-4 text-lg leading-8 text-slate-700">
             ChatGPT can give you a great answer. But how will you find it a day, a month, or a year later?
-          </p>
-          <p id="home-learning-benefit" class="mt-4 text-base leading-7 text-slate-600">
-            Recall an idea before reopening the answer: it strengthens memory and reveals gaps.
-            Connect it to what you know to deepen your understanding.
           </p>
         </div>
 

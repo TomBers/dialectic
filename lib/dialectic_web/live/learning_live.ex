@@ -72,6 +72,8 @@ defmodule DialecticWeb.LearningLive do
        socket
        |> assign(
          collection: collection,
+         learning_return_path:
+           ~p"/my/learning?#{Map.take(params, ~w(collection saved q include_subfolders add))}",
          new_grid_requested?: params["new"] == "true",
          include_subfolders?:
            params["include_subfolders"] == "true" and not is_nil(collection) and
@@ -540,7 +542,7 @@ defmodule DialecticWeb.LearningLive do
         {:noreply,
          socket
          |> file_new_grid(collection_id, graph)
-         |> redirect(to: learning_grid_path(graph))}
+         |> redirect(to: learning_grid_path(graph, filter_path(socket.assigns.collection, "all")))}
     end
   end
 
@@ -610,8 +612,8 @@ defmodule DialecticWeb.LearningLive do
   defp collection_id(_socket), do: nil
   defp grid_id(grid), do: "learning-grid-" <> Base.url_encode64(grid.title, padding: false)
 
-  defp learning_grid_path(grid, node \\ nil, params \\ []) do
-    graph_path(%{slug: grid.slug}, node, params)
+  defp learning_grid_path(grid, return_path, node \\ nil, params \\ []) do
+    graph_path(%{slug: grid.slug}, node, Keyword.put(params, :learning, return_path))
   end
 
   defp group_kind(%{origin: :tags}), do: "topic"
@@ -1183,7 +1185,7 @@ defmodule DialecticWeb.LearningLive do
                         else: "Find a grid in this #{group_kind(@collection)}"
                       )
                     }
-                    placeholder="Search grid titles or tags…"
+                    placeholder="Search titles, answers, sources or highlights…"
                     phx-debounce="300"
                     maxlength="200"
                   />
@@ -1200,7 +1202,7 @@ defmodule DialecticWeb.LearningLive do
                       <% @search != "" -> %>
                         <h3 class="mt-4 text-lg font-semibold">No matching grids</h3>
                         <p class="mt-2 text-sm leading-6 text-slate-600">
-                          Try a different title or tag.
+                          Try a different title, topic or phrase from an answer or highlight.
                         </p>
                       <% @adding? -> %>
                         <h3 class="mt-4 text-lg font-semibold">No more grids to add</h3>
@@ -1258,7 +1260,7 @@ defmodule DialecticWeb.LearningLive do
                         </button>
                         <.link
                           id={id <> "-open"}
-                          href={learning_grid_path(grid)}
+                          href={learning_grid_path(grid, @learning_return_path)}
                           class="break-words font-serif text-xl font-semibold leading-7 text-slate-950 hover:text-teal-800"
                         >{grid.title}</.link>
                         <p class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
@@ -1309,11 +1311,30 @@ defmodule DialecticWeb.LearningLive do
                           <% true -> %>
                             <.link
                               id={id <> "-continue"}
-                              href={learning_grid_path(grid)}
+                              href={learning_grid_path(grid, @learning_return_path)}
                               class="inline-flex items-center gap-2 text-sm font-semibold text-teal-800"
                             >Continue <.icon name="hero-arrow-right" class="h-4 w-4" /></.link>
                         <% end %>
                       </div>
+                    </div>
+
+                    <div :if={grid.search_matches != []} id={id <> "-matches"} class="mt-4 space-y-2">
+                      <.link
+                        :for={{match, index} <- Enum.with_index(grid.search_matches)}
+                        id={id <> "-match-#{index}"}
+                        href={
+                          learning_grid_path(
+                            grid,
+                            @learning_return_path,
+                            match.node_id,
+                            if(match.highlight_id, do: [highlight: match.highlight_id], else: [])
+                          )
+                        }
+                        class="block rounded-md border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-slate-700 hover:border-teal-600"
+                      >
+                        <span class="font-semibold text-teal-800">{match.label}</span>
+                        <p class="mt-1">{match.preview}</p>
+                      </.link>
                     </div>
 
                     <details
@@ -1340,7 +1361,7 @@ defmodule DialecticWeb.LearningLive do
                           >
                             <.link
                               id={"learning-bookmark-#{bookmark.id}-open"}
-                              href={learning_grid_path(grid, bookmark.node_id)}
+                              href={learning_grid_path(grid, @learning_return_path, bookmark.node_id)}
                               class="inline-flex items-start gap-2 text-sm font-semibold text-teal-800"
                             >
                               <.icon name="hero-bookmark" class="mt-0.5 h-4 w-4 shrink-0" /> {bookmark.title}
@@ -1369,7 +1390,9 @@ defmodule DialecticWeb.LearningLive do
                               id={"learning-highlight-#{highlight.id}-open"}
                               aria-label={"Open highlight: #{String.slice(highlight.selected_text_snapshot || "", 0, 120)}"}
                               href={
-                                learning_grid_path(grid, highlight.node_id, highlight: highlight.id)
+                                learning_grid_path(grid, @learning_return_path, highlight.node_id,
+                                  highlight: highlight.id
+                                )
                               }
                               class="block text-sm leading-6 text-slate-800 hover:text-teal-800"
                             >

@@ -3,6 +3,7 @@ defmodule DialecticWeb.SearchLive do
 
   alias Dialectic.Search
   @page_size 12
+  on_mount {DialecticWeb.UserAuth, :mount_current_user}
 
   @impl true
   def mount(_params, _session, socket) do
@@ -65,15 +66,25 @@ defmodule DialecticWeb.SearchLive do
     <div class="min-h-screen bg-[#f4f1e9] text-slate-950">
       <div class="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
         <header class="border border-stone-300 border-l-4 border-l-teal-700 bg-white px-5 py-6 shadow-sm sm:px-8 sm:py-8">
-          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800">
-            Across RationalGrid
-          </p>
+          <.link
+            id="search-community-link"
+            href={~p"/community?#{if(@query == "", do: %{}, else: %{search: @query})}"}
+            class="inline-flex items-center gap-1 text-sm font-semibold text-teal-800 hover:underline"
+          >
+            <.icon name="hero-arrow-left" class="h-4 w-4" /> Community
+          </.link>
           <h1 class="mt-2 font-serif text-4xl font-semibold tracking-tight sm:text-5xl">
             Find an idea, not just a grid.
           </h1>
           <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
             Search public questions, explanations, and source passages. Open any result in its original context.
           </p>
+          <.link
+            :if={@current_user}
+            id="search-my-learning"
+            navigate={~p"/my/learning?#{%{q: @query}}"}
+            class="mt-3 inline-block text-sm font-semibold text-teal-800 underline"
+          >Search your grids and highlights in My Learning</.link>
 
           <.form
             id="global-search-form"

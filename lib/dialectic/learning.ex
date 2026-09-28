@@ -368,19 +368,8 @@ defmodule Dialectic.Learning do
           from g in query, where: g.title not in subquery(members)
       end
 
-    query =
-      case String.trim(Keyword.get(opts, :search, "")) do
-        "" ->
-          query
-
-        term ->
-          pattern = "%" <> String.replace(term, ~r/[\\%_]/, fn char -> "\\" <> char end) <> "%"
-
-          from g in query,
-            where:
-              ilike(g.title, ^pattern) or
-                ilike(fragment("array_to_string(?, ' ')", g.tags), ^pattern)
-      end
+    term = String.trim(Keyword.get(opts, :search, "")) |> String.slice(0, 200)
+    query = Dialectic.Learning.Search.filter(query, user, term)
 
     limit = opts |> Keyword.get(:limit, 25) |> max(1) |> min(100)
     offset = opts |> Keyword.get(:offset, 0) |> max(0)
@@ -393,6 +382,7 @@ defmodule Dialectic.Learning do
         select: map(g, [:title, :slug, :tags, :is_public, :updated_at, :user_id])
     )
     |> with_saved_items(user)
+    |> Dialectic.Learning.Search.add_matches(term)
   end
 
   def remove_bookmark(%User{} = user, id) do

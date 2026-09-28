@@ -11,7 +11,8 @@ defmodule DialecticWeb.Plugs.AuthReturn do
         uri = URI.parse(path)
 
         if is_nil(uri.scheme) && is_nil(uri.host) &&
-             Regex.match?(~r{\A/g/[a-zA-Z0-9_-]+(?:/graph)?\z}, uri.path || "") &&
+             (path in ["/?resume=grid#start-here", "/my/learning?new=true"] ||
+                Regex.match?(~r{\A/g/[a-zA-Z0-9_-]+(?:/graph)?\z}, uri.path || "")) &&
              !Regex.match?(~r/[\\\x00-\x20\x7f]/, path) do
           put_session(conn, :user_return_to, path)
         else

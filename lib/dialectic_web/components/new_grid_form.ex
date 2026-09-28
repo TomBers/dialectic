@@ -28,6 +28,7 @@ defmodule DialecticWeb.NewGridForm do
       |> assign_new(:label, fn -> nil end)
       |> assign_new(:context, fn -> nil end)
       |> assign_new(:busy, fn -> false end)
+      |> assign_new(:resume_draft, fn -> false end)
       |> assign_new(:selected_mode, fn -> "high_school" end)
       |> assign_new(:show_level_prompt, fn -> false end)
       |> assign_new(:content, fn %{form: form} ->
@@ -41,11 +42,29 @@ defmodule DialecticWeb.NewGridForm do
   def handle_event("select_mode", %{"mode" => mode}, socket) do
     if restricted_mode?(mode) and not socket.assigns.authenticated do
       send(self(), {:answer_level_login_required, mode})
-      {:noreply, socket}
+      {:noreply, assign(socket, selected_mode: mode)}
     else
       {:noreply, assign(socket, selected_mode: mode)}
     end
   end
+
+  @impl true
+  def handle_event("restore_draft", %{"content" => content, "mode" => mode}, socket)
+      when is_binary(content) and mode in ["high_school", "university", "expert"] do
+    if socket.assigns.authenticated && socket.assigns.resume_draft do
+      {:reply, %{restored: true},
+       assign(socket,
+         content: content,
+         selected_mode: mode,
+         show_level_prompt: String.trim(content) != ""
+       )}
+    else
+      {:reply, %{restored: false}, socket}
+    end
+  end
+
+  def handle_event("restore_draft", _params, socket),
+    do: {:reply, %{restored: false}, socket}
 
   @impl true
   def handle_event("update_content", %{"vertex" => %{"content" => content}}, socket) do
@@ -95,6 +114,9 @@ defmodule DialecticWeb.NewGridForm do
           phx-submit="submit_prompt"
           phx-target={@myself}
           id={@id}
+          phx-hook="NewGridDraft"
+          data-resume-draft={to_string(@resume_draft)}
+          data-selected-mode={@selected_mode}
           class="w-full relative"
         >
           <div class="flex flex-col gap-3 sm:gap-1.5">

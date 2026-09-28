@@ -101,7 +101,7 @@ defmodule DialecticWeb.LearningLiveTest do
       refute has_element?(view, grid_selector(grid))
       view |> element("#learning-done-adding") |> render_click()
       assert has_element?(view, grid_selector(grid))
-      assert has_element?(view, grid_selector(grid, "-open") <> "[href='/g/#{grid.slug}']")
+      assert has_element?(view, grid_selector(grid, "-open") <> "[href^='/g/#{grid.slug}?']")
       view |> form("#learning-search", q: "economics") |> render_change()
       assert has_element?(view, grid_selector(grid))
       {:ok, revisited, _} = live(conn, ~p"/my/learning?collection=#{collection.id}")
@@ -180,7 +180,7 @@ defmodule DialecticWeb.LearningLiveTest do
       assert [%{title: ^question, slug: slug, is_public: false}] =
                Learning.list_grids(user, collection_id: collection.id)
 
-      assert path == "/g/#{slug}"
+      assert URI.parse(path).path == "/g/#{slug}"
     end
 
     test "dragging and the Organise dialog add grids to topics with ownership checks", %{
@@ -239,7 +239,7 @@ defmodule DialecticWeb.LearningLiveTest do
 
       assert has_element?(
                view,
-               "#learning-bookmark-#{bookmark.id}-open[href='/g/#{grid.slug}?node=1']"
+               "#learning-bookmark-#{bookmark.id}-open[href^='/g/#{grid.slug}?node=1&']"
              )
 
       assert has_element?(view, "#learning-highlight-#{highlight.id}", "Remember this")

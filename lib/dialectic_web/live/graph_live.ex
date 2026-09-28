@@ -82,6 +82,8 @@ defmodule DialecticWeb.GraphLive do
   # presenting mode so shared links open the presentation automatically.
   @impl true
   def handle_params(%{"present" => "true", "slides" => slides_str} = params, _uri, socket) do
+    socket = DialecticWeb.LearningNavigation.assign_return(socket, params)
+
     slide_ids =
       slides_str
       |> String.split(",", trim: true)
@@ -135,6 +137,7 @@ defmodule DialecticWeb.GraphLive do
   def handle_params(params, _uri, socket) do
     {:noreply,
      socket
+     |> DialecticWeb.LearningNavigation.assign_return(params)
      |> assign(:mobile_inquiry?, params["focus"] == "ask")
      |> assign_reader_path(params["path"])}
   end
@@ -2610,7 +2613,11 @@ defmodule DialecticWeb.GraphLive do
             graph_path(
               socket.assigns.graph_struct,
               socket.assigns.node.id,
-              if(socket.assigns.token, do: [token: socket.assigns.token], else: [])
+              graph_nav_params(
+                socket.assigns.token,
+                socket.assigns.reader_path_endpoint,
+                socket.assigns.learning_return
+              )
             )
         )
       else
@@ -2863,8 +2870,9 @@ defmodule DialecticWeb.GraphLive do
     end
   end
 
-  defp graph_nav_params(token, path_endpoint) do
+  defp graph_nav_params(token, path_endpoint, learning_return) do
     []
+    |> DialecticWeb.LearningNavigation.with_return(learning_return)
     |> then(fn params -> if token, do: Keyword.put(params, :token, token), else: params end)
     |> then(fn params ->
       if path_endpoint,

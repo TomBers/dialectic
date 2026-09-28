@@ -394,12 +394,12 @@ defmodule DialecticWeb.UserProfileLiveTest do
 
       assert has_element?(
                learning,
-               ~s(#learning-bookmark-#{note.id}-open[href="/g/quote-grid?node=quote-node"])
+               ~s(#learning-bookmark-#{note.id}-open[href^="/g/quote-grid?node=quote-node&"])
              )
 
       assert has_element?(
                learning,
-               ~s(#learning-highlight-#{highlight.id}-open[href="/g/quote-grid?node=quote-node&highlight=#{highlight.id}"])
+               ~s(#learning-highlight-#{highlight.id}-open[href^="/g/quote-grid?node=quote-node&"][href*="highlight=#{highlight.id}"])
              )
     end
 
@@ -420,7 +420,7 @@ defmodule DialecticWeb.UserProfileLiveTest do
       refute has_element?(profile, "#profile-followed-grids")
       {:ok, learning, _} = live(conn, ~p"/my/learning")
       id = "learning-grid-" <> Base.url_encode64(followed_graph.title, padding: false)
-      assert has_element?(learning, "##{id}-open[href='/g/followed-grid-link']")
+      assert has_element?(learning, "##{id}-open[href^='/g/followed-grid-link?']")
     end
   end
 

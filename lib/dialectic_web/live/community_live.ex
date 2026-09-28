@@ -244,7 +244,7 @@ defmodule DialecticWeb.CommunityLive do
                 navigate={~p"/?focus=grid#start-here"}
                 class="inline-flex shrink-0 min-h-11 items-center justify-center gap-2 rounded-md bg-teal-800 px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-800"
               >
-                <span class="hidden sm:inline">Create a grid</span><span class="sm:hidden">Create</span><.icon
+                <span>Create public grid</span><.icon
                   name="hero-arrow-right"
                   class="h-4 w-4"
                 />
@@ -276,6 +276,13 @@ defmodule DialecticWeb.CommunityLive do
                 class="pointer-events-none absolute right-4 top-3.5 h-5 w-5 text-teal-800"
               />
             </.form>
+            <.link
+              id="community-search-content-link"
+              navigate={~p"/search?#{if(@search_term == "", do: %{}, else: %{q: @search_term})}"}
+              class="mt-3 inline-flex min-h-9 items-center gap-2 text-sm font-semibold text-teal-800 underline underline-offset-4"
+            >
+              <.icon name="hero-magnifying-glass" class="h-4 w-4" /> Search answers and sources
+            </.link>
           </header>
 
           <div

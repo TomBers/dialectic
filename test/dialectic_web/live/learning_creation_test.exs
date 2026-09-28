@@ -34,7 +34,7 @@ defmodule DialecticWeb.LearningCreationTest do
     refute graph.is_public
     assert graph.user_id == user.id
     assert graph.prompt_mode == "expert"
-    assert path == "/g/#{graph.slug}"
+    assert URI.parse(path).path == "/g/#{graph.slug}"
     assert GraphManager.find_node_by_id(graph.title, "1").content == "## " <> question
     assert GraphManager.find_node_by_id(graph.title, "2").response_level == "expert"
     assert Sharing.can_access?(user, graph)
@@ -43,10 +43,11 @@ defmodule DialecticWeb.LearningCreationTest do
     assert Graphs.all_graphs_with_notes(question) == []
 
     {:ok, revisited, _html} = live(conn, ~p"/my/learning")
-    assert has_element?(revisited, "#learning-grids a[href='#{path}']")
+    assert has_element?(revisited, "#learning-grids a[href^='#{URI.parse(path).path}?']")
 
     for suffix <- ["", "/graph"] do
-      assert {:error, {:redirect, %{to: "/"}}} = live(build_conn(), path <> suffix)
+      assert {:error, {:redirect, %{to: "/"}}} =
+               live(build_conn(), URI.parse(path).path <> suffix)
     end
   end
 
@@ -67,7 +68,9 @@ defmodule DialecticWeb.LearningCreationTest do
     |> render_submit(%{"vertex" => %{"is_public" => "true", "user_id" => original.user_id}})
 
     {path, _flash} = assert_redirect(view, 2_000)
-    graph = Graphs.get_graph_by_slug_or_title(String.replace_prefix(path, "/g/", ""))
+
+    graph =
+      Graphs.get_graph_by_slug_or_title(String.replace_prefix(URI.parse(path).path, "/g/", ""))
 
     refute graph.is_public
     assert graph.user_id == user.id
@@ -167,7 +170,7 @@ defmodule DialecticWeb.LearningCreationTest do
              %{"collection" => to_string(collection.id), "new" => "true"}
 
     view |> element("#learning-filter-all") |> render_click()
-    assert has_element?(view, "#learning-grids a[href='/g/#{grid.slug}']")
+    assert has_element?(view, "#learning-grids a[href^='/g/#{grid.slug}?']")
     assert has_element?(view, "#learning-filter-all[aria-current='page']")
     refute has_element?(view, "#learning-new-grid-form")
 

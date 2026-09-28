@@ -52,7 +52,11 @@ defmodule DialecticWeb.UserRegistrationLiveTest do
       conn = get(conn, "/")
       response = html_response(conn, 200)
       assert response =~ "My Profile"
-      refute response =~ ~s(href="/users/settings")
+
+      assert response
+             |> LazyHTML.from_document()
+             |> LazyHTML.query("#account-menu #account-settings-link")
+             |> LazyHTML.attribute("href") == ["/users/settings"]
     end
 
     test "renders errors for duplicated email", %{conn: conn} do

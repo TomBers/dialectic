@@ -192,7 +192,12 @@ defmodule DialecticWeb.HomeLiveTest do
 
     assert has_element?(view, "#home-video-hero #start-here #new-idea-form")
     assert has_element?(view, "#home-public-creation-note", "public grid")
-    assert has_element?(view, "#home-private-grid-link[href='/my/learning']", "My Learning")
+
+    assert has_element?(
+             view,
+             "#home-private-grid-signup-link[href='/users/register?return_to=%2Fmy%2Flearning%3Fnew%3Dtrue']",
+             "create a free account for private grids"
+           )
 
     assert has_element?(
              view,
@@ -544,7 +549,7 @@ defmodule DialecticWeb.HomeLiveTest do
     assert is_nil(Graphs.get_graph_by_title(answer))
   end
 
-  test "logged in users see profile entry in the header without a settings link", %{conn: conn} do
+  test "logged in users find profile and settings together in Account", %{conn: conn} do
     user = user_fixture()
     {:ok, user} = Accounts.update_user_profile(user, %{username: "headerprofile"})
 
@@ -554,8 +559,19 @@ defmodule DialecticWeb.HomeLiveTest do
       |> get(~p"/")
       |> html_response(200)
 
-    assert html =~ ~s(href="/u/headerprofile")
-    assert html =~ "My Profile"
-    refute html =~ ~s(href="/users/settings")
+    document = LazyHTML.from_document(html)
+
+    assert document
+           |> LazyHTML.query("#account-menu #account-profile-link")
+           |> LazyHTML.attribute("href") == ["/u/headerprofile"]
+
+    assert document
+           |> LazyHTML.query("#account-menu #account-settings-link")
+           |> LazyHTML.attribute("href") == ["/users/settings"]
+
+    assert document |> LazyHTML.query("#site-navigation-links > a") |> LazyHTML.attribute("id") ==
+             ["my-learning-nav-link", "community-nav-link", "desktop-new-grid-nav-link"]
+
+    assert document |> LazyHTML.query("#account-curate-link") |> LazyHTML.attribute("href") == []
   end
 end
