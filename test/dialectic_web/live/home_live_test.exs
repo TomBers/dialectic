@@ -219,7 +219,7 @@ defmodule DialecticWeb.HomeLiveTest do
 
     assert has_element?(view, "#home-hero-logo")
     assert has_element?(view, "#home-hero-brand", "RationalGrid")
-    assert has_element?(view, "#home-hero-title", "Explore today. Build tomorrow.")
+    assert has_element?(view, "#home-hero-title", "Learn today. Remember tomorrow.")
     assert has_element?(view, "#home-hero-descriptor", "Your AI workshop")
     assert has_element?(view, "#home-hero-comparisons-link[href='/compare']")
 

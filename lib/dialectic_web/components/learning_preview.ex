@@ -5,13 +5,13 @@ defmodule DialecticWeb.LearningPreview do
     ~H"""
     <section
       id="home-grid-preview"
-      aria-label="Explore today and build tomorrow"
+      aria-label="Learn today and remember tomorrow"
       class="mx-auto w-full max-w-md"
     >
       <div class="overflow-hidden rounded-xl border border-white/20 bg-white text-slate-950 shadow-2xl">
         <div
           role="group"
-          aria-label="Explore today and build tomorrow"
+          aria-label="Learn today and remember tomorrow"
           class="grid grid-cols-2 gap-1 border-b border-stone-200 bg-stone-100 p-2"
         >
           <button
@@ -21,7 +21,7 @@ defmodule DialecticWeb.LearningPreview do
             aria-controls="home-preview-today"
             phx-click={show_moment("today")}
             class="min-h-11 rounded-md px-3 py-2 text-sm font-semibold text-slate-600 hover:text-slate-950 aria-pressed:bg-white aria-pressed:text-teal-800 aria-pressed:shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-700"
-          >Explore today</button>
+          >Learn today</button>
           <button
             id="home-preview-later-button"
             type="button"
@@ -29,14 +29,14 @@ defmodule DialecticWeb.LearningPreview do
             aria-controls="home-preview-later"
             phx-click={show_moment("later")}
             class="min-h-11 rounded-md px-3 py-2 text-sm font-semibold text-slate-600 hover:text-slate-950 aria-pressed:bg-white aria-pressed:text-teal-800 aria-pressed:shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-700"
-          >Build tomorrow</button>
+          >Remember tomorrow</button>
         </div>
 
         <div id="home-preview-panels" class="grid">
           <div
             id="home-preview-today"
             role="group"
-            aria-label="Explore today: questions and answers"
+            aria-label="Learn today: questions and answers"
             aria-hidden="false"
             class="col-start-1 row-start-1 min-w-0 p-4 aria-hidden:invisible sm:p-5"
           >
@@ -97,7 +97,7 @@ defmodule DialecticWeb.LearningPreview do
           <div
             id="home-preview-later"
             role="group"
-            aria-label="Build tomorrow: grids, bookmarks and highlights in My Learning"
+            aria-label="Remember tomorrow: grids, bookmarks and highlights in My Learning"
             aria-hidden="true"
             class="col-start-1 row-start-1 min-w-0 bg-[#f4f1e9] p-4 aria-hidden:invisible sm:p-5"
             inert

@@ -87,7 +87,7 @@ defmodule DialecticWeb.HomeLive do
        homepage_faqs: @homepage_faqs,
        json_ld: homepage_json_ld(),
        page_description:
-         "Explore today. Build tomorrow. Your AI workshop for connected ideas, sources and challenges, organised and ready to revisit with others."
+         "Learn today. Remember tomorrow. Your AI workshop for connected ideas, sources and challenges, organised and ready to revisit with others."
      )
      |> stream_configure(:partner_grids,
        dom_id: fn item ->
@@ -463,7 +463,7 @@ defmodule DialecticWeb.HomeLive do
               id="home-hero-title"
               class="mt-7 text-4xl font-semibold leading-[1.08] tracking-[-0.035em] text-white sm:text-5xl xl:text-6xl"
             >
-              Explore today. <span class="text-teal-200">Build tomorrow.</span>
+              Learn today. <span class="text-teal-200">Remember tomorrow.</span>
             </h1>
             <p id="home-hero-subheading" class="mt-6 max-w-xl text-lg leading-8 text-slate-200">
               Explore questions with AI. Keep ideas, sources and challenges connected,
@@ -1191,7 +1191,7 @@ defmodule DialecticWeb.HomeLive do
           "url" => base_url,
           "image" => base_url <> ~p"/images/graph_live.webp",
           "description" =>
-            "Explore today. Build tomorrow. Your AI workshop for connected ideas, sources and challenges, organised and ready to revisit with others.",
+            "Learn today. Remember tomorrow. Your AI workshop for connected ideas, sources and challenges, organised and ready to revisit with others.",
           "applicationCategory" => "EducationalApplication",
           "operatingSystem" => "Web",
           "isAccessibleForFree" => true,
