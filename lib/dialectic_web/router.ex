@@ -43,6 +43,25 @@ defmodule DialecticWeb.Router do
     plug :accepts, ["json"]
   end
 
+  scope "/", DialecticWeb do
+    pipe_through :api
+
+    get "/.well-known/oauth-authorization-server", McpOAuthController, :metadata
+    post "/oauth/token", McpOAuthController, :token, log: false
+    post "/oauth/revoke", McpOAuthController, :revoke, log: false
+    post "/api/mcp/grids", McpGridController, :create, log: false
+    get "/api/mcp/grids/:slug", McpGridController, :show
+  end
+
+  scope "/", DialecticWeb do
+    pipe_through [:browser, :require_authenticated_user, :auth]
+
+    get "/oauth/authorize", McpOAuthController, :authorize, log: false
+    post "/oauth/authorize", McpOAuthController, :decide, log: false
+    get "/users/connections", McpOAuthController, :connections
+    delete "/users/connections/:id", McpOAuthController, :disconnect
+  end
+
   # Health check endpoints (no rate limiting)
   scope "/health", DialecticWeb do
     pipe_through :health
@@ -105,6 +124,7 @@ defmodule DialecticWeb.Router do
 
     get "/public/grids", PublicGridController, :index
     get "/public/grids/:slug", PublicGridController, :show
+    get "/public/thinking-methods/:method", ThinkingMethodController, :show
 
     get "/promotion/grids", PromotionMaterialController, :index
     get "/promotion/grids/:graph_name", PromotionMaterialController, :show
@@ -129,6 +149,8 @@ defmodule DialecticWeb.Router do
       pipe_through :browser
 
       live_dashboard "/dashboard", metrics: DialecticWeb.Telemetry
+      get "/mcp-preview", DialecticWeb.McpPreviewDemoController, :index
+      get "/mcp-preview/widget", DialecticWeb.McpPreviewDemoController, :widget
       forward "/mailbox", Plug.Swoosh.MailboxPreview
     end
   end

@@ -814,6 +814,14 @@ defmodule DialecticWeb.UserSettingsLive do
               <.icon name="hero-arrow-left" class="h-4 w-4" /> Back to home
             </.link>
 
+            <.link
+              href={~p"/users/connections"}
+              id="user-settings-connections"
+              class="text-sm font-semibold text-zinc-700 hover:text-zinc-900"
+            >
+              Connected apps
+            </.link>
+
             <p class="text-xs text-zinc-500">
               Need help? Email support.
             </p>
