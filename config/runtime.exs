@@ -20,6 +20,34 @@ if System.get_env("PHX_SERVER") do
   config :dialectic, DialecticWeb.Endpoint, server: true
 end
 
+mcp_resource = System.get_env("MCP_PUBLIC_URL") || "http://127.0.0.1:4001/mcp"
+
+if config_env() != :prod or System.get_env("MCP_PUBLIC_URL") do
+  if config_env() == :prod and not String.starts_with?(mcp_resource, "https://") do
+    raise "MCP_PUBLIC_URL must use HTTPS in production"
+  end
+
+  config :dialectic, :mcp_resource, mcp_resource
+
+  mcp_redirects =
+    case System.get_env("MCP_REDIRECT_URIS") do
+      nil ->
+        if config_env() == :prod,
+          do: [],
+          else: [
+            "http://localhost:6274/oauth/callback",
+            "http://localhost:6274/oauth/callback/debug"
+          ]
+
+      value ->
+        String.split(value, ",", trim: true) |> Enum.map(&String.trim/1)
+    end
+
+  config :dialectic, :mcp_oauth_clients, %{
+    "rationalgrid-chatgpt" => %{name: "RationalGrid for ChatGPT", redirect_uris: mcp_redirects}
+  }
+end
+
 tigris_access_key_id = System.get_env("AWS_ACCESS_KEY_ID")
 tigris_secret_access_key = System.get_env("AWS_SECRET_ACCESS_KEY")
 tigris_endpoint_url = System.get_env("AWS_ENDPOINT_URL_S3")

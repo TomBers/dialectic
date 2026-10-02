@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RationalGrid MCP preview demo</title>
+  <style>
+    body { max-width: 800px; margin: 32px auto; padding: 0 20px; font: 16px/1.6 system-ui, sans-serif; color: #20372f; background: #f3f7f5; }
+    iframe { width: 100%; min-height: 700px; border: 1px solid #ccdcd4; border-radius: 14px; background: white; }
+    #demo-status { white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Chat-to-grid preview</h1>
+    <p id="demo-notice"><strong>Local, read-only demo.</strong> This exercises the real MCP Apps bridge with sample ideas. It cannot link accounts or save grids. In a connected host, the same card calls the authenticated create_grid tool.</p>
+    <p id="demo-status" role="status">Starting the preview…</p>
+    <iframe id="preview-frame" title="RationalGrid review card" sandbox="allow-scripts allow-same-origin"></iframe>
+  </main>
+  <script type="module">{{SCRIPT}}</script>
+</body>
+</html>
