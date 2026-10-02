@@ -50,6 +50,9 @@ defmodule DialecticWeb.Router do
     post "/oauth/token", McpOAuthController, :token, log: false
     post "/oauth/revoke", McpOAuthController, :revoke, log: false
     post "/api/mcp/grids", McpGridController, :create, log: false
+    post "/api/mcp/explorations", McpGridController, :start_exploration, log: false
+    get "/api/mcp/grids", McpGridController, :index
+    get "/api/mcp/operations/:request_id", McpGridController, :operation
     post "/api/mcp/grids/:slug/actions", McpGridController, :apply_action, log: false
     post "/api/mcp/grids/:slug/nodes", McpGridController, :add_idea, log: false
     get "/api/mcp/grids/:slug", McpGridController, :show

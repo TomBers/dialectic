@@ -360,13 +360,20 @@ defmodule Dialectic.Responses.LlmInterface do
     queue_prepared_response("explain", instruction, answer, graph_id, mode)
   end
 
-  defp queue_prepared_response(action, instruction, child, graph_id, mode) do
+  def queue_initial_answer(question, answer, graph_id, context, mode, opts \\ []) do
+    instruction = Prompts.initial_explainer(context, question.content, mode)
+    queue_prepared_response("initial_explainer", instruction, answer, graph_id, mode, opts)
+  end
+
+  defp queue_prepared_response(action, instruction, child, graph_id, mode, opts \\ []) do
     system_prompt = PromptsStructured.system_preamble(mode)
     log_prompt(to_string(action), graph_id, mode, system_prompt, instruction)
 
-    RequestQueue.add(instruction, system_prompt, child, graph_id, "graph_update:#{graph_id}",
+    request_context = {"graph_update:#{graph_id}", Keyword.get(opts, :actor_id)}
+
+    RequestQueue.add(instruction, system_prompt, child, graph_id, request_context,
       mode: mode,
-      notify_rejection: false
+      notify_rejection: Keyword.get(opts, :notify_rejection, false)
     )
   end
 

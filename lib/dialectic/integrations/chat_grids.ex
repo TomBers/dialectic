@@ -3,48 +3,176 @@ defmodule Dialectic.Integrations.ChatGrids do
 
   alias Dialectic.Accounts.{Graph, User}
   alias Dialectic.DbActions.Graphs
-  alias Dialectic.Integrations.GridRequest
+  alias Dialectic.Graph.Vertex
+  alias Dialectic.Integrations.{GridAction, GridActions, GridRequest}
   alias Dialectic.Repo
+  alias Dialectic.Responses.LlmInterface
 
   @kinds ~w(origin question answer thesis antithesis synthesis premise conclusion ideas clarify assumptions counterexample implications blind_spots says_who who_disagrees steel_man what_if)
+  @levels %{"high_school" => :high_school, "university" => :university, "expert" => :expert}
 
   def create(%User{} = user, params) do
     with {:ok, request_id} <- Ecto.UUID.cast(params["request_id"]),
          {:ok, draft} <- prepare(params) do
-      payload_hash = :crypto.hash(:sha256, :erlang.term_to_binary(draft))
-
-      Repo.transact(fn ->
-        request = %GridRequest{
-          user_id: user.id,
-          request_id: request_id,
-          payload_hash: payload_hash
-        }
-
-        inserted_request =
-          Repo.insert!(request, on_conflict: :nothing, conflict_target: [:user_id, :request_id])
-
-        stored_request = Repo.get_by!(GridRequest, user_id: user.id, request_id: request_id)
-
-        cond do
-          stored_request.payload_hash != payload_hash ->
-            {:error, :request_conflict}
-
-          stored_request.graph_title != nil ->
-            case Repo.get(Graph, stored_request.graph_title) do
-              %Graph{is_deleted: deleted} = graph when deleted != true -> {:ok, graph}
-              _ -> {:error, :unavailable}
-            end
-
-          inserted_request.id != nil ->
-            create_and_link(user, draft, stored_request)
-
-          true ->
-            {:error, :unavailable}
-        end
-      end)
+      save(user, request_id, draft, &{:ok, &1})
     else
       :error -> {:error, "request_id must be a UUID"}
       error -> error
+    end
+  end
+
+  def start_exploration(%User{} = user, params) do
+    with {:ok, request_id} <- Ecto.UUID.cast(params["request_id"]),
+         {:ok, draft} <- prepare_exploration(user, params),
+         {:ok, _graph} <-
+           save(user, request_id, draft, &queue_exploration(user, request_id, draft, &1)) do
+      GridActions.get_operation(user, request_id)
+    else
+      :error -> {:error, :invalid_exploration}
+      error -> error
+    end
+  end
+
+  def list_owned(%User{id: user_id}, params) do
+    limit = params.limit
+    cursor = params.cursor
+
+    search =
+      params.query
+      |> String.replace("\\", "\\\\")
+      |> String.replace("%", "\\%")
+      |> String.replace("_", "\\_")
+
+    query =
+      from graph in Graph,
+        where: graph.user_id == ^user_id,
+        where: graph.is_deleted == false or is_nil(graph.is_deleted),
+        where: not is_nil(graph.slug),
+        order_by: [asc: graph.slug],
+        limit: ^(limit + 1),
+        select: struct(graph, [:title, :slug, :tags, :is_public])
+
+    query = if cursor, do: where(query, [graph], graph.slug > ^cursor), else: query
+
+    query =
+      if search == "",
+        do: query,
+        else: where(query, [graph], ilike(graph.title, ^("%" <> search <> "%")))
+
+    results = Repo.all(query)
+    grids = Enum.take(results, limit)
+    next_cursor = if length(results) > limit, do: List.last(grids).slug, else: nil
+    %{grids: grids, next_cursor: next_cursor}
+  end
+
+  defp save(user, request_id, draft, after_insert) do
+    payload_hash = :crypto.hash(:sha256, :erlang.term_to_binary(draft))
+
+    Repo.transact(fn ->
+      GridActions.lock_request(user.id, request_id)
+
+      request = %GridRequest{
+        user_id: user.id,
+        request_id: request_id,
+        payload_hash: payload_hash
+      }
+
+      inserted_request =
+        Repo.insert!(request, on_conflict: :nothing, conflict_target: [:user_id, :request_id])
+
+      stored_request = Repo.get_by!(GridRequest, user_id: user.id, request_id: request_id)
+
+      cond do
+        stored_request.payload_hash != payload_hash ->
+          {:error, :request_conflict}
+
+        stored_request.graph_title != nil ->
+          case Repo.get(Graph, stored_request.graph_title) do
+            %Graph{is_deleted: deleted} = graph when deleted != true -> {:ok, graph}
+            _ -> {:error, :unavailable}
+          end
+
+        inserted_request.id != nil ->
+          create_and_link(user, draft, stored_request, after_insert)
+
+        true ->
+          {:error, :unavailable}
+      end
+    end)
+  end
+
+  defp prepare_exploration(user, params) do
+    question = params["question"]
+    title = params["title"]
+    level = Map.get(params, "response_level", "university")
+
+    if text?(question, 4000) and (is_nil(title) or text?(title, 140)) and
+         Map.has_key?(@levels, level) do
+      origin = %Vertex{
+        id: "1",
+        class: "origin",
+        content: "## " <> String.trim(question),
+        user: user.email
+      }
+
+      answer = %Vertex{
+        id: "2",
+        class: "answer",
+        prompt_kind: "initial_explainer",
+        response_level: level,
+        user: user.email
+      }
+
+      nodes =
+        Enum.map([origin, answer], fn node ->
+          Map.new(Vertex.serialize(node), fn {key, value} -> {Atom.to_string(key), value} end)
+        end)
+
+      {:ok,
+       %{
+         title: Graphs.sanitize_title(title || question),
+         tags: [],
+         prompt_mode: level,
+         data: %{
+           "nodes" => nodes,
+           "edges" => [%{"data" => %{"id" => "1-2", "source" => "1", "target" => "2"}}]
+         }
+       }}
+    else
+      {:error, :invalid_exploration}
+    end
+  end
+
+  defp queue_exploration(user, request_id, draft, graph) do
+    if Repo.exists?(
+         from operation in GridAction,
+           where: operation.user_id == ^user.id and operation.request_id == ^request_id
+       ) do
+      {:error, :request_conflict}
+    else
+      [origin, answer] = Enum.map(draft.data["nodes"], &Vertex.deserialize/1)
+
+      with {:ok, job} <-
+             LlmInterface.queue_initial_answer(
+               origin,
+               answer,
+               graph.title,
+               "",
+               Map.fetch!(@levels, draft.prompt_mode)
+             ),
+           {:ok, _operation} <-
+             Repo.insert(%GridAction{
+               user_id: user.id,
+               request_id: request_id,
+               graph_title: graph.title,
+               parent_node_id: origin.id,
+               node_id: origin.id,
+               answer_node_id: answer.id,
+               action: "start_exploration",
+               job_id: job.id
+             }) do
+        {:ok, graph}
+      end
     end
   end
 
@@ -184,8 +312,9 @@ defmodule Dialectic.Integrations.ChatGrids do
 
   defp text?(_value, _maximum), do: false
 
-  defp create_and_link(user, draft, request) do
+  defp create_and_link(user, draft, request, after_insert) do
     with {:ok, graph} <- insert_graph(user, draft, draft.title, 3),
+         {:ok, graph} <- after_insert.(graph),
          {:ok, _request} <-
            request |> Ecto.Changeset.change(graph_title: graph.title) |> Repo.update() do
       {:ok, graph}
@@ -207,7 +336,7 @@ defmodule Dialectic.Integrations.ChatGrids do
         is_locked: false,
         is_deleted: false,
         share_token: :crypto.strong_rand_bytes(16) |> Base.url_encode64(padding: false),
-        prompt_mode: "university"
+        prompt_mode: Map.get(draft, :prompt_mode, "university")
       })
 
     case Repo.insert(changeset, mode: :savepoint) do

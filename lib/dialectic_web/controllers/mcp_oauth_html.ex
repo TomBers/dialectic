@@ -33,6 +33,52 @@ defmodule DialecticWeb.McpOAuthHTML do
     ~H"""
     <section id="mcp-connections" class="mx-auto max-w-lg p-8 space-y-6">
       <h1 class="text-2xl font-semibold">Connected apps</h1>
+      <section
+        :if={@mcp_testing?}
+        id="mcp-testing"
+        class="space-y-4 rounded-xl border border-slate-200 p-4"
+      >
+        <h2 class="text-lg font-semibold">MCP testing and authorization</h2>
+        <p>
+          Start authorization in MCP Inspector so it creates its own secure sign-in session.
+          This page does not grant access, and an old consent URL cannot start a new connection.
+        </p>
+        <.link
+          id="mcp-testing-open-inspector"
+          href="http://localhost:6274/"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn btn-primary"
+        >
+          Open MCP Inspector <.icon name="hero-arrow-top-right-on-square" class="h-4 w-4" />
+          <span class="sr-only">(opens in a new tab)</span>
+        </.link>
+        <dl id="mcp-testing-settings" class="space-y-2 text-sm">
+          <div>
+            <dt class="font-semibold">Transport</dt><dd>Streamable HTTP</dd>
+          </div>
+          <div>
+            <dt class="font-semibold">Server URL</dt><dd><code>{@mcp_resource}</code></dd>
+          </div>
+          <div>
+            <dt class="font-semibold">OAuth Client ID</dt><dd><code>rationalgrid-chatgpt</code></dd>
+          </div>
+          <div>
+            <dt class="font-semibold">Client Secret</dt><dd>Leave blank</dd>
+          </div>
+          <div>
+            <dt class="font-semibold">Scopes</dt><dd><code>{@mcp_scopes}</code></dd>
+          </div>
+          <div>
+            <dt class="font-semibold">Request refresh token</dt><dd>Turn off</dd>
+          </div>
+        </dl>
+        <p class="text-sm">
+          In Inspector, enter the OAuth details under Server Settings → OAuth Settings.
+          Connect, run <code>read_my_grid</code>, and follow Inspector's authorization prompt.
+          Approve only the fresh RationalGrid consent page it opens.
+        </p>
+      </section>
       <p :if={@connections == []}>No active connections.</p>
       <div
         :for={connection <- @connections}

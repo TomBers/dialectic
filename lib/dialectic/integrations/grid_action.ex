@@ -11,6 +11,7 @@ defmodule Dialectic.Integrations.GridAction do
     field :answer_node_id, :string
     field :job_id, :integer
     field :content_hash, :binary
+    field :status, :string, default: "queued"
     timestamps(type: :utc_datetime)
   end
 end

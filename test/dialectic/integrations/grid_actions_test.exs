@@ -429,7 +429,7 @@ defmodule Dialectic.Integrations.GridActionsTest do
     end
 
     Repo.delete!(job)
-    assert {:ok, %{status: "unknown"}} = GridActions.apply(user, graph.slug, params)
+    assert {:ok, %{status: "failed"}} = GridActions.apply(user, graph.slug, params)
     assert Repo.aggregate(GridAction, :count) == 1
   end
 

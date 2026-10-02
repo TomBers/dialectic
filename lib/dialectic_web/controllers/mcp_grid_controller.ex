@@ -6,6 +6,37 @@ defmodule DialecticWeb.McpGridController do
 
   plug :authenticate
 
+  def start_exploration(conn, params) do
+    conn.assigns.mcp_user
+    |> ChatGrids.start_exploration(params)
+    |> action_response(conn)
+  end
+
+  def operation(conn, %{"request_id" => request_id}) do
+    conn.assigns.mcp_user
+    |> GridActions.get_operation(request_id)
+    |> action_response(conn)
+  end
+
+  def index(conn, params) do
+    with {:ok, limit} <- integer_param(params, "limit", 20, 1, 50),
+         query when is_binary(query) <- Map.get(params, "query", ""),
+         true <- String.length(query) <= 100,
+         cursor <- params["cursor"],
+         true <- is_nil(cursor) or (is_binary(cursor) and byte_size(cursor) in 1..255) do
+      result =
+        ChatGrids.list_owned(conn.assigns.mcp_user, %{
+          limit: limit,
+          query: String.trim(query),
+          cursor: cursor
+        })
+
+      json(conn, %{grids: Enum.map(result.grids, &metadata/1), next_cursor: result.next_cursor})
+    else
+      _ -> conn |> put_status(:bad_request) |> json(%{error: "Invalid grid listing parameters"})
+    end
+  end
+
   def add_idea(conn, %{"slug" => slug} = params) do
     conn.assigns.mcp_user
     |> GridActions.add_idea(slug, params)
@@ -30,6 +61,11 @@ defmodule DialecticWeb.McpGridController do
   end
 
   defp action_error(:not_found), do: {:not_found, "Grid not found"}
+
+  defp action_error(:invalid_exploration),
+    do:
+      {:unprocessable_entity,
+       "Provide a question of 1–4000 characters, an optional title of 1–140 characters, a supported response level and a UUID request_id"}
 
   defp action_error(:locked),
     do: {:locked, "Unlock this grid in RationalGrid before adding a node"}
@@ -127,6 +163,9 @@ defmodule DialecticWeb.McpGridController do
     scope =
       case action_name(conn) do
         :create -> "grids:create"
+        :start_exploration -> "grids:create"
+        :index -> "grids:read"
+        :operation -> "grids:read"
         :apply_action -> "grids:append"
         :add_idea -> "grids:append"
         :show -> "grids:read"

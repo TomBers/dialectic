@@ -21,6 +21,42 @@ defmodule Dialectic.Integrations.GridActions do
     end
   end
 
+  def get_operation(user, request_id) do
+    with {:ok, request_id} <- Ecto.UUID.cast(request_id),
+         %GridAction{graph_title: title} when is_binary(title) <-
+           Repo.get_by(GridAction, user_id: user.id, request_id: request_id),
+         %Graph{} <- owned_graph(user.id, title) do
+      GraphManager.get_mcp_operation(title, user, request_id)
+    else
+      _ -> {:error, :not_found}
+    end
+  end
+
+  def get_operation_in_graph({graph_struct, graph}, user, request_id) do
+    with %Graph{} = fresh <- owned_graph(user.id, graph_struct.title),
+         %GridAction{} = request <-
+           Repo.get_by(GridAction,
+             user_id: user.id,
+             request_id: request_id,
+             graph_title: fresh.title
+           ),
+         {:ok, node} <- visible_node(graph, request.node_id),
+         {:ok, answer} <- visible_node(graph, request.answer_node_id) do
+      {:ok, response(request, fresh, node, answer)}
+    else
+      nil -> {:error, :not_found}
+      error -> error
+    end
+  end
+
+  defp owned_graph(user_id, title) do
+    Repo.one(
+      from graph in Graph,
+        where: graph.title == ^title and graph.user_id == ^user_id,
+        where: graph.is_deleted == false or is_nil(graph.is_deleted)
+    )
+  end
+
   def add_idea(user, slug, params) do
     content = params["content"]
     kind = Map.get(params, "kind", "comment")
@@ -171,6 +207,7 @@ defmodule Dialectic.Integrations.GridActions do
                  node_id: child.id,
                  answer_node_id: if(answer, do: answer.id),
                  job_id: job_id,
+                 status: if(is_nil(job_id), do: "completed", else: "queued"),
                  content_hash: params["content_hash"]
                }) do
           {:ok,
@@ -238,8 +275,12 @@ defmodule Dialectic.Integrations.GridActions do
     result = %{
       graph: graph,
       request_id: request.request_id,
-      status: status(request),
-      node: node_result(node, request.parent_node_id)
+      status: request.status,
+      node:
+        node_result(
+          node,
+          if(request.action == "start_exploration", do: nil, else: request.parent_node_id)
+        )
     }
 
     if answer, do: Map.put(result, :answer_node, node_result(answer, node.id)), else: result
@@ -247,18 +288,6 @@ defmodule Dialectic.Integrations.GridActions do
 
   defp node_result(node, parent_id),
     do: %{id: node.id, parent_node_id: parent_id, class: node.class, content: node.content}
-
-  defp status(%GridAction{action: "add_idea"}), do: "completed"
-
-  defp status(request) do
-    case Repo.get(Oban.Job, request.job_id) do
-      %{state: "completed"} -> "completed"
-      %{state: "executing"} -> "generating"
-      %{state: state} when state in ~w(available scheduled retryable) -> "queued"
-      %{state: state} when state in ~w(cancelled discarded) -> "failed"
-      _ -> "unknown"
-    end
-  end
 
   defp copy_graph(graph) do
     copy = :digraph.new()
@@ -285,7 +314,7 @@ defmodule Dialectic.Integrations.GridActions do
   defp response_mode(level) when level in ["simple", "high_school"], do: :high_school
   defp response_mode(_), do: :university
 
-  defp lock_request(user_id, request_id) do
+  def lock_request(user_id, request_id) do
     <<key::signed-64, _rest::binary>> =
       :crypto.hash(:sha256, "mcp-action:#{user_id}:#{request_id}")
 

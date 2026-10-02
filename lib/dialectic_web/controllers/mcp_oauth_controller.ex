@@ -87,7 +87,12 @@ defmodule DialecticWeb.McpOAuthController do
         }
       end)
 
-    render(conn, :connections, connections: connections)
+    render(conn, :connections,
+      connections: connections,
+      mcp_testing?: Application.get_env(:dialectic, :dev_routes, false),
+      mcp_resource: OAuth.resource(),
+      mcp_scopes: Enum.join(OAuth.scopes(), " ")
+    )
   end
 
   def disconnect(conn, %{"id" => id}) do
