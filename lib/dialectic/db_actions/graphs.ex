@@ -621,34 +621,28 @@ defmodule Dialectic.DbActions.Graphs do
   Timestamp strings from jobs created before data revisions were introduced are
   converted to microsecond revisions for backwards compatibility.
   """
-  def save_graph_if_newer(title, data, revision) when is_integer(revision) do
-    Repo.transact(fn ->
-      query = from(g in Graph, where: g.title == ^title and g.data_revision < ^revision)
+  def save_graph_if_newer(title, data, revision, opts \\ [])
 
-      case Repo.one(from(g in query, lock: "FOR UPDATE")) do
-        nil ->
-          {:error, :stale}
+  def save_graph_if_newer(title, data, revision, opts) when is_integer(revision) do
+    updates = [data: data, data_revision: revision]
 
-        graph ->
-          updated_at =
-            if Dialectic.Graph.Serialise.equivalent?(graph.data, data) do
-              graph.updated_at
-            else
-              DateTime.utc_now() |> DateTime.truncate(:second)
-            end
-
-          Repo.update_all(query,
-            set: [data: data, data_revision: revision, updated_at: updated_at]
-          )
-
-          {:ok, :updated}
+    updates =
+      if Keyword.get(opts, :touch, true) do
+        Keyword.put(updates, :updated_at, DateTime.utc_now() |> DateTime.truncate(:second))
+      else
+        updates
       end
-    end)
+
+    {count, _} =
+      from(g in Graph, where: g.title == ^title and g.data_revision < ^revision)
+      |> Repo.update_all(set: updates)
+
+    if count == 1, do: {:ok, :updated}, else: {:error, :stale}
   end
 
-  def save_graph_if_newer(title, data, iso_ts) when is_binary(iso_ts) do
+  def save_graph_if_newer(title, data, iso_ts, opts) when is_binary(iso_ts) do
     with {:ok, ts, _offset} <- DateTime.from_iso8601(iso_ts) do
-      save_graph_if_newer(title, data, DateTime.to_unix(ts, :microsecond))
+      save_graph_if_newer(title, data, DateTime.to_unix(ts, :microsecond), opts)
     else
       _ -> {:error, :invalid_timestamp}
     end

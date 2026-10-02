@@ -30,34 +30,28 @@ defmodule Dialectic.DbActions.GraphSnapshotTest do
     %{graph: graph}
   end
 
-  test "shutdown after reading preserves the date despite serialization differences", %{
-    graph: graph
-  } do
-    shutdown(graph)
+  test "shutdown after reading preserves the date", %{graph: graph} do
+    snapshot = shutdown(graph)
 
     stored = Repo.get!(Graph, graph.title)
     assert stored.updated_at == @original_updated_at
     assert stored.data_revision > graph.data_revision
-    assert Serialise.equivalent?(stored.data, graph.data)
+    assert stored.data == snapshot
   end
 
-  test "shutdown persists unsaved edits and updates the date", %{graph: graph} do
+  test "shutdown persists unsaved edits without touching the date", %{graph: graph} do
     shutdown(graph, fn digraph ->
       {vertex_id, vertex} = :digraph.vertex(digraph, "2")
       :digraph.add_vertex(digraph, vertex_id, %{vertex | content: "Edited answer"})
     end)
 
     stored = Repo.get!(Graph, graph.title)
-    assert DateTime.compare(stored.updated_at, @original_updated_at) == :gt
+    assert stored.updated_at == @original_updated_at
     assert Enum.any?(stored.data["nodes"], &(&1["content"] == "Edited answer"))
   end
 
-  test "equivalent queued snapshots advance revisions without changing dates", %{graph: graph} do
-    snapshot = %{
-      graph.data
-      | "nodes" => Enum.reverse(graph.data["nodes"]),
-        "edges" => Enum.reverse(graph.data["edges"])
-    }
+  test "normal queued snapshots still update the date and reject stale revisions", %{graph: graph} do
+    snapshot = put_in(graph.data, ["nodes", Access.at(0), "content"], "Saved answer")
 
     assert :ok =
              DbWorker.perform(%Oban.Job{
@@ -65,12 +59,43 @@ defmodule Dialectic.DbActions.GraphSnapshotTest do
              })
 
     stored = Repo.get!(Graph, graph.title)
-    assert stored.updated_at == @original_updated_at
+    assert DateTime.compare(stored.updated_at, @original_updated_at) == :gt
     assert stored.data_revision == 2
+    assert stored.data == snapshot
 
     stale_snapshot = put_in(snapshot, ["nodes", Access.at(0), "content"], "Stale answer")
     assert {:error, :stale} = Graphs.save_graph_if_newer(graph.title, stale_snapshot, 1)
     assert Repo.get!(Graph, graph.title) == stored
+  end
+
+  test "touch false still advances revisions and rejects stale snapshots", %{graph: graph} do
+    assert {:ok, :updated} =
+             Graphs.save_graph_if_newer(graph.title, graph.data, 2, touch: false)
+
+    stored = Repo.get!(Graph, graph.title)
+    assert stored.updated_at == @original_updated_at
+    assert stored.data_revision == 2
+
+    stale_snapshot = %{graph.data | "edges" => []}
+
+    assert {:error, :stale} =
+             Graphs.save_graph_if_newer(graph.title, stale_snapshot, 1, touch: false)
+
+    assert {:error, :stale} =
+             Graphs.save_graph_if_newer(graph.title, stale_snapshot, 2, touch: false)
+
+    assert Repo.get!(Graph, graph.title) == stored
+  end
+
+  test "legacy timestamp revisions forward the touch option", %{graph: graph} do
+    assert {:ok, :updated} =
+             Graphs.save_graph_if_newer(graph.title, graph.data, "2026-08-06T10:00:00Z",
+               touch: false
+             )
+
+    stored = Repo.get!(Graph, graph.title)
+    assert stored.updated_at == @original_updated_at
+    assert stored.data_revision == DateTime.to_unix(~U[2026-08-06 10:00:00Z], :microsecond)
   end
 
   test "edge changes update the date", %{graph: graph} do
@@ -92,11 +117,11 @@ defmodule Dialectic.DbActions.GraphSnapshotTest do
       |> Ecto.Changeset.change(updated_at: @original_updated_at)
       |> Repo.update!()
 
-    shutdown(saved_graph)
+    saved_snapshot = shutdown(saved_graph)
 
     stored = Repo.get!(Graph, graph.title)
     assert stored.updated_at == saved_graph.updated_at
-    assert Serialise.equivalent?(stored.data, snapshot)
+    assert stored.data == saved_snapshot
   end
 
   defp shutdown(graph, edit \\ fn _digraph -> :ok end) do
@@ -107,6 +132,7 @@ defmodule Dialectic.DbActions.GraphSnapshotTest do
       edit.(digraph)
       Application.put_env(:dialectic, :sync_tasks_for_testing, false)
       assert :ok = GraphManager.terminate(:shutdown, {graph, digraph})
+      digraph |> Serialise.graph_to_json() |> Jason.encode!() |> Jason.decode!()
     after
       Application.put_env(:dialectic, :sync_tasks_for_testing, previous)
       :digraph.delete(digraph)

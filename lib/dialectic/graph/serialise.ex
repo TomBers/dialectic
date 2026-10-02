@@ -1,34 +1,6 @@
 defmodule Dialectic.Graph.Serialise do
   alias Dialectic.Graph.Vertex
 
-  def equivalent?(left, right) do
-    normalize_snapshot(left) == normalize_snapshot(right)
-  end
-
-  defp normalize_snapshot(data) do
-    data
-    |> Jason.encode!()
-    |> Jason.decode!()
-    |> normalize_graph()
-  end
-
-  defp normalize_graph(%{"nodes" => nodes} = data) when is_list(nodes) do
-    nodes =
-      nodes
-      |> Enum.map(fn node -> node |> Vertex.deserialize() |> Vertex.serialize() end)
-      |> Enum.sort()
-
-    edges =
-      data
-      |> Map.get("edges", [])
-      |> Enum.map(fn %{"data" => edge} -> {edge["source"], edge["target"]} end)
-      |> Enum.sort()
-
-    data |> Map.put("nodes", nodes) |> Map.put("edges", edges)
-  end
-
-  defp normalize_graph(data), do: data
-
   def calc_path(name) do
     :code.priv_dir(:dialectic)
     |> Path.join("/static/graphs/")
