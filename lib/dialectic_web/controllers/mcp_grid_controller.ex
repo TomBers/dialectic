@@ -2,6 +2,7 @@ defmodule DialecticWeb.McpGridController do
   use DialecticWeb, :controller
 
   alias Dialectic.Graph.Extractor
+  alias Dialectic.DbActions.Sharing
   alias Dialectic.Integrations.{ChatGrids, GridActions, OAuth}
 
   plug :authenticate
@@ -68,7 +69,7 @@ defmodule DialecticWeb.McpGridController do
        "Provide a question of 1–4000 characters, an optional title of 1–140 characters, a supported response level and a UUID request_id"}
 
   defp action_error(:locked),
-    do: {:locked, "Unlock this grid in RationalGrid before adding a node"}
+    do: {:locked, "Editing is disabled for this grid"}
 
   defp action_error(:request_conflict),
     do: {:conflict, "This request_id was already used for a different action"}
@@ -120,7 +121,7 @@ defmodule DialecticWeb.McpGridController do
   def show(conn, %{"slug" => slug} = params) do
     with {:ok, limit} <- integer_param(params, "limit", 20, 1, 50),
          {:ok, offset} <- integer_param(params, "offset", 0, 0, 1_000_000),
-         graph when not is_nil(graph) <- ChatGrids.get(conn.assigns.mcp_user, slug) do
+         graph when not is_nil(graph) <- Sharing.get_accessible_graph(conn.assigns.mcp_user, slug) do
       {:ok, data} = Extractor.extract_for_image_generation(graph)
       nodes = Enum.slice(data.nodes, offset, limit)
       node_ids = MapSet.new(nodes, & &1.id)
@@ -141,8 +142,15 @@ defmodule DialecticWeb.McpGridController do
         next_offset: if(offset + limit < total_nodes, do: offset + limit, else: nil)
       })
     else
-      nil -> conn |> put_status(:not_found) |> json(%{error: "Grid not found"})
-      :error -> conn |> put_status(:bad_request) |> json(%{error: "Invalid pagination"})
+      nil ->
+        if conn.assigns.mcp_user do
+          conn |> put_status(:not_found) |> json(%{error: "Grid not found"})
+        else
+          conn |> put_status(:unauthorized) |> json(%{error: "invalid_token"})
+        end
+
+      :error ->
+        conn |> put_status(:bad_request) |> json(%{error: "Invalid pagination"})
     end
   end
 
@@ -179,7 +187,12 @@ defmodule DialecticWeb.McpGridController do
 
     conn = put_resp_header(conn, "cache-control", "no-store")
 
-    case OAuth.authenticate(token, scope) do
+    authentication =
+      if action_name(conn) == :show and get_req_header(conn, "authorization") == [],
+        do: {:ok, nil},
+        else: OAuth.authenticate(token, scope)
+
+    case authentication do
       {:ok, user} ->
         assign(conn, :mcp_user, user)
 

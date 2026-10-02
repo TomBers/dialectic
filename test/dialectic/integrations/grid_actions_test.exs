@@ -452,18 +452,116 @@ defmodule Dialectic.Integrations.GridActionsTest do
     assert Repo.aggregate(GridAction, :count) == 9
   end
 
-  test "only the owner may append, including to public grids", %{
+  test "public unlocked grids allow non-owner contributions without transferring ownership", %{
     user: user,
     graph: graph,
     params: params
   } do
-    assert {:error, :not_found} = GridActions.apply(user_fixture(), graph.slug, params)
+    contributor = user_fixture()
+    assert {:error, :not_found} = GridActions.apply(contributor, graph.slug, params)
     refute GraphManager.exists?(graph.title)
     graph |> Ecto.Changeset.change(is_public: true) |> Repo.update!()
-    assert {:error, :not_found} = GridActions.apply(user_fixture(), graph.slug, params)
+    assert {:ok, result} = GridActions.apply(contributor, graph.slug, params)
+    assert result.graph.user_id == user.id
+    assert result.graph.is_public
+    assert GraphManager.find_node_by_id(graph.title, result.node.id).user == contributor.email
+    assert Repo.one!(GridAction).user_id == contributor.id
+    assert {:ok, _} = GridActions.get_operation(contributor, params["request_id"])
+    assert {:error, :not_found} = GridActions.get_operation(user, params["request_id"])
     graph |> Ecto.Changeset.change(is_deleted: true) |> Repo.update!()
     assert {:error, :not_found} = GridActions.apply(user, graph.slug, params)
+    assert {:error, :not_found} = GridActions.get_operation(contributor, params["request_id"])
+    assert Repo.aggregate(GridAction, :count) == 1
+  end
+
+  test "public access and editing are rechecked inside the graph process", %{
+    graph: graph,
+    params: params
+  } do
+    contributor = user_fixture()
+    graph |> Ecto.Changeset.change(is_public: true) |> Repo.update!()
+    GraphManager.get_graph(graph.title)
+    graph |> Repo.reload!() |> Ecto.Changeset.change(is_public: false) |> Repo.update!()
+
+    assert {:error, :not_found} =
+             GraphManager.apply_mcp_action(graph.title, contributor, params)
+
+    graph
+    |> Repo.reload!()
+    |> Ecto.Changeset.change(is_public: true, is_locked: true)
+    |> Repo.update!()
+
+    assert {:error, :locked} =
+             GraphManager.apply_mcp_action(graph.title, contributor, params)
+
     assert Repo.aggregate(GridAction, :count) == 0
+    assert Repo.aggregate(Oban.Job, :count) == 0
+  end
+
+  test "shared private grids allow questions but revoked access blocks retries and progress", %{
+    user: owner,
+    graph: graph
+  } do
+    contributor = user_fixture()
+    {:ok, _} = Dialectic.DbActions.Sharing.invite_user(graph, contributor.email)
+
+    params = %{
+      "request_id" => Ecto.UUID.generate(),
+      "parent_node_id" => "2",
+      "kind" => "question",
+      "content" => "What evidence would change this?"
+    }
+
+    assert {:ok, result} = GridActions.add_idea(contributor, graph.slug, params)
+    refute result.graph.is_public
+    assert result.graph.user_id == owner.id
+
+    assert GraphManager.find_node_by_id(graph.title, result.answer_node.id).user ==
+             contributor.email
+
+    assert {:ok, _} = GridActions.get_operation(contributor, params["request_id"])
+    assert {:error, :not_found} = GridActions.get_operation(owner, params["request_id"])
+
+    assert :ok = Dialectic.DbActions.Sharing.remove_invite(graph, contributor.email, owner)
+    assert {:error, :not_found} = GridActions.add_idea(contributor, graph.slug, params)
+    assert {:error, :not_found} = GridActions.get_operation(contributor, params["request_id"])
+
+    assert {:error, :not_found} =
+             GraphManager.get_mcp_operation(graph.title, contributor, params["request_id"])
+
+    assert Repo.aggregate(GridAction, :count) == 1
+    assert Repo.aggregate(Oban.Job, :count) == 1
+  end
+
+  test "locking stops new contributions but permits read-only replay until visibility is revoked",
+       %{
+         graph: graph
+       } do
+    contributor = user_fixture()
+    graph |> Ecto.Changeset.change(is_public: true) |> Repo.update!()
+
+    params = %{
+      "request_id" => Ecto.UUID.generate(),
+      "parent_node_id" => "2",
+      "content" => "A contribution"
+    }
+
+    assert {:ok, original} = GridActions.add_idea(contributor, graph.slug, params)
+    graph |> Repo.reload!() |> Ecto.Changeset.change(is_locked: true) |> Repo.update!()
+    assert {:ok, repeated} = GridActions.add_idea(contributor, graph.slug, params)
+    assert repeated.node.id == original.node.id
+    assert {:ok, _} = GridActions.get_operation(contributor, params["request_id"])
+
+    assert {:error, :locked} =
+             GridActions.add_idea(contributor, graph.slug, %{
+               params
+               | "request_id" => Ecto.UUID.generate()
+             })
+
+    graph |> Repo.reload!() |> Ecto.Changeset.change(is_public: false) |> Repo.update!()
+    assert {:error, :not_found} = GridActions.add_idea(contributor, graph.slug, params)
+    assert {:error, :not_found} = GridActions.get_operation(contributor, params["request_id"])
+    assert Repo.aggregate(GridAction, :count) == 1
   end
 
   test "locks and stale snapshots reject writes without side effects", %{

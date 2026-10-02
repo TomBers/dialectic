@@ -8,9 +8,11 @@ defmodule DialecticWeb.McpOAuthHTML do
       <p>Signed in as {@current_user.email}.</p>
       <ul class="list-disc pl-5 space-y-2">
         <li :if={"grids:create" in @scopes}>Create private grids when you ask to save your ideas.</li>
-        <li :if={"grids:read" in @scopes}>Read grids that you own.</li>
+        <li :if={"grids:read" in @scopes}>
+          Read grids you can access, including public and shared grids.
+        </li>
         <li :if={"grids:append" in @scopes} id="mcp-append-permission">
-          Add your own ideas or use AI thinking tools to read ideas and add connected nodes to grids you own when you ask.
+          Add your own ideas or use AI thinking tools to read ideas and add connected nodes to grids you can access when you ask, provided editing is enabled.
           New nodes keep the grid's visibility: additions to public grids are public.
         </li>
       </ul>
@@ -75,7 +77,7 @@ defmodule DialecticWeb.McpOAuthHTML do
         </dl>
         <p class="text-sm">
           In Inspector, enter the OAuth details under Server Settings → OAuth Settings.
-          Connect, run <code>read_my_grid</code>, and follow Inspector's authorization prompt.
+          Connect, run <code>read_grid</code>, and follow Inspector's authorization prompt.
           Approve only the fresh RationalGrid consent page it opens.
         </p>
       </section>

@@ -1,18 +1,17 @@
 import assert from "node:assert/strict";
 import { once } from "node:events";
 import { createHash, randomUUID } from "node:crypto";
-import { z } from "zod";
 import { createServer as createHttpServer, get, type Server } from "node:http";
 import { afterEach, beforeEach, test } from "node:test";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import type { OAuthClientProvider } from "@modelcontextprotocol/sdk/client/auth.js";
-import { createApp, previewUri } from "../src/server.js";
+import { createApp } from "../src/server.js";
 
 const grid = { id: "reasoning-abc123", title: "Reasoning", url: "https://rationalgrid.ai/g/reasoning-abc123", tags: ["philosophy"] };
 const searchResult = { grids: [{ ...grid, matches: [{ node_id: "2", snippet: "Follow the evidence" }] }] };
 const readResult = {
-  grid,
+  grid: { ...grid, visibility: "public" },
   nodes: [{ id: "2", content: "Follow the evidence", class: "answer" }],
   edges: [{ from: "1", to: "2" }],
   total_nodes: 3,
@@ -80,17 +79,17 @@ afterEach(async () => {
   }
 });
 
-test("discovers public reads, preview, and seven scoped account tools", async () => {
+test("discovers exactly seven focused tools with public or scoped access", async () => {
   const { tools } = await client.listTools();
-  assert.equal(tools.length, 10);
+  assert.deepEqual(tools.map(tool => tool.name).sort(), ["search_public_grids", "list_my_grids", "read_grid", "create_grid", "add_grid_idea", "apply_grid_action", "get_operation"].sort());
   assert.equal(tools.filter(tool => tool.name.endsWith("_method")).length, 0);
   for (const tool of tools) {
-    assert.equal(tool.annotations?.readOnlyHint, !["create_grid", "start_exploration", "apply_grid_action", "add_grid_idea"].includes(tool.name));
+    assert.equal(tool.annotations?.readOnlyHint, !["create_grid", "apply_grid_action", "add_grid_idea"].includes(tool.name));
     assert.equal(tool.annotations?.destructiveHint, false);
     assert.ok(tool.inputSchema);
     assert.ok(tool.outputSchema);
-    const scope = ["create_grid", "start_exploration"].includes(tool.name) ? "grids:create" : ["read_my_grid", "list_my_grids", "get_operation"].includes(tool.name) ? "grids:read" : ["apply_grid_action", "add_grid_idea"].includes(tool.name) ? "grids:append" : undefined;
-    const securitySchemes = scope ? [{ type: "oauth2", scopes: [scope] }] : [{ type: "noauth" }];
+    const scope = tool.name === "create_grid" ? "grids:create" : ["read_grid", "list_my_grids", "get_operation"].includes(tool.name) ? "grids:read" : ["apply_grid_action", "add_grid_idea"].includes(tool.name) ? "grids:append" : undefined;
+    const securitySchemes = tool.name === "read_grid" ? [{ type: "noauth" }, { type: "oauth2", scopes: ["grids:read"] }] : scope ? [{ type: "oauth2", scopes: [scope] }] : [{ type: "noauth" }];
     assert.deepEqual(tool._meta?.securitySchemes, securitySchemes);
   }
   assert.equal(requests.length, 0);
@@ -114,12 +113,64 @@ test("search returns text and structured data and safely encodes query parameter
   assert.equal(requests[0].method, "GET");
 });
 
+test("published schemas use single-type branches without losing nullability", async () => {
+  const { tools } = await client.listTools();
+
+  function assertSingleTypes(value: unknown): void {
+    if (!value || typeof value !== "object") return;
+    if (Array.isArray(value)) {
+      value.forEach(assertSingleTypes);
+      return;
+    }
+    const object = value as Record<string, unknown>;
+    assert.equal(Array.isArray(object.type), false);
+    Object.values(object).forEach(assertSingleTypes);
+  }
+
+  for (const tool of tools) {
+    assertSingleTypes(tool.inputSchema);
+    assertSingleTypes(tool.outputSchema);
+  }
+
+  for (const name of ["create_grid", "add_grid_idea", "apply_grid_action", "get_operation"]) {
+    const output = tools.find(tool => tool.name === name)!.outputSchema!;
+    for (const property of ["node", "answer_node"]) {
+      const node = output.properties![property] as { properties: Record<string, unknown>; required: string[] };
+      assert.deepEqual(node.properties.parent_node_id, { anyOf: [{ type: "string" }, { type: "null" }] });
+      assert.ok(node.required.includes("parent_node_id"));
+    }
+    assert.ok(!output.required?.includes("answer_node"));
+  }
+
+  const listing = tools.find(tool => tool.name === "list_my_grids")!.outputSchema!;
+  assert.deepEqual(listing.properties!.next_cursor, { anyOf: [{ type: "string" }, { type: "null" }] });
+  const read = tools.find(tool => tool.name === "read_grid")!.outputSchema!;
+  const offset = read.properties!.next_offset as { anyOf: { type: string; minimum?: number }[] };
+  assert.equal(offset.anyOf[0].type, "integer");
+  assert.equal(offset.anyOf[0].minimum, 0);
+  assert.deepEqual(offset.anyOf[1], { type: "null" });
+  assert.equal(requests.length, 0);
+});
+
 test("read forwards pagination and retains node IDs and cross-page edges", async () => {
   const result = await client.callTool({ name: "read_grid", arguments: { grid_id: grid.id, offset: 1, limit: 1 } });
   assert.deepEqual(result.structuredContent, readResult);
-  assert.equal(requests[0].url.pathname, `/api/public/grids/${grid.id}`);
+  assert.equal(requests[0].url.pathname, `/api/mcp/grids/${grid.id}`);
   assert.equal(requests[0].url.searchParams.get("offset"), "1");
   assert.equal(requests[0].url.searchParams.get("limit"), "1");
+  assert.equal(requests[0].authorization, undefined);
+});
+
+test("retired tools and bulk import cannot write through the minimal interface", async () => {
+  for (const name of ["start_exploration", "read_my_grid", "preview_grid", "get_clarify_method"]) {
+    const result = await authenticatedCall(name, { request_id: randomUUID(), grid_id: grid.id, question: "Why?" });
+    assert.equal(result.isError, true);
+  }
+  const imported = await authenticatedCall("create_grid", {
+    request_id: randomUUID(), title: "Old import", nodes: [{ id: "1", kind: "origin", content: "Why?" }], edges: [],
+  });
+  assert.equal(imported.isError, true);
+  assert.equal(requests.length, 0);
 });
 
 test("invalid inputs cannot reach Phoenix", async () => {
@@ -137,10 +188,7 @@ test("invalid inputs cannot reach Phoenix", async () => {
   assert.equal(requests.length, 0);
 });
 
-const draft = {
-  request_id: randomUUID(), title: "Chat ideas", tags: [],
-  nodes: [{ id: "question", content: "What would change our minds?", kind: "origin" }], edges: [],
-};
+const draft = { request_id: randomUUID(), question: "What would change our minds?" };
 
 async function authenticatedCall(name: string, args: Record<string, unknown>, token = "test-token", expectedStatus = 200) {
   const response = await fetch(endpoint, {
@@ -180,7 +228,7 @@ test("grid actions require append permission and forward only the selected actio
 
 test("native exploration uses create scope, forwards the question and reports the opening answer", async () => {
   const exploration = { request_id: randomUUID(), question: "What makes a strong explanation?" };
-  const anonymous = await authenticatedCall("start_exploration", exploration, "", 401);
+  const anonymous = await authenticatedCall("create_grid", exploration, "", 401);
   assert.equal(anonymous.isError, true);
   assert.match(JSON.stringify(anonymous._meta), /grids:create/);
   assert.equal(requests.length, 0);
@@ -189,7 +237,7 @@ test("native exploration uses create scope, forwards the question and reports th
     node: { id: "1", parent_node_id: null, class: "origin", content: exploration.question },
     answer_node: { id: "2", parent_node_id: "1", class: "answer", content: "" },
   };
-  const result = await authenticatedCall("start_exploration", { ...exploration, user_id: 42, is_public: true, answer: "Do not import", chat_history: "private history" });
+  const result = await authenticatedCall("create_grid", { ...exploration, user_id: 42, is_public: true, answer: "Do not import", chat_history: "private history" });
   assert.deepEqual(result.structuredContent, upstreamBody);
   assert.equal(requests[0].method, "POST");
   assert.equal(requests[0].url.pathname, "/api/mcp/explorations");
@@ -238,7 +286,7 @@ test("operation polling is read-only, exposes partial answers and never repeats 
 test("new tools reject malformed inputs and preserve safe errors", async () => {
   const exploration = { request_id: randomUUID(), question: "A question?" };
   for (const changed of [{ question: " " }, { question: "x".repeat(4001) }, { title: " " }, { response_level: "invalid" }, { request_id: "bad" }]) {
-    assert.equal((await authenticatedCall("start_exploration", { ...exploration, ...changed })).isError, true);
+    assert.equal((await authenticatedCall("create_grid", { ...exploration, ...changed })).isError, true);
   }
   for (const args of [{ limit: 51 }, { cursor: "" }, { query: "x".repeat(101) }]) {
     assert.equal((await authenticatedCall("list_my_grids", args)).isError, true);
@@ -248,7 +296,7 @@ test("new tools reject malformed inputs and preserve safe errors", async () => {
   for (const status of [409, 410, 422, 429]) {
     upstreamStatus = status;
     upstreamBody = { error: "private backend detail" };
-    const result = await authenticatedCall("start_exploration", exploration);
+    const result = await authenticatedCall("create_grid", exploration);
     assert.equal(result.isError, true);
     assert.doesNotMatch(JSON.stringify(result), /private backend detail/);
   }
@@ -373,7 +421,8 @@ test("SDK OAuth client discovers auth, generates its own state and PKCE, exchang
   const authenticatedClient = new Client({ name: "oauth-test", version: "1.0.0" });
   try {
     await authenticatedClient.connect(transport);
-    await assert.rejects(authenticatedClient.callTool({ name: "read_my_grid", arguments: { grid_id: grid.id } }), /Unauthorized/);
+    upstreamStatus = 401;
+    await assert.rejects(authenticatedClient.callTool({ name: "read_grid", arguments: { grid_id: grid.id } }), /Unauthorized/);
     assert.ok(authorizationUrl);
     assert.equal(authorizationUrl.origin, origin(upstream));
     assert.equal(authorizationUrl.searchParams.get("state"), state);
@@ -382,7 +431,7 @@ test("SDK OAuth client discovers auth, generates its own state and PKCE, exchang
     assert.equal(authorizationUrl.searchParams.get("scope"), "grids:read");
     assert.equal(authorizationUrl.searchParams.get("code_challenge_method"), "S256");
     assert.equal(authorizationUrl.searchParams.get("code_challenge"), createHash("sha256").update(verifier).digest("base64url"));
-    assert.ok(!requests.some(request => request.url.pathname.startsWith("/api/mcp/")));
+    assert.equal(requests.find(request => request.url.pathname.startsWith("/api/mcp/"))?.authorization, undefined);
     await transport.finishAuth("approved-test-code");
     const tokenRequest = requests.find(request => request.url.pathname === "/oauth/token")!;
     const tokenParams = new URLSearchParams(tokenRequest.body);
@@ -390,8 +439,9 @@ test("SDK OAuth client discovers auth, generates its own state and PKCE, exchang
     assert.equal(tokenParams.get("code_verifier"), verifier);
     assert.equal(tokenParams.get("resource"), endpoint.href);
     assert.equal(tokenParams.get("client_id"), "test-client");
+    upstreamStatus = 200;
     upstreamBody = { ...readResult, grid: { ...grid, visibility: "private" } };
-    const result = await authenticatedClient.callTool({ name: "read_my_grid", arguments: { grid_id: grid.id } });
+    const result = await authenticatedClient.callTool({ name: "read_grid", arguments: { grid_id: grid.id } });
     assert.deepEqual(result.structuredContent, upstreamBody);
     assert.equal(requests.at(-1)?.authorization, "Bearer linked-test-token");
   } finally {
@@ -436,23 +486,11 @@ test("protected metadata identifies the resource and Phoenix authorization serve
   assert.throws(() => createApp(origin(upstream), { publicUrl: "http://insecure.example/mcp" }));
 });
 
-test("saving forwards only the linked token and validated draft, with no implicit retry", async () => {
-  upstreamBody = { grid: { ...grid, visibility: "private" }, node_count: 1 };
-  const result = await authenticatedCall("create_grid", { ...draft, user_id: 123, is_public: true, chat_history: "not transferred" });
-  assert.deepEqual(result.structuredContent, upstreamBody);
-  assert.equal(requests.length, 1);
-  assert.equal(requests[0].method, "POST");
-  assert.equal(requests[0].url.pathname, "/api/mcp/grids");
-  assert.equal(requests[0].authorization, "Bearer test-token");
-  assert.equal(requests[0].cookie, undefined);
-  assert.deepEqual(JSON.parse(requests[0].body), draft);
-});
-
 test("tokens are isolated between simultaneous requests and owned reads are paginated", async () => {
   upstreamBody = { ...readResult, grid: { ...grid, visibility: "private" } };
   const results = await Promise.all([
-    authenticatedCall("read_my_grid", { grid_id: grid.id, limit: 1, offset: 2 }, "first-token"),
-    authenticatedCall("read_my_grid", { grid_id: grid.id, limit: 1, offset: 2 }, "second-token"),
+    authenticatedCall("read_grid", { grid_id: grid.id, limit: 1, offset: 2 }, "first-token"),
+    authenticatedCall("read_grid", { grid_id: grid.id, limit: 1, offset: 2 }, "second-token"),
   ]);
   assert.ok(results.every(result => !result.isError));
   assert.deepEqual(requests.map(request => request.authorization).sort(), ["Bearer first-token", "Bearer second-token"]);
@@ -470,67 +508,6 @@ test("invalid or insufficient tokens ask for authorization; safe errors hide bac
     else assert.equal(result._meta, undefined);
   }
   assert.equal(requests.length, 6);
-});
-
-test("skill discovery returns matching frontmatter, readable content, and digest", async () => {
-  const response = await client.request({ method: "skills/list" }, z.object({ skills: z.array(z.object({ uri: z.string(), frontmatter: z.object({ name: z.string(), description: z.string() }), resources: z.array(z.object({ uri: z.string(), digest: z.string() })) })) }));
-  assert.equal(response.skills.length, 1);
-  const skill = response.skills[0];
-  const read = await client.readResource({ uri: skill.uri });
-  const text = read.contents[0].text;
-  assert.equal(typeof text, "string");
-  assert.match(text as string, new RegExp(`name: ${skill.frontmatter.name}`));
-  assert.ok((text as string).includes(`description: ${skill.frontmatter.description}`));
-  assert.equal(skill.resources[0].digest, `sha256:${createHash("sha256").update(text as string).digest("hex")}`);
-  const fetched = await client.request({ method: "skills/get", params: { uri: skill.uri } }, z.object({ skill: z.unknown() }));
-  assert.deepEqual(fetched.skill, skill);
-});
-
-test("preview returns a complete unsaved draft without contacting Phoenix", async () => {
-  const result = await client.callTool({ name: "preview_grid", arguments: { ...draft, user_id: 123, transcript: "not included" } });
-  assert.equal(result.isError, undefined);
-  assert.deepEqual(result.structuredContent, { status: "draft", draft });
-  assert.match(JSON.stringify(result.content), /nothing saved/);
-  assert.doesNotMatch(JSON.stringify(result), /not included|user_id/);
-  assert.equal(requests.length, 0);
-});
-
-test("only the preview tool renders UI, while create remains callable by model and app", async () => {
-  const { tools } = await client.listTools();
-  const preview = tools.find(tool => tool.name === "preview_grid")!;
-  assert.deepEqual(preview._meta?.ui, { resourceUri: previewUri, visibility: ["model"] });
-  assert.deepEqual(preview._meta?.securitySchemes, [{ type: "noauth" }]);
-  const create = tools.find(tool => tool.name === "create_grid")!;
-  assert.deepEqual(create._meta?.ui, { visibility: ["model", "app"] });
-  for (const tool of tools.filter(tool => tool.name !== "preview_grid")) {
-    assert.equal((tool._meta?.ui as Record<string, unknown> | undefined)?.resourceUri, undefined);
-  }
-  const resource = await client.readResource({ uri: previewUri });
-  assert.equal(resource.contents.length, 1);
-  assert.equal(resource.contents[0].mimeType, "text/html;profile=mcp-app");
-  const text = resource.contents[0].text as string;
-  assert.match(text, /id="save-grid"/);
-  assert.match(text, /id="open-grid"/);
-  assert.doesNotMatch(text, /\{\{SCRIPT\}\}|<script[^>]+src=/);
-  assert.deepEqual(resource.contents[0]._meta, { ui: { prefersBorder: true, csp: { connectDomains: [], resourceDomains: [] } } });
-  assert.equal(requests.length, 0);
-});
-
-test("invalid graph previews fail without writing or presenting an actionable draft", async () => {
-  const root = draft.nodes[0];
-  const idea = { id: "idea", content: "Another idea", kind: "answer" };
-  for (const invalid of [
-    { ...draft, nodes: [root, root] },
-    { ...draft, nodes: [idea] },
-    { ...draft, nodes: [root, idea] },
-    { ...draft, edges: [{ from: "question", to: "missing" }] },
-    { ...draft, nodes: [root, idea], edges: [{ from: "question", to: "idea" }, { from: "idea", to: "question" }] },
-  ]) {
-    const result = await client.callTool({ name: "preview_grid", arguments: invalid });
-    assert.equal(result.isError, true);
-    assert.equal(result.structuredContent, undefined);
-  }
-  assert.equal(requests.length, 0);
 });
 
 test("local demo is opt-in and serves the same self-contained card", async () => {

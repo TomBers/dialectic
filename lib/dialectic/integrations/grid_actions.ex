@@ -2,9 +2,9 @@ defmodule Dialectic.Integrations.GridActions do
   import Ecto.Query
 
   alias Dialectic.Accounts.Graph
-  alias Dialectic.DbActions.Graphs
+  alias Dialectic.DbActions.{Graphs, Sharing}
   alias Dialectic.Graph.{Serialise, Vertex}
-  alias Dialectic.Integrations.{ChatGrids, GridAction}
+  alias Dialectic.Integrations.GridAction
   alias Dialectic.Repo
   alias Dialectic.Responses.{LlmInterface, PromptsStructured}
 
@@ -25,7 +25,7 @@ defmodule Dialectic.Integrations.GridActions do
     with {:ok, request_id} <- Ecto.UUID.cast(request_id),
          %GridAction{graph_title: title} when is_binary(title) <-
            Repo.get_by(GridAction, user_id: user.id, request_id: request_id),
-         %Graph{} <- owned_graph(user.id, title) do
+         %Graph{} <- accessible_graph(user, title) do
       GraphManager.get_mcp_operation(title, user, request_id)
     else
       _ -> {:error, :not_found}
@@ -33,7 +33,7 @@ defmodule Dialectic.Integrations.GridActions do
   end
 
   def get_operation_in_graph({graph_struct, graph}, user, request_id) do
-    with %Graph{} = fresh <- owned_graph(user.id, graph_struct.title),
+    with %Graph{} = fresh <- accessible_graph(user, graph_struct.title),
          %GridAction{} = request <-
            Repo.get_by(GridAction,
              user_id: user.id,
@@ -49,12 +49,10 @@ defmodule Dialectic.Integrations.GridActions do
     end
   end
 
-  defp owned_graph(user_id, title) do
-    Repo.one(
-      from graph in Graph,
-        where: graph.title == ^title and graph.user_id == ^user_id,
-        where: graph.is_deleted == false or is_nil(graph.is_deleted)
-    )
+  defp accessible_graph(user, title) do
+    graph = Graphs.get_graph_by_title(title)
+
+    if graph && graph.is_deleted != true && Sharing.can_access?(user, graph), do: graph
   end
 
   def add_idea(user, slug, params) do
@@ -82,7 +80,7 @@ defmodule Dialectic.Integrations.GridActions do
   defp submit(user, slug, params) do
     with {:ok, request_id} <- Ecto.UUID.cast(params["request_id"]),
          true <- is_binary(params["node_id"]) and byte_size(params["node_id"]) in 1..255,
-         %Graph{} = graph <- ChatGrids.get(user, slug) do
+         %Graph{} = graph <- Sharing.get_accessible_graph(user, slug) do
       GraphManager.apply_mcp_action(graph.title, user, Map.put(params, "request_id", request_id))
     else
       nil -> {:error, :not_found}
@@ -101,7 +99,7 @@ defmodule Dialectic.Integrations.GridActions do
           fresh =
             Repo.one(
               from stored in Graph,
-                where: stored.title == ^graph_struct.title and stored.user_id == ^user.id,
+                where: stored.title == ^graph_struct.title,
                 where: stored.is_deleted == false or is_nil(stored.is_deleted),
                 lock: "FOR UPDATE"
             )
@@ -110,6 +108,7 @@ defmodule Dialectic.Integrations.GridActions do
 
           cond do
             is_nil(fresh) -> {:error, :not_found}
+            not Sharing.can_access?(user, fresh) -> {:error, :not_found}
             request != nil -> existing_result(request, fresh, candidate, params, graph_struct)
             fresh.is_locked == true or graph_struct.is_locked == true -> {:error, :locked}
             fresh.data_revision > graph_struct.data_revision -> {:error, :stale}
