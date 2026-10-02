@@ -23,6 +23,18 @@ defmodule DialecticWeb.LearningLiveTest do
       :ok
     end
 
+    test "grid rows show visibility without an updated date", %{conn: conn, user: user} do
+      grid = learning_grid_fixture(user)
+      {:ok, view, _html} = live(conn, ~p"/my/learning")
+
+      assert has_element?(view, grid_selector(grid, "-open"))
+      assert has_element?(view, grid_selector(grid, "-access") <> "[aria-label='Public grid']")
+      assert has_element?(view, grid_selector(grid, "-access") <> " .hero-globe-alt")
+      assert has_element?(view, grid_selector(grid, "-access") <> " span", "Public")
+      refute has_element?(view, grid_selector(grid, "-continue"))
+      refute has_element?(view, grid_selector(grid) <> " span", "Updated")
+    end
+
     test "creates, edits, and deletes a collection through its forms", %{conn: conn, user: user} do
       {:ok, view, html} = live(conn, ~p"/my/learning")
       assert has_element?(view, "#learning-header")
@@ -88,7 +100,10 @@ defmodule DialecticWeb.LearningLiveTest do
     test "adds existing grids, searches a collection, and removes membership without deleting the grid",
          %{conn: conn, user: user} do
       grid =
-        learning_grid_fixture(user, %{title: "Why does inflation happen?", tags: ["economics"]})
+        learning_grid_fixture(user, %{
+          title: "Why does inflation happen?",
+          tags: ["economics", "inflation"]
+        })
 
       other = learning_grid_fixture(user, %{title: "Learning Spanish"})
       {:ok, collection} = Learning.create_collection(user, %{name: "Economics"})
@@ -106,6 +121,32 @@ defmodule DialecticWeb.LearningLiveTest do
       assert has_element?(view, grid_selector(grid))
       {:ok, revisited, _} = live(conn, ~p"/my/learning?collection=#{collection.id}")
       assert has_element?(revisited, grid_selector(grid))
+      refute has_element?(revisited, grid_selector(grid, "-metadata"), "Public grid")
+      assert has_element?(revisited, grid_selector(grid, "-metadata"), "Economics")
+
+      assert has_element?(
+               revisited,
+               grid_selector(grid, "-metadata") <>
+                 " " <> grid_selector(grid, "-topic-#{collection.id}") <> ":first-child"
+             )
+
+      assert has_element?(
+               revisited,
+               grid_selector(grid, "-metadata") <> " [data-grid-tag]",
+               "Inflation"
+             )
+
+      refute has_element?(
+               revisited,
+               grid_selector(grid, "-metadata") <> " [data-grid-tag]",
+               "Economics"
+             )
+
+      assert has_element?(
+               revisited,
+               grid_selector(grid, "-manage") <> " " <> grid_selector(grid, "-remove")
+             )
+
       revisited |> element(grid_selector(grid, "-remove")) |> render_click()
       refute has_element?(revisited, grid_selector(grid))
       revisited |> element("#learning-all-grids") |> render_click()
@@ -202,6 +243,12 @@ defmodule DialecticWeb.LearningLiveTest do
       render_hook(view, "drop_grid", %{title: grid.title, collection_id: economics.id})
       assert [%{title: title}] = Learning.list_grids(user, collection_id: economics.id)
       assert title == grid.title
+
+      assert has_element?(
+               view,
+               grid_selector(grid, "-manage") <> " " <> grid_selector(grid, "-organise")
+             )
+
       view |> element(grid_selector(grid, "-organise")) |> render_click()
 
       view
@@ -267,9 +314,12 @@ defmodule DialecticWeb.LearningLiveTest do
       {:ok, collection} = Learning.create_collection(user, %{name: "Revision"})
       {:ok, _} = Learning.add_grid(user, collection.id, grid.title)
       {:ok, view, _} = live(conn, ~p"/my/learning?collection=#{collection.id}")
-      assert has_element?(view, grid_selector(grid), "Private grid")
+      assert has_element?(view, grid_selector(grid, "-access") <> "[aria-label='Private grid']")
+      assert has_element?(view, grid_selector(grid, "-access") <> " .hero-lock-closed")
+      assert has_element?(view, grid_selector(grid, "-access") <> " span", "Private")
       view |> element(grid_selector(grid, "-visibility")) |> render_click()
       assert Dialectic.Repo.get!(Dialectic.Accounts.Graph, grid.title).is_public
+      assert has_element?(view, grid_selector(grid, "-access") <> "[aria-label='Public grid']")
       view |> element(grid_selector(grid, "-delete")) |> render_click()
       view |> element("#learning-cancel-delete") |> render_click()
       refute has_element?(view, "#learning-delete-modal")
@@ -283,10 +333,24 @@ defmodule DialecticWeb.LearningLiveTest do
       refute has_element?(view, "#learning-grid-browser")
     end
 
-    test "cannot manage someone else's grid even with crafted events", %{conn: conn, user: user} do
+    test "can organise a saved community grid without owner controls", %{conn: conn, user: user} do
       grid = learning_grid_fixture(user_fixture())
       {:ok, _} = Dialectic.DbActions.Notes.add_note(grid.title, "1", user)
-      {:ok, view, _} = live(conn, ~p"/my/learning")
+      {:ok, collection} = Learning.create_collection(user, %{name: "Saved reading"})
+      {:ok, _} = Learning.add_grid(user, collection.id, grid.title)
+      {:ok, view, _} = live(conn, ~p"/my/learning?collection=#{collection.id}")
+
+      assert has_element?(
+               view,
+               grid_selector(grid, "-manage") <> " " <> grid_selector(grid, "-organise")
+             )
+
+      assert has_element?(
+               view,
+               grid_selector(grid, "-manage") <> " " <> grid_selector(grid, "-remove")
+             )
+
+      refute has_element?(view, grid_selector(grid, "-edit"))
       refute has_element?(view, grid_selector(grid, "-delete"))
       refute has_element?(view, grid_selector(grid, "-visibility"))
       render_click(view, "toggle_visibility", %{title: grid.title})
@@ -295,6 +359,8 @@ defmodule DialecticWeb.LearningLiveTest do
       unchanged = Dialectic.Repo.get!(Dialectic.Accounts.Graph, grid.title)
       assert unchanged.is_public
       refute unchanged.is_deleted
+      view |> element(grid_selector(grid, "-remove")) |> render_click()
+      assert Learning.list_grids(user, collection_id: collection.id) == []
     end
   end
 

@@ -110,7 +110,7 @@ defmodule GraphManager do
         json = Serialise.graph_to_json(graph)
         revision = next_data_revision(graph_struct)
 
-        case Dialectic.DbActions.Graphs.save_graph_if_newer(path, json, revision, touch: false) do
+        case Dialectic.DbActions.Graphs.save_graph_if_newer(path, json, revision) do
           {:ok, :updated} ->
             Logger.info("Successfully saved graph #{path} during shutdown")
 
