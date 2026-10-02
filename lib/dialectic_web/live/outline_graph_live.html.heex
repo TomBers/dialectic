@@ -273,7 +273,7 @@
         data-selected-reader-node-id={@selected_node_id}
       >
         <%= if @node do %>
-          <div class="mx-auto flex w-full max-w-4xl flex-col gap-4 px-4 pb-4 sm:pt-3 lg:px-6">
+          <div class="mx-auto flex w-full max-w-3xl flex-col gap-4 px-4 pb-4 sm:pt-3 lg:px-6">
             <section id="outline-mobile-nav" class="contents lg:hidden">
               <div
                 id="outline-mobile-nav-panel"
@@ -472,7 +472,7 @@
                     </button>
                   </div>
                   <%= if index == 0 do %>
-                    <div class="max-w-[68ch]">
+                    <div>
                       <p class="flex items-center gap-2 text-xs font-medium text-teal-200">
                         <img src={~p"/images/favicon-32.png"} alt="" class="h-5 w-5" />
                         Starting question
@@ -486,7 +486,7 @@
                       <%= if String.trim(reading_node.body_content || "") != "" do %>
                         <div
                           id={"reading-highlight-#{reading_node.id}"}
-                          class="mt-3 max-w-[68ch] border-t border-white/15 pt-3"
+                          class="mt-3 border-t border-white/15 pt-3"
                           phx-hook="TextSelectionHook"
                           data-node-id={reading_node.id}
                           data-mudg-id={@graph_id}
@@ -801,23 +801,25 @@
                     {next_choices_message(@reading_terminal, @node)}
                   </p>
 
-                  <div class="mt-5 grid gap-3 sm:grid-cols-2">
+                  <ul class="mt-4 divide-y divide-slate-200 overflow-hidden rounded-lg border border-slate-200 bg-white">
                     <%= for choice <- @next_choices do %>
-                      <DialecticWeb.PathActionCardComp.path_action_card
-                        id={"next-choice-#{choice.id}"}
-                        patch={
-                          graph_path(
-                            @graph_struct,
-                            choice.id,
-                            reader_nav_params(@nav_params, @path_focus_ids)
-                          )
-                        }
-                        title={choice.title}
-                        node_class={choice.class}
-                        loading={MapSet.member?(@selection_pending_node_ids, choice.id)}
-                      />
+                      <li>
+                        <DialecticWeb.PathActionCardComp.path_action_card
+                          id={"next-choice-#{choice.id}"}
+                          patch={
+                            graph_path(
+                              @graph_struct,
+                              choice.id,
+                              reader_nav_params(@nav_params, @path_focus_ids)
+                            )
+                          }
+                          title={choice.title}
+                          node_class={choice.class}
+                          loading={MapSet.member?(@selection_pending_node_ids, choice.id)}
+                        />
+                      </li>
                     <% end %>
-                  </div>
+                  </ul>
                 </section>
               <% true -> %>
                 <section
@@ -886,23 +888,25 @@
                   )} below.
                 </p>
 
-                <div class="mt-5 grid gap-3 sm:grid-cols-2">
+                <ul class="mt-4 divide-y divide-slate-200 overflow-hidden rounded-lg border border-slate-200 bg-white">
                   <%= for branch <- inactive_branches do %>
-                    <DialecticWeb.PathActionCardComp.path_action_card
-                      id={"branch-compare-card-#{branch.id}"}
-                      patch={
-                        graph_path(
-                          @graph_struct,
-                          branch.id,
-                          reader_nav_params(@nav_params, @path_focus_ids)
-                        )
-                      }
-                      title={branch.lead.full_title}
-                      node_class={branch.lead.class}
-                      loading={MapSet.member?(@selection_pending_node_ids, branch.lead.id)}
-                    />
+                    <li>
+                      <DialecticWeb.PathActionCardComp.path_action_card
+                        id={"branch-compare-card-#{branch.id}"}
+                        patch={
+                          graph_path(
+                            @graph_struct,
+                            branch.id,
+                            reader_nav_params(@nav_params, @path_focus_ids)
+                          )
+                        }
+                        title={branch.lead.full_title}
+                        node_class={branch.lead.class}
+                        loading={MapSet.member?(@selection_pending_node_ids, branch.lead.id)}
+                      />
+                    </li>
                   <% end %>
-                </div>
+                </ul>
               </section>
             <% end %>
           </div>

@@ -199,6 +199,32 @@ defmodule Dialectic.LearningTest do
              MapSet.new([own.title, saved.title, followed.title])
   end
 
+  test "grids are ordered newest-created first regardless of updates, including pagination", %{
+    user: user
+  } do
+    older =
+      learning_grid_fixture(user, %{title: "Older grid"})
+      |> Ecto.Changeset.change(
+        inserted_at: ~U[2026-01-01 12:00:00Z],
+        updated_at: ~U[2026-03-01 12:00:00Z]
+      )
+      |> Repo.update!()
+
+    newer =
+      learning_grid_fixture(user, %{title: "Newer grid"})
+      |> Ecto.Changeset.change(
+        inserted_at: ~U[2026-02-01 12:00:00Z],
+        updated_at: ~U[2026-02-01 12:00:00Z]
+      )
+      |> Repo.update!()
+
+    assert Enum.map(Learning.list_grids(user), & &1.title) == [newer.title, older.title]
+    assert [%{title: newest_title}] = Learning.list_grids(user, limit: 1)
+    assert newest_title == newer.title
+    assert [%{title: older_title}] = Learning.list_grids(user, limit: 1, offset: 1)
+    assert older_title == older.title
+  end
+
   test "search matches titles and tags literally, with collection filtering and pagination", %{
     user: user
   } do

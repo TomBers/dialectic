@@ -393,10 +393,10 @@ defmodule Dialectic.Learning do
 
     Repo.all(
       from g in query,
-        order_by: [desc: g.updated_at, asc: g.title],
+        order_by: [desc: g.inserted_at, asc: g.title],
         limit: ^limit,
         offset: ^offset,
-        select: map(g, [:title, :slug, :tags, :is_public, :updated_at, :user_id])
+        select: map(g, [:title, :slug, :tags, :is_public, :user_id])
     )
     |> with_saved_items(user)
     |> Dialectic.Learning.Search.add_matches(term)
