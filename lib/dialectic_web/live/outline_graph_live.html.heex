@@ -47,7 +47,7 @@
       follow_id_prefix="reader"
       current_user={@current_user}
       following_graph?={@following_graph?}
-      learning_return={@learning_return}
+      return_context={@learning_return}
       menu_class={["hidden sm:flex"]}
     >
       <:navigation>
@@ -149,25 +149,22 @@
     >
       <aside
         id="outline-tree"
+        aria-label="Conversation outline"
         class="hidden min-h-0 overflow-y-auto border-b border-slate-200 bg-white lg:block lg:border-b-0 lg:border-r"
         phx-hook="OutlineNav"
       >
-        <div class="sticky top-0 z-10 border-b border-slate-200 bg-white px-4 py-4">
-          <div class="flex items-start justify-between gap-3">
-            <div>
-              <h2 class="text-sm font-semibold text-slate-900">Conversation Outline</h2>
-              <p class="mt-1 text-xs text-slate-500">Choose a point in the conversation.</p>
-            </div>
-            <button
-              :if={@paths_filtered?}
-              id="outline-show-all-paths"
-              type="button"
-              phx-click="show_all_paths"
-              class="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700 transition hover:border-blue-300 hover:bg-blue-100"
-            >
-              Clear path filter <.icon name="hero-x-mark" class="h-3.5 w-3.5" />
-            </button>
-          </div>
+        <div
+          :if={@paths_filtered?}
+          class="sticky top-0 z-10 border-b border-slate-200 bg-white px-4 py-2"
+        >
+          <button
+            id="outline-show-all-paths"
+            type="button"
+            phx-click="show_all_paths"
+            class="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700 transition hover:border-blue-300 hover:bg-blue-100"
+          >
+            Clear path filter <.icon name="hero-x-mark" class="h-3.5 w-3.5" />
+          </button>
         </div>
 
         <%= if @outline_nodes == [] do %>
@@ -276,7 +273,7 @@
         data-selected-reader-node-id={@selected_node_id}
       >
         <%= if @node do %>
-          <div class="mx-auto max-w-4xl space-y-4 px-4 pb-4 sm:space-y-8 sm:px-8 sm:pb-8 sm:pt-3 lg:px-10">
+          <div class="mx-auto flex w-full max-w-4xl flex-col gap-4 px-4 pb-4 sm:pt-3 lg:px-6">
             <section id="outline-mobile-nav" class="contents lg:hidden">
               <div
                 id="outline-mobile-nav-panel"
@@ -430,7 +427,7 @@
               data-search-terms={
                 Jason.encode!(if(@search_highlight, do: @search_highlight.terms, else: []))
               }
-              class="-mx-4 overflow-hidden border-y border-slate-200 bg-white shadow-sm sm:mx-0 sm:rounded-[2rem] sm:border"
+              class="-mx-4 overflow-hidden border-y border-slate-200 bg-white shadow-sm sm:mx-0 sm:rounded-xl sm:border"
             >
               <%= for {reading_node, index} <- Enum.with_index(@visible_reading_chain) do %>
                 <% reading_response_level = Map.get(reading_node, :response_level) %>
@@ -445,13 +442,13 @@
                   data-reading-selected={to_string(selected_reading_node?)}
                   class={[
                     if(index == 0,
-                      do: "bg-slate-950 px-4 py-4 text-white sm:px-12 sm:py-8",
-                      else: "bg-white px-4 sm:px-12"
+                      do: "bg-slate-950 px-4 py-3 text-white sm:px-6 sm:py-4",
+                      else: "bg-white px-4 sm:px-6"
                     ),
                     index > 0 &&
                       if(String.trim(reading_node.body_content || "") == "",
-                        do: "py-4 sm:py-9",
-                        else: "py-5 sm:py-12"
+                        do: "py-4 sm:py-5",
+                        else: "py-5 sm:py-6"
                       ),
                     index > 0 && "border-t border-slate-200",
                     selected_reading_node? && index > 0 && "bg-teal-50/50"
@@ -476,20 +473,20 @@
                   </div>
                   <%= if index == 0 do %>
                     <div class="max-w-[68ch]">
-                      <div class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-teal-200">
+                      <p class="flex items-center gap-2 text-xs font-medium text-teal-200">
                         <img src={~p"/images/favicon-32.png"} alt="" class="h-5 w-5" />
                         Starting question
-                      </div>
+                      </p>
                       <h2
                         id={"reading-title-#{reading_node.id}"}
-                        class="reader-heading reader-title reader-title-origin mt-3 break-words font-semibold leading-[1.12] tracking-tight text-white"
+                        class="reader-heading reader-question-title mt-1 break-words font-semibold leading-snug text-white"
                       >
                         {reading_node.full_title || reading_node.title}
                       </h2>
                       <%= if String.trim(reading_node.body_content || "") != "" do %>
                         <div
                           id={"reading-highlight-#{reading_node.id}"}
-                          class="mt-4 max-w-[68ch] border-t border-white/15 pt-4 sm:mt-5 sm:pt-5"
+                          class="mt-3 max-w-[68ch] border-t border-white/15 pt-3"
                           phx-hook="TextSelectionHook"
                           data-node-id={reading_node.id}
                           data-mudg-id={@graph_id}
@@ -582,7 +579,7 @@
                         <%= if String.trim(reading_node.body_content || "") != "" do %>
                           <div
                             id={"reading-highlight-#{reading_node.id}"}
-                            class="mt-6 w-full sm:mt-8"
+                            class="mt-4 w-full"
                             phx-hook="TextSelectionHook"
                             data-node-id={reading_node.id}
                             data-mudg-id={@graph_id}
