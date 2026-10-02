@@ -2,9 +2,61 @@ defmodule DialecticWeb.McpGridController do
   use DialecticWeb, :controller
 
   alias Dialectic.Graph.Extractor
-  alias Dialectic.Integrations.{ChatGrids, OAuth}
+  alias Dialectic.Integrations.{ChatGrids, GridActions, OAuth}
 
   plug :authenticate
+
+  def add_idea(conn, %{"slug" => slug} = params) do
+    conn.assigns.mcp_user
+    |> GridActions.add_idea(slug, params)
+    |> action_response(conn)
+  end
+
+  def apply_action(conn, %{"slug" => slug} = params) do
+    conn.assigns.mcp_user
+    |> GridActions.apply(slug, params)
+    |> action_response(conn)
+  end
+
+  defp action_response(result, conn) do
+    case result do
+      {:ok, %{graph: graph} = result} ->
+        json(conn, result |> Map.delete(:graph) |> Map.put(:grid, metadata(graph)))
+
+      {:error, reason} ->
+        {status, message} = action_error(reason)
+        conn |> put_status(status) |> json(%{error: message})
+    end
+  end
+
+  defp action_error(:not_found), do: {:not_found, "Grid not found"}
+
+  defp action_error(:locked),
+    do: {:locked, "Unlock this grid in RationalGrid before adding a node"}
+
+  defp action_error(:request_conflict),
+    do: {:conflict, "This request_id was already used for a different action"}
+
+  defp action_error(:unavailable), do: {:gone, "The previously added node is no longer available"}
+
+  defp action_error(:invalid_content),
+    do: {:unprocessable_entity, "Provide nonblank idea content of at most 4000 characters"}
+
+  defp action_error(:invalid_kind),
+    do:
+      {:unprocessable_entity,
+       "Choose comment to save text only, or question to generate an AI answer"}
+
+  defp action_error(:stale),
+    do: {:conflict, "The live grid is behind its saved version; reopen it before retrying"}
+
+  defp action_error(reason) when reason in [:rate_limited, :too_many_active_requests],
+    do: {:too_many_requests, "Please wait for existing AI requests to finish before retrying"}
+
+  defp action_error(_),
+    do:
+      {:unprocessable_entity,
+       "Choose a supported action and an existing, nonempty idea node; provide a UUID request_id"}
 
   def create(conn, params) do
     case ChatGrids.create(conn.assigns.mcp_user, params) do
@@ -72,7 +124,13 @@ defmodule DialecticWeb.McpGridController do
   end
 
   defp authenticate(conn, _opts) do
-    scope = if action_name(conn) == :create, do: "grids:create", else: "grids:read"
+    scope =
+      case action_name(conn) do
+        :create -> "grids:create"
+        :apply_action -> "grids:append"
+        :add_idea -> "grids:append"
+        :show -> "grids:read"
+      end
 
     token =
       case get_req_header(conn, "authorization") do

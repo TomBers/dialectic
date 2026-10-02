@@ -5,7 +5,7 @@ defmodule Dialectic.Integrations.OAuth do
   alias Dialectic.Integrations.Authorization
   alias Dialectic.Repo
 
-  @scopes ~w(grids:create grids:read)
+  @scopes ~w(grids:create grids:read grids:append)
 
   def resource do
     Application.get_env(:dialectic, :mcp_resource, "http://127.0.0.1:4001/mcp")

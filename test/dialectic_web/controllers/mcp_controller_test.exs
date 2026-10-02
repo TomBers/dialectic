@@ -142,18 +142,148 @@ defmodule DialecticWeb.McpControllerTest do
     end
   end
 
-  test "methods are public templates for chat reasoning, not saved or generated analysis", %{
+  test "append consent explains existing visibility and the API requires its own scope", %{
     conn: conn
   } do
-    for method <-
-          ~w(clarify assumptions counterexample implications blind_spots says_who who_disagrees steel_man what_if) do
-      response = conn |> get(~p"/api/public/thinking-methods/#{method}") |> json_response(200)
-      assert response["id"] == method
-      assert response["prompt_template"] =~ "{{selected_idea}}"
-      assert response["instructions"] =~ "not a completed analysis"
-    end
+    user = user_fixture()
+    {params, _verifier} = authorization_params("grids:append")
 
-    assert conn |> get(~p"/api/public/thinking-methods/unknown") |> json_response(404)
+    document =
+      conn
+      |> log_in_user(user)
+      |> get(~p"/oauth/authorize", params)
+      |> html_response(200)
+      |> LazyHTML.from_document()
+
+    assert LazyHTML.query(document, "#mcp-append-permission") |> Enum.count() == 1
+
+    {:ok, graph} = ChatGrids.create(user, grid_draft())
+    action = %{request_id: Ecto.UUID.generate(), node_id: "1", action: "clarify"}
+    path = ~p"/api/mcp/grids/#{graph.slug}/actions"
+    assert conn |> post(path, action) |> json_response(401)
+    readonly = put_req_header(conn, "authorization", "Bearer " <> issue_token(user))
+    assert readonly |> post(path, action) |> json_response(403)
+
+    other =
+      put_req_header(
+        conn,
+        "authorization",
+        "Bearer " <> issue_token(user_fixture(), "grids:append")
+      )
+
+    assert other |> post(path, action) |> json_response(404)
+
+    api = put_req_header(conn, "authorization", "Bearer " <> issue_token(user, "grids:append"))
+    result = api |> post(path, action) |> json_response(200)
+    assert result["status"] == "queued"
+    assert result["node"]["parent_node_id"] == "1"
+    assert result["grid"]["visibility"] == "private"
+    assert result["grid"]["id"] == graph.slug
+    assert api |> post(path, action) |> json_response(200) == result
+    assert api |> post(path, %{action | action: "assumptions"}) |> json_response(409)
+    graph |> Ecto.Changeset.change(is_locked: true) |> Repo.update!()
+    assert api |> post(path, %{action | request_id: Ecto.UUID.generate()}) |> json_response(423)
+    assert api |> post(path, action) |> json_response(200) == result
+
+    DynamicSupervisor.terminate_child(
+      GraphSupervisor,
+      :global.whereis_name({:graph, graph.title})
+    )
+  end
+
+  test "adding an authored idea requires append scope and returns a persisted connected node", %{
+    conn: conn
+  } do
+    user = user_fixture()
+    {:ok, graph} = ChatGrids.create(user, grid_draft())
+    params = %{request_id: Ecto.UUID.generate(), parent_node_id: "2", content: "  My own idea\n"}
+    path = ~p"/api/mcp/grids/#{graph.slug}/nodes"
+    assert conn |> post(path, params) |> json_response(401)
+    readonly = put_req_header(conn, "authorization", "Bearer " <> issue_token(user))
+    assert readonly |> post(path, params) |> json_response(403)
+
+    other =
+      put_req_header(
+        conn,
+        "authorization",
+        "Bearer " <> issue_token(user_fixture(), "grids:append")
+      )
+
+    assert other |> post(path, params) |> json_response(404)
+
+    api =
+      put_req_header(
+        conn,
+        "authorization",
+        "Bearer " <> issue_token(user, "grids:append grids:read")
+      )
+
+    result = api |> post(path, params) |> json_response(200)
+    assert result["status"] == "completed"
+
+    assert result["node"] == %{
+             "id" => "3",
+             "parent_node_id" => "2",
+             "class" => "user",
+             "content" => params.content
+           }
+
+    assert api |> post(path, params) |> json_response(200) == result
+    assert api |> post(path, %{params | content: "Different"}) |> json_response(409)
+    assert api |> post(path, %{params | content: " "}) |> json_response(422)
+    persisted = api |> get(~p"/api/mcp/grids/#{graph.slug}") |> json_response(200)
+    assert Enum.any?(persisted["nodes"], &(&1["id"] == "3" and &1["content"] == params.content))
+    assert %{"from" => "2", "to" => "3"} in persisted["edges"]
+    assert Repo.aggregate(Oban.Job, :count) == 0
+
+    DynamicSupervisor.terminate_child(
+      GraphSupervisor,
+      :global.whereis_name({:graph, graph.title})
+    )
+  end
+
+  test "question mode returns both nodes and enforces the same append permissions", %{conn: conn} do
+    user = user_fixture()
+    {:ok, graph} = ChatGrids.create(user, grid_draft())
+
+    params = %{
+      request_id: Ecto.UUID.generate(),
+      parent_node_id: "2",
+      content: "Why?",
+      kind: "question"
+    }
+
+    path = ~p"/api/mcp/grids/#{graph.slug}/nodes"
+    assert conn |> post(path, params) |> json_response(401)
+    readonly = put_req_header(conn, "authorization", "Bearer " <> issue_token(user, "grids:read"))
+    assert readonly |> post(path, params) |> json_response(403)
+
+    other =
+      put_req_header(
+        conn,
+        "authorization",
+        "Bearer " <> issue_token(user_fixture(), "grids:append")
+      )
+
+    assert other |> post(path, params) |> json_response(404)
+    api = put_req_header(conn, "authorization", "Bearer " <> issue_token(user, "grids:append"))
+    assert api |> post(path, %{params | kind: "invalid"}) |> json_response(422)
+    result = api |> post(path, params) |> json_response(200)
+    assert result["status"] == "queued"
+    assert result["node"]["content"] == "Why?"
+    assert result["node"]["class"] == "question"
+    assert result["answer_node"]["class"] == "answer"
+    assert result["answer_node"]["parent_node_id"] == result["node"]["id"]
+    assert api |> post(path, params) |> json_response(200) == result
+    assert api |> post(path, %{params | kind: "comment"}) |> json_response(409)
+    graph |> Ecto.Changeset.change(is_locked: true) |> Repo.update!()
+    assert api |> post(path, %{params | request_id: Ecto.UUID.generate()}) |> json_response(423)
+    assert Repo.aggregate(Oban.Job, :count) == 1
+
+    DynamicSupervisor.terminate_child(
+      GraphSupervisor,
+      :global.whereis_name({:graph, graph.title})
+    )
   end
 
   test "metadata advertises PKCE and the revocation endpoint invalidates tokens", %{conn: conn} do
