@@ -1877,6 +1877,10 @@ button[type="submit"]:active {
     font-size: calc(var(--rg-read-font-size, 1.125rem) * 1.42);
 }
 
+.reading-appearance .reader-question-title {
+    font-size: calc(var(--rg-read-font-size, 1.125rem) * 1.12);
+}
+
 .reading-appearance .reader-title-origin {
     font-size: calc(var(--rg-read-font-size, 1.125rem) * 1.5);
 }

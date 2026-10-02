@@ -29,25 +29,32 @@ defmodule DialecticWeb.LearningNavigationTest do
     path = href(library, match_selector)
     assert URI.decode_query(URI.parse(path).query)["node"] == "1"
     {:ok, reader, _} = live(conn, path)
-    assert has_element?(reader, "#reader-header-back-to-learning", "Back to Economics")
-    back = href(reader, "#reader-header-back-to-learning")
+    assert has_element?(reader, "#reader-header-back-link", "Back to Economics")
+    back = href(reader, "#reader-header-back-link")
 
     assert URI.decode_query(URI.parse(back).query) ==
              Map.new(params, fn {key, value} -> {to_string(key), to_string(value)} end)
 
     {:ok, editor, _} = live(conn, href(reader, "#reader-workspace-bar-graph"))
-    assert href(editor, "#graph-header-back-to-learning") == back
+    assert href(editor, "#graph-header-back-link") == back
     {:ok, reader, _} = live(conn, href(editor, "#graph-workspace-bar-reader"))
-    assert href(reader, "#reader-header-back-to-learning") == back
+    assert href(reader, "#reader-header-back-link") == back
     {:ok, returned, _} = live(conn, back)
     assert has_element?(returned, "#learning-filter-bookmarks[aria-current='page']")
     assert has_element?(returned, "#learning-search-input[value='learning question']")
     assert has_element?(returned, match_selector)
   end
 
-  test "back links reject external locations and other users' folders", %{conn: conn, user: user} do
+  test "back navigation defaults to community and rejects unsafe learning locations", %{
+    conn: conn,
+    user: user
+  } do
     grid = learning_grid_fixture(user)
     {:ok, foreign} = Learning.create_collection(user_fixture(), %{name: "Private folder"})
+
+    {:ok, direct_view, _} = live(conn, ~p"/g/#{grid.slug}")
+    assert has_element?(direct_view, "#reader-header-back-link", "Back to Community")
+    assert href(direct_view, "#reader-header-back-link") == "/community"
 
     for path <- [
           "https://example.com/my/learning",
@@ -56,7 +63,8 @@ defmodule DialecticWeb.LearningNavigationTest do
           "/my/learning?collection=#{foreign.id}"
         ] do
       {:ok, view, _} = live(conn, ~p"/g/#{grid.slug}?#{%{learning: path}}")
-      refute has_element?(view, "#reader-header-back-to-learning")
+      assert has_element?(view, "#reader-header-back-link", "Back to Community")
+      assert href(view, "#reader-header-back-link") == "/community"
     end
   end
 

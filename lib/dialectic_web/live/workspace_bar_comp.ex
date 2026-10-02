@@ -11,32 +11,43 @@ defmodule DialecticWeb.WorkspaceBarComp do
   attr :follow_id_prefix, :string, required: true
   attr :current_user, :any, required: true
   attr :following_graph?, :boolean, required: true
-  attr :learning_return, :map, default: nil
+  attr :return_context, :map, default: nil
   slot :heading_actions
   slot :navigation, required: true
   slot :tools
 
   def workspace_header(assigns) do
+    assigns =
+      assign(
+        assigns,
+        :return_context,
+        assigns.return_context || %{path: "/community", label: "Community"}
+      )
+
     ~H"""
     <header id={@id} class="workspace-header">
       <div id={@heading_id} class="workspace-heading">
         <.link
-          :if={@learning_return}
-          id={@id <> "-back-to-learning"}
-          href={@learning_return.path}
-          title={"Back to #{@learning_return.label}"}
-          class="inline-flex min-w-0 max-w-[60%] shrink-0 items-center gap-1 text-xs font-semibold text-teal-800 hover:underline"
+          id={@id <> "-back-link"}
+          href={@return_context.path}
+          title={"Back to #{@return_context.label}"}
+          class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 transition hover:border-slate-300 hover:bg-slate-100 hover:text-slate-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 active:bg-slate-200"
         >
-          <.icon name="hero-arrow-left" class="h-4 w-4 shrink-0" />
-          <span class="truncate">Back to {@learning_return.label}</span>
+          <.icon name="hero-arrow-left" class="h-5 w-5" />
+          <span class="sr-only">Back to {@return_context.label}</span>
         </.link>
-        <h1
-          id={@title_id}
-          class="min-w-0 truncate text-sm font-semibold text-slate-700"
-          title={@title}
-        >
-          {@title}
-        </h1>
+        <div class="flex min-w-0 flex-1 flex-col justify-center gap-0.5">
+          <h1
+            id={@title_id}
+            class="line-clamp-2 min-w-0 break-words text-base font-semibold leading-snug text-slate-900"
+            title={@title}
+          >
+            {@title}
+          </h1>
+          <p class="truncate text-xs leading-4 text-slate-500" title={@return_context.label}>
+            {@return_context.label}
+          </p>
+        </div>
         {render_slot(@heading_actions)}
       </div>
       <div id={@menu_id} class={["workspace-menu", @menu_class]}>
