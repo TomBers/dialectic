@@ -622,19 +622,28 @@ defmodule Dialectic.DbActions.Graphs do
   converted to microsecond revisions for backwards compatibility.
   """
   def save_graph_if_newer(title, data, revision) when is_integer(revision) do
-    updated_at = DateTime.utc_now() |> DateTime.truncate(:second)
+    Repo.transact(fn ->
+      query = from(g in Graph, where: g.title == ^title and g.data_revision < ^revision)
 
-    {count, _} =
-      from(g in Graph,
-        where: g.title == ^title and g.data_revision < ^revision
-      )
-      |> Repo.update_all(set: [data: data, data_revision: revision, updated_at: updated_at])
+      case Repo.one(from(g in query, lock: "FOR UPDATE")) do
+        nil ->
+          {:error, :stale}
 
-    if count == 1 do
-      {:ok, :updated}
-    else
-      {:error, :stale}
-    end
+        graph ->
+          updated_at =
+            if Dialectic.Graph.Serialise.equivalent?(graph.data, data) do
+              graph.updated_at
+            else
+              DateTime.utc_now() |> DateTime.truncate(:second)
+            end
+
+          Repo.update_all(query,
+            set: [data: data, data_revision: revision, updated_at: updated_at]
+          )
+
+          {:ok, :updated}
+      end
+    end)
   end
 
   def save_graph_if_newer(title, data, iso_ts) when is_binary(iso_ts) do

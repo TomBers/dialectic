@@ -801,23 +801,25 @@
                     {next_choices_message(@reading_terminal, @node)}
                   </p>
 
-                  <div class="mt-5 grid gap-3 sm:grid-cols-2">
+                  <ul class="mt-4 divide-y divide-slate-200 overflow-hidden rounded-lg border border-slate-200 bg-white">
                     <%= for choice <- @next_choices do %>
-                      <DialecticWeb.PathActionCardComp.path_action_card
-                        id={"next-choice-#{choice.id}"}
-                        patch={
-                          graph_path(
-                            @graph_struct,
-                            choice.id,
-                            reader_nav_params(@nav_params, @path_focus_ids)
-                          )
-                        }
-                        title={choice.title}
-                        node_class={choice.class}
-                        loading={MapSet.member?(@selection_pending_node_ids, choice.id)}
-                      />
+                      <li>
+                        <DialecticWeb.PathActionCardComp.path_action_card
+                          id={"next-choice-#{choice.id}"}
+                          patch={
+                            graph_path(
+                              @graph_struct,
+                              choice.id,
+                              reader_nav_params(@nav_params, @path_focus_ids)
+                            )
+                          }
+                          title={choice.title}
+                          node_class={choice.class}
+                          loading={MapSet.member?(@selection_pending_node_ids, choice.id)}
+                        />
+                      </li>
                     <% end %>
-                  </div>
+                  </ul>
                 </section>
               <% true -> %>
                 <section
@@ -886,23 +888,25 @@
                   )} below.
                 </p>
 
-                <div class="mt-5 grid gap-3 sm:grid-cols-2">
+                <ul class="mt-4 divide-y divide-slate-200 overflow-hidden rounded-lg border border-slate-200 bg-white">
                   <%= for branch <- inactive_branches do %>
-                    <DialecticWeb.PathActionCardComp.path_action_card
-                      id={"branch-compare-card-#{branch.id}"}
-                      patch={
-                        graph_path(
-                          @graph_struct,
-                          branch.id,
-                          reader_nav_params(@nav_params, @path_focus_ids)
-                        )
-                      }
-                      title={branch.lead.full_title}
-                      node_class={branch.lead.class}
-                      loading={MapSet.member?(@selection_pending_node_ids, branch.lead.id)}
-                    />
+                    <li>
+                      <DialecticWeb.PathActionCardComp.path_action_card
+                        id={"branch-compare-card-#{branch.id}"}
+                        patch={
+                          graph_path(
+                            @graph_struct,
+                            branch.id,
+                            reader_nav_params(@nav_params, @path_focus_ids)
+                          )
+                        }
+                        title={branch.lead.full_title}
+                        node_class={branch.lead.class}
+                        loading={MapSet.member?(@selection_pending_node_ids, branch.lead.id)}
+                      />
+                    </li>
                   <% end %>
-                </div>
+                </ul>
               </section>
             <% end %>
           </div>
