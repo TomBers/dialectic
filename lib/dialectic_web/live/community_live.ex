@@ -32,7 +32,6 @@ defmodule DialecticWeb.CommunityLive do
         topic_filter: "",
         topic_form: to_form(%{"topic_filter" => ""}),
         sort_form: to_form(%{"sort" => "newest"}),
-        size_form: to_form(%{"size" => "all"}),
         generating_tags: MapSet.new(),
         tag_generation_jobs: %{},
         search_form: to_form(%{"search" => ""})
@@ -51,7 +50,7 @@ defmodule DialecticWeb.CommunityLive do
 
   @impl true
   def handle_params(params, _url, socket) do
-    search = trimmed_string(params["search"])
+    search = Dialectic.Search.normalize_query(params["search"] || "")
     tag = resolve_tag(params["tag"])
 
     category_param =
@@ -88,8 +87,7 @@ defmodule DialecticWeb.CommunityLive do
        page: parse_page(params["page"]),
        browse_params: browse_params,
        search_form: to_form(%{"search" => search}),
-       sort_form: to_form(%{"sort" => sort}),
-       size_form: to_form(%{"size" => size})
+       sort_form: to_form(%{"sort" => sort})
      )
      |> load_results()
      |> stream_topics()}
@@ -99,7 +97,10 @@ defmodule DialecticWeb.CommunityLive do
   def handle_event("search", %{"search" => term}, socket) do
     {:noreply,
      push_patch(socket,
-       to: browse_path(socket.assigns.browse_params, %{"search" => trimmed_string(term)})
+       to:
+         browse_path(socket.assigns.browse_params, %{
+           "search" => Dialectic.Search.normalize_query(term)
+         })
      )}
   end
 
@@ -125,13 +126,6 @@ defmodule DialecticWeb.CommunityLive do
     else
       {:noreply, socket}
     end
-  end
-
-  def handle_event("filter_size", %{"size" => size}, socket) do
-    {:noreply,
-     push_patch(socket,
-       to: browse_path(socket.assigns.browse_params, %{"size" => normalize_size(size)})
-     )}
   end
 
   def handle_event("generate_tags", %{"identifier" => identifier}, socket) do
@@ -250,39 +244,6 @@ defmodule DialecticWeb.CommunityLive do
                 />
               </.link>
             </div>
-            <.form
-              for={@search_form}
-              id="community-search-form"
-              phx-change="search"
-              phx-submit="search"
-              class="relative mt-5 max-w-3xl"
-            >
-              <.input
-                id="community-search-input"
-                field={@search_form[:search]}
-                type="search"
-                aria-label="Search community grids"
-                phx-debounce="300"
-                placeholder={
-                  if @active_tag,
-                    do: "Search within #{tag_label(@active_tag)}…",
-                    else: "Search questions or topics…"
-                }
-                class="h-12 w-full rounded-md border border-stone-300 bg-white px-4 pr-11 text-base text-slate-950 shadow-sm placeholder:text-slate-400 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-100"
-                autocomplete="off"
-              />
-              <.icon
-                name="hero-magnifying-glass"
-                class="pointer-events-none absolute right-4 top-3.5 h-5 w-5 text-teal-800"
-              />
-            </.form>
-            <.link
-              id="community-search-content-link"
-              navigate={~p"/search?#{if(@search_term == "", do: %{}, else: %{q: @search_term})}"}
-              class="mt-3 inline-flex min-h-9 items-center gap-2 text-sm font-semibold text-teal-800 underline underline-offset-4"
-            >
-              <.icon name="hero-magnifying-glass" class="h-4 w-4" /> Search answers and sources
-            </.link>
           </header>
 
           <div
@@ -390,50 +351,43 @@ defmodule DialecticWeb.CommunityLive do
                   >{label}</.link>
                 <% end %>
               </nav>
-              <div class="flex flex-wrap items-end justify-between gap-3 py-4">
-                <div aria-live="polite">
-                  <h2 id="community-results-heading" class="text-lg font-semibold">
-                    {results_heading(@search_term, @active_tag, @active_category, @active_size)}
-                  </h2>
-                  <p id="community-result-count" class="mt-1 text-xs text-slate-500">
-                    {result_count_label(@total_count, @page, @page_size)}
+              <div id="community-search-controls" class="space-y-4 py-4">
+                <.form
+                  for={@search_form}
+                  id="community-search-form"
+                  phx-change="search"
+                  phx-submit="search"
+                  class="relative"
+                >
+                  <.input
+                    id="community-search-input"
+                    field={@search_form[:search]}
+                    type="search"
+                    aria-label="Search community grids"
+                    phx-debounce="300"
+                    placeholder={
+                      if @active_tag,
+                        do: "Search within #{tag_label(@active_tag)}…",
+                        else: "Search for an idea, topic or question…"
+                    }
+                    class="h-12 w-full rounded-md border border-stone-300 bg-white px-4 pr-11 text-base text-slate-950 shadow-sm placeholder:text-slate-400 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-100"
+                    autocomplete="off"
+                  />
+                  <.icon
+                    name="hero-magnifying-glass"
+                    class="pointer-events-none absolute right-4 top-3.5 h-5 w-5 text-teal-800"
+                  />
+                </.form>
+                <div class="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+                  <p class="text-xs text-slate-500">
+                    Search questions, topics, answers and source passages across public grids.
                   </p>
-                </div>
-                <div class="flex flex-wrap items-end gap-3">
-                  <.form
-                    for={@size_form}
-                    id="community-size-form"
-                    phx-change="filter_size"
-                    class="w-56"
-                  >
-                    <.input
-                      id="community-size-input"
-                      field={@size_form[:size]}
-                      type="select"
-                      label="Grid size"
-                      options={[
-                        {"All sizes", "all"},
-                        {"Large grids · 21+ ideas", "large"},
-                        {"Medium grids · 5–20 ideas", "medium"},
-                        {"Small grids · 0–4 ideas", "small"}
-                      ]}
-                      class="h-10 w-full rounded-md border border-stone-300 bg-white px-3 text-sm text-slate-700 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-100"
-                    />
-                  </.form>
-                  <.form for={@sort_form} id="community-sort-form" phx-change="sort" class="w-44">
-                    <.input
-                      id="community-sort-input"
-                      field={@sort_form[:sort]}
-                      type="select"
-                      label="Sort grids"
-                      options={[
-                        {"Newest first", "newest"},
-                        {"Recently updated", "updated"},
-                        {"Most ideas", "largest"}
-                      ]}
-                      class="h-10 w-full rounded-md border border-stone-300 bg-white px-3 text-sm text-slate-700 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-100"
-                    />
-                  </.form>
+                  <.link
+                    :if={@current_user}
+                    id="community-search-my-learning"
+                    navigate={~p"/my/learning?#{%{q: @search_term}}"}
+                    class="text-xs font-semibold text-teal-800 underline underline-offset-4"
+                  >Search your grids and highlights in My Learning</.link>
                 </div>
               </div>
               <div
@@ -451,11 +405,54 @@ defmodule DialecticWeb.CommunityLive do
                   class="inline-flex items-center gap-1 rounded-full bg-teal-100 px-3 py-1.5 font-medium text-teal-900"
                 >{tag_label(@active_tag)}<.icon name="hero-x-mark" class="h-3.5 w-3.5" /><span class="sr-only">Remove topic filter</span></.link>
                 <.link
+                  :if={@active_size != "all"}
+                  id="community-clear-size"
+                  href={browse_path(@browse_params, %{"size" => nil})}
+                  class="inline-flex items-center gap-1 rounded-full bg-teal-100 px-3 py-1.5 font-medium text-teal-900"
+                >{String.capitalize(@active_size)} grids<.icon name="hero-x-mark" class="h-3.5 w-3.5" /><span class="sr-only">Remove size filter</span></.link>
+                <.link
                   id="community-clear-filters"
                   href={~p"/community"}
                   class="px-1 py-1.5 font-medium text-slate-600 underline underline-offset-2 hover:text-teal-800"
                 >Clear filters</.link>
               </div>
+              <div class="mb-3 flex flex-wrap items-end justify-between gap-3">
+                <div aria-live="polite">
+                  <h2 id="community-results-heading" class="scroll-mt-14 text-lg font-semibold">
+                    {results_heading(@search_term, @active_tag, @active_category, @active_size)}
+                  </h2>
+                  <p id="community-result-count" class="mt-1 text-xs text-slate-500">
+                    {result_count_label(@total_count, @page, @page_size)}
+                  </p>
+                </div>
+                <.form
+                  for={@sort_form}
+                  id="community-sort-form"
+                  phx-change="sort"
+                  class="w-44 shrink-0 [&_label]:sr-only"
+                >
+                  <.input
+                    id="community-sort-input"
+                    field={@sort_form[:sort]}
+                    type="select"
+                    label="Sort grids"
+                    options={[
+                      {"Newest first", "newest"},
+                      {"Recently updated", "updated"},
+                      {"Most ideas", "largest"}
+                    ]}
+                    class="min-h-11 w-full rounded-md border border-stone-300 bg-white px-3 text-sm text-slate-700 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-100"
+                  />
+                </.form>
+              </div>
+              <.result_pagination
+                :if={@page_count > 1}
+                id="community-top"
+                page={@page}
+                page_count={@page_count}
+                params={@browse_params}
+                class="mb-4"
+              />
               <div
                 id="community-grid-list"
                 phx-update="stream"
@@ -481,36 +478,21 @@ defmodule DialecticWeb.CommunityLive do
                   <.community_grid_row
                     id={id}
                     graph={item.graph}
+                    matches={Map.get(item, :matches, [])}
                     selected_tag={@active_tag}
                     can_generate_tags={admin?(@current_user)}
                     generating_tags={@generating_tags}
                   />
                 <% end %>
               </div>
-              <nav
+              <.result_pagination
                 :if={@page_count > 1}
-                id="community-pagination"
-                aria-label="Grid result pages"
-                class="mt-5 flex items-center justify-between gap-3"
-              >
-                <.link
-                  :if={@page > 1}
-                  id="community-previous-page"
-                  href={browse_path(@browse_params, %{"page" => @page - 1})}
-                  rel="prev"
-                  class="inline-flex items-center gap-1.5 rounded-md border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:border-teal-600"
-                ><.icon name="hero-arrow-left" class="h-4 w-4" />Previous</.link>
-                <span :if={@page == 1}></span>
-                <span id="community-page-number" class="text-sm tabular-nums text-slate-500">Page {@page} of {@page_count}</span>
-                <.link
-                  :if={@page < @page_count}
-                  id="community-next-page"
-                  href={browse_path(@browse_params, %{"page" => @page + 1})}
-                  rel="next"
-                  class="inline-flex items-center gap-1.5 rounded-md border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:border-teal-600"
-                >Next<.icon name="hero-arrow-right" class="h-4 w-4" /></.link>
-                <span :if={@page == @page_count}></span>
-              </nav>
+                id="community"
+                page={@page}
+                page_count={@page_count}
+                params={@browse_params}
+                class="mt-5"
+              />
               <div
                 id="community-contribute"
                 class="mt-8 border-t border-stone-300 px-4 py-8 text-center"
@@ -533,7 +515,151 @@ defmodule DialecticWeb.CommunityLive do
   end
 
   attr :id, :string, required: true
+  attr :page, :integer, required: true
+  attr :page_count, :integer, required: true
+  attr :params, :map, required: true
+  attr :class, :string, default: nil
+
+  defp result_pagination(assigns) do
+    assigns =
+      assign(assigns,
+        desktop_pages: pagination_pages(assigns.page, assigns.page_count, 10),
+        mobile_pages: pagination_pages(assigns.page, assigns.page_count, 5)
+      )
+
+    ~H"""
+    <nav
+      id={@id <> "-pagination"}
+      aria-label={
+        if(@id == "community-top", do: "Grid result pages, above results", else: "Grid result pages")
+      }
+      class={@class}
+    >
+      <div class="overflow-x-auto py-1">
+        <div class="flex w-max min-w-full items-center justify-between gap-2 px-1">
+          <div class="shrink-0">
+            <button
+              :if={@page == 1}
+              id={@id <> "-previous-page"}
+              type="button"
+              disabled
+              aria-label="Previous page"
+              class="inline-flex min-h-11 cursor-default items-center gap-1.5 rounded-md border border-stone-200 bg-stone-50 px-3 text-sm font-medium text-stone-400"
+            ><.icon name="hero-arrow-left" class="h-4 w-4" />Previous</button>
+            <.link
+              :if={@page > 1}
+              id={@id <> "-previous-page"}
+              patch={result_page_path(@params, @page - 1)}
+              rel="prev"
+              aria-label="Previous page"
+              class="inline-flex min-h-11 items-center gap-1.5 rounded-md border border-stone-300 bg-white px-3 text-sm font-medium text-slate-700 hover:border-teal-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"
+            ><.icon name="hero-arrow-left" class="h-4 w-4" />Previous</.link>
+          </div>
+          <.pagination_numbers
+            id={@id}
+            pages={@desktop_pages}
+            page={@page}
+            params={@params}
+            class="hidden sm:flex"
+          />
+          <.pagination_numbers
+            id={@id <> "-mobile"}
+            pages={@mobile_pages}
+            page={@page}
+            params={@params}
+            class="flex sm:hidden"
+          />
+          <div class="shrink-0">
+            <button
+              :if={@page == @page_count}
+              id={@id <> "-next-page"}
+              type="button"
+              disabled
+              aria-label="Next page"
+              class="inline-flex min-h-11 cursor-default items-center gap-1.5 rounded-md border border-stone-200 bg-stone-50 px-3 text-sm font-medium text-stone-400"
+            >Next<.icon name="hero-arrow-right" class="h-4 w-4" /></button>
+            <.link
+              :if={@page < @page_count}
+              id={@id <> "-next-page"}
+              patch={result_page_path(@params, @page + 1)}
+              rel="next"
+              aria-label="Next page"
+              class="inline-flex min-h-11 items-center gap-1.5 rounded-md border border-stone-300 bg-white px-3 text-sm font-medium text-slate-700 hover:border-teal-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"
+            >Next<.icon name="hero-arrow-right" class="h-4 w-4" /></.link>
+          </div>
+        </div>
+      </div>
+      <span
+        id={@id <> "-page-number"}
+        class="mt-1 block text-center text-xs tabular-nums text-slate-500"
+      >
+        Page {@page} of {@page_count}
+      </span>
+    </nav>
+    """
+  end
+
+  attr :id, :string, required: true
+  attr :pages, :list, required: true
+  attr :page, :integer, required: true
+  attr :params, :map, required: true
+  attr :class, :string, required: true
+
+  defp pagination_numbers(assigns) do
+    ~H"""
+    <div class={["grow shrink-0 flex-nowrap items-center justify-between gap-1", @class]}>
+      <%= for {item, index} <- Enum.with_index(@pages) do %>
+        <%= if item == :ellipsis do %>
+          <span
+            id={@id <> "-gap-#{index}"}
+            aria-hidden="true"
+            class="w-4 shrink-0 text-center text-stone-400"
+          >…</span>
+        <% else %>
+          <.link
+            id={@id <> "-page-#{item}"}
+            patch={result_page_path(@params, item)}
+            aria-label={"Page #{item}"}
+            aria-current={if(item == @page, do: "page")}
+            class={[
+              "inline-flex min-h-11 min-w-10 items-center justify-center rounded-md px-2 text-sm tabular-nums transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700",
+              if(item == @page,
+                do: "bg-teal-800 font-semibold text-white shadow-sm",
+                else: "font-medium text-slate-700 hover:bg-teal-50 hover:text-teal-900"
+              )
+            ]}
+          >{item}</.link>
+        <% end %>
+      <% end %>
+    </div>
+    """
+  end
+
+  defp result_page_path(params, page) do
+    browse_path(params, %{"page" => page}) <> "#community-results-heading"
+  end
+
+  defp pagination_pages(page, page_count, window_size) do
+    first = max(1, min(page - div(window_size - 1, 2), page_count - window_size + 1))
+    nearby = first..min(first + window_size - 1, page_count)
+
+    [1, page_count | Enum.to_list(nearby)]
+    |> Enum.uniq()
+    |> Enum.sort()
+    |> Enum.chunk_every(2, 1, :discard)
+    |> Enum.flat_map(fn [left, right] ->
+      cond do
+        right - left == 1 -> [left]
+        right - left == 2 -> [left, left + 1]
+        true -> [left, :ellipsis]
+      end
+    end)
+    |> Kernel.++([page_count])
+  end
+
+  attr :id, :string, required: true
   attr :graph, :map, required: true
+  attr :matches, :list, default: []
   attr :selected_tag, :string, default: nil
   attr :can_generate_tags, :boolean, default: false
   attr :generating_tags, :any, required: true
@@ -593,9 +719,39 @@ defmodule DialecticWeb.CommunityLive do
           {if(@generating_tags?, do: "Generating...", else: "Generate tags")}
         </button>
       </div>
+      <div :if={@matches != []} class="mt-4 space-y-2">
+        <.link
+          :for={match <- @matches}
+          id={@id <> "-node-#{Map.get(match, :id) || Map.get(match, "id")}"}
+          navigate={graph_path(@graph, Map.get(match, :id) || Map.get(match, "id"))}
+          class="group block rounded-r-md border-l-2 border-stone-300 bg-stone-50 px-3 py-2.5 transition hover:border-teal-700 hover:bg-teal-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"
+        >
+          <div class="flex items-start justify-between gap-3">
+            <span class="text-sm font-semibold leading-5 text-slate-800 group-hover:text-teal-900">
+              {Map.get(match, :title)}
+            </span>
+            <span class="shrink-0 text-xs font-medium text-slate-500">
+              {passage_label(Map.get(match, :search_preview_label))}
+            </span>
+          </div>
+          <p
+            :if={
+              Map.get(match, :search_preview) &&
+                Map.get(match, :search_preview) != Map.get(match, :full_title)
+            }
+            class="mt-1 line-clamp-2 text-sm leading-5 text-slate-600"
+          >
+            {Map.get(match, :search_preview)}
+          </p>
+        </.link>
+      </div>
     </article>
     """
   end
+
+  defp passage_label("Source"), do: "Source"
+  defp passage_label("Title"), do: "Heading"
+  defp passage_label(_), do: "Passage"
 
   defp mark_tags_generating(socket, title, pid) do
     monitor_ref = if is_pid(pid), do: Process.monitor(pid)

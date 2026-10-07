@@ -32,13 +32,29 @@ defmodule Dialectic.Search do
     end
   end
 
-  def normalize_query(query) do
+  def matching_graph_titles(query) do
+    match = query |> normalize_query() |> Query.terms() |> match_expression()
+    from(document in Document, where: ^match, select: document.graph_title)
+  end
+
+  def public_matches(query, graph_titles) do
+    query = normalize_query(query)
+
+    graph_titles
+    |> graph_results(query)
+    |> add_node_matches(node_matches(Query.terms(query), query, graph_titles), query)
+    |> prepare_results(query)
+    |> Map.new(&{&1.graph.title, &1.matches})
+  end
+
+  def normalize_query(query) when is_binary(query) do
     query
-    |> to_string()
     |> String.trim()
     |> String.replace(~r/\s+/u, " ")
     |> String.slice(0, @max_query_length)
   end
+
+  def normalize_query(_query), do: ""
 
   defp candidate_graph_titles(terms, query, limit, offset) do
     match = match_expression(terms)

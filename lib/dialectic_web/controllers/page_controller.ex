@@ -1,6 +1,13 @@
 defmodule DialecticWeb.PageController do
   use DialecticWeb, :controller
 
+  def community_search(conn, params) do
+    query = Dialectic.Search.normalize_query(params["q"] || params["search"] || "")
+    browse_params = Map.take(params, ["page", "tag", "size", "sort"])
+    browse_params = Map.merge(browse_params, %{"category" => "all", "search" => query})
+    redirect(conn, to: ~p"/community?#{browse_params}")
+  end
+
   def my_graphs(conn, _params) do
     redirect(conn, to: ~p"/my/learning")
   end

@@ -122,9 +122,9 @@ defmodule DialecticWeb.LearningNavigationTest do
   end
 
   test "community search offers the same query in My Learning", %{conn: conn} do
-    {:ok, view, _} = live(conn, ~p"/search?q=remembered%20phrase")
+    {:ok, view, _} = live(conn, ~p"/community?category=all&search=remembered%20phrase")
 
-    assert URI.decode_query(URI.parse(href(view, "#search-my-learning")).query) == %{
+    assert URI.decode_query(URI.parse(href(view, "#community-search-my-learning")).query) == %{
              "q" => "remembered phrase"
            }
   end
