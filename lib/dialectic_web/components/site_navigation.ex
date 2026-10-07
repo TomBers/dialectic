@@ -51,7 +51,7 @@ defmodule DialecticWeb.SiteNavigation do
           id="community-nav-link"
           href={~p"/community"}
           label="Community"
-          active={@active_path in ["/community", "/search"]}
+          active={@active_path == "/community"}
         />
 
         <.link

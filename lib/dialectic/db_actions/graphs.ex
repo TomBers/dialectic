@@ -338,16 +338,8 @@ defmodule Dialectic.DbActions.Graphs do
       if search == "" do
         query
       else
-        pattern = "%" <> String.replace(search, ~r/[\\%_]/, fn char -> "\\" <> char end) <> "%"
-
-        from g in query,
-          where:
-            ilike(g.title, ^pattern) or
-              fragment(
-                "EXISTS (SELECT 1 FROM unnest(?) AS tag WHERE tag ILIKE ?)",
-                g.tags,
-                ^pattern
-              )
+        matching_titles = Dialectic.Search.matching_graph_titles(search)
+        from g in query, where: g.title in subquery(matching_titles)
       end
 
     query =
@@ -412,6 +404,14 @@ defmodule Dialectic.DbActions.Graphs do
       |> Enum.map(fn row ->
         %{id: row.title, graph: Map.delete(row, :author_name), author_name: row.author_name}
       end)
+
+    entries =
+      if search == "" do
+        entries
+      else
+        matches = Dialectic.Search.public_matches(search, Enum.map(entries, & &1.graph.title))
+        Enum.map(entries, &Map.put(&1, :matches, Map.get(matches, &1.graph.title, [])))
+      end
 
     %{
       entries: entries,

@@ -84,7 +84,7 @@ defmodule DialecticWeb.Router do
     live "/about", AboutLive
     live "/community", CommunityLive
     live "/questions/does-ai-make-us-better-thinkers", QuestionLive
-    live "/search", SearchLive
+    get "/search", PageController, :community_search
     live "/gallery", InfographicGalleryLive
 
     # Slug-based routes

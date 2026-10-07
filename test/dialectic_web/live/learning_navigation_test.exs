@@ -121,12 +121,20 @@ defmodule DialecticWeb.LearningNavigationTest do
     refute has_element?(guest, "#new-idea-level-step")
   end
 
-  test "community search offers the same query in My Learning", %{conn: conn} do
-    {:ok, view, _} = live(conn, ~p"/search?q=remembered%20phrase")
+  test "community keeps learning and creation available without duplicate header actions", %{
+    conn: conn
+  } do
+    {:ok, view, _} = live(conn, ~p"/community?category=all&search=remembered%20phrase")
 
-    assert URI.decode_query(URI.parse(href(view, "#search-my-learning")).query) == %{
-             "q" => "remembered phrase"
-           }
+    document = conn |> get(~p"/community") |> html_response(200) |> LazyHTML.from_document()
+
+    assert document |> LazyHTML.query("#my-learning-nav-link") |> LazyHTML.attribute("href") == [
+             "/my/learning"
+           ]
+
+    assert has_element?(view, "#community-contribute-create-grid")
+    refute has_element?(view, "#community-search-my-learning")
+    refute has_element?(view, "#community-create-grid")
   end
 
   defp href(view, selector) do

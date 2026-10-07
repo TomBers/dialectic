@@ -85,6 +85,12 @@ defmodule Dialectic.SearchTest do
     assert [%{graph: %{title: title}}] = Search.search_public("ai")
     assert title == graph.title
     assert Search.search_public("a") == []
+
+    assert %{entries: [], total_count: 0} =
+             Dialectic.DbActions.Graphs.browse_public_graphs(search: " a ")
+
+    assert %{entries: [%{graph: %{title: ^title}}]} =
+             Dialectic.DbActions.Graphs.browse_public_graphs(search: "ai")
   end
 
   test "finds a topic from a natural question and words in a different order" do
