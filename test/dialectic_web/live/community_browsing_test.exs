@@ -255,7 +255,7 @@ defmodule DialecticWeb.CommunityBrowsingTest do
     assert has_element?(view, "#community-grid-#{partner_large.slug}")
     refute has_element?(view, "#community-grid-#{curated_small.slug}")
     assert has_element?(view, ~s(#community-format-partners[aria-current="page"]))
-    assert has_element?(view, ~s(#community-sort-input option[value="updated"][selected]))
+    refute has_element?(view, "#community-sort-input")
     assert has_element?(view, "#community-clear-topic", "Sociology")
   end
 
@@ -325,7 +325,7 @@ defmodule DialecticWeb.CommunityBrowsingTest do
 
     {:ok, view, _} = live(conn, ~p"/community?tag=sociology")
 
-    view |> form("#community-sort-form", %{sort: "largest"}) |> render_change()
+    render_patch(view, ~p"/community?tag=sociology&sort=largest")
     assert has_element?(view, "#community-grid-list > #community-grid-#{large.slug}:first-child")
     assert has_element?(view, "#community-clear-topic", "Sociology")
 

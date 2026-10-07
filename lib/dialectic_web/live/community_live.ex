@@ -31,7 +31,6 @@ defmodule DialecticWeb.CommunityLive do
         browse_params: %{},
         topic_filter: "",
         topic_form: to_form(%{"topic_filter" => ""}),
-        sort_form: to_form(%{"sort" => "newest"}),
         generating_tags: MapSet.new(),
         tag_generation_jobs: %{},
         search_form: to_form(%{"search" => ""})
@@ -86,8 +85,7 @@ defmodule DialecticWeb.CommunityLive do
        sort: sort,
        page: parse_page(params["page"]),
        browse_params: browse_params,
-       search_form: to_form(%{"search" => search}),
-       sort_form: to_form(%{"sort" => sort})
+       search_form: to_form(%{"search" => search})
      )
      |> load_results()
      |> stream_topics()}
@@ -102,13 +100,6 @@ defmodule DialecticWeb.CommunityLive do
            "search" => Dialectic.Search.normalize_query(term)
          })
      )}
-  end
-
-  def handle_event("sort", %{"sort" => sort}, socket) do
-    sort = if sort in ["updated", "largest"], do: sort
-
-    {:noreply,
-     push_patch(socket, to: browse_path(socket.assigns.browse_params, %{"sort" => sort}))}
   end
 
   def handle_event("filter_topics", %{"topic_filter" => term}, socket) do
@@ -209,40 +200,48 @@ defmodule DialecticWeb.CommunityLive do
     <Layouts.app flash={@flash}>
       <div class="min-h-screen bg-[#f4f1e9] text-slate-950">
         <div class="mx-auto w-full max-w-7xl px-4 py-7 sm:px-6 lg:px-8">
-          <header id="community-page-header" class="border-b border-stone-300 pb-6">
-            <div class="flex items-start justify-between gap-5">
+          <header id="community-page-header" class="border-b border-stone-300 pb-5">
+            <div class="flex flex-wrap items-center justify-between gap-4">
               <div>
                 <h1
                   id="community-page-title"
-                  class="text-xs font-semibold uppercase tracking-[0.18em] text-teal-800"
+                  class="font-serif text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl"
                 >
                   {if @active_tag, do: "#{tag_label(@active_tag)} grids", else: "Community grids"}
                 </h1>
                 <p
                   :if={@active_tag}
                   id="community-topic-description"
-                  class="mt-2 max-w-2xl text-sm leading-6 text-slate-600"
+                  class="sr-only"
                 >
                   {@page_description}
                 </p>
                 <p
                   :if={!@active_tag}
                   id="community-introduction"
-                  class="mt-2 max-w-2xl text-sm leading-6 text-slate-600"
+                  class="sr-only"
                 >
                   See what others are exploring in the AI workshop. Share a grid and build on each other’s ideas.
                 </p>
               </div>
-              <.link
-                id="community-create-grid"
-                navigate={~p"/?focus=grid#start-here"}
-                class="inline-flex shrink-0 min-h-11 items-center justify-center gap-2 rounded-md bg-teal-800 px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-800"
-              >
-                <span>Create public grid</span><.icon
-                  name="hero-arrow-right"
-                  class="h-4 w-4"
-                />
-              </.link>
+              <div class="flex flex-wrap items-center gap-2">
+                <.link
+                  :if={@current_user}
+                  id="community-search-my-learning"
+                  navigate={~p"/my/learning?#{%{q: @search_term}}"}
+                  class="inline-flex min-h-11 items-center gap-2 rounded-md px-3 text-sm font-semibold text-slate-600 hover:bg-white hover:text-teal-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"
+                ><.icon name="hero-bookmark-square" class="h-4 w-4" />My Learning</.link>
+                <.link
+                  id="community-create-grid"
+                  navigate={~p"/?focus=grid#start-here"}
+                  class="inline-flex shrink-0 min-h-11 items-center justify-center gap-2 rounded-md bg-teal-800 px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-800"
+                >
+                  <span>Create public grid</span><.icon
+                    name="hero-arrow-right"
+                    class="h-4 w-4"
+                  />
+                </.link>
+              </div>
             </div>
           </header>
 
@@ -351,43 +350,45 @@ defmodule DialecticWeb.CommunityLive do
                   >{label}</.link>
                 <% end %>
               </nav>
-              <div id="community-search-controls" class="space-y-4 py-4">
-                <.form
-                  for={@search_form}
-                  id="community-search-form"
-                  phx-change="search"
-                  phx-submit="search"
-                  class="relative"
-                >
-                  <.input
-                    id="community-search-input"
-                    field={@search_form[:search]}
-                    type="search"
-                    aria-label="Search community grids"
-                    phx-debounce="300"
-                    placeholder={
-                      if @active_tag,
-                        do: "Search within #{tag_label(@active_tag)}…",
-                        else: "Search for an idea, topic or question…"
-                    }
-                    class="h-12 w-full rounded-md border border-stone-300 bg-white px-4 pr-11 text-base text-slate-950 shadow-sm placeholder:text-slate-400 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-100"
-                    autocomplete="off"
-                  />
-                  <.icon
-                    name="hero-magnifying-glass"
-                    class="pointer-events-none absolute right-4 top-3.5 h-5 w-5 text-teal-800"
-                  />
-                </.form>
-                <div class="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-                  <p class="text-xs text-slate-500">
-                    Search questions, topics, answers and source passages across public grids.
+              <div id="community-results-heading" class="scroll-mt-14">
+                <div aria-live="polite" class="sr-only">
+                  <h2>
+                    {results_heading(@search_term, @active_tag, @active_category, @active_size)}
+                  </h2>
+                  <p id="community-result-count">
+                    {result_count_label(@total_count, @page, @page_size)}
                   </p>
-                  <.link
-                    :if={@current_user}
-                    id="community-search-my-learning"
-                    navigate={~p"/my/learning?#{%{q: @search_term}}"}
-                    class="text-xs font-semibold text-teal-800 underline underline-offset-4"
-                  >Search your grids and highlights in My Learning</.link>
+                </div>
+                <div
+                  id="community-search-controls"
+                  class="py-4"
+                >
+                  <.form
+                    for={@search_form}
+                    id="community-search-form"
+                    phx-change="search"
+                    phx-submit="search"
+                    class="relative"
+                  >
+                    <.input
+                      id="community-search-input"
+                      field={@search_form[:search]}
+                      type="search"
+                      aria-label="Search community grids"
+                      phx-debounce="300"
+                      placeholder={
+                        if @active_tag,
+                          do: "Search within #{tag_label(@active_tag)}…",
+                          else: "Search for an idea, topic or question…"
+                      }
+                      class="h-12 w-full rounded-md border border-stone-300 bg-white px-4 pr-11 text-base text-slate-950 shadow-sm placeholder:text-slate-400 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-100"
+                      autocomplete="off"
+                    />
+                    <.icon
+                      name="hero-magnifying-glass"
+                      class="pointer-events-none absolute right-4 top-3.5 h-5 w-5 text-teal-800"
+                    />
+                  </.form>
                 </div>
               </div>
               <div
@@ -416,43 +417,6 @@ defmodule DialecticWeb.CommunityLive do
                   class="px-1 py-1.5 font-medium text-slate-600 underline underline-offset-2 hover:text-teal-800"
                 >Clear filters</.link>
               </div>
-              <div class="mb-3 flex flex-wrap items-end justify-between gap-3">
-                <div aria-live="polite">
-                  <h2 id="community-results-heading" class="scroll-mt-14 text-lg font-semibold">
-                    {results_heading(@search_term, @active_tag, @active_category, @active_size)}
-                  </h2>
-                  <p id="community-result-count" class="mt-1 text-xs text-slate-500">
-                    {result_count_label(@total_count, @page, @page_size)}
-                  </p>
-                </div>
-                <.form
-                  for={@sort_form}
-                  id="community-sort-form"
-                  phx-change="sort"
-                  class="w-44 shrink-0 [&_label]:sr-only"
-                >
-                  <.input
-                    id="community-sort-input"
-                    field={@sort_form[:sort]}
-                    type="select"
-                    label="Sort grids"
-                    options={[
-                      {"Newest first", "newest"},
-                      {"Recently updated", "updated"},
-                      {"Most ideas", "largest"}
-                    ]}
-                    class="min-h-11 w-full rounded-md border border-stone-300 bg-white px-3 text-sm text-slate-700 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-100"
-                  />
-                </.form>
-              </div>
-              <.result_pagination
-                :if={@page_count > 1}
-                id="community-top"
-                page={@page}
-                page_count={@page_count}
-                params={@browse_params}
-                class="mb-4"
-              />
               <div
                 :if={@total_count == 0}
                 id="community-empty-results"
@@ -533,9 +497,7 @@ defmodule DialecticWeb.CommunityLive do
     ~H"""
     <nav
       id={@id <> "-pagination"}
-      aria-label={
-        if(@id == "community-top", do: "Grid result pages, above results", else: "Grid result pages")
-      }
+      aria-label="Grid result pages"
       class={@class}
     >
       <div class="overflow-x-auto py-1">
