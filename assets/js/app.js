@@ -41,6 +41,7 @@ import ToolsMenuHook from "./tools_menu_hook.js";
 import AutoExpandTextareaHook from "./auto_expand_textarea_hook.js";
 import SearchNav from "./search_nav_hook.js";
 import { containModalFocus } from "./modal_focus.js";
+import { createDrawerNavigation, syncDrawerAccessibility } from "./drawer_navigation.js";
 import PresentationHook, {
   PresentationSetupHook,
 } from "./presentation_hook.js";
@@ -272,6 +273,11 @@ hooks.GraphLayout = {
   mounted() {
     this.activePanelId = null;
     this.activePanelSection = null;
+    this._drawerNavigation = createDrawerNavigation(this.el, (id) => {
+      this.el.dispatchEvent(new CustomEvent("toggle-panel", { detail: { id } }));
+      if (id === "presentation-drawer") this.pushEvent("close_presentation_setup", {});
+      if (id === "combine-drawer") this.pushEvent("close_combine_setup", {});
+    });
     this._reopenSideDrawerAfterPresentation = false;
     this._reopenSideDrawerAfterCombine = false;
     this._mobileOutlineCloseTimer = null;
@@ -394,6 +400,9 @@ hooks.GraphLayout = {
 
       this._syncPanelToggles();
 
+      if (isClosed) this._drawerNavigation.open(targetPanel, e.detail.dispatcher, section);
+      else this._drawerNavigation.close();
+
       const shouldRestoreSideDrawer =
         (this._reopenSideDrawerAfterPresentation &&
           ((presWasOpen && id !== "presentation-drawer") ||
@@ -425,7 +434,29 @@ hooks.GraphLayout = {
       if (targetPanel.classList.contains("translate-x-full")) return;
 
       this._closeAllPanels();
+      this._drawerNavigation.close();
       window.dispatchEvent(new Event("resize"));
+    });
+
+    this.handleEvent("open_grid_tool", ({ section }) => {
+      if (!["presentation", "configure", "workspace"].includes(section)) return;
+
+      const presenting = section === "presentation";
+      this.el.dispatchEvent(new CustomEvent("toggle-panel", {
+        detail: {
+          id: presenting ? "presentation-drawer" : "right-panel",
+          section: presenting ? null : section,
+          open: true,
+        },
+      }));
+      this.pushEvent(presenting ? "enter_presentation_setup" :
+        section === "configure" ? "open_prompt_settings" : "open_access_settings", {});
+    });
+
+    this.handleEvent("open_reader_tools", () => {
+      this.el.dispatchEvent(new CustomEvent("toggle-panel", {
+        detail: { id: "right-panel", section: "reading-style", open: true },
+      }));
     });
 
     this.el.addEventListener("toggle-side-drawer", (e) => {
@@ -562,10 +593,14 @@ hooks.GraphLayout = {
     this._syncPanelToggles();
   },
   _syncPanelToggles() {
+    this._panelIds().forEach((id) => {
+      const panel = document.getElementById(id);
+      if (panel) syncDrawerAccessibility(panel, id === this.activePanelId);
+    });
     this.el.querySelectorAll("[data-panel-toggle]").forEach((button) => {
       const active =
         button.dataset.panelToggle === this.activePanelId &&
-        (button.dataset.panelSection || null) === this.activePanelSection;
+        (!button.dataset.panelSection || button.dataset.panelSection === this.activePanelSection);
       button.setAttribute("aria-expanded", String(active));
       for (const className of ["ring-2", "ring-offset-1", "ring-white", "scale-110"]) {
         button.classList.toggle(className, active);
@@ -590,6 +625,12 @@ hooks.GraphLayout = {
     if (!drawer) return;
 
     this.sideDrawerOpen = shouldOpen;
+    drawer.inert = !shouldOpen;
+    if (shouldOpen) drawer.removeAttribute("aria-hidden");
+    else {
+      if (drawer.contains(document.activeElement)) toggleBtn?.focus({ preventScroll: true });
+      drawer.setAttribute("aria-hidden", "true");
+    }
 
     if (shouldOpen) {
       drawer.classList.remove(
@@ -678,6 +719,7 @@ hooks.GraphLayout = {
     this._focusAskInputFromUrl();
   },
   destroyed() {
+    this._drawerNavigation?.destroy();
     this._mobileOutlineFocus?.destroy();
     if (this._mobileOutlineCloseTimer) {
       clearTimeout(this._mobileOutlineCloseTimer);
@@ -697,11 +739,13 @@ hooks.GraphLayout = {
     const mobileReaderPath = this.el.dataset.mobileReaderPath;
     const isGraphLayout = this.el.id === "graph-layout";
     const isPresenting = this.el.dataset.presenting === "true";
+    const requestedTool = new URL(window.location.href).searchParams.get("tools");
 
     if (
       !isGraphLayout ||
       !mobileReaderPath ||
       isPresenting ||
+      ["presentation", "configure", "workspace"].includes(requestedTool) ||
       this.el.dataset.mobileInquiry === "true"
     ) return;
     if (!window.matchMedia("(max-width: 767px)").matches) return;
@@ -854,6 +898,7 @@ hooks.GraphLayout = {
 
     if (!this.activePanelId) {
       this._closeAllPanels();
+      this._drawerNavigation.close();
       return;
     }
 
@@ -889,6 +934,7 @@ hooks.GraphLayout = {
       if (bottomMenu) bottomMenu.classList.add("panel-open");
     }
     this._syncPanelToggles();
+    this._drawerNavigation.refresh();
   },
 };
 
@@ -920,7 +966,7 @@ let liveSocket = new LiveSocket("/live", Socket, {
     keydown: (e, el) => {
       // console.log(e);
       // console.log(el);
-      const target = e.target;
+      const target = e.target instanceof Element ? e.target : null;
       const tag = (target && target.tagName) || "";
       const isEditable =
         tag === "INPUT" ||

@@ -138,6 +138,11 @@ defmodule DialecticWeb.OutlineGraphLive do
       |> maybe_scroll_to_highlight(highlight_id)
       |> assign_share_metadata(share_highlight)
 
+    socket =
+      if params["tools"] == "reading-style",
+        do: push_event(socket, "open_reader_tools", %{}),
+        else: socket
+
     {:noreply, socket}
   end
 

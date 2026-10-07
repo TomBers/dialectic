@@ -22,6 +22,7 @@ defmodule DialecticWeb.SettingsMenuComp do
         highlights={@highlights}
         prompt_mode={@prompt_mode}
         token={@token}
+        reader_tools_path={@reader_tools_path}
       />
     </div>
     """

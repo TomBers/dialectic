@@ -600,16 +600,18 @@ defmodule DialecticWeb.GraphLiveTest do
       assert has_element?(view, "#selection-actions-focus-selection-actions-end[tabindex='0']")
     end
 
-    test "surfaces the explanation level and opens its settings", %{conn: conn} do
+    test "surfaces explanation level and opens its settings", %{conn: conn} do
       {:ok, view, _html} = setup_live(conn)
 
-      assert has_element?(view, "#graph-workspace-bar-level", "Expanded")
+      assert has_element?(view, "#graph-header #graph-workspace-bar-level", "Expanded")
 
       view
       |> element("#graph-workspace-bar-level")
       |> render_click()
 
       assert has_element?(view, "#right-panel", "Grid tools")
+      assert has_element?(view, "#right-panel #grid-tools-presentation")
+      refute has_element?(view, "#graph-header #document-menu-present-document-menu")
       assert has_element?(view, "#details-configure[open]", "Explanation level")
       assert has_element?(view, "#answer-level-university[aria-pressed='true']")
 
