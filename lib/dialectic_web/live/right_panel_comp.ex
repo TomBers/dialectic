@@ -55,7 +55,6 @@ defmodule DialecticWeb.RightPanelComp do
       |> assign_new(:prompt_mode, fn -> "university" end)
       |> assign_new(:layout_target, fn -> "#graph-layout" end)
       |> assign_new(:mode, fn -> :graph end)
-      |> assign_new(:graph_tools_paths, fn -> %{} end)
       |> assign_new(:reader_style, fn -> "screen" end)
       |> assign_new(:following_graph?, fn -> false end)
       |> assign_new(:current_user, fn -> nil end)
@@ -68,17 +67,14 @@ defmodule DialecticWeb.RightPanelComp do
     {:ok, socket}
   end
 
-  defp maybe_open_section(socket, section) when section == "workspace" do
-    update(socket, :open_sections, fn sections ->
-      sections
-      |> MapSet.delete("workspace")
-      |> MapSet.put(section)
-    end)
+  defp maybe_open_section(socket, section)
+       when section in ["workspace", "answer-level", "visibility"] do
+    update(socket, :open_sections, &MapSet.put(&1, section))
   end
 
   defp maybe_open_section(socket, _section), do: socket
 
-  @valid_sections ~w(workspace activity export utilities)
+  @valid_sections ~w(workspace activity export utilities answer-level visibility)
 
   defp load_activity_logs(graph_id) when is_binary(graph_id) and graph_id != "" do
     GridActivity.list_for_graph(graph_id)
@@ -300,35 +296,7 @@ defmodule DialecticWeb.RightPanelComp do
           </button>
         </div>
       </details>
-      <button
-        :if={@mode == :graph}
-        id="grid-tools-presentation"
-        type="button"
-        phx-click={
-          Phoenix.LiveView.JS.dispatch("toggle-side-drawer",
-            to: @layout_target,
-            detail: %{force: "close", persist: false}
-          )
-          |> Phoenix.LiveView.JS.dispatch("toggle-panel",
-            to: @layout_target,
-            detail: %{id: "presentation-drawer", open: true}
-          )
-          |> Phoenix.LiveView.JS.push("enter_presentation_setup")
-        }
-        disabled={is_nil(@graph_id)}
-        data-panel-toggle="presentation-drawer"
-        class="flex w-full items-center gap-2.5 rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-left shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-45"
-        aria-label="Start presentation setup"
-      >
-        <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-violet-50 text-violet-600">
-          <.icon name="hero-presentation-chart-bar" class="h-4 w-4" />
-        </span>
-        <span class="flex-1">
-          <span class="block text-xs font-semibold text-gray-800">Presentation</span>
-          <span class="block text-[11px] leading-tight text-gray-500">Build and present a slide deck</span>
-        </span>
-        <.icon name="hero-chevron-right" class="h-4 w-4 text-gray-400" />
-      </button>
+
       <%= if @mode == :reader do %>
         <button
           id="reader-workspace-bar-outline-desktop"
@@ -347,25 +315,6 @@ defmodule DialecticWeb.RightPanelComp do
         >
           <.icon name="hero-bars-3-bottom-left" class="h-4 w-4 text-gray-500" /> Conversation outline
         </button>
-
-        <.link
-          :for={
-            {section, label, icon} <-
-              [
-                {"presentation", "Presentation", "hero-presentation-chart-bar"}
-              ]
-          }
-          id={"reader-grid-tools-#{section}"}
-          navigate={Map.fetch!(@graph_tools_paths, section)}
-          class="flex items-center gap-2.5 rounded-lg border border-gray-200 bg-white px-3 py-2.5 shadow-sm hover:bg-gray-50"
-        >
-          <.icon name={icon} class="h-4 w-4 text-gray-500" />
-          <span class="flex-1">
-            <span class="block text-xs font-semibold text-gray-800">{label}</span>
-            <span class="block text-[11px] text-gray-500">Open in Grid view</span>
-          </span>
-          <.icon name="hero-chevron-right" class="h-4 w-4 text-gray-400" />
-        </.link>
       <% end %>
       <div
         id="tools-mobile-actions"
@@ -373,16 +322,84 @@ defmodule DialecticWeb.RightPanelComp do
         role="group"
         aria-label="Quick settings and sharing"
       >
-        <DialecticWeb.WorkspaceBarComp.answer_level_dropdown
-          id="tools-answer-level"
-          prompt_mode={@prompt_mode}
-          current_user={@current_user}
-        />
-        <DialecticWeb.WorkspaceBarComp.visibility_dropdown
-          id="tools-visibility"
-          graph_struct={@graph_struct}
-          current_user={@current_user}
-        />
+        <details
+          id="details-answer-level"
+          class="group overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm"
+          open={MapSet.member?(@open_sections, "answer-level")}
+        >
+          <summary
+            class="list-none cursor-pointer select-none px-3 py-2.5 rounded-lg hover:bg-gray-50/50 transition-colors"
+            phx-click="toggle_section"
+            phx-value-section="answer-level"
+            phx-target={@myself}
+          >
+            <div class="flex items-center justify-between gap-3">
+              <div class="flex items-center gap-2.5">
+                <span class="flex h-7 w-7 items-center justify-center rounded-md bg-indigo-50 text-indigo-600">
+                  <.icon name="hero-square-3-stack-3d" class="h-4 w-4" />
+                </span>
+                <div>
+                  <div class="text-xs font-semibold text-gray-800">Answer level</div>
+                  <p class="text-[11px] leading-tight text-gray-500">
+                    {DialecticWeb.WorkspaceBarComp.answer_level_label(@prompt_mode)} · new AI answers
+                  </p>
+                </div>
+              </div>
+              <.icon
+                name="hero-chevron-down"
+                class="h-4 w-4 text-gray-400 transition-transform duration-200 group-open:rotate-180"
+              />
+            </div>
+          </summary>
+          <div class="border-t border-gray-100">
+            <DialecticWeb.WorkspaceBarComp.answer_level_dropdown
+              id="tools-answer-level"
+              inline
+              hide_heading
+              prompt_mode={@prompt_mode}
+              current_user={@current_user}
+            />
+          </div>
+        </details>
+        <details
+          id="details-visibility"
+          class="group overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm"
+          open={MapSet.member?(@open_sections, "visibility")}
+        >
+          <summary
+            class="list-none cursor-pointer select-none px-3 py-2.5 rounded-lg hover:bg-gray-50/50 transition-colors"
+            phx-click="toggle_section"
+            phx-value-section="visibility"
+            phx-target={@myself}
+          >
+            <div class="flex items-center justify-between gap-3">
+              <div class="flex items-center gap-2.5">
+                <span class="flex h-7 w-7 items-center justify-center rounded-md bg-sky-50 text-sky-600">
+                  <.icon name="hero-globe-alt" class="h-4 w-4" />
+                </span>
+                <div>
+                  <div class="text-xs font-semibold text-gray-800">Visibility</div>
+                  <p class="text-[11px] leading-tight text-gray-500">
+                    {if(@graph_struct.is_public, do: "Public", else: "Private")} · who can view
+                  </p>
+                </div>
+              </div>
+              <.icon
+                name="hero-chevron-down"
+                class="h-4 w-4 text-gray-400 transition-transform duration-200 group-open:rotate-180"
+              />
+            </div>
+          </summary>
+          <div class="border-t border-gray-100">
+            <DialecticWeb.WorkspaceBarComp.visibility_dropdown
+              id="tools-visibility"
+              inline
+              hide_heading
+              graph_struct={@graph_struct}
+              current_user={@current_user}
+            />
+          </div>
+        </details>
         <button
           id="reader-tools-share"
           type="button"
@@ -542,6 +559,36 @@ defmodule DialecticWeb.RightPanelComp do
           <% end %>
         </div>
       </details>
+
+      <button
+        :if={@mode == :graph}
+        id="grid-tools-presentation"
+        type="button"
+        phx-click={
+          Phoenix.LiveView.JS.dispatch("toggle-side-drawer",
+            to: @layout_target,
+            detail: %{force: "close", persist: false}
+          )
+          |> Phoenix.LiveView.JS.dispatch("toggle-panel",
+            to: @layout_target,
+            detail: %{id: "presentation-drawer", open: true}
+          )
+          |> Phoenix.LiveView.JS.push("enter_presentation_setup")
+        }
+        disabled={is_nil(@graph_id)}
+        data-panel-toggle="presentation-drawer"
+        class="hidden w-full items-center gap-2.5 rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-left shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-45 md:flex"
+        aria-label="Start presentation setup"
+      >
+        <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-violet-50 text-violet-600">
+          <.icon name="hero-presentation-chart-bar" class="h-4 w-4" />
+        </span>
+        <span class="flex-1">
+          <span class="block text-xs font-semibold text-gray-800">Presentation</span>
+          <span class="block text-[11px] leading-tight text-gray-500">Build and present a slide deck</span>
+        </span>
+        <.icon name="hero-chevron-right" class="h-4 w-4 text-gray-400" />
+      </button>
 
       <%!-- Export Section --%>
       <details

@@ -213,6 +213,7 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_event("open_prompt_settings", _params, socket) do
+    send_update(DialecticWeb.RightPanelComp, id: "right-panel-comp", open_section: "answer-level")
     {:noreply, push_event(socket, "open_answer_level", %{})}
   end
 

@@ -49,7 +49,9 @@ defmodule DialecticWeb.GraphAccessTest do
     refute has_element?(grid, "#grid-tools-reading-style")
     assert has_element?(grid, "#details-reading-style #reader-style-screen")
     assert has_element?(reader, "#reader-style-book", "Serif")
-    assert has_element?(reader, "#right-panel.fixed")
+    assert has_element?(reader, "#right-panel.fixed.top-10")
+    assert has_element?(reader, "#right-panel .tools-drawer-header #grid-tools-close")
+    assert has_element?(reader, "#right-panel .tools-drawer-header + .tools-drawer-content")
     assert has_element?(reader, "#right-panel[class~='lg:absolute']")
     assert has_element?(grid, "#right-panel.absolute")
     refute has_element?(grid, "#right-panel.fixed")
@@ -154,6 +156,35 @@ defmodule DialecticWeb.GraphAccessTest do
       refute has_element?(view, "#details-configure")
       assert has_element?(view, "#tools-mobile-actions[class~='sm:hidden'] #tools-visibility")
       assert has_element?(view, "#tools-mobile-actions #tools-answer-level")
+
+      assert has_element?(
+               view,
+               "#tools-answer-level[role='group'] #tools-answer-level-high_school"
+             )
+
+      assert has_element?(view, "#tools-visibility[role='group'] #tools-visibility-public")
+      refute has_element?(view, "#tools-mobile-actions [popover]")
+      refute has_element?(view, "#tools-mobile-actions [popovertarget]")
+      refute has_element?(view, "#details-answer-level[open]")
+      refute has_element?(view, "#details-visibility[open]")
+      view |> element("#details-answer-level > summary") |> render_click()
+      assert has_element?(view, "#details-answer-level[open]")
+      view |> element("#details-answer-level > summary") |> render_click()
+      refute has_element?(view, "#details-answer-level[open]")
+      view |> element("#details-visibility > summary") |> render_click()
+      assert has_element?(view, "#details-visibility[open]")
+      view |> element("#details-visibility > summary") |> render_click()
+
+      if has_element?(view, "#graph-layout") do
+        assert has_element?(
+                 view,
+                 "#details-activity ~ #grid-tools-presentation.hidden[class~='md:flex']"
+               )
+      else
+        refute has_element?(view, "#reader-grid-tools-presentation")
+        refute has_element?(view, "#grid-tools-presentation")
+      end
+
       assert has_element?(view, "#tools-mobile-actions #reader-tools-share")
       refute has_element?(view, "#details-workspace button")
       refute has_element?(view, "#details-workspace #toggle_public_graph")

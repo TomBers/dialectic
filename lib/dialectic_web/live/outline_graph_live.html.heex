@@ -865,16 +865,6 @@
           prompt_mode={@graph_struct.prompt_mode || "university"}
           following_graph?={@following_graph?}
           token={@token}
-          graph_tools_paths={
-            Map.new(["presentation", "configure", "workspace"], fn section ->
-              {section,
-               graph_editor_path(
-                 @graph_struct,
-                 @selected_node_id,
-                 Keyword.put(reader_nav_params(@nav_params, @path_focus_ids), :tools, section)
-               )}
-            end)
-          }
         />
       </DialecticWeb.WorkspaceBarComp.tools_drawer>
 

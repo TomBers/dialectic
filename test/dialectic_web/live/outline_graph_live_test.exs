@@ -444,7 +444,7 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
 
     assert has_element?(
              view,
-             "#reader-grid-tools-presentation[href*='node=2'][href*='path=4'][href*='tools=presentation']"
+             "#reader-workspace-bar-graph[href*='node=2'][href*='path=4']"
            )
 
     refute has_element?(view, "#reader-mobile-menu")
@@ -474,7 +474,7 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     refute has_element?(view, "#reader-appearance-panel")
     assert has_element?(view, "#right-panel #details-reading-style")
     assert has_element?(view, "#right-panel #details-export")
-    assert has_element?(view, "#right-panel #reader-grid-tools-presentation")
+    refute has_element?(view, "#right-panel #reader-grid-tools-presentation")
     view |> element("#reader-style-large_print") |> render_click()
 
     assert has_element?(

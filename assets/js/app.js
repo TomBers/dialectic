@@ -442,6 +442,7 @@ hooks.GraphLayout = {
 
     this.handleEvent("open_grid_tool", ({ section }) => {
       if (!["presentation", "configure", "workspace"].includes(section)) return;
+      if (section === "presentation" && window.matchMedia("(max-width: 767px)").matches) return;
 
       if (section === "configure" && window.matchMedia("(min-width: 640px)").matches) {
         this.pushEvent("open_prompt_settings", {});
@@ -460,9 +461,15 @@ hooks.GraphLayout = {
     });
 
     this.handleEvent("open_answer_level", () => {
-      const id = window.matchMedia("(min-width: 640px)").matches ?
-        "graph-workspace-bar-level-options" : "tools-answer-level-options";
-      document.getElementById(id)?.showPopover();
+      if (window.matchMedia("(min-width: 640px)").matches) {
+        document.getElementById("graph-workspace-bar-level-options")?.showPopover();
+      } else {
+        const accordion = document.getElementById("details-answer-level");
+        if (accordion) accordion.open = true;
+        const section = document.getElementById("tools-answer-level");
+        section?.scrollIntoView({block: "nearest"});
+        (section?.querySelector('[aria-pressed="true"]') || section)?.focus({preventScroll: true});
+      }
     });
 
     this.handleEvent("open_reader_tools", () => {
@@ -771,7 +778,7 @@ hooks.GraphLayout = {
       !isGraphLayout ||
       !mobileReaderPath ||
       isPresenting ||
-      ["presentation", "configure", "workspace"].includes(requestedTool) ||
+      ["configure", "workspace"].includes(requestedTool) ||
       this.el.dataset.mobileInquiry === "true"
     ) return;
     if (!window.matchMedia("(max-width: 767px)").matches) return;

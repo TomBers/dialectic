@@ -482,6 +482,16 @@
             0 3px 8px rgb(15 23 42 / 5%);
     }
 
+    .tools-drawer-content {
+        overscroll-behavior: contain;
+        padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+    }
+
+    .workspace-settings-section {
+        padding: 0.5rem;
+        background: #fff;
+    }
+
     .workspace-dropdown-heading {
         @apply flex items-center gap-2.5 px-3 pb-3 pt-1.5 text-sm font-semibold text-slate-900;
     }
