@@ -13,7 +13,75 @@ defmodule DialecticWeb.GraphAccessTest do
     %{owner: owner, graph: graph}
   end
 
-  test "owner can reach visibility and protection from the title bar", %{
+  test "reader and grid headers keep the same controls and layout", %{
+    conn: conn,
+    owner: owner,
+    graph: graph
+  } do
+    conn = log_in_user(conn, owner)
+    {:ok, reader, _html} = live(conn, ~p"/g/#{graph.slug}")
+    {:ok, grid, _html} = live(conn, ~p"/g/#{graph.slug}/graph")
+
+    for {view, prefix} <- [{reader, "reader"}, {grid, "graph"}] do
+      assert has_element?(view, "##{prefix}-header #document-menu-settings-document-menu")
+      assert has_element?(view, "##{prefix}-header ##{prefix}-access-settings", "Public")
+      assert has_element?(view, "##{prefix}-header ##{prefix}-workspace-bar-level", "Expanded")
+      assert has_element?(view, "##{prefix}-workspace-bar-level .hero-square-3-stack-3d")
+      refute has_element?(view, "##{prefix}-header #graph-help-button")
+      refute has_element?(view, "##{prefix}-header #reader-workspace-bar-outline-desktop")
+    end
+
+    controls = fn view, prefix ->
+      view
+      |> render()
+      |> LazyHTML.from_fragment()
+      |> LazyHTML.filter("##{prefix}-header button")
+      |> LazyHTML.to_tree()
+      |> Enum.map(fn {tag, attrs, _children} ->
+        attrs = Map.new(attrs)
+        {tag, String.replace_prefix(attrs["id"], prefix, "workspace"), attrs["class"]}
+      end)
+    end
+
+    assert controls.(reader, "reader") == controls.(grid, "graph")
+    assert has_element?(reader, "#reader-workspace-bar-reader[aria-current='page']")
+    assert has_element?(grid, "#graph-workspace-bar-graph[aria-current='page']")
+    assert has_element?(grid, "#grid-tools-reading-style[href*='tools=reading-style']")
+    assert has_element?(reader, "#reader-style-book", "Serif")
+    assert has_element?(reader, "#right-panel.fixed")
+    assert has_element?(reader, "#right-panel[class~='lg:absolute']")
+    assert has_element?(grid, "#right-panel.absolute")
+    refute has_element?(grid, "#right-panel.fixed")
+
+    render_patch(reader, ~p"/g/#{graph.slug}?tools=reading-style")
+    assert_push_event(reader, "open_reader_tools", %{})
+  end
+
+  test "mobile tool links open in an accessible workspace with a route back to reader", %{
+    conn: conn,
+    owner: owner,
+    graph: graph
+  } do
+    {:ok, view, _html} =
+      live(log_in_user(conn, owner), ~p"/g/#{graph.slug}/graph?tools=configure")
+
+    assert_push_event(view, "open_grid_tool", %{section: "configure"})
+    assert has_element?(view, "#graph-keyboard-workspace.flex #right-panel")
+    refute has_element?(view, "#graph-keyboard-workspace.hidden")
+    assert has_element?(view, "#graph-mobile-back-to-reader[href^='/g/#{graph.slug}?node=']")
+
+    assert has_element?(
+             view,
+             "#document-menu-settings-mobile-document-menu[aria-controls='right-panel']"
+           )
+
+    assert has_element?(view, "#graph-mobile-reader-link[href^='/g/#{graph.slug}?node=']")
+    refute has_element?(view, "#graph-mobile-back-to-reader[href*=tools]")
+    assert has_element?(view, "#side-drawer.hidden")
+    assert has_element?(view, "#cy.hidden")
+  end
+
+  test "owner can reach visibility and protection from grid tools", %{
     conn: conn,
     owner: owner,
     graph: graph
@@ -21,16 +89,12 @@ defmodule DialecticWeb.GraphAccessTest do
     {:ok, view, _html} = live(log_in_user(conn, owner), ~p"/g/#{graph.slug}/graph")
 
     assert has_element?(view, "#graph-header #graph-heading #graph-title")
-    assert has_element?(view, "#graph-header #graph-heading #graph-help-button")
+    assert has_element?(view, "#right-panel #graph-help-button")
+    refute has_element?(view, "#graph-header #graph-help-button")
     assert has_element?(view, "#graph-header #graph-workspace-bar")
 
-    assert has_element?(
-             view,
-             "#graph-header #graph-access-settings[title='Access controls: Public · Editable']"
-           )
-
-    assert has_element?(view, "#graph-access-settings .hero-globe-alt")
-
+    assert has_element?(view, "#graph-header #document-menu-settings-document-menu")
+    assert has_element?(view, "#graph-header #graph-access-settings", "Public")
     refute has_element?(view, "#details-workspace[open]")
 
     view |> element("#graph-access-settings") |> render_click()
@@ -38,12 +102,7 @@ defmodule DialecticWeb.GraphAccessTest do
 
     view |> element("#toggle_public_graph") |> render_click()
     refute Repo.reload!(graph).is_public
-
-    assert has_element?(
-             view,
-             "#graph-access-settings[title='Access controls: Private · Editable']"
-           )
-
+    assert has_element?(view, "#graph-access-settings", "Private")
     assert has_element?(view, "#graph-access-settings .hero-lock-closed")
 
     refute has_element?(view, "#toggle_public_graph[checked]")
@@ -55,42 +114,32 @@ defmodule DialecticWeb.GraphAccessTest do
     view |> element("#toggle_lock_graph") |> render_click()
     assert Repo.reload!(graph).is_locked
 
-    assert has_element?(
-             view,
-             "#graph-access-settings[title='Access controls: Public · Protected']"
-           )
-
-    assert has_element?(view, "#graph-access-settings .hero-globe-alt")
-
     refute has_element?(view, "#toggle_lock_graph[checked]")
 
     view |> element("#toggle_lock_graph") |> render_click()
     refute Repo.reload!(graph).is_locked
 
-    assert has_element?(
-             view,
-             "#graph-access-settings[title='Access controls: Public · Editable']"
-           )
-
     assert has_element?(view, "#toggle_lock_graph[checked]")
   end
 
-  test "access and explanation shortcuts focus their own section", %{
+  test "access and explanation sections open within grid tools", %{
     conn: conn,
     owner: owner,
     graph: graph
   } do
     {:ok, view, _html} = live(log_in_user(conn, owner), ~p"/g/#{graph.slug}/graph")
 
-    view |> element("#graph-access-settings") |> render_click()
+    view |> element("#details-workspace > summary") |> render_click()
     assert has_element?(view, "#details-workspace[open]")
     refute has_element?(view, "#details-configure[open]")
 
-    view |> element("#graph-workspace-bar-level") |> render_click()
+    view |> element("#details-workspace > summary") |> render_click()
+    view |> element("#details-configure > summary") |> render_click()
     assert has_element?(view, "#details-configure[open]")
     refute has_element?(view, "#details-workspace[open]")
 
-    view |> element("#graph-access-settings") |> render_click()
+    view |> element("#details-configure > summary") |> render_click()
+    view |> element("#details-workspace > summary") |> render_click()
     assert has_element?(view, "#details-workspace[open]")
     refute has_element?(view, "#details-configure[open]")
   end
@@ -103,7 +152,7 @@ defmodule DialecticWeb.GraphAccessTest do
       visitor_conn = if user, do: log_in_user(conn, user), else: conn
       {:ok, view, _html} = live(visitor_conn, ~p"/g/#{graph.slug}/graph")
       assert has_element?(view, "#graph-layout")
-      refute has_element?(view, "#graph-access-settings")
+      assert has_element?(view, "#graph-access-settings[aria-label='Grid visibility: Public']")
       refute has_element?(view, "#toggle_public_graph")
       refute has_element?(view, "#toggle_lock_graph")
 

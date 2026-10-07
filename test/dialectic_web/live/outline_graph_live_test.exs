@@ -440,28 +440,41 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     refute has_element?(view, "#reader-mobile-ask")
     refute has_element?(view, "#reader-workspace-bar-ask-question")
 
-    assert has_element?(view, "#reader-mobile-more[popovertarget='reader-mobile-menu']")
-    view |> element("#reader-mobile-style-compact") |> render_click()
+    assert has_element?(view, "#reader-mobile-more[aria-controls='right-panel']")
+
+    assert has_element?(
+             view,
+             "#reader-grid-tools-presentation[href*='node=2'][href*='path=4'][href*='tools=presentation']"
+           )
+
+    refute has_element?(view, "#reader-mobile-menu")
+    view |> element("#reader-style-compact") |> render_click()
     assert has_element?(view, "#outline-layout[data-reading-density='compact']")
-    assert has_element?(view, "#reader-mobile-style-compact[aria-pressed='true']")
+    assert has_element?(view, "#reader-style-compact[aria-pressed='true']")
     view |> element("#reader-mobile-search") |> render_click()
     assert has_element?(view, "#outline-quick-search-input")
     view |> element("#outline-quick-search-close") |> render_click()
-    view |> element("#reader-mobile-share") |> render_click()
+    view |> element("#reader-tools-share") |> render_click()
     assert has_element?(view, "#share-modal-hook")
   end
 
-  test "reader style dropdown saves presets without changing other preferences", %{conn: conn} do
+  test "unified tools drawer saves reader styles without changing other preferences", %{
+    conn: conn
+  } do
     graph = create_graph()
     user = user_fixture()
     {:ok, view, _} = conn |> log_in_user(user) |> live(~p"/g/#{graph.slug}")
 
     assert has_element?(
              view,
-             "#reader-appearance-toggle[popovertarget='reader-appearance-panel']"
+             "#document-menu-settings-document-menu[aria-controls='right-panel']"
            )
 
     refute has_element?(view, "#reader-style-custom")
+    refute has_element?(view, "#reader-appearance-panel")
+    assert has_element?(view, "#right-panel #details-reading-style")
+    assert has_element?(view, "#right-panel #details-export")
+    assert has_element?(view, "#right-panel #reader-grid-tools-presentation")
     view |> element("#reader-style-large_print") |> render_click()
 
     assert has_element?(

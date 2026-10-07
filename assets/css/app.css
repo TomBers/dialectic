@@ -459,20 +459,68 @@
     }
 
     .workspace-menu {
-        @apply flex min-h-[42px] w-full min-w-0 flex-wrap items-center justify-between gap-1.5;
+        @apply flex min-h-[42px] w-full min-w-0 flex-nowrap items-center justify-between gap-1.5;
     }
 
     .workspace-context-actions {
-        @apply ml-auto flex shrink-0 items-center justify-end gap-1.5;
+        @apply ml-auto flex shrink-0 items-center justify-end gap-1.5 whitespace-nowrap;
     }
 
-    @screen sm {
-        .workspace-menu {
-            @apply flex-nowrap;
+    .workspace-menu-group {
+        @apply flex shrink-0 items-center gap-1.5;
+    }
+
+    .workspace-menu-group::before {
+        content: "";
+        width: 1px;
+        height: 1.25rem;
+        margin-inline: 0.25rem;
+        flex-shrink: 0;
+        background: #cbd5e1;
+    }
+
+    .workspace-menu :is(a, button) {
+        min-height: 2.25rem;
+        min-width: 2.25rem;
+    }
+
+    #graph-mobile-tools-nav :is(a, button) {
+        min-height: 2.75rem;
+        min-width: 2.75rem;
+    }
+
+    #graph-mobile-tools-nav button {
+        width: auto;
+        padding-inline: 0.75rem;
+    }
+
+    #graph-mobile-tools-nav button > span:last-child {
+        display: inline;
+    }
+
+    #graph-mobile-tools-nav :is(a, button):focus-visible,
+    .workspace-menu :is(a, button):focus-visible,
+    #right-panel :is(a, button, summary):focus-visible {
+        outline: 2px solid #0f766e;
+        outline-offset: 2px;
+    }
+
+    #right-panel :is(a, button, summary) {
+        min-height: 2.75rem;
+    }
+
+    #right-panel [data-panel-close] {
+        min-width: 2.75rem;
+    }
+
+    @media (pointer: coarse) {
+        .workspace-menu :is(a, button) {
+            min-height: 2.75rem;
+            min-width: 2.75rem;
         }
     }
 
-    @screen lg {
+    @screen sm {
         .workspace-header {
             @apply flex-nowrap;
         }
@@ -483,10 +531,6 @@
 
         .workspace-menu {
             @apply w-auto shrink-0;
-        }
-
-        .workspace-context-actions {
-            width: 23rem;
         }
     }
 }

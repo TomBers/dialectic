@@ -52,92 +52,19 @@ defmodule DialecticWeb.ReaderMobileNavComp do
         </span>
         <span>Highlights</span>
       </button>
-      <button id="reader-mobile-more" type="button" popovertarget="reader-mobile-menu">
-        <.icon name="hero-ellipsis-horizontal" class="h-5 w-5" />
-        <span>More</span>
+      <button
+        id="reader-mobile-more"
+        type="button"
+        phx-click={JS.dispatch("toggle-panel", to: "#outline-layout", detail: %{id: "right-panel"})}
+        data-panel-toggle="right-panel"
+        aria-controls="right-panel"
+        aria-expanded="false"
+        aria-label="Open grid tools"
+      >
+        <.icon name="hero-wrench-screwdriver" class="h-5 w-5" />
+        <span>Tools</span>
       </button>
     </nav>
-
-    <section
-      id="reader-mobile-menu"
-      popover
-      aria-labelledby="reader-mobile-menu-title"
-      class="reader-mobile-menu"
-    >
-      <div class="flex items-center justify-between border-b border-slate-200 px-4 py-2">
-        <h2 id="reader-mobile-menu-title" class="text-base font-semibold">Reader options</h2>
-        <button
-          id="reader-mobile-menu-close"
-          type="button"
-          popovertarget="reader-mobile-menu"
-          popovertargetaction="hide"
-          aria-label="Close reader options"
-          class="inline-flex h-11 w-11 items-center justify-center rounded-lg"
-        >
-          <.icon name="hero-x-mark" class="h-5 w-5" />
-        </button>
-      </div>
-      <div class="space-y-4 p-4">
-        <fieldset>
-          <legend class="mb-2 text-sm font-semibold">Reading style</legend>
-          <div class="grid grid-cols-2 gap-2">
-            <button
-              :for={
-                {label, style} <- [
-                  {"Book", "book"},
-                  {"Screen", "screen"},
-                  {"Large print", "large_print"},
-                  {"Compact", "compact"}
-                ]
-              }
-              id={"reader-mobile-style-#{style}"}
-              type="button"
-              aria-pressed={to_string(@reader_style == style)}
-              phx-click={
-                JS.focus(to: "#reader-mobile-more")
-                |> JS.push("save_reader_appearance", value: %{style: style})
-              }
-              popovertarget="reader-mobile-menu"
-              popovertargetaction="hide"
-              class="min-h-11 rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium aria-pressed:border-teal-700 aria-pressed:bg-teal-50 aria-pressed:text-teal-900"
-            >
-              {label}
-            </button>
-          </div>
-        </fieldset>
-        <div class="grid gap-1">
-          <button
-            id="reader-mobile-share"
-            type="button"
-            phx-click={JS.focus(to: "#reader-mobile-more") |> JS.push("open_share_modal")}
-            popovertarget="reader-mobile-menu"
-            popovertargetaction="hide"
-            class="reader-mobile-menu-action"
-          >
-            <.icon name="hero-share" class="h-5 w-5" /> Share
-          </button>
-          <button
-            :if={@current_user}
-            id="reader-mobile-follow"
-            type="button"
-            phx-click={if(@following_graph?, do: "unfollow_graph", else: "follow_graph")}
-            aria-pressed={to_string(@following_graph?)}
-            class="reader-mobile-menu-action"
-          >
-            <.icon name="hero-bell" class="h-5 w-5" />
-            {if(@following_graph?, do: "Turn off grid updates", else: "Get grid updates")}
-          </button>
-          <.link
-            :if={!@current_user}
-            id="reader-mobile-follow-login"
-            navigate={~p"/users/log_in"}
-            class="reader-mobile-menu-action"
-          >
-            <.icon name="hero-bell" class="h-5 w-5" /> Sign in for grid updates
-          </.link>
-        </div>
-      </div>
-    </section>
     """
   end
 end

@@ -15,33 +15,6 @@ defmodule DialecticWeb.DocumentMenuComp do
     ~H"""
     <div id={"document-menu-actions-#{@id}"} class={root_classes(@compact)}>
       <button
-        id={"document-menu-present-#{@id}"}
-        type="button"
-        phx-click={
-          JS.dispatch("toggle-side-drawer",
-            to: @layout_target,
-            detail: %{force: "close", persist: false}
-          )
-          |> JS.dispatch("toggle-panel",
-            to: @layout_target,
-            detail: %{id: "presentation-drawer"}
-          )
-          |> JS.push("enter_presentation_setup")
-        }
-        disabled={is_nil(@graph_id)}
-        class={[
-          action_button_classes(@compact),
-          "disabled:cursor-not-allowed disabled:opacity-45"
-        ]}
-        data-panel-toggle="presentation-drawer"
-        aria-label="Start presentation setup"
-        title="Present this grid"
-      >
-        <.icon name="hero-presentation-chart-bar" class="h-4 w-4" />
-        <span class={action_label_classes(@compact)}>Present</span>
-      </button>
-
-      <button
         id={"document-menu-settings-#{@id}"}
         type="button"
         phx-click={
@@ -52,10 +25,12 @@ defmodule DialecticWeb.DocumentMenuComp do
         }
         class={action_button_classes(@compact)}
         data-panel-toggle="right-panel"
+        aria-controls="right-panel"
+        aria-expanded="false"
         aria-label="Open grid tools"
         title="Open grid tools"
       >
-        <.icon name="hero-adjustments-horizontal" class="h-4 w-4" />
+        <.icon name="hero-wrench-screwdriver" class="h-4 w-4" />
         <span class={action_label_classes(@compact)}>Tools</span>
       </button>
 
@@ -70,19 +45,19 @@ defmodule DialecticWeb.DocumentMenuComp do
 
   defp root_classes(true) do
     [
-      "flex max-w-full items-center gap-0.5 sm:inline-flex sm:flex-wrap sm:justify-start"
+      "flex max-w-full flex-nowrap items-center gap-0.5"
     ]
   end
 
   defp root_classes(false) do
     [
-      "flex max-w-full items-center gap-1 sm:inline-flex sm:flex-wrap sm:justify-start"
+      "flex max-w-full flex-nowrap items-center gap-1"
     ]
   end
 
   defp action_button_classes(true) do
     [
-      "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-transparent bg-slate-50 text-xs font-semibold text-slate-600 transition duration-150 sm:h-7 sm:w-7 sm:bg-transparent",
+      "inline-flex h-9 w-9 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-600 transition duration-150 md:w-20",
       "hover:bg-slate-100 hover:text-slate-950"
     ]
   end
@@ -94,6 +69,6 @@ defmodule DialecticWeb.DocumentMenuComp do
     ]
   end
 
-  defp action_label_classes(true), do: "hidden"
+  defp action_label_classes(true), do: "hidden md:inline"
   defp action_label_classes(false), do: "hidden sm:inline"
 end

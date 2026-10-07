@@ -22,6 +22,18 @@
 
     <.login_required_modal id="reader-login-modal" show={@show_login_modal} />
 
+    <DialecticWeb.WorkspaceBarComp.workspace_header
+      mode={:reader}
+      graph_struct={@graph_struct}
+      node_id={@selected_node_id}
+      nav_params={reader_nav_params(@nav_params, @path_focus_ids)}
+      layout_target="#outline-layout"
+      current_user={@current_user}
+      following_graph?={@following_graph?}
+      highlights_count={length(@visible_highlights)}
+      return_context={@learning_return}
+    />
+
     <div id="reader-new-thoughts-status" aria-live="polite" aria-atomic="true" class="shrink-0">
       <button
         :if={@new_thought_ids != []}
@@ -38,70 +50,6 @@
       </button>
     </div>
 
-    <DialecticWeb.WorkspaceBarComp.workspace_header
-      id="reader-header"
-      heading_id="reader-heading"
-      title_id="reader-title"
-      title={@graph_struct.title}
-      menu_id="reader-top-menu"
-      follow_id_prefix="reader"
-      current_user={@current_user}
-      following_graph?={@following_graph?}
-      return_context={@learning_return}
-      menu_class={["hidden sm:flex"]}
-    >
-      <:navigation>
-        <DialecticWeb.WorkspaceBarComp.workspace_bar
-          id="reader-workspace-bar"
-          mode={:reader}
-          graph_struct={@graph_struct}
-          node_id={@selected_node_id}
-          nav_params={reader_nav_params(@nav_params, @path_focus_ids)}
-          show_search
-          search_click="open_search_overlay_click"
-          highlights_click={
-            JS.dispatch("toggle-panel",
-              to: "#outline-layout",
-              detail: %{id: "highlights-drawer"}
-            )
-          }
-          highlights_count={length(@visible_highlights)}
-          highlights_panel_id="highlights-drawer"
-          share_click="open_share_modal"
-          compact
-        />
-      </:navigation>
-      <:tools>
-        <button
-          id="reader-workspace-bar-outline-desktop"
-          type="button"
-          phx-click={JS.dispatch("toggle-mobile-outline", to: "#outline-layout")}
-          aria-label="Show conversation outline"
-          title="Show conversation outline"
-          aria-controls="outline-mobile-nav-panel"
-          aria-expanded="false"
-          class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 lg:hidden"
-        >
-          <.icon name="hero-bars-3-bottom-left" class="h-4 w-4" />
-        </button>
-        <button
-          id="reader-appearance-toggle"
-          type="button"
-          popovertarget="reader-appearance-panel"
-          class="inline-flex h-8 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-medium text-slate-600 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 [anchor-name:--reader-style]"
-        >
-          <span>Style</span>
-          <.icon name="hero-chevron-down" class="h-3.5 w-3.5" aria-hidden="true" />
-        </button>
-
-        <%= if !@can_edit do %>
-          <span class="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700">
-            <.icon name="hero-lock-closed" class="h-3.5 w-3.5" /> Read only
-          </span>
-        <% end %>
-      </:tools>
-    </DialecticWeb.WorkspaceBarComp.workspace_header>
-
     <DialecticWeb.ReaderMobileNavComp.reader_mobile_nav
       reader_style={@reader_style}
       highlights_count={length(@visible_highlights)}
@@ -109,34 +57,6 @@
       following_graph?={@following_graph?}
     />
 
-    <section
-      id="reader-appearance-panel"
-      popover
-      aria-label="Reading style"
-      class="fixed inset-auto right-4 top-20 m-0 w-64 max-w-[calc(100vw-2rem)] rounded-xl border border-slate-200 bg-white p-1.5 text-slate-900 shadow-lg [position-anchor:--reader-style] [top:anchor(bottom,5rem)] [right:anchor(right,1rem)] [margin-top:0.5rem]"
-    >
-      <button
-        :for={
-          {label, description, style} <- [
-            {"Book", "Serif · comfortable spacing", "book"},
-            {"Screen", "Sans · comfortable spacing", "screen"},
-            {"Large print", "Larger sans text · more spacing", "large_print"},
-            {"Compact", "Smaller sans text · tighter spacing", "compact"}
-          ]
-        }
-        id={"reader-style-#{style}"}
-        type="button"
-        aria-pressed={to_string(@reader_style == style)}
-        phx-click="save_reader_appearance"
-        phx-value-style={style}
-        popovertarget="reader-appearance-panel"
-        popovertargetaction="hide"
-        class="block w-full rounded-lg px-3 py-2 text-left hover:bg-slate-50 aria-pressed:bg-teal-50 aria-pressed:text-teal-900 focus-visible:outline-2 focus-visible:outline-teal-700"
-      >
-        <span class="block text-sm font-semibold">{label}</span>
-        <span class="block text-xs leading-5 text-slate-600">{description}</span>
-      </button>
-    </section>
     <p id="reader-appearance-status" role="status" class="sr-only">
       {@reader_appearance_status}
     </p>
@@ -538,7 +458,7 @@
                             "Generated using the #{response_level_label(reading_response_level)} answer level"
                           }
                         >
-                          <.icon name="hero-adjustments-horizontal" class="h-3 w-3" />
+                          <.icon name="hero-square-3-stack-3d" class="h-3 w-3" />
                           {response_level_label(reading_response_level)} level
                         </span>
                       </div>
@@ -924,6 +844,37 @@
           </div>
         <% end %>
       </section>
+
+      <DialecticWeb.WorkspaceBarComp.tools_drawer
+        id="right-panel"
+        layout_target="#outline-layout"
+        mode={:reader}
+      >
+        <.live_component
+          module={DialecticWeb.RightPanelComp}
+          id="right-panel-comp"
+          mode={:reader}
+          layout_target="#outline-layout"
+          graph_id={@graph_id}
+          graph_struct={@graph_struct}
+          node={@node}
+          current_user={@current_user}
+          reader_style={@reader_style}
+          prompt_mode={@graph_struct.prompt_mode || "university"}
+          following_graph?={@following_graph?}
+          token={@token}
+          graph_tools_paths={
+            Map.new(["presentation", "configure", "workspace"], fn section ->
+              {section,
+               graph_editor_path(
+                 @graph_struct,
+                 @selected_node_id,
+                 Keyword.put(reader_nav_params(@nav_params, @path_focus_ids), :tools, section)
+               )}
+            end)
+          }
+        />
+      </DialecticWeb.WorkspaceBarComp.tools_drawer>
 
       <div
         id="highlights-drawer"

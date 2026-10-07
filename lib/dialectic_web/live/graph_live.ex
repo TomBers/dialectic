@@ -135,6 +135,13 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_params(params, _uri, socket) do
+    socket =
+      if params["tools"] in ["presentation", "configure", "workspace"] do
+        push_event(socket, "open_grid_tool", %{section: params["tools"]})
+      else
+        socket
+      end
+
     {:noreply,
      socket
      |> DialecticWeb.LearningNavigation.assign_return(params)
