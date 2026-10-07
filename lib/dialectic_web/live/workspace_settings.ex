@@ -2,6 +2,7 @@ defmodule DialecticWeb.WorkspaceSettings do
   import Phoenix.Component, only: [assign: 2]
   import Phoenix.LiveView, only: [put_flash: 3, push_event: 3]
 
+  alias Dialectic.Accounts.Graph
   alias Dialectic.DbActions.Graphs
   alias Dialectic.Responses.ModeServer
 
@@ -24,14 +25,15 @@ defmodule DialecticWeb.WorkspaceSettings do
 
       true ->
         mode_str = Atom.to_string(normalized)
-        graph = Graphs.get_graph_by_title(socket.assigns.graph_id)
 
-        case graph
-             |> Dialectic.Accounts.Graph.changeset(%{prompt_mode: mode_str})
-             |> Dialectic.Repo.update() do
-          {:ok, updated} ->
-            :ok = ModeServer.set_mode(socket.assigns.graph_id, normalized)
-            assign(socket, prompt_mode: mode_str, graph_struct: updated)
+        with %Graph{} = graph <- Graphs.get_graph_by_title(socket.assigns.graph_id),
+             {:ok, updated} <-
+               graph |> Graph.changeset(%{prompt_mode: mode_str}) |> Dialectic.Repo.update() do
+          :ok = ModeServer.set_mode(socket.assigns.graph_id, normalized)
+          assign(socket, prompt_mode: mode_str, graph_struct: updated)
+        else
+          nil ->
+            put_flash(socket, :error, "This grid is no longer available.")
 
           {:error, _} ->
             put_flash(socket, :error, "Could not update the answer level. Please try again.")
@@ -53,8 +55,11 @@ defmodule DialecticWeb.WorkspaceSettings do
           params: %{setting: "visibility", visibility: visibility}
         })
 
-      {:error, _} ->
+      {:error, :forbidden} ->
         put_flash(socket, :error, "Only the grid owner can change access settings.")
+
+      {:error, _} ->
+        put_flash(socket, :error, "Could not update visibility. Please try again.")
     end
   end
 
