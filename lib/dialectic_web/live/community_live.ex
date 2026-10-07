@@ -224,24 +224,6 @@ defmodule DialecticWeb.CommunityLive do
                   See what others are exploring in the AI workshop. Share a grid and build on each other’s ideas.
                 </p>
               </div>
-              <div class="flex flex-wrap items-center gap-2">
-                <.link
-                  :if={@current_user}
-                  id="community-search-my-learning"
-                  navigate={~p"/my/learning?#{%{q: @search_term}}"}
-                  class="inline-flex min-h-11 items-center gap-2 rounded-md px-3 text-sm font-semibold text-slate-600 hover:bg-white hover:text-teal-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"
-                ><.icon name="hero-bookmark-square" class="h-4 w-4" />My Learning</.link>
-                <.link
-                  id="community-create-grid"
-                  navigate={~p"/?focus=grid#start-here"}
-                  class="inline-flex shrink-0 min-h-11 items-center justify-center gap-2 rounded-md bg-teal-800 px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-800"
-                >
-                  <span>Create public grid</span><.icon
-                    name="hero-arrow-right"
-                    class="h-4 w-4"
-                  />
-                </.link>
-              </div>
             </div>
           </header>
 
