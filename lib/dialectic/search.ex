@@ -33,7 +33,9 @@ defmodule Dialectic.Search do
   end
 
   def matching_graph_titles(query) do
-    match = query |> normalize_query() |> Query.terms() |> match_expression()
+    query = normalize_query(query)
+    terms = if String.length(query) < 2, do: [], else: Query.terms(query)
+    match = match_expression(terms)
     from(document in Document, where: ^match, select: document.graph_title)
   end
 

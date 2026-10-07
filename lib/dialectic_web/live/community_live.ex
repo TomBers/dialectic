@@ -454,26 +454,29 @@ defmodule DialecticWeb.CommunityLive do
                 class="mb-4"
               />
               <div
+                :if={@total_count == 0}
+                id="community-empty-results"
+                class="rounded-lg border border-stone-300 bg-white px-6 py-12 text-center"
+              >
+                <.icon name="hero-magnifying-glass" class="mx-auto h-7 w-7 text-stone-400" />
+                <p class="mt-3 font-semibold text-slate-800">No grids match these filters.</p>
+                <p class="mt-1 text-sm text-slate-500">
+                  Try another question or browse all community grids.
+                </p>
+                <.link
+                  id="community-empty-reset"
+                  href={~p"/community?category=all"}
+                  class="mt-4 inline-flex text-sm font-semibold text-teal-800 underline underline-offset-4"
+                >Browse all grids</.link>
+              </div>
+              <div
                 id="community-grid-list"
                 phx-update="stream"
-                class="divide-y divide-stone-200 overflow-hidden rounded-lg border border-stone-300 bg-white"
+                class={[
+                  "divide-y divide-stone-200 overflow-hidden rounded-lg border border-stone-300 bg-white",
+                  @total_count == 0 && "hidden"
+                ]}
               >
-                <div
-                  :if={@total_count == 0}
-                  id="community-empty-results"
-                  class="px-6 py-12 text-center"
-                >
-                  <.icon name="hero-magnifying-glass" class="mx-auto h-7 w-7 text-stone-400" />
-                  <p class="mt-3 font-semibold text-slate-800">No grids match these filters.</p>
-                  <p class="mt-1 text-sm text-slate-500">
-                    Try another question or browse all community grids.
-                  </p>
-                  <.link
-                    id="community-empty-reset"
-                    href={~p"/community?category=all"}
-                    class="mt-4 inline-flex text-sm font-semibold text-teal-800 underline underline-offset-4"
-                  >Browse all grids</.link>
-                </div>
                 <%= for {id, item} <- @streams.graphs do %>
                   <.community_grid_row
                     id={id}
@@ -607,7 +610,11 @@ defmodule DialecticWeb.CommunityLive do
 
   defp pagination_numbers(assigns) do
     ~H"""
-    <div class={["grow shrink-0 flex-nowrap items-center justify-between gap-1", @class]}>
+    <div class={[
+      "grow shrink-0 flex-nowrap items-center gap-1",
+      if(length(@pages) <= 5, do: "justify-center", else: "justify-between"),
+      @class
+    ]}>
       <%= for {item, index} <- Enum.with_index(@pages) do %>
         <%= if item == :ellipsis do %>
           <span

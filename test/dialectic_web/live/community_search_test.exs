@@ -21,6 +21,7 @@ defmodule DialecticWeb.CommunitySearchTest do
     |> render_change()
 
     assert has_element?(view, "#community-grid-list article", "Free will")
+    refute has_element?(view, "#community-empty-results")
     assert has_element?(view, "#community-next-page")
     assert has_element?(view, "#community-previous-page[disabled]")
 
@@ -32,9 +33,11 @@ defmodule DialecticWeb.CommunitySearchTest do
 
     view |> form("#community-search-form", %{"search" => "nonexistent topic"}) |> render_change()
     assert has_element?(view, "#community-empty-results")
+    refute has_element?(view, "#community-grid-list article")
     refute has_element?(view, "#community-pagination")
 
     view |> form("#community-search-form", %{"search" => "free will"}) |> render_change()
+    refute has_element?(view, "#community-empty-results")
     assert has_element?(view, "#community-next-page")
     assert has_element?(view, "#community-previous-page[disabled]")
   end
