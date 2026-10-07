@@ -466,6 +466,19 @@
         @apply ml-auto flex shrink-0 items-center justify-end gap-1.5 whitespace-nowrap;
     }
 
+    .workspace-menu-group {
+        @apply flex shrink-0 items-center gap-1.5;
+    }
+
+    .workspace-menu-group::before {
+        content: "";
+        width: 1px;
+        height: 1.25rem;
+        margin-inline: 0.25rem;
+        flex-shrink: 0;
+        background: #cbd5e1;
+    }
+
     .workspace-menu :is(a, button) {
         min-height: 2.25rem;
         min-width: 2.25rem;

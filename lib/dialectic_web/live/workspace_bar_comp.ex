@@ -77,101 +77,118 @@ defmodule DialecticWeb.WorkspaceBarComp do
           compact
         />
         <div class="workspace-context-actions">
-          <button
-            id={@prefix <> "-workspace-bar-level"}
-            type="button"
-            phx-click={@answer_level_click}
-            data-panel-toggle={if(@mode == :graph, do: "right-panel")}
-            data-panel-section={if(@mode == :graph, do: "configure")}
-            aria-controls={if(@mode == :graph, do: "right-panel")}
-            aria-expanded={if(@mode == :graph, do: "false")}
-            aria-label={"Explanation level: #{@answer_level_label}. Change explanation level"}
-            title={"Explanation level: #{@answer_level_label}. Change explanation level"}
-            class="inline-flex h-7 w-8 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700 transition hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 md:w-[6.75rem]"
+          <div
+            id={@prefix <> "-settings-actions"}
+            class="workspace-menu-group"
+            role="group"
+            aria-label="Answer and access settings"
           >
-            <.icon name="hero-square-3-stack-3d" class="h-3.5 w-3.5" />
-            <span class="hidden md:inline">{@answer_level_label}</span>
-          </button>
-          <button
-            id={@prefix <> "-access-settings"}
-            type="button"
-            phx-click={@visibility_click}
-            data-panel-toggle={
-              if(@mode == :graph && @current_user && @graph_struct.user_id == @current_user.id,
-                do: "right-panel"
-              )
-            }
-            data-panel-section={
-              if(@mode == :graph && @current_user && @graph_struct.user_id == @current_user.id,
-                do: "workspace"
-              )
-            }
-            aria-label={"Grid visibility: #{if(@graph_struct.is_public, do: "Public", else: "Private")}"}
-            title={"Access controls: #{if(@graph_struct.is_public, do: "Public", else: "Private")} · #{if(@graph_struct.is_locked, do: "Protected", else: "Editable")}"}
-            class="inline-flex h-7 w-8 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white text-xs font-medium text-slate-600 transition hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600 md:w-[5.5rem]"
-          >
-            <.icon
-              name={if(@graph_struct.is_public, do: "hero-globe-alt", else: "hero-lock-closed")}
-              class="h-3.5 w-3.5"
-            />
-            <span class="hidden md:inline">{if(@graph_struct.is_public, do: "Public", else: "Private")}</span>
-          </button>
-          <.live_component
-            module={DialecticWeb.DocumentMenuComp}
-            id="document-menu"
-            can_edit={!@graph_struct.is_locked}
-            layout_target={@layout_target}
-            compact={true}
-          />
-          <.share_button
-            id={@prefix <> "-workspace-bar-share"}
-            mode={@mode}
-            click="open_share_modal"
-            compact
-          />
-          <%= if @current_user do %>
             <button
-              id={"#{@prefix}-follow-grid-button"}
+              id={@prefix <> "-workspace-bar-level"}
               type="button"
-              phx-click={if(@following_graph?, do: "unfollow_graph", else: "follow_graph")}
-              aria-label={
-                if(@following_graph?,
-                  do: "Stop receiving grid updates in Activity",
-                  else: "Get notified about grid changes in Activity"
+              phx-click={@answer_level_click}
+              data-panel-toggle={if(@mode == :graph, do: "right-panel")}
+              data-panel-section={if(@mode == :graph, do: "configure")}
+              aria-controls={if(@mode == :graph, do: "right-panel")}
+              aria-expanded={if(@mode == :graph, do: "false")}
+              aria-label={"Explanation level: #{@answer_level_label}. Change explanation level"}
+              title={"Explanation level: #{@answer_level_label}. Change explanation level"}
+              class="inline-flex h-7 w-8 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700 transition hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 md:w-[6.75rem]"
+            >
+              <.icon name="hero-square-3-stack-3d" class="h-3.5 w-3.5" />
+              <span class="hidden md:inline">{@answer_level_label}</span>
+            </button>
+            <button
+              id={@prefix <> "-access-settings"}
+              type="button"
+              phx-click={@visibility_click}
+              data-panel-toggle={
+                if(@mode == :graph && @current_user && @graph_struct.user_id == @current_user.id,
+                  do: "right-panel"
                 )
               }
-              aria-pressed={to_string(@following_graph?)}
-              title={
-                if(@following_graph?,
-                  do: "Updates from this grid appear in Activity. Click to turn them off.",
-                  else: "Get notified when this grid changes and see updates in Activity."
+              data-panel-section={
+                if(@mode == :graph && @current_user && @graph_struct.user_id == @current_user.id,
+                  do: "workspace"
                 )
               }
-              class={[
-                "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-slate-600 transition duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 sm:h-7 sm:w-7",
-                if(@following_graph?,
-                  do: "border-sky-200 bg-sky-100 text-sky-700 hover:bg-sky-200",
-                  else:
-                    "border-transparent bg-slate-50 hover:bg-slate-100 hover:text-slate-950 sm:bg-transparent"
-                )
-              ]}
+              aria-label={"Grid visibility: #{if(@graph_struct.is_public, do: "Public", else: "Private")}"}
+              title={"Access controls: #{if(@graph_struct.is_public, do: "Public", else: "Private")} · #{if(@graph_struct.is_locked, do: "Protected", else: "Editable")}"}
+              class="inline-flex h-7 w-8 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white text-xs font-medium text-slate-600 transition hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600 md:w-[5.5rem]"
             >
               <.icon
-                name={if(@following_graph?, do: "hero-bell-solid", else: "hero-bell-alert")}
-                class="h-4 w-4"
+                name={if(@graph_struct.is_public, do: "hero-globe-alt", else: "hero-lock-closed")}
+                class="h-3.5 w-3.5"
               />
+              <span class="hidden md:inline">{if(@graph_struct.is_public,
+                do: "Public",
+                else: "Private"
+              )}</span>
             </button>
-          <% else %>
-            <.link
-              navigate={~p"/users/log_in"}
-              id={"#{@prefix}-follow-grid-login-link"}
-              aria-label="Sign in to get notified about grid changes in Activity"
-              title="Sign in to get notified when this grid changes and see updates in Activity."
-              class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-transparent bg-slate-50 text-slate-600 transition duration-150 hover:bg-slate-100 hover:text-slate-950 sm:h-7 sm:w-7 sm:bg-transparent"
-            >
-              <.icon name="hero-bell-alert" class="h-4 w-4" />
-            </.link>
-          <% end %>
+            <.live_component
+              module={DialecticWeb.DocumentMenuComp}
+              id="document-menu"
+              can_edit={!@graph_struct.is_locked}
+              layout_target={@layout_target}
+              compact={true}
+            />
+          </div>
+          <div
+            id={@prefix <> "-sharing-actions"}
+            class="workspace-menu-group"
+            role="group"
+            aria-label="Sharing and updates"
+          >
+            <.share_button
+              id={@prefix <> "-workspace-bar-share"}
+              mode={@mode}
+              click="open_share_modal"
+              compact
+            />
+            <%= if @current_user do %>
+              <button
+                id={"#{@prefix}-follow-grid-button"}
+                type="button"
+                phx-click={if(@following_graph?, do: "unfollow_graph", else: "follow_graph")}
+                aria-label={
+                  if(@following_graph?,
+                    do: "Stop receiving grid updates in Activity",
+                    else: "Get notified about grid changes in Activity"
+                  )
+                }
+                aria-pressed={to_string(@following_graph?)}
+                title={
+                  if(@following_graph?,
+                    do: "Updates from this grid appear in Activity. Click to turn them off.",
+                    else: "Get notified when this grid changes and see updates in Activity."
+                  )
+                }
+                class={[
+                  "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-slate-600 transition duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 sm:h-7 sm:w-7",
+                  if(@following_graph?,
+                    do: "border-sky-200 bg-sky-100 text-sky-700 hover:bg-sky-200",
+                    else:
+                      "border-transparent bg-slate-50 hover:bg-slate-100 hover:text-slate-950 sm:bg-transparent"
+                  )
+                ]}
+              >
+                <.icon
+                  name={if(@following_graph?, do: "hero-bell-solid", else: "hero-bell-alert")}
+                  class="h-4 w-4"
+                />
+              </button>
+            <% else %>
+              <.link
+                navigate={~p"/users/log_in"}
+                id={"#{@prefix}-follow-grid-login-link"}
+                aria-label="Sign in to get notified about grid changes in Activity"
+                title="Sign in to get notified when this grid changes and see updates in Activity."
+                class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-transparent bg-slate-50 text-slate-600 transition duration-150 hover:bg-slate-100 hover:text-slate-950 sm:h-7 sm:w-7 sm:bg-transparent"
+              >
+                <.icon name="hero-bell-alert" class="h-4 w-4" />
+              </.link>
+            <% end %>
+          </div>
         </div>
       </div>
     </header>
