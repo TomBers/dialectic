@@ -33,6 +33,7 @@ export function createDrawerNavigation(root, onClose) {
       const sectionHeading = focusSection === "reading-style" ? "#reading-style-heading" :
         focusSection ? `#details-${CSS.escape(focusSection)} > summary` : null;
       const destination = (sectionHeading && panel.querySelector(sectionHeading)) ||
+        (focusSection === "configure" && panel.querySelector("#tools-answer-level")) ||
         panel.querySelector('[data-panel-close], button[aria-label^="Close"]') || panel;
       if (!destination.hasAttribute("tabindex") && destination === panel) destination.tabIndex = -1;
       destination.focus({ preventScroll: true });

@@ -181,38 +181,7 @@ defmodule DialecticWeb.OutlineGraphLive do
   end
 
   def handle_event("save_reader_appearance", %{"user" => params}, socket) do
-    {style, params} = apply_reading_style(params)
-    params = Map.take(params, ["reading_font", "reading_density"])
-    user = socket.assigns.current_user || struct(User, socket.assigns.appearance_preferences)
-
-    result =
-      if socket.assigns.current_user do
-        Accounts.update_user_appearance(user, params)
-      else
-        user |> Accounts.change_user_appearance(params) |> Ecto.Changeset.apply_action(:update)
-      end
-
-    case result do
-      {:ok, updated} ->
-        socket =
-          if socket.assigns.current_user, do: assign(socket, :current_user, updated), else: socket
-
-        {:noreply,
-         assign(socket,
-           reader_style: style,
-           reader_appearance_form: to_form(Accounts.change_user_appearance(updated)),
-           appearance_preferences: User.appearance_preferences(updated),
-           reader_appearance_status:
-             if(socket.assigns.current_user,
-               do: "Reading style saved for all grids.",
-               else: "Reading style applied for this visit."
-             )
-         )}
-
-      {:error, changeset} ->
-        {:noreply,
-         assign(socket, reader_style: style, reader_appearance_form: to_form(changeset))}
-    end
+    {:noreply, DialecticWeb.ReadingStyles.save_appearance(socket, params)}
   end
 
   @impl true
@@ -490,6 +459,22 @@ defmodule DialecticWeb.OutlineGraphLive do
   end
 
   @impl true
+  def handle_event("set_prompt_mode", %{"prompt_mode" => mode}, socket) do
+    {:noreply, DialecticWeb.WorkspaceSettings.set_prompt_mode(socket, mode)}
+  end
+
+  def handle_event("set_graph_visibility", %{"visibility" => visibility}, socket) do
+    {:noreply, DialecticWeb.WorkspaceSettings.set_visibility(socket, visibility)}
+  end
+
+  def handle_event("toggle_lock_graph", _params, socket) do
+    {:noreply, DialecticWeb.WorkspaceSettings.toggle_access(socket, :editing)}
+  end
+
+  def handle_event("toggle_public_graph", _params, socket) do
+    {:noreply, DialecticWeb.WorkspaceSettings.toggle_access(socket, :visibility)}
+  end
+
   def handle_event("show_login_required", _params, socket) do
     {:noreply, assign(socket, show_login_modal: true)}
   end

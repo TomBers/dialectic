@@ -207,14 +207,14 @@ defmodule DialecticWeb.GraphLive do
     {:noreply, GridChat.open(socket)}
   end
 
-  def handle_event("open_prompt_settings", _params, socket) do
-    send_update(
-      DialecticWeb.RightPanelComp,
-      id: "right-panel-comp",
-      open_section: "configure"
-    )
+  def handle_event("save_reader_appearance", %{"style" => style}, socket)
+      when style in ["book", "screen", "large_print", "compact"] do
+    {:noreply, DialecticWeb.ReadingStyles.save_appearance(socket, %{"reading_style" => style})}
+  end
 
-    {:noreply, socket}
+  def handle_event("open_prompt_settings", _params, socket) do
+    send_update(DialecticWeb.RightPanelComp, id: "right-panel-comp", open_section: "answer-level")
+    {:noreply, push_event(socket, "open_answer_level", %{})}
   end
 
   def handle_event("open_access_settings", _params, socket) do
@@ -227,43 +227,11 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_event("set_prompt_mode", %{"prompt_mode" => mode}, socket) do
-    graph_id = socket.assigns.graph_id
+    {:noreply, DialecticWeb.WorkspaceSettings.set_prompt_mode(socket, mode)}
+  end
 
-    normalized =
-      case String.downcase(to_string(mode)) do
-        "expert" -> :expert
-        "high_school" -> :high_school
-        "simple" -> :high_school
-        _ -> :university
-      end
-
-    mode_str = Atom.to_string(normalized)
-
-    if normalized in [:university, :expert] and is_nil(socket.assigns[:current_user]) do
-      {:noreply, assign(socket, show_login_modal: true)}
-    else
-      if is_binary(graph_id) do
-        _ = Dialectic.Responses.ModeServer.set_mode(graph_id, normalized)
-
-        case Dialectic.DbActions.Graphs.get_graph_by_title(graph_id) do
-          nil ->
-            :noop
-
-          graph ->
-            graph
-            |> Dialectic.Accounts.Graph.changeset(%{prompt_mode: mode_str})
-            |> Dialectic.Repo.update()
-        end
-      end
-
-      send_update(
-        DialecticWeb.RightPanelComp,
-        id: "right-panel-comp",
-        prompt_mode: mode_str
-      )
-
-      {:noreply, assign(socket, prompt_mode: mode_str)}
-    end
+  def handle_event("set_graph_visibility", %{"visibility" => visibility}, socket) do
+    {:noreply, DialecticWeb.WorkspaceSettings.set_visibility(socket, visibility)}
   end
 
   def handle_event("set_reader_path", %{"id" => path_endpoint}, socket) do
@@ -3037,6 +3005,8 @@ defmodule DialecticWeb.GraphLive do
       graph_struct: graph_struct,
       graph_id: graph_id,
       appearance_preferences: User.appearance_preferences(socket.assigns[:current_user]),
+      reader_style: DialecticWeb.ReadingStyles.reading_style(socket.assigns[:current_user]),
+      reader_appearance_status: nil,
       following_graph?: following_graph?(socket.assigns[:current_user], graph_struct),
       f_graph: GraphManager.format_graph_json(graph_id),
       node: node,

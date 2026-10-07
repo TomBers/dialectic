@@ -46,9 +46,12 @@ defmodule DialecticWeb.GraphAccessTest do
     assert controls.(reader, "reader") == controls.(grid, "graph")
     assert has_element?(reader, "#reader-workspace-bar-reader[aria-current='page']")
     assert has_element?(grid, "#graph-workspace-bar-graph[aria-current='page']")
-    assert has_element?(grid, "#grid-tools-reading-style[href*='tools=reading-style']")
+    refute has_element?(grid, "#grid-tools-reading-style")
+    assert has_element?(grid, "#details-reading-style #reader-style-screen")
     assert has_element?(reader, "#reader-style-book", "Serif")
-    assert has_element?(reader, "#right-panel.fixed")
+    assert has_element?(reader, "#right-panel.fixed.top-10")
+    assert has_element?(reader, "#right-panel .tools-drawer-header #grid-tools-close")
+    assert has_element?(reader, "#right-panel .tools-drawer-header + .tools-drawer-content")
     assert has_element?(reader, "#right-panel[class~='lg:absolute']")
     assert has_element?(grid, "#right-panel.absolute")
     refute has_element?(grid, "#right-panel.fixed")
@@ -97,19 +100,25 @@ defmodule DialecticWeb.GraphAccessTest do
     assert has_element?(view, "#graph-header #graph-access-settings", "Public")
     refute has_element?(view, "#details-workspace[open]")
 
-    view |> element("#graph-access-settings") |> render_click()
-    assert has_element?(view, "#details-workspace[open]")
+    assert has_element?(
+             view,
+             "#graph-access-settings[popovertarget='graph-access-settings-options']"
+           )
 
-    view |> element("#toggle_public_graph") |> render_click()
+    refute has_element?(view, "#graph-access-settings-options #toggle_lock_graph")
+
+    view |> element("#graph-access-settings-private") |> render_click()
     refute Repo.reload!(graph).is_public
     assert has_element?(view, "#graph-access-settings", "Private")
     assert has_element?(view, "#graph-access-settings .hero-lock-closed")
 
-    refute has_element?(view, "#toggle_public_graph[checked]")
+    assert has_element?(view, "#graph-access-settings-private[aria-pressed='true']")
+    view |> element("#graph-access-settings-private") |> render_click()
+    refute Repo.reload!(graph).is_public
 
-    view |> element("#toggle_public_graph") |> render_click()
+    view |> element("#graph-access-settings-public") |> render_click()
     assert Repo.reload!(graph).is_public
-    assert has_element?(view, "#toggle_public_graph[checked]")
+    assert has_element?(view, "#graph-access-settings-public[aria-pressed='true']")
 
     view |> element("#toggle_lock_graph") |> render_click()
     assert Repo.reload!(graph).is_locked
@@ -120,28 +129,73 @@ defmodule DialecticWeb.GraphAccessTest do
     refute Repo.reload!(graph).is_locked
 
     assert has_element?(view, "#toggle_lock_graph[checked]")
+
+    {:ok, reader, _html} = live(log_in_user(conn, owner), ~p"/g/#{graph.slug}")
+    reader |> element("#reader-workspace-bar-level-high_school") |> render_click()
+    assert has_element?(reader, "#reader-workspace-bar-level", "Simple")
+    assert Repo.reload!(graph).prompt_mode == "high_school"
+    reader |> element("#reader-access-settings-private") |> render_click()
+    refute Repo.reload!(graph).is_public
+    assert has_element?(reader, "#reader-access-settings", "Private")
+    reader |> element("#toggle_lock_graph") |> render_click()
+    assert Repo.reload!(graph).is_locked
+    assert has_element?(reader, "#right-panel #toggle_lock_graph")
+    refute has_element?(reader, "#reader-access-settings-options #toggle_lock_graph")
+    refute has_element?(reader, "#reader-grid-tools-configure")
+    refute has_element?(reader, "#reader-grid-tools-workspace")
   end
 
-  test "access and explanation sections open within grid tools", %{
+  test "tools separates editing from header settings", %{
     conn: conn,
     owner: owner,
     graph: graph
   } do
-    {:ok, view, _html} = live(log_in_user(conn, owner), ~p"/g/#{graph.slug}/graph")
+    for path <- [~p"/g/#{graph.slug}/graph", ~p"/g/#{graph.slug}"] do
+      {:ok, view, _html} = live(log_in_user(conn, owner), path)
+      refute has_element?(view, "#grid-tools-status")
+      refute has_element?(view, "#details-configure")
+      assert has_element?(view, "#tools-mobile-actions[class~='sm:hidden'] #tools-visibility")
+      assert has_element?(view, "#tools-mobile-actions #tools-answer-level")
 
-    view |> element("#details-workspace > summary") |> render_click()
-    assert has_element?(view, "#details-workspace[open]")
-    refute has_element?(view, "#details-configure[open]")
+      assert has_element?(
+               view,
+               "#tools-answer-level[role='group'] #tools-answer-level-high_school"
+             )
 
-    view |> element("#details-workspace > summary") |> render_click()
-    view |> element("#details-configure > summary") |> render_click()
-    assert has_element?(view, "#details-configure[open]")
-    refute has_element?(view, "#details-workspace[open]")
+      assert has_element?(view, "#tools-visibility[role='group'] #tools-visibility-public")
+      refute has_element?(view, "#tools-mobile-actions [popover]")
+      refute has_element?(view, "#tools-mobile-actions [popovertarget]")
+      refute has_element?(view, "#details-answer-level[open]")
+      refute has_element?(view, "#details-visibility[open]")
+      view |> element("#details-answer-level > summary") |> render_click()
+      assert has_element?(view, "#details-answer-level[open]")
+      view |> element("#details-answer-level > summary") |> render_click()
+      refute has_element?(view, "#details-answer-level[open]")
+      view |> element("#details-visibility > summary") |> render_click()
+      assert has_element?(view, "#details-visibility[open]")
+      view |> element("#details-visibility > summary") |> render_click()
 
-    view |> element("#details-configure > summary") |> render_click()
-    view |> element("#details-workspace > summary") |> render_click()
-    assert has_element?(view, "#details-workspace[open]")
-    refute has_element?(view, "#details-configure[open]")
+      if has_element?(view, "#graph-layout") do
+        assert has_element?(
+                 view,
+                 "#details-activity ~ #grid-tools-presentation.hidden[class~='md:flex']"
+               )
+      else
+        refute has_element?(view, "#reader-grid-tools-presentation")
+        refute has_element?(view, "#grid-tools-presentation")
+      end
+
+      assert has_element?(view, "#tools-mobile-actions #reader-tools-share")
+      refute has_element?(view, "#details-workspace button")
+      refute has_element?(view, "#details-workspace #toggle_public_graph")
+
+      view |> element("#details-workspace > summary") |> render_click()
+      assert has_element?(view, "#details-workspace[open] #toggle_lock_graph")
+      view |> element("#details-workspace > summary") |> render_click()
+      refute has_element?(view, "#details-workspace[open]")
+      view |> element("#details-activity > summary") |> render_click()
+      assert has_element?(view, "#details-activity[open]")
+    end
   end
 
   test "forged access-setting events cannot change another user's grid", %{
@@ -150,17 +204,23 @@ defmodule DialecticWeb.GraphAccessTest do
   } do
     for user <- [nil, user_fixture()] do
       visitor_conn = if user, do: log_in_user(conn, user), else: conn
-      {:ok, view, _html} = live(visitor_conn, ~p"/g/#{graph.slug}/graph")
-      assert has_element?(view, "#graph-layout")
-      assert has_element?(view, "#graph-access-settings[aria-label='Grid visibility: Public']")
-      refute has_element?(view, "#toggle_public_graph")
-      refute has_element?(view, "#toggle_lock_graph")
 
-      for event <- ["toggle_lock_graph", "toggle_public_graph"] do
-        render_click(view, event)
+      for path <- [~p"/g/#{graph.slug}/graph", ~p"/g/#{graph.slug}"] do
+        {:ok, view, _html} = live(visitor_conn, path)
+        refute has_element?(view, "#graph-access-settings-private")
+        refute has_element?(view, "#reader-access-settings-private")
+        render_click(view, "set_graph_visibility", %{"visibility" => "private"})
         assert has_element?(view, "#flash-error", "Only the grid owner")
         assert Repo.reload!(graph).is_public
-        refute Repo.reload!(graph).is_locked
+        refute has_element?(view, "#toggle_public_graph")
+        refute has_element?(view, "#toggle_lock_graph")
+
+        for event <- ["toggle_lock_graph", "toggle_public_graph"] do
+          render_click(view, event)
+          assert has_element?(view, "#flash-error", "Only the grid owner")
+          assert Repo.reload!(graph).is_public
+          refute Repo.reload!(graph).is_locked
+        end
       end
     end
   end

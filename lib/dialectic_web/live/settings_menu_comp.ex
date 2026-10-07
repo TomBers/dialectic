@@ -21,8 +21,9 @@ defmodule DialecticWeb.SettingsMenuComp do
         search_results={@search_results}
         highlights={@highlights}
         prompt_mode={@prompt_mode}
+        following_graph?={@following_graph?}
         token={@token}
-        reader_tools_path={@reader_tools_path}
+        reader_style={@reader_style}
       />
     </div>
     """

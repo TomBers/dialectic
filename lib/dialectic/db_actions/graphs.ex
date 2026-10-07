@@ -595,13 +595,19 @@ defmodule Dialectic.DbActions.Graphs do
     update_access_setting(graph, user, :is_public)
   end
 
-  defp update_access_setting(graph, user, field) do
+  def set_graph_public(graph, user, public?) when is_boolean(public?) do
+    update_access_setting(graph, user, :is_public, public?)
+  end
+
+  defp update_access_setting(graph, user, field, value \\ :toggle) do
     graph = Repo.get(Graph, graph.title)
 
     if Dialectic.DbActions.Sharing.can_manage?(user, graph) do
+      value = if value == :toggle, do: !Map.fetch!(graph, field), else: value
+
       with {:ok, graph} <- Dialectic.DbActions.Sharing.ensure_share_token(graph),
            {:ok, updated_graph} <-
-             graph |> Graph.changeset(%{field => !Map.fetch!(graph, field)}) |> Repo.update() do
+             graph |> Graph.changeset(%{field => value}) |> Repo.update() do
         Phoenix.PubSub.broadcast(
           Dialectic.PubSub,
           "graph_update:#{graph.title}",

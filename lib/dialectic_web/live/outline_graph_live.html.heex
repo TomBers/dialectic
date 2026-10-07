@@ -5,6 +5,8 @@
     class="reading-appearance flex w-full flex-col overflow-hidden bg-slate-50"
     style="height: calc(100vh - 2.5rem); height: calc(100dvh - 2.5rem);"
     data-graph-id={@graph_id}
+    data-anonymous={to_string(is_nil(@current_user))}
+    data-reading-style={@reader_style}
     data-reading-density={@appearance_preferences.reading_density}
     data-reading-font={@appearance_preferences.reading_font}
     data-graph-view-mode={@appearance_preferences.graph_view_mode}
@@ -863,16 +865,6 @@
           prompt_mode={@graph_struct.prompt_mode || "university"}
           following_graph?={@following_graph?}
           token={@token}
-          graph_tools_paths={
-            Map.new(["presentation", "configure", "workspace"], fn section ->
-              {section,
-               graph_editor_path(
-                 @graph_struct,
-                 @selected_node_id,
-                 Keyword.put(reader_nav_params(@nav_params, @path_focus_ids), :tools, section)
-               )}
-            end)
-          }
         />
       </DialecticWeb.WorkspaceBarComp.tools_drawer>
 
