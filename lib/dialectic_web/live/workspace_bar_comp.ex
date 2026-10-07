@@ -18,18 +18,6 @@ defmodule DialecticWeb.WorkspaceBarComp do
       assigns
       |> assign(:prefix, if(assigns.mode == :reader, do: "reader", else: "graph"))
       |> assign(
-        :answer_level_label,
-        answer_level_label(assigns.prompt_mode || Map.get(assigns.graph_struct, :prompt_mode))
-      )
-      |> assign(:answer_level_click, settings_click(assigns, "configure"))
-      |> assign(
-        :visibility_click,
-        if(assigns.current_user && assigns.graph_struct.user_id == assigns.current_user.id,
-          do: settings_click(assigns, "workspace"),
-          else: "open_share_modal"
-        )
-      )
-      |> assign(
         :return_context,
         assigns.return_context || %{path: "/community", label: "Community"}
       )
@@ -83,48 +71,18 @@ defmodule DialecticWeb.WorkspaceBarComp do
             role="group"
             aria-label="Answer and access settings"
           >
-            <button
+            <.answer_level_dropdown
               id={@prefix <> "-workspace-bar-level"}
-              type="button"
-              phx-click={@answer_level_click}
-              data-panel-toggle={if(@mode == :graph, do: "right-panel")}
-              data-panel-section={if(@mode == :graph, do: "configure")}
-              aria-controls={if(@mode == :graph, do: "right-panel")}
-              aria-expanded={if(@mode == :graph, do: "false")}
-              aria-label={"Explanation level: #{@answer_level_label}. Change explanation level"}
-              title={"Explanation level: #{@answer_level_label}. Change explanation level"}
-              class="inline-flex h-7 w-8 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700 transition hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 md:w-[6.75rem]"
-            >
-              <.icon name="hero-square-3-stack-3d" class="h-3.5 w-3.5" />
-              <span class="hidden md:inline">{@answer_level_label}</span>
-            </button>
-            <button
+              prompt_mode={@prompt_mode || @graph_struct.prompt_mode || "university"}
+              current_user={@current_user}
+              compact
+            />
+            <.visibility_dropdown
               id={@prefix <> "-access-settings"}
-              type="button"
-              phx-click={@visibility_click}
-              data-panel-toggle={
-                if(@mode == :graph && @current_user && @graph_struct.user_id == @current_user.id,
-                  do: "right-panel"
-                )
-              }
-              data-panel-section={
-                if(@mode == :graph && @current_user && @graph_struct.user_id == @current_user.id,
-                  do: "workspace"
-                )
-              }
-              aria-label={"Grid visibility: #{if(@graph_struct.is_public, do: "Public", else: "Private")}"}
-              title={"Access controls: #{if(@graph_struct.is_public, do: "Public", else: "Private")} · #{if(@graph_struct.is_locked, do: "Protected", else: "Editable")}"}
-              class="inline-flex h-7 w-8 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white text-xs font-medium text-slate-600 transition hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600 md:w-[5.5rem]"
-            >
-              <.icon
-                name={if(@graph_struct.is_public, do: "hero-globe-alt", else: "hero-lock-closed")}
-                class="h-3.5 w-3.5"
-              />
-              <span class="hidden md:inline">{if(@graph_struct.is_public,
-                do: "Public",
-                else: "Private"
-              )}</span>
-            </button>
+              graph_struct={@graph_struct}
+              current_user={@current_user}
+              compact
+            />
             <.live_component
               module={DialecticWeb.DocumentMenuComp}
               id="document-menu"
@@ -214,13 +172,8 @@ defmodule DialecticWeb.WorkspaceBarComp do
       ]}
     >
       <div class="p-2">
-        <div class="mb-2 flex items-start justify-between gap-2 px-1">
-          <div>
-            <h2 id="grid-tools-title" class="text-sm font-semibold text-gray-900">Grid tools</h2>
-            <p class="text-[11px] text-gray-500">
-              Settings, presentation, history, export, and translation.
-            </p>
-          </div>
+        <div class="mb-2 flex items-center justify-between gap-2 px-1">
+          <h2 id="grid-tools-title" class="text-sm font-semibold text-gray-900">Grid tools</h2>
           <button
             id="grid-tools-close"
             data-panel-close
@@ -417,6 +370,212 @@ defmodule DialecticWeb.WorkspaceBarComp do
     """
   end
 
+  attr :id, :string, required: true
+  attr :prompt_mode, :string, required: true
+  attr :current_user, :any, required: true
+  attr :compact, :boolean, default: false
+
+  def answer_level_dropdown(assigns) do
+    assigns =
+      assign(
+        assigns,
+        :level,
+        if(assigns.prompt_mode == "simple", do: "high_school", else: assigns.prompt_mode)
+      )
+
+    ~H"""
+    <div id={@id <> "-dropdown"} phx-hook="WorkspaceDropdown" class="workspace-dropdown">
+      <button
+        id={@id}
+        type="button"
+        popovertarget={@id <> "-options"}
+        aria-controls={@id <> "-options"}
+        aria-expanded="false"
+        aria-haspopup="dialog"
+        aria-label={"Explanation level: #{answer_level_label(@level)}. Change explanation level"}
+        title={"Explanation level: #{answer_level_label(@level)}. Change explanation level"}
+        class={dropdown_trigger_classes(@compact, :level)}
+      >
+        <.icon name="hero-square-3-stack-3d" class="h-4 w-4 shrink-0" />
+        <span class={if(@compact, do: "hidden md:inline", else: "flex-1 text-left")}>
+          {if(@compact,
+            do: answer_level_label(@level),
+            else: "Answer level: #{answer_level_label(@level)}"
+          )}
+        </span>
+        <.icon name="hero-chevron-down" class="h-3 w-3 shrink-0" />
+      </button>
+      <div
+        id={@id <> "-options"}
+        popover="auto"
+        tabindex="-1"
+        role="dialog"
+        aria-labelledby={@id <> "-heading"}
+        class="workspace-dropdown-panel"
+      >
+        <h2 id={@id <> "-heading"} class="workspace-dropdown-heading">
+          <span class="workspace-dropdown-heading-icon">
+            <.icon name="hero-square-3-stack-3d" class="h-4 w-4" />
+          </span>
+          Answer level
+        </h2>
+        <button
+          :for={
+            {value, label, description, icon} <- [
+              {"high_school", "Simple", "Plain language, examples, and key ideas.", "hero-bars-2"},
+              {"university", "Expanded", "Defined terminology, context, and sourced evidence.",
+               "hero-bars-3"},
+              {"expert", "In-depth", "Rigorous analysis and competing interpretations.",
+               "hero-bars-4"}
+            ]
+          }
+          id={@id <> "-" <> value}
+          type="button"
+          phx-click="set_prompt_mode"
+          phx-value-prompt_mode={value}
+          data-dropdown-choice
+          aria-pressed={to_string(@level == value)}
+          class="workspace-dropdown-choice"
+        >
+          <span class="workspace-dropdown-option-icon">
+            <.icon name={icon} class="h-4 w-4" />
+          </span>
+          <span class="min-w-0 flex-1">
+            <span class="workspace-dropdown-option-title flex items-center gap-1.5">
+              {label}
+              <.icon
+                :if={is_nil(@current_user) && value != "high_school"}
+                name="hero-lock-closed"
+                class="h-3 w-3"
+              />
+            </span>
+            <span class="mt-1 block text-xs leading-5 text-slate-500">{description}</span>
+          </span>
+          <span class="workspace-dropdown-check">
+            <.icon :if={@level == value} name="hero-check" class="h-4 w-4" />
+          </span>
+        </button>
+        <p class="workspace-dropdown-footer">
+          <.icon name="hero-information-circle" class="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          <span>Applies to new AI answers. Existing answers keep their original level.</span>
+        </p>
+      </div>
+    </div>
+    """
+  end
+
+  attr :id, :string, required: true
+  attr :graph_struct, :map, required: true
+  attr :current_user, :any, required: true
+  attr :compact, :boolean, default: false
+
+  def visibility_dropdown(assigns) do
+    assigns =
+      assign(
+        assigns,
+        :owner?,
+        assigns.current_user && assigns.graph_struct.user_id == assigns.current_user.id
+      )
+
+    ~H"""
+    <div id={@id <> "-dropdown"} phx-hook="WorkspaceDropdown" class="workspace-dropdown">
+      <button
+        id={@id}
+        type="button"
+        popovertarget={@id <> "-options"}
+        aria-controls={@id <> "-options"}
+        aria-expanded="false"
+        aria-haspopup="dialog"
+        aria-label={"Grid visibility: #{if(@graph_struct.is_public, do: "Public", else: "Private")}"}
+        title="View visibility settings"
+        class={dropdown_trigger_classes(@compact, :visibility)}
+      >
+        <.icon
+          name={if(@graph_struct.is_public, do: "hero-globe-alt", else: "hero-lock-closed")}
+          class="h-4 w-4 shrink-0"
+        />
+        <span class={if(@compact, do: "hidden md:inline", else: "flex-1 text-left")}>
+          {if(@graph_struct.is_public, do: "Public", else: "Private")}
+        </span>
+        <.icon name="hero-chevron-down" class="h-3 w-3 shrink-0" />
+      </button>
+      <div
+        id={@id <> "-options"}
+        popover="auto"
+        tabindex="-1"
+        role="dialog"
+        aria-labelledby={@id <> "-heading"}
+        class="workspace-dropdown-panel"
+      >
+        <h2 id={@id <> "-heading"} class="workspace-dropdown-heading">
+          <span class="workspace-dropdown-heading-icon">
+            <.icon
+              name={if(@graph_struct.is_public, do: "hero-globe-alt", else: "hero-lock-closed")}
+              class="h-4 w-4"
+            />
+          </span>
+          Visibility
+        </h2>
+        <%= if @owner? do %>
+          <button
+            :for={
+              {value, label, description} <- [
+                {"public", "Public", "Anyone can find and view this grid."},
+                {"private", "Private",
+                 "Only you, invited collaborators, and people with a shared access link can view it."}
+              ]
+            }
+            id={@id <> "-" <> value}
+            type="button"
+            phx-click="set_graph_visibility"
+            phx-value-visibility={value}
+            data-dropdown-choice
+            aria-pressed={to_string(@graph_struct.is_public == (value == "public"))}
+            class="workspace-dropdown-choice"
+          >
+            <span class="workspace-dropdown-option-icon">
+              <.icon
+                name={if(value == "public", do: "hero-globe-alt", else: "hero-lock-closed")}
+                class="h-4 w-4"
+              />
+            </span>
+            <span class="min-w-0 flex-1">
+              <span class="workspace-dropdown-option-title">{label}</span>
+              <span class="mt-1 block text-xs leading-5 text-slate-500">{description}</span>
+            </span>
+            <span class="workspace-dropdown-check">
+              <.icon
+                :if={@graph_struct.is_public == (value == "public")}
+                name="hero-check"
+                class="h-4 w-4"
+              />
+            </span>
+          </button>
+        <% else %>
+          <p class="px-3 py-2 text-xs leading-5 text-slate-600">
+            {if(@graph_struct.is_public,
+              do: "Anyone can find and view this grid.",
+              else: "You have access to this private grid."
+            )} Only the owner can change visibility.
+          </p>
+        <% end %>
+        <p class="workspace-dropdown-footer">
+          <.icon name="hero-information-circle" class="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          <span>Controls who can view. Editing permissions are in Tools.</span>
+        </p>
+      </div>
+    </div>
+    """
+  end
+
+  defp dropdown_trigger_classes(compact, kind) do
+    [
+      "inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50",
+      if(compact, do: "h-9 w-11", else: "min-h-11 w-full px-3 py-2"),
+      compact && if(kind == :level, do: "md:w-[7.5rem]", else: "md:w-[6.25rem]")
+    ]
+  end
+
   defp normalize_node_id(nil), do: nil
   defp normalize_node_id(value), do: to_string(value)
 
@@ -424,26 +583,6 @@ defmodule DialecticWeb.WorkspaceBarComp do
   def answer_level_label("high_school"), do: "Simple"
   def answer_level_label("expert"), do: "In-depth"
   def answer_level_label(_mode), do: "Expanded"
-
-  defp settings_click(%{mode: :graph} = assigns, section) do
-    JS.dispatch("toggle-panel",
-      to: assigns.layout_target,
-      detail: %{id: "right-panel", section: section}
-    )
-    |> JS.push(
-      if(section == "configure", do: "open_prompt_settings", else: "open_access_settings")
-    )
-  end
-
-  defp settings_click(assigns, section) do
-    JS.navigate(
-      graph_editor_path(
-        assigns.graph_struct,
-        assigns.node_id,
-        Keyword.put(assigns.nav_params, :tools, section)
-      )
-    )
-  end
 
   defp bar_classes(true) do
     [

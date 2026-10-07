@@ -407,6 +407,13 @@ defmodule GraphManager do
     end
   end
 
+  def handle_call({:set_graph_public, user, public?}, _from, {graph_struct, graph}) do
+    case Dialectic.DbActions.Graphs.set_graph_public(graph_struct, user, public?) do
+      {:ok, updated} -> {:reply, {:ok, updated}, {updated, graph}}
+      error -> {:reply, error, {graph_struct, graph}}
+    end
+  end
+
   def handle_call({:toggle_graph_public, user}, _from, {graph_struct, graph}) do
     case Dialectic.DbActions.Graphs.toggle_graph_public(graph_struct, user) do
       {:ok, updated} -> {:reply, {:ok, updated}, {updated, graph}}
@@ -769,6 +776,10 @@ defmodule GraphManager do
 
   def toggle_graph_locked(path, user) do
     GenServer.call(via_tuple(path), {:toggle_graph_locked, user})
+  end
+
+  def set_graph_public(path, user, public?) when is_boolean(public?) do
+    GenServer.call(via_tuple(path), {:set_graph_public, user, public?})
   end
 
   def toggle_graph_public(path, user) do

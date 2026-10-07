@@ -8,7 +8,7 @@ defmodule DialecticWeb.LockComp do
   def render(assigns) do
     ~H"""
     <div class="space-y-2">
-      <!-- Edit Lock Toggle -->
+      <%!-- Editing protection --%>
       <div class="rounded-xl border border-gray-200 bg-white px-3 py-2.5 shadow-sm">
         <label for="toggle_lock_graph" class="flex cursor-pointer items-center justify-between gap-3">
           <div class="min-w-0">
@@ -33,7 +33,7 @@ defmodule DialecticWeb.LockComp do
                 else: "bg-gray-100 text-gray-600"
               )
             ]}>
-              {if !@graph_struct.is_locked, do: "Editable", else: "Locked"}
+              {if !@graph_struct.is_locked, do: "Editable", else: "Read only"}
             </span>
 
             <div class="relative shrink-0">
@@ -53,61 +53,6 @@ defmodule DialecticWeb.LockComp do
               <div class={[
                 "absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-transform",
                 if(!@graph_struct.is_locked, do: "translate-x-5", else: "translate-x-0")
-              ]}>
-              </div>
-            </div>
-          </div>
-        </label>
-      </div>
-
-      <!-- Privacy Toggle -->
-      <div class="rounded-xl border border-gray-200 bg-white px-3 py-2.5 shadow-sm">
-        <label
-          for="toggle_public_graph"
-          class="flex cursor-pointer items-center justify-between gap-3"
-        >
-          <div class="min-w-0">
-            <div class="flex items-center gap-1.5">
-              <span class="text-xs font-semibold text-gray-800">Visibility</span>
-              <.icon
-                name="hero-information-circle"
-                class="h-3.5 w-3.5 text-gray-400"
-                tooltip="Public grids can be found and opened by anyone."
-              />
-            </div>
-            <p class="mt-0.5 text-[11px] leading-4 text-gray-500">
-              On makes this grid public and discoverable.
-            </p>
-          </div>
-
-          <div class="flex items-center gap-2">
-            <span class={[
-              "inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold",
-              if(@graph_struct.is_public,
-                do: "bg-sky-50 text-sky-700",
-                else: "bg-gray-100 text-gray-600"
-              )
-            ]}>
-              {if @graph_struct.is_public, do: "Public", else: "Private"}
-            </span>
-
-            <div class="relative shrink-0">
-              <input
-                type="checkbox"
-                id="toggle_public_graph"
-                class="sr-only"
-                checked={@graph_struct.is_public}
-                name="toggle_public_graph"
-                phx-click="toggle_public_graph"
-              />
-              <div class={[
-                "h-6 w-11 rounded-full transition",
-                if(@graph_struct.is_public, do: "bg-sky-500", else: "bg-gray-300")
-              ]}>
-              </div>
-              <div class={[
-                "absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-transform",
-                if(@graph_struct.is_public, do: "translate-x-5", else: "translate-x-0")
               ]}>
               </div>
             </div>

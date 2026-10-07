@@ -466,6 +466,74 @@
         @apply ml-auto flex shrink-0 items-center justify-end gap-1.5 whitespace-nowrap;
     }
 
+    .workspace-dropdown-panel {
+        white-space: normal;
+        position: fixed;
+        inset: auto;
+        margin: 0;
+        width: 20rem;
+        max-width: calc(100vw - 1rem);
+        overflow-y: auto;
+        padding: 0.5rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 1rem;
+        background: #fff;
+        box-shadow: 0 16px 40px -12px rgb(15 23 42 / 18%),
+            0 3px 8px rgb(15 23 42 / 5%);
+    }
+
+    .workspace-dropdown-heading {
+        @apply flex items-center gap-2.5 px-3 pb-3 pt-1.5 text-sm font-semibold text-slate-900;
+    }
+
+    .workspace-dropdown-heading-icon {
+        @apply flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500;
+    }
+
+    .workspace-dropdown-choice {
+        @apply flex min-h-11 w-full items-start gap-2.5 rounded-xl border border-transparent px-2.5 py-3 text-left text-sm text-slate-700 transition-colors hover:border-slate-200 hover:bg-slate-50;
+    }
+
+    .workspace-dropdown-choice + .workspace-dropdown-choice {
+        margin-top: 0.25rem;
+    }
+
+    .workspace-dropdown-option-icon {
+        @apply flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500;
+    }
+
+    .workspace-dropdown-option-title {
+        @apply font-semibold text-slate-800;
+    }
+
+    .workspace-dropdown-check {
+        @apply flex h-7 w-4 shrink-0 items-center justify-center text-teal-700;
+    }
+
+    .workspace-dropdown-choice[aria-pressed="true"] {
+        @apply border-teal-200 bg-teal-50 text-teal-900;
+    }
+
+    .workspace-dropdown-choice[aria-pressed="true"] .workspace-dropdown-option-icon {
+        @apply bg-teal-100 text-teal-700;
+    }
+
+    .workspace-dropdown-choice[aria-pressed="true"] .workspace-dropdown-option-title {
+        @apply text-teal-900;
+    }
+
+    .workspace-dropdown-footer {
+        @apply flex items-start gap-2 border-t border-slate-200 bg-slate-50 text-xs leading-5 text-slate-500;
+        margin: 0.75rem -0.5rem -0.5rem;
+        padding: 0.75rem 1rem;
+        border-radius: 0 0 1rem 1rem;
+    }
+
+    .workspace-dropdown :is(button):focus-visible {
+        outline: 2px solid #0f766e;
+        outline-offset: 2px;
+    }
+
     .workspace-menu-group {
         @apply flex shrink-0 items-center gap-1.5;
     }

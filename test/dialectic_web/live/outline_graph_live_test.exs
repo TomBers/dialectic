@@ -490,6 +490,28 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert has_element?(view, "#reader-appearance-status", "saved")
     view |> element("#next-choice-3") |> render_click()
     assert has_element?(view, "#outline-layout[data-reading-density='large']")
+    {:ok, grid_view, _} = conn |> log_in_user(user) |> live(~p"/g/#{graph.slug}/graph")
+
+    assert has_element?(
+             grid_view,
+             "#graph-layout[data-reading-density='large'][data-reading-font='sans']"
+           )
+
+    assert has_element?(grid_view, "#reader-style-large_print[aria-pressed='true']")
+    grid_view |> element("#reader-style-book") |> render_click()
+
+    assert has_element?(
+             grid_view,
+             "#graph-layout[data-reading-density='comfortable'][data-reading-font='serif']"
+           )
+
+    assert has_element?(grid_view, "#reader-appearance-status", "saved")
+    updated = Dialectic.Accounts.get_user!(user.id)
+    assert updated.graph_view_mode == user.graph_view_mode
+    assert updated.reduce_motion == user.reduce_motion
+    {:ok, reader_view, _} = conn |> log_in_user(user) |> live(~p"/g/#{graph.slug}")
+    assert has_element?(reader_view, "#outline-layout[data-reading-font='serif']")
+    assert has_element?(reader_view, "#reader-style-book[aria-pressed='true']")
   end
 
   test "guest reader style dropdown applies presets for this visit", %{conn: conn} do

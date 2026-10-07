@@ -17,6 +17,8 @@
     data-graph-id={@graph_id}
     data-mobile-inquiry={to_string(@mobile_inquiry?)}
     data-presenting={if(@presentation_mode == :presenting, do: "true", else: "false")}
+    data-anonymous={to_string(is_nil(@current_user))}
+    data-reading-style={@reader_style}
     data-reading-density={@appearance_preferences.reading_density}
     data-reading-font={@appearance_preferences.reading_font}
     data-graph-view-mode={@appearance_preferences.graph_view_mode}
@@ -44,6 +46,7 @@
       prompt_mode={@prompt_mode}
       return_context={@learning_return}
     />
+    <p id="reader-appearance-status" role="status" class="sr-only">{@reader_appearance_status}</p>
     <% slides = slides(@graph_id, @presentation_slide_ids) %>
     <% active_slide = active_slide(slides, @node) %>
     <% active_slide_id = if active_slide, do: active_slide.id, else: nil %>
@@ -667,17 +670,8 @@
           <.live_component
             module={DialecticWeb.SettingsMenuComp}
             id="settings-menu"
-            reader_tools_path={
-              graph_path(
-                @graph_struct,
-                Map.get(@node || %{}, :id),
-                Keyword.put(
-                  graph_nav_params(@token, @reader_path_endpoint, @learning_return),
-                  :tools,
-                  "reading-style"
-                )
-              )
-            }
+            following_graph?={@following_graph?}
+            reader_style={@reader_style}
             graph_id={@graph_id}
             node={@node}
             current_user={@current_user}

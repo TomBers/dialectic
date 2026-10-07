@@ -605,15 +605,16 @@ defmodule DialecticWeb.GraphLiveTest do
 
       assert has_element?(view, "#graph-header #graph-workspace-bar-level", "Expanded")
 
-      view
-      |> element("#graph-workspace-bar-level")
-      |> render_click()
+      assert has_element?(
+               view,
+               "#graph-workspace-bar-level[popovertarget='graph-workspace-bar-level-options']"
+             )
 
       assert has_element?(view, "#right-panel", "Grid tools")
       assert has_element?(view, "#right-panel #grid-tools-presentation")
       refute has_element?(view, "#graph-header #document-menu-present-document-menu")
-      assert has_element?(view, "#details-configure[open]", "Explanation level")
-      assert has_element?(view, "#answer-level-university[aria-pressed='true']")
+      assert has_element?(view, "#graph-workspace-bar-level-options", "Applies to new AI answers")
+      assert has_element?(view, "#graph-workspace-bar-level-university[aria-pressed='true']")
 
       assert has_element?(
                view,
@@ -623,8 +624,8 @@ defmodule DialecticWeb.GraphLiveTest do
       render_click(view, "set_prompt_mode", %{"prompt_mode" => "high_school"})
 
       assert has_element?(view, "#graph-workspace-bar-level", "Simple")
-      assert has_element?(view, "#answer-level-high_school[aria-pressed='true']")
-      assert has_element?(view, "#answer-level-high_school[phx-click*='toggle-panel']")
+      assert has_element?(view, "#graph-workspace-bar-level-high_school[aria-pressed='true']")
+      assert has_element?(view, "#tools-answer-level-high_school[aria-pressed='true']")
       refute has_element?(view, "#answer-level-simple")
     end
 

@@ -38,6 +38,7 @@ import { ViewModeHook } from "./view_mode_hook.js";
 import GraphKeyboardNavigation from "./graph_keyboard_navigation.js";
 import AskFormShortcuts from "./ask_form_shortcuts.js";
 import ToolsMenuHook from "./tools_menu_hook.js";
+import WorkspaceDropdown from "./workspace_dropdown.js";
 import AutoExpandTextareaHook from "./auto_expand_textarea_hook.js";
 import SearchNav from "./search_nav_hook.js";
 import { containModalFocus } from "./modal_focus.js";
@@ -90,6 +91,7 @@ hooks.ViewMode = ViewModeHook;
 hooks.GraphKeyboardNavigation = GraphKeyboardNavigation;
 hooks.AskFormShortcuts = AskFormShortcuts;
 hooks.ToolsMenu = ToolsMenuHook;
+hooks.WorkspaceDropdown = WorkspaceDropdown;
 hooks.AutoExpandTextarea = AutoExpandTextareaHook;
 hooks.SearchNav = SearchNav;
 hooks.Presentation = PresentationHook;
@@ -441,6 +443,10 @@ hooks.GraphLayout = {
     this.handleEvent("open_grid_tool", ({ section }) => {
       if (!["presentation", "configure", "workspace"].includes(section)) return;
 
+      if (section === "configure" && window.matchMedia("(min-width: 640px)").matches) {
+        this.pushEvent("open_prompt_settings", {});
+        return;
+      }
       const presenting = section === "presentation";
       this.el.dispatchEvent(new CustomEvent("toggle-panel", {
         detail: {
@@ -451,6 +457,12 @@ hooks.GraphLayout = {
       }));
       this.pushEvent(presenting ? "enter_presentation_setup" :
         section === "configure" ? "open_prompt_settings" : "open_access_settings", {});
+    });
+
+    this.handleEvent("open_answer_level", () => {
+      const id = window.matchMedia("(min-width: 640px)").matches ?
+        "graph-workspace-bar-level-options" : "tools-answer-level-options";
+      document.getElementById(id)?.showPopover();
     });
 
     this.handleEvent("open_reader_tools", () => {
@@ -484,6 +496,20 @@ hooks.GraphLayout = {
     this.el.addEventListener("close-mobile-outline", () => {
       this._applyMobileOutlineState(false);
     });
+
+    const readingStyles = ["book", "screen", "large_print", "compact"];
+    this.handleEvent("reading_style_applied", ({style}) => {
+      if (this.el.dataset.anonymous !== "true" || !readingStyles.includes(style)) return;
+      try { sessionStorage.setItem("rg:reading-style", style); } catch (_error) {}
+    });
+    if (this.el.dataset.anonymous === "true") {
+      try {
+        const style = sessionStorage.getItem("rg:reading-style");
+        if (readingStyles.includes(style) && style !== this.el.dataset.readingStyle) {
+          this.pushEvent("save_reader_appearance", {style});
+        }
+      } catch (_error) {}
+    }
 
     this.restoreState();
     this._focusAskInputFromUrl();
