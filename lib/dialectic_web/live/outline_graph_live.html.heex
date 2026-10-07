@@ -845,7 +845,11 @@
         <% end %>
       </section>
 
-      <DialecticWeb.WorkspaceBarComp.tools_drawer id="right-panel" layout_target="#outline-layout">
+      <DialecticWeb.WorkspaceBarComp.tools_drawer
+        id="right-panel"
+        layout_target="#outline-layout"
+        mode={:reader}
+      >
         <.live_component
           module={DialecticWeb.RightPanelComp}
           id="right-panel-comp"

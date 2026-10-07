@@ -197,6 +197,7 @@ defmodule DialecticWeb.WorkspaceBarComp do
 
   attr :id, :string, required: true
   attr :layout_target, :string, required: true
+  attr :mode, :atom, default: :graph, values: [:reader, :graph]
   slot :inner_block, required: true
 
   def tools_drawer(assigns) do
@@ -207,7 +208,10 @@ defmodule DialecticWeb.WorkspaceBarComp do
       role="region"
       aria-labelledby="grid-tools-title"
       tabindex="-1"
-      class="absolute inset-y-0 right-0 z-50 w-0 overflow-hidden border-l border-gray-200 bg-white opacity-0 transform translate-x-full transition-all duration-300 ease-in-out"
+      class={[
+        "inset-y-0 right-0 z-50 w-0 overflow-hidden border-l border-gray-200 bg-white opacity-0 transform translate-x-full transition-all duration-300 ease-in-out",
+        if(@mode == :reader, do: "fixed lg:absolute", else: "absolute")
+      ]}
     >
       <div class="p-2">
         <div class="mb-2 flex items-start justify-between gap-2 px-1">

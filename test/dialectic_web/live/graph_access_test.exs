@@ -48,6 +48,10 @@ defmodule DialecticWeb.GraphAccessTest do
     assert has_element?(grid, "#graph-workspace-bar-graph[aria-current='page']")
     assert has_element?(grid, "#grid-tools-reading-style[href*='tools=reading-style']")
     assert has_element?(reader, "#reader-style-book", "Serif")
+    assert has_element?(reader, "#right-panel.fixed")
+    assert has_element?(reader, "#right-panel[class~='lg:absolute']")
+    assert has_element?(grid, "#right-panel.absolute")
+    refute has_element?(grid, "#right-panel.fixed")
 
     render_patch(reader, ~p"/g/#{graph.slug}?tools=reading-style")
     assert_push_event(reader, "open_reader_tools", %{})
