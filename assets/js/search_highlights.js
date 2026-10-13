@@ -64,7 +64,7 @@ const SearchHighlights = {
     if (!node || !this.el.contains(node)) return;
     const terms = JSON.parse(this.el.dataset.searchTerms || "[]");
     const ranges = [];
-    for (const root of node.querySelectorAll('.reader-heading, [phx-hook="Markdown"][data-body-only="true"]')) {
+    for (const root of node.querySelectorAll('.reader-heading, [data-reader-prompt-opening], [phx-hook="Markdown"][data-body-only="true"]')) {
       ranges.push(...searchMatchRanges(root, terms));
     }
     const highlight = new Highlight();

@@ -606,6 +606,48 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     refute has_element?(view, "#outline-branch-compare")
   end
 
+  test "multiline starting prompts render the opening as a paragraph with the rest of the prompt",
+       %{
+         conn: conn
+       } do
+    opening = "“AI-generated content is more like genius than garbage.”"
+
+    remainder =
+      "“AI-generated content is more like garbage than genius.”\n\nSynthesize both views."
+
+    content = "## " <> opening <> "\n\n" <> remainder
+
+    data =
+      update_in(sample_graph_data(), ["nodes"], fn nodes ->
+        Enum.map(nodes, fn
+          %{"id" => "1"} = node -> Map.put(node, "content", content)
+          node -> node
+        end)
+      end)
+
+    graph = create_graph(data)
+    {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}")
+
+    assert has_element?(view, "#reading-title-1", "Starting question")
+    assert has_element?(view, "#reading-prompt-1 p#reading-prompt-opening-1", opening)
+    refute has_element?(view, "#reading-node-1 h2", opening)
+
+    assert has_element?(
+             view,
+             "#reading-prompt-1 #outline-markdown-body-1[data-body-only='true']"
+           )
+
+    for paragraph <- String.split(remainder, "\n\n") do
+      assert has_element?(
+               view,
+               "#outline-markdown-body-1 [data-role='server-markdown-fallback']",
+               paragraph
+             )
+    end
+
+    assert has_element?(view, "#reading-highlight-1[phx-hook='TextSelectionHook']")
+  end
+
   test "node_id param selects the requested node and keeps its outline entry", %{conn: conn} do
     graph = create_graph()
 

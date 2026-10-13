@@ -327,12 +327,9 @@ defmodule DialecticWeb.WorkspaceBarComp do
           <.icon name="hero-pencil" class="h-4 w-4" />
           <span class={highlights_label_classes(@compact)}>Highlights</span>
           <span
-            :if={@compact || @highlights_count > 0}
+            :if={@highlights_count > 0}
             aria-hidden="true"
-            class={[
-              highlight_count_classes(@compact),
-              @compact && @highlights_count == 0 && "invisible"
-            ]}
+            class={highlight_count_classes(@compact)}
           >
             {if(@compact && @highlights_count > 99, do: "99+", else: @highlights_count)}
           </span>
