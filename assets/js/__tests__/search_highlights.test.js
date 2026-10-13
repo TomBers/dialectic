@@ -62,4 +62,20 @@ describe("temporary search matches", () => {
     expect(document.getElementById("node-content-2").contains(ranges[0].startContainer)).toBe(true);
   });
 
+  it("includes the opening paragraph of a multiline prompt in search matches", () => {
+    vi.stubGlobal("CSS", {highlights: new Map()});
+    vi.stubGlobal("Highlight", Set);
+    document.body.innerHTML = `<section id="flow" data-search-node-id="1" data-search-terms='["genius"]'>
+      <article id="reading-node-1">
+        <h2>Starting question</h2>
+        <p data-reader-prompt-opening>More like genius than garbage.</p>
+        <div phx-hook="Markdown" data-body-only="true"><p>More like garbage than genius.</p></div>
+      </article>
+    </section>`;
+    SearchHighlights.paint.call({el: document.getElementById("flow")});
+    const ranges = [...CSS.highlights.get("reader-search-matches")];
+    expect(ranges.map(range => range.toString())).toEqual(["genius", "genius"]);
+    expect(document.querySelector("[data-reader-prompt-opening]").contains(ranges[0].startContainer)).toBe(true);
+  });
+
 });

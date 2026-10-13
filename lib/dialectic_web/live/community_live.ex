@@ -321,7 +321,7 @@ defmodule DialecticWeb.CommunityLive do
               <nav
                 id="community-format-filters"
                 aria-label="Browse grid collections"
-                class="flex gap-1 overflow-x-auto border-b border-stone-300 pb-3"
+                class="mb-4 flex flex-wrap items-center gap-2 border-b border-stone-300 pb-3"
               >
                 <%= for {category, label} <- [{"curated", "Curated grids"}, {"all", "All grids"}, {"partners", "Partner grids"}] do %>
                   <.link
@@ -331,23 +331,15 @@ defmodule DialecticWeb.CommunityLive do
                     class={category_class(@active_category == category)}
                   >{label}</.link>
                 <% end %>
-              </nav>
-              <div id="community-results-heading" class="scroll-mt-14">
-                <div aria-live="polite" class="sr-only">
-                  <h2>
-                    {results_heading(@search_term, @active_tag, @active_category, @active_size)}
-                  </h2>
-                  <p id="community-result-count">
-                    {result_count_label(@total_count, @page, @page_size)}
-                  </p>
-                </div>
                 <div
                   id="community-search-controls"
-                  class="py-4"
+                  class="w-full min-w-0 sm:ml-auto sm:w-64"
                 >
                   <.form
                     for={@search_form}
                     id="community-search-form"
+                    role="search"
+                    aria-label="Search community grids"
                     phx-change="search"
                     phx-submit="search"
                     class="relative"
@@ -361,16 +353,22 @@ defmodule DialecticWeb.CommunityLive do
                       placeholder={
                         if @active_tag,
                           do: "Search within #{tag_label(@active_tag)}…",
-                          else: "Search for an idea, topic or question…"
+                          else: "Search"
                       }
-                      class="h-12 w-full rounded-md border border-stone-300 bg-white px-4 pr-11 text-base text-slate-950 shadow-sm placeholder:text-slate-400 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-100"
+                      class="block h-9 w-full rounded-md border border-stone-300 bg-white px-3 text-sm text-slate-950 shadow-sm placeholder:text-slate-500 focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
                       autocomplete="off"
                     />
-                    <.icon
-                      name="hero-magnifying-glass"
-                      class="pointer-events-none absolute right-4 top-3.5 h-5 w-5 text-teal-800"
-                    />
                   </.form>
+                </div>
+              </nav>
+              <div id="community-results-heading" class="scroll-mt-14">
+                <div aria-live="polite" class="sr-only">
+                  <h2>
+                    {results_heading(@search_term, @active_tag, @active_category, @active_size)}
+                  </h2>
+                  <p id="community-result-count">
+                    {result_count_label(@total_count, @page, @page_size)}
+                  </p>
                 </div>
               </div>
               <div
