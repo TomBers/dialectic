@@ -12,7 +12,11 @@ defmodule DialecticWeb.LearningCreationTest do
   setup :register_and_log_in_user
 
   test "the form creates an owned private grid with the chosen depth", %{conn: conn, user: user} do
-    question = "Private exploration #{System.unique_integer([:positive])}"
+    question =
+      "Private exploration #{System.unique_integer([:positive])}\n\n" <>
+        "“AI-generated content is genius.”\r\n“AI-generated content is garbage.”\tSynthesize."
+
+    title = Graphs.sanitize_title(question)
     {:ok, view, _html} = live(conn, ~p"/my/learning")
 
     assert has_element?(view, "#learning-new-grid-form-panel label", "Start a private grid")
@@ -30,7 +34,8 @@ defmodule DialecticWeb.LearningCreationTest do
     view |> form("#learning-new-grid-form", vertex: %{content: question}) |> render_submit()
 
     {path, _flash} = assert_redirect(view, 2_000)
-    graph = Graphs.get_graph_by_title(question)
+    graph = Graphs.get_graph_by_title(title)
+    refute String.contains?(graph.title, ["\n", "\r", "\t"])
     refute graph.is_public
     assert graph.user_id == user.id
     assert graph.prompt_mode == "expert"

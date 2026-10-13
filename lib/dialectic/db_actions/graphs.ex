@@ -45,6 +45,7 @@ defmodule Dialectic.DbActions.Graphs do
   def sanitize_title(title) do
     sanitized =
       title
+      |> String.replace(~r/[\s\x00-\x1F\x7F]+/u, " ")
       |> String.slice(0, 140)
       |> String.trim()
       |> String.replace("/", "-")
