@@ -3,6 +3,12 @@ defmodule Dialectic.DbActions.Sharing do
   alias Dialectic.Repo
   alias Dialectic.Accounts.{Graph, GraphShare, User}
 
+  def get_accessible_graph(user, identifier) do
+    graph = Dialectic.DbActions.Graphs.get_graph_by_slug_or_title(identifier)
+
+    if graph && graph.is_deleted != true && can_access?(user, graph), do: graph
+  end
+
   def can_manage?(%User{id: id}, %Graph{user_id: id}) when not is_nil(id), do: true
   def can_manage?(_user, _graph), do: false
 

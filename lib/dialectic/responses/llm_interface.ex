@@ -348,6 +348,35 @@ defmodule Dialectic.Responses.LlmInterface do
     queue_response(to_string(tool_name), instruction, child, graph_id, live_view_topic)
   end
 
+  def queue_grid_action(action, parent, child, graph_id, context, mode) do
+    instruction =
+      build_instruction(Map.fetch!(@thinking_tools, action), context, parent.content, nil)
+
+    queue_prepared_response(action, instruction, child, graph_id, mode)
+  end
+
+  def queue_grid_answer(question, answer, graph_id, context, mode) do
+    instruction = Prompts.explain(context, question.content)
+    queue_prepared_response("explain", instruction, answer, graph_id, mode)
+  end
+
+  def queue_initial_answer(question, answer, graph_id, context, mode, opts \\ []) do
+    instruction = Prompts.initial_explainer(context, question.content, mode)
+    queue_prepared_response("initial_explainer", instruction, answer, graph_id, mode, opts)
+  end
+
+  defp queue_prepared_response(action, instruction, child, graph_id, mode, opts \\ []) do
+    system_prompt = PromptsStructured.system_preamble(mode)
+    log_prompt(to_string(action), graph_id, mode, system_prompt, instruction)
+
+    request_context = {"graph_update:#{graph_id}", Keyword.get(opts, :actor_id)}
+
+    RequestQueue.add(instruction, system_prompt, child, graph_id, request_context,
+      mode: mode,
+      notify_rejection: Keyword.get(opts, :notify_rejection, false)
+    )
+  end
+
   # Build the instruction for a thinking tool based on whether we have a content override
   @spec build_instruction(map(), String.t(), String.t(), String.t() | nil) :: String.t()
   defp build_instruction(tool_metadata, context, content, content_override) do

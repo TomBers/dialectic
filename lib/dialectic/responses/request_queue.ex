@@ -36,7 +36,7 @@ defmodule Dialectic.Responses.RequestQueue do
     def add(instruction, system_prompt, to_node, graph, live_view_topic, opts) do
       instruction
       |> build_params(system_prompt, to_node, graph, live_view_topic, opts)
-      |> run_llm()
+      |> run_llm(notify_rejection: Keyword.get(opts, :notify_rejection, true))
     end
   end
 
@@ -96,7 +96,7 @@ defmodule Dialectic.Responses.RequestQueue do
     end
   end
 
-  def run_llm(params) do
+  def run_llm(params, opts \\ []) do
     params = ensure_actor_key(params)
 
     Logger.debug(fn ->
@@ -138,7 +138,8 @@ defmodule Dialectic.Responses.RequestQueue do
       {:error, :too_many_active_requests} = error ->
         reject_request(
           params,
-          "You already have #{max_active_per_actor()} AI requests in progress. Please wait for one to finish."
+          "You already have #{max_active_per_actor()} AI requests in progress. Please wait for one to finish.",
+          opts
         )
 
         error
@@ -146,7 +147,8 @@ defmodule Dialectic.Responses.RequestQueue do
       {:error, :rate_limited} = error ->
         reject_request(
           params,
-          "You are requesting AI responses too quickly. Please wait a minute."
+          "You are requesting AI responses too quickly. Please wait a minute.",
+          opts
         )
 
         error
@@ -357,11 +359,15 @@ defmodule Dialectic.Responses.RequestQueue do
     end
   end
 
-  defp reject_request(params, message) do
+  defp reject_request(params, message, opts) do
     Logger.warning(
       "[RequestQueue] LLM request rejected for graph=#{inspect(params.graph)} node=#{inspect(params.to_node)}: #{message}"
     )
 
+    if Keyword.get(opts, :notify_rejection, true), do: notify_rejection(params, message)
+  end
+
+  defp notify_rejection(params, message) do
     if GraphManager.exists?(params.graph) do
       GraphManager.set_node_content(params.graph, params.to_node, message)
       GraphManager.save_graph(params.graph)

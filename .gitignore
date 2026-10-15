@@ -55,6 +55,8 @@ dialectic-*.tar
 # In case you use Node.js/npm, you want to ignore these.
 npm-debug.log
 /assets/node_modules/
+/mcp/node_modules/
+/mcp/dist/
 
 # E2E runner (Playwright) artifacts
 /e2e/node_modules/

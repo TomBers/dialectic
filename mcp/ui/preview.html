@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RationalGrid preview</title>
+  <style>
+    :root { color-scheme: light dark; font-family: system-ui, sans-serif; color: light-dark(#182c29, #e3efeb); background: light-dark(#fff, #162320); }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 20px; }
+    .eyebrow { color: light-dark(#466c61, #a4cbbb); font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+    h1 { margin: 10px 0; font-size: 23px; overflow-wrap: anywhere; }
+    .muted { color: light-dark(#566b64, #afc3bb); font-size: 14px; line-height: 1.5; }
+    #grid-outline { padding: 0; list-style: none; max-height: 390px; overflow: auto; }
+    details { border: 1px solid light-dark(#dce7e2, #3e5750); border-radius: 10px; padding: 12px; margin: 8px 0; }
+    summary { cursor: pointer; font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
+    .idea-content { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; }
+    .connections { font-size: 12px; color: light-dark(#566b64, #afc3bb); }
+    .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 16px; }
+    button, a { font: inherit; border-radius: 8px; padding: 10px 14px; }
+    button { border: 0; background: light-dark(#1d6754, #a9decb); color: light-dark(#fff, #142d24); cursor: pointer; }
+    button:disabled { opacity: .55; cursor: default; }
+    a { color: inherit; }
+    :focus-visible { outline: 3px solid #47a88b; outline-offset: 3px; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <main id="grid-preview" aria-labelledby="grid-title">
+    <div class="eyebrow">RationalGrid · review before saving</div>
+    <h1 id="grid-title">Your proposed grid</h1>
+    <p class="muted">Only the ideas below will be saved—not your entire conversation. Saving creates a new private grid in your linked account.</p>
+    <p id="grid-summary" class="muted"></p>
+    <ol id="grid-outline" aria-label="Proposed ideas and connections"></ol>
+    <p id="grid-status" class="muted" role="status" aria-live="polite">Waiting for a complete preview…</p>
+    <div class="actions">
+      <button id="save-grid" type="button" disabled>Save privately</button>
+      <button id="continue-in-chat" type="button" hidden>Continue in chat</button>
+      <a id="open-grid" target="_blank" rel="noopener noreferrer" hidden>Open in RationalGrid</a>
+    </div>
+  </main>
+  <script type="module">{{SCRIPT}}</script>
+</body>
+</html>
