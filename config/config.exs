@@ -35,6 +35,7 @@ config :dialectic,
 config :dialectic, DialecticWeb.Endpoint,
   url: [host: "localhost"],
   adapter: Bandit.PhoenixAdapter,
+  http: [http_2_options: [enabled: false]],
   render_errors: [
     formats: [html: DialecticWeb.ErrorHTML, json: DialecticWeb.ErrorJSON],
     layout: false
