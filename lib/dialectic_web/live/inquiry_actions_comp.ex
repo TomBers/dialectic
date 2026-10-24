@@ -200,7 +200,7 @@ defmodule DialecticWeb.InquiryActionsComp do
                 <.tool_button
                   id={action_id(assigns, "pros-cons")}
                   icon="hero-scale"
-                  label="Test both sides"
+                  label="Pro | Con"
                   tone="thesis"
                   shortcut="a"
                   selection_action="pros_cons"
@@ -223,7 +223,7 @@ defmodule DialecticWeb.InquiryActionsComp do
                 <.tool_button
                   id={action_id(assigns, "pros-cons")}
                   icon="hero-scale"
-                  label="Test both sides"
+                  label="Pro | Con"
                   tone="thesis"
                   shortcut="a"
                   event="node_branch"

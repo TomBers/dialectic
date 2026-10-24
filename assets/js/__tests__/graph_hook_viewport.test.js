@@ -260,6 +260,41 @@ describe("graph viewport lifecycle", () => {
     expect(hook._layoutRunning).toBe(false);
   });
 
+  it.each(["ask", "branch"])("lays out both new nodes immediately for %s", (operation) => {
+    mount();
+    // Headless Cytoscape cannot measure the browser's label-based node height.
+    hook.cy.style().selector("node").style("height", 60).update();
+    const elements = JSON.parse(hook.el.dataset.graph);
+    const parent = operation === "ask" ? "question" : "pro";
+    const child = operation === "ask" ? "answer" : "con";
+    elements.push(
+      { data: { id: parent, content: "A new question or supporting argument" } },
+      { data: { id: child, content: "" } },
+      { data: { id: "new-parent", source: "11", target: parent } },
+      { data: { id: "new-child", source: operation === "ask" ? parent : "11", target: child } },
+    );
+    Object.assign(hook.el.dataset, {
+      graph: JSON.stringify(elements), node: child, operation,
+    });
+
+    hook.updated();
+    flushFrames();
+
+    for (const id of [parent, child]) {
+      const node = hook.cy.getElementById(id);
+      expect(node.scratch("dagre").width).toBeGreaterThanOrEqual(node.width());
+      expect(node.scratch("dagre").height).toBeGreaterThanOrEqual(60);
+      expect(Number.isFinite(node.position().x)).toBe(true);
+      expect(Number.isFinite(node.position().y)).toBe(true);
+      expect(node.hidden()).toBe(false);
+    }
+    const first = hook.cy.getElementById(parent).boundingBox();
+    const second = hook.cy.getElementById(child).boundingBox();
+    expect(first.x2 < second.x1 || second.x2 < first.x1 ||
+      first.y2 < second.y1 || second.y2 < first.y1).toBe(true);
+    expect(hook.cy.batching()).toBe(false);
+  });
+
   it("restores a saved viewport after the initial framing", () => {
     vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
     sessionStorage.setItem("dialectic:graph-viewport:viewport-test", JSON.stringify({
