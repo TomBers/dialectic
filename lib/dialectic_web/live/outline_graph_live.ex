@@ -147,44 +147,6 @@ defmodule DialecticWeb.OutlineGraphLive do
   end
 
   @impl true
-  def handle_event("preview_reader_appearance", %{"user" => params}, socket) do
-    {style, params} = apply_reading_style(params)
-    params = Map.take(params, ["reading_font", "reading_density"])
-    user = struct(User, socket.assigns.appearance_preferences)
-    changeset = Accounts.change_user_appearance(user, params)
-
-    socket =
-      assign(socket,
-        reader_style: style,
-        reader_appearance_form: to_form(Map.put(changeset, :action, :validate)),
-        reader_appearance_status: nil
-      )
-
-    socket =
-      if changeset.valid? do
-        assign(
-          socket,
-          :appearance_preferences,
-          User.appearance_preferences(Ecto.Changeset.apply_changes(changeset))
-        )
-      else
-        socket
-      end
-
-    {:noreply, socket}
-  end
-
-  @impl true
-  def handle_event("save_reader_appearance", %{"style" => style}, socket)
-      when style in ["book", "screen", "large_print", "compact"] do
-    handle_event("save_reader_appearance", %{"user" => %{"reading_style" => style}}, socket)
-  end
-
-  def handle_event("save_reader_appearance", %{"user" => params}, socket) do
-    {:noreply, DialecticWeb.ReadingStyles.save_appearance(socket, params)}
-  end
-
-  @impl true
   def handle_info({:other_user_change, sender_pid}, socket) do
     if self() == sender_pid do
       {:noreply, socket}
@@ -317,6 +279,44 @@ defmodule DialecticWeb.OutlineGraphLive do
 
   @impl true
   def handle_info(_msg, socket), do: {:noreply, socket}
+
+  @impl true
+  def handle_event("preview_reader_appearance", %{"user" => params}, socket) do
+    {style, params} = apply_reading_style(params)
+    params = Map.take(params, ["reading_font", "reading_density"])
+    user = struct(User, socket.assigns.appearance_preferences)
+    changeset = Accounts.change_user_appearance(user, params)
+
+    socket =
+      assign(socket,
+        reader_style: style,
+        reader_appearance_form: to_form(Map.put(changeset, :action, :validate)),
+        reader_appearance_status: nil
+      )
+
+    socket =
+      if changeset.valid? do
+        assign(
+          socket,
+          :appearance_preferences,
+          User.appearance_preferences(Ecto.Changeset.apply_changes(changeset))
+        )
+      else
+        socket
+      end
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("save_reader_appearance", %{"style" => style}, socket)
+      when style in ["book", "screen", "large_print", "compact"] do
+    handle_event("save_reader_appearance", %{"user" => %{"reading_style" => style}}, socket)
+  end
+
+  def handle_event("save_reader_appearance", %{"user" => params}, socket) do
+    {:noreply, DialecticWeb.ReadingStyles.save_appearance(socket, params)}
+  end
 
   @impl true
   def handle_event("toggle_answer_drawer", %{"id" => node_id}, socket) do

@@ -120,10 +120,8 @@ defmodule Dialectic.Graph.Extractor do
       ** (RuntimeError) Graph not found
   """
   def extract_for_image_generation!(%Graph{} = graph) do
-    case extract_for_image_generation(graph) do
-      {:ok, data} -> data
-      {:error, reason} -> raise "Extraction failed: #{inspect(reason)}"
-    end
+    {:ok, data} = extract_for_image_generation(graph)
+    data
   end
 
   def extract_for_image_generation!(identifier) when is_binary(identifier) do
@@ -140,10 +138,8 @@ defmodule Dialectic.Graph.Extractor do
   Returns `{:ok, json_string}` or `{:error, reason}`.
   """
   def extract_to_json(%Graph{} = graph) do
-    case extract_for_image_generation(graph) do
-      {:ok, data} -> {:ok, Jason.encode!(data, pretty: true)}
-      error -> error
-    end
+    {:ok, data} = extract_for_image_generation(graph)
+    {:ok, Jason.encode!(data, pretty: true)}
   end
 
   def extract_to_json(identifier) when is_binary(identifier) do
@@ -157,10 +153,8 @@ defmodule Dialectic.Graph.Extractor do
   Same as `extract_to_json/1` but returns the JSON string directly or raises on error.
   """
   def extract_to_json!(%Graph{} = graph) do
-    case extract_to_json(graph) do
-      {:ok, json} -> json
-      {:error, reason} -> raise "JSON extraction failed: #{inspect(reason)}"
-    end
+    {:ok, json} = extract_to_json(graph)
+    json
   end
 
   def extract_to_json!(identifier) when is_binary(identifier) do
@@ -177,10 +171,8 @@ defmodule Dialectic.Graph.Extractor do
   Returns `{:ok, json_string}` or `{:error, reason}`.
   """
   def extract_to_compact_json(%Graph{} = graph) do
-    case extract_for_image_generation(graph) do
-      {:ok, data} -> {:ok, Jason.encode!(data)}
-      error -> error
-    end
+    {:ok, data} = extract_for_image_generation(graph)
+    {:ok, Jason.encode!(data)}
   end
 
   def extract_to_compact_json(identifier) when is_binary(identifier) do
@@ -194,10 +186,8 @@ defmodule Dialectic.Graph.Extractor do
   Same as `extract_to_compact_json/1` but returns the JSON string directly or raises on error.
   """
   def extract_to_compact_json!(%Graph{} = graph) do
-    case extract_to_compact_json(graph) do
-      {:ok, json} -> json
-      {:error, reason} -> raise "Compact JSON extraction failed: #{inspect(reason)}"
-    end
+    {:ok, json} = extract_to_compact_json(graph)
+    json
   end
 
   def extract_to_compact_json!(identifier) when is_binary(identifier) do

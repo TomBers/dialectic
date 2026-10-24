@@ -18,11 +18,11 @@ defmodule Dialectic.Application do
     end
 
     children = [
-      DialecticWeb.Telemetry,
       Dialectic.Repo,
       Dialectic.RateLimit,
       {DNSCluster, query: Application.get_env(:dialectic, :dns_cluster_query) || :ignore},
       {Oban, Application.fetch_env!(:dialectic, Oban)},
+      DialecticWeb.Telemetry,
       {Phoenix.PubSub, name: Dialectic.PubSub},
       {Task.Supervisor, name: Dialectic.TaskSupervisor},
       # Start the Finch HTTP client with optimized connection pools

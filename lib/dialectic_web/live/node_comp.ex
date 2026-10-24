@@ -392,7 +392,7 @@ defmodule DialecticWeb.NodeComp do
                       class="absolute right-3 top-2.5 flex items-center gap-2"
                     >
                       <% noted? =
-                        Enum.any?(Map.get(@node || %{}, :noted_by, []), fn u -> u == @user end) %>
+                        Enum.any?(Map.get(@node, :noted_by, []), fn u -> u == @user end) %>
                       <button
                         id={"graph-bookmark-node-#{@node.id}"}
                         type="button"
