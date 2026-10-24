@@ -67,7 +67,7 @@ defmodule Dialectic.Responses.GuidedLearningPlan do
     },
     %{
       key: "branch",
-      label: "Test both sides",
+      label: "Pro | Con",
       executor: :branch,
       icon: "hero-scale",
       description: "Compare the strongest case for and against this idea."

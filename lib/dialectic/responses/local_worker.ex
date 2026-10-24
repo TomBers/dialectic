@@ -1,5 +1,4 @@
 defmodule Dialectic.Workers.LocalWorker do
-  require Logger
   use Oban.Worker, queue: :api_request, max_attempts: 5
   # Note: LocalWorker ignores any optional "instruction" and "system_prompt" args.
   # Tests and dev flows continue to rely on the "question" arg for echo behavior.

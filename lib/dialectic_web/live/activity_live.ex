@@ -129,17 +129,13 @@ defmodule DialecticWeb.ActivityLive do
   end
 
   defp unfollow_target(%User{} = user, %{target_type: "graph", graph: %Graph{} = graph}) do
-    case Follows.unfollow_graph(user, graph) do
-      {:ok, _count} -> {:ok, "Grid unfollowed."}
-      _error -> {:error, "Could not unfollow that grid."}
-    end
+    {:ok, _count} = Follows.unfollow_graph(user, graph)
+    {:ok, "Grid unfollowed."}
   end
 
   defp unfollow_target(%User{} = user, %{target_type: "user", target_user: %User{} = target_user}) do
-    case Follows.unfollow_user(user, target_user) do
-      {:ok, _count} -> {:ok, "Profile unfollowed."}
-      _error -> {:error, "Could not unfollow that profile."}
-    end
+    {:ok, _count} = Follows.unfollow_user(user, target_user)
+    {:ok, "Profile unfollowed."}
   end
 
   defp unfollow_target(_user, _follow), do: {:error, "Could not unfollow that item."}

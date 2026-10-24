@@ -2,7 +2,6 @@ defmodule DialecticWeb.CommunityLive do
   use DialecticWeb, :live_view
 
   alias Dialectic.DbActions.Graphs
-  import DialecticWeb.GridCardComp
 
   on_mount {DialecticWeb.UserAuth, :mount_current_user}
 

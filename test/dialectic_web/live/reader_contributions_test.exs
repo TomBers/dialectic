@@ -142,7 +142,7 @@ defmodule DialecticWeb.ReaderContributionsTest do
     assert has_element?(reader, "#reading-node-#{comment.id}", content)
     refute has_element?(reader, "#reader-view-new-thoughts")
 
-    Oban.drain_queue(queue: :db_write)
+    Oban.drain_queue(queue: :db_write, with_scheduled: true)
     saved = Dialectic.DbActions.Graphs.get_graph_by_title(graph.title)
     assert Enum.any?(saved.data["nodes"], &(&1["id"] == comment.id && &1["content"] == content))
   end

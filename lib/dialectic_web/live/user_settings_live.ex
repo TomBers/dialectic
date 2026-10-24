@@ -576,8 +576,18 @@ defmodule DialecticWeb.UserSettingsLive do
                       {"Compact — smaller sans text with tighter spacing", "compact"}
                     ]}
                   />
-                  <.input field={@appearance_form[:reading_density]} type="hidden" />
-                  <.input field={@appearance_form[:reading_font]} type="hidden" />
+                  <input
+                    type="hidden"
+                    id={@appearance_form[:reading_density].id}
+                    name={@appearance_form[:reading_density].name}
+                    value={@appearance_form[:reading_density].value}
+                  />
+                  <input
+                    type="hidden"
+                    id={@appearance_form[:reading_font].id}
+                    name={@appearance_form[:reading_font].name}
+                    value={@appearance_form[:reading_font].value}
+                  />
                   <div class="grid gap-5 sm:grid-cols-2">
                     <.input
                       field={@appearance_form[:graph_view_mode]}

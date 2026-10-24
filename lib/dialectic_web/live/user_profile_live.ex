@@ -717,7 +717,6 @@ defmodule DialecticWeb.UserProfileLive do
     end
   end
 
-  defp human_join([]), do: ""
   defp human_join([one]), do: one
   defp human_join([first, second]), do: "#{first} and #{second}"
 

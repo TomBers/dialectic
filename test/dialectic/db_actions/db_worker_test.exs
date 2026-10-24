@@ -8,6 +8,7 @@ defmodule Dialectic.DbActions.DbWorkerTest do
     graph_id = "latest-snapshot-#{System.unique_integer([:positive])}"
 
     assert {:ok, first_job} = DbWorker.save_snapshot(graph_id, %{"version" => 1}, 1)
+    assert first_job.state == "scheduled"
 
     assert {:ok, replaced_job} = DbWorker.save_snapshot(graph_id, %{"version" => 2}, 2)
 
@@ -39,7 +40,12 @@ defmodule Dialectic.DbActions.DbWorkerTest do
     refute pending_job.conflict?
     refute pending_job.id == first_job.id
     assert pending_job.args["data"] == %{"version" => 2}
-    assert Enum.map(snapshot_jobs(), & &1.state) == ["executing", "available"]
+
+    assert {:ok, latest_job} = DbWorker.save_snapshot(graph_id, %{"version" => 3}, 3)
+    assert latest_job.conflict?
+    assert latest_job.id == pending_job.id
+    assert latest_job.args["revision"] == 3
+    assert Enum.map(snapshot_jobs(), & &1.state) == ["executing", "scheduled"]
   end
 
   test "persists only snapshots with newer revisions" do

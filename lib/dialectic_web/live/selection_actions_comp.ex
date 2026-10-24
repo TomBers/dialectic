@@ -238,14 +238,13 @@ defmodule DialecticWeb.SelectionActionsComp do
           class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 transition-colors hover:bg-slate-50 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
           aria-label={
             cond do
-              @presentation == :drawer -> "Hide response form"
               @context == :answer -> "Close answer actions"
               true -> "Close selection actions"
             end
           }
         >
           <.icon
-            name={if(@presentation == :drawer, do: "hero-chevron-up", else: "hero-x-mark")}
+            name="hero-x-mark"
             class="h-4 w-4"
           />
         </button>

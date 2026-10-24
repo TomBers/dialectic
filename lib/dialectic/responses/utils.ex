@@ -7,8 +7,6 @@ defmodule Dialectic.Responses.Utils do
   which sets the content on the node and broadcasts to LiveView subscribers.
   """
 
-  require Logger
-
   def set_node_content(graph, node, data, live_view_topic) do
     text =
       cond do

@@ -775,9 +775,9 @@
 
               <%= if (@search_term || "") != "" do %>
                 <div class="max-h-72 overflow-y-auto">
-                  <%= if length(@search_results || []) > 0 do %>
+                  <%= if length(@search_results) > 0 do %>
                     <ul class="py-1">
-                      <%= for node <- @search_results || [] do %>
+                      <%= for node <- @search_results do %>
                         <li>
                           <button
                             id={"graph-search-result-#{node.id}"}
