@@ -101,33 +101,25 @@ defmodule DialecticWeb.NewGridForm do
             autocomplete="off"
             class="block min-h-28 w-full resize-y rounded-md border border-stone-400 bg-white px-4 py-3 text-base leading-6 text-slate-950 placeholder:text-slate-500 focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-700/20"
           />
-          <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div id="new-idea-answer-detail" class="flex items-center gap-2 text-xs text-slate-500">
-              <label for="new-idea-mode" class="shrink-0">Answer detail</label>
-              <.input
-                field={@form[:mode]}
-                id="new-idea-mode"
-                type="select"
-                value={@selected_mode}
-                aria-label="Answer detail"
-                options={[
-                  {"Simple", "high_school"},
-                  {"Expanded", "university"},
-                  {"In-depth", "expert"}
-                ]}
-                class="min-h-11 rounded-md border border-stone-300 bg-white py-2 pl-3 pr-8 text-sm text-slate-600 focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-700/20"
-              />
-            </div>
+          <div class="flex min-w-0 flex-wrap items-center gap-2 border-t border-stone-300 pt-3">
             <button
               id="new-idea-create-submit"
               type="submit"
               phx-disable-with="Creating your grid…"
               data-analytics-event="grid_creation_requested"
               data-analytics-location="my_learning"
-              class="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md bg-teal-800 px-5 py-3 text-base font-semibold text-white hover:bg-teal-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 disabled:cursor-wait disabled:opacity-60 sm:w-auto"
+              class="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-teal-800 px-5 py-3 text-base font-semibold text-white hover:bg-teal-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 disabled:cursor-wait disabled:opacity-60"
             >
               Create a grid <.icon name="hero-arrow-right" class="h-4 w-4" />
             </button>
+            <DialecticWeb.WorkspaceBarComp.answer_level_dropdown
+              id={@id <> "-answer-level"}
+              field={@form[:mode]}
+              prompt_mode={@selected_mode}
+              current_user={@current_user}
+              heading="First AI answer"
+              hint="Sets the detail of your first AI answer. You can change it later."
+            />
           </div>
           <p class="text-xs leading-5 text-slate-500">
             AI will help you get started. You can ask follow-up questions, add your own thoughts and change the answer detail later.

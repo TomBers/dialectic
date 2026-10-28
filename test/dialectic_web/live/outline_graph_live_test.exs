@@ -458,6 +458,29 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert has_element?(view, "#outline-node-1[aria-current='location']")
     view |> element("#outline-branch-4") |> render_click()
     assert has_element?(view, "#outline-row-5[hidden]")
+
+    data =
+      update_in(sample_graph_data(), ["nodes"], fn nodes ->
+        Enum.map(nodes, fn
+          %{"id" => "4"} = node -> Map.put(node, "class", "user")
+          node -> node
+        end)
+      end)
+
+    commented_graph = create_graph(data)
+    {:ok, comments, _} = live(conn, ~p"/g/#{commented_graph.slug}")
+    comments |> element("#outline-comments-2") |> render_click()
+    comments |> element("#outline-branch-4") |> render_click()
+    refute has_element?(comments, "#outline-row-4[hidden]")
+    refute has_element?(comments, "#outline-row-5[hidden]")
+
+    comments |> element("#outline-comments-2") |> render_click()
+    assert has_element?(comments, "#outline-row-4[hidden]")
+    assert has_element?(comments, "#outline-row-5[hidden]")
+    assert has_element?(comments, "#outline-mobile-row-5[hidden]")
+
+    comments |> element("#outline-comments-2") |> render_click()
+    refute has_element?(comments, "#outline-row-5[hidden]")
   end
 
   test "mobile reader actions expose exploration, questions, search, and More", %{conn: conn} do
@@ -968,6 +991,26 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert has_element?(view, "#share-modal-hook")
     assert has_element?(view, ~s(#share-url-input[value="#{share_url}"]))
     refute render(view) =~ "Generating preview..."
+
+    assert has_element?(view, "#share-copy-btn", "Copy link")
+    assert has_element?(view, "#share-feedback[role='status']")
+    assert has_element?(view, "#share-social-whatsapp")
+    assert has_element?(view, "#share-social-email[href^='mailto:']")
+    refute has_element?(view, "#share-image-options")
+    refute has_element?(view, "#share-download-image")
+    refute has_element?(view, "[aria-label='Copy embed code']")
+
+    view |> element("#share-view-grid") |> render_click()
+    grid_url = "#{DialecticWeb.Endpoint.url()}/g/#{graph.slug}/graph?node=2"
+    assert has_element?(view, ~s(#share-url-input[value="#{grid_url}"]))
+    assert has_element?(view, "#share-view-grid[aria-pressed='true']")
+
+    view |> element("#share-view-reader") |> render_click()
+    assert has_element?(view, ~s(#share-url-input[value="#{share_url}"]))
+
+    view |> element("#share-node-toggle") |> render_click()
+    whole_url = "#{DialecticWeb.Endpoint.url()}/g/#{graph.slug}"
+    assert has_element?(view, ~s(#share-url-input[value="#{whole_url}"]))
   end
 
   test "share button includes the chosen path and viewed chapter", %{conn: conn} do
@@ -1012,10 +1055,8 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert render(view) =~ "Share Quote"
     assert has_element?(view, ~s(#share-url-input[value="#{share_url}"]))
 
-    assert has_element?(
-             view,
-             ~s(#quote-share-preview[data-share-card-canvas][data-card-text="Meaning is use."])
-           )
+    assert has_element?(view, "#share-social-whatsapp")
+    refute has_element?(view, "#share-download-image")
   end
 
   test "reader exposes skip links and identifies the current outline item", %{conn: conn} do

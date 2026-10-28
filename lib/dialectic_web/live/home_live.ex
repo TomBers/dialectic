@@ -94,7 +94,7 @@ defmodule DialecticWeb.HomeLive do
     {:ok,
      socket
      |> assign(
-       og_image: DialecticWeb.Endpoint.url() <> ~p"/images/graph_live.webp",
+       og_image: DialecticWeb.Endpoint.url() <> ~p"/images/rationalgrid-social.png",
        page_title: "RationalGrid",
        partner_grids_empty?: true,
        homepage_faqs: @homepage_faqs,
@@ -196,8 +196,7 @@ defmodule DialecticWeb.HomeLive do
               Learn today. <span class="text-teal-200">Remember tomorrow.</span>
             </h1>
             <p id="home-hero-subheading" class="mt-6 max-w-xl text-lg leading-8 text-slate-200">
-              Turn a question into connected ideas, sources and new directions with AI.
-              Keep your learning organised in a grid, ready to return to and build on.
+              Go beyond easy answers and arguments that hide behind jargon. Explore ideas in depth, remember what you learn, and share your thinking with others.
             </p>
             <div id="start-here" class="mt-7 scroll-mt-24">
               <.account_action
@@ -206,13 +205,6 @@ defmodule DialecticWeb.HomeLive do
                 location="home_hero"
                 hero
               />
-              <p
-                id="home-private-reassurance"
-                class="mt-4 flex items-start gap-2 text-sm leading-6 text-slate-300"
-              >
-                <.icon name="hero-lock-closed" class="mt-1 h-4 w-4 shrink-0 text-teal-200" />
-                <span>Free to use. Your grids start private. You choose what to make public.</span>
-              </p>
             </div>
           </div>
 
@@ -643,7 +635,7 @@ defmodule DialecticWeb.HomeLive do
           "@id" => product_id,
           "name" => "RationalGrid",
           "url" => base_url,
-          "image" => base_url <> ~p"/images/graph_live.webp",
+          "image" => base_url <> ~p"/images/rationalgrid-social.png",
           "description" =>
             "Learn today. Remember tomorrow. Your AI workshop for connected ideas, sources and challenges, organised and ready to revisit with others.",
           "applicationCategory" => "EducationalApplication",

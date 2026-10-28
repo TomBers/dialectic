@@ -58,12 +58,14 @@ defmodule DialecticWeb.SiteNavigation do
           :if={@current_user}
           id="desktop-new-grid-nav-link"
           href={~p"/my/learning?new=true"}
+          aria-label="Create a grid"
+          title="Create a grid"
           class={[
-            "ml-1 h-8 shrink-0 items-center justify-center rounded-md bg-teal-300 px-2 font-semibold text-slate-950 hover:bg-teal-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-300 sm:px-2.5",
+            "ml-1 h-8 shrink-0 items-center justify-center gap-1 rounded-md bg-teal-300 px-2 font-semibold text-slate-950 hover:bg-teal-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-300 sm:px-2.5",
             "inline-flex"
           ]}
         >
-          Create a grid
+          <.icon name="hero-plus" class="h-4 w-4" /> Grid
         </.link>
 
         <%= if @current_user do %>

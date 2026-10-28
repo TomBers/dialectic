@@ -4,6 +4,7 @@ export default {
   mounted() {
     this.trigger = this.el.querySelector("[data-answer-level-toggle]");
     this.panel = this.el.querySelector("[data-answer-level-options]");
+    this.input = this.el.querySelector("[data-answer-level-input]");
     this.options = Array.from(this.el.querySelectorAll("[data-answer-level-choice]"));
     this.setOpen = (open, restoreFocus = false) => {
       this.panel.hidden = !open;
@@ -16,7 +17,15 @@ export default {
     };
     this.onClick = (event) => {
       if (this.trigger.contains(event.target)) this.setOpen(this.panel.hidden);
-      else if (event.target.closest("[data-answer-level-choice]")) this.setOpen(false, true);
+      else {
+        const choice = event.target.closest("[data-answer-level-choice]");
+        if (!choice) return;
+        if (this.input) {
+          this.syncLevel(choice.dataset.answerLevelChoice);
+          this.input.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+        this.setOpen(false, true);
+      }
     };
     this.onKeydown = (event) => {
       if (event.isComposing || event.altKey || event.metaKey || event.ctrlKey) return;
@@ -47,6 +56,7 @@ export default {
     mode = mode === "simple" ? "high_school" : mode;
     if (!labels[mode]) return;
     this.el.dataset.promptMode = mode;
+    if (this.input) this.input.value = mode;
     this.el.querySelector("[data-answer-level-label]").textContent = labels[mode];
     this.trigger.setAttribute("aria-label", `Change AI answer level. Current level: ${labels[mode]}`);
     this.el.querySelectorAll("[data-answer-level-icon]").forEach(icon => {

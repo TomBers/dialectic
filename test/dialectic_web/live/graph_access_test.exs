@@ -241,10 +241,22 @@ defmodule DialecticWeb.GraphAccessTest do
     GraphManager.add_edges(graph.title, response, [GraphManager.find_node_by_id(graph.title, "1")])
 
     render_click(visitor, "node_clicked", %{"id" => response.id})
+    render_click(owner_view, "node_clicked", %{"id" => response.id})
     count = length(GraphManager.vertices(graph.title))
 
     render_click(owner_view, "toggle_lock_graph")
     assert Repo.reload!(graph).is_locked
+
+    assert has_element?(
+             owner_view,
+             "#node-tools-popover-#{response.id}[phx-hook='ToolsMenu']:not([phx-update])"
+           )
+
+    assert has_element?(
+             owner_view,
+             "#node-tools-popover-#{response.id} [id^='node-tool-pros-cons-'][disabled]"
+           )
+
     render_click(visitor, "answer", %{"vertex" => %{"content" => "A blocked contribution"}})
 
     assert has_element?(visitor, "#flash-error", "locked")
@@ -252,6 +264,12 @@ defmodule DialecticWeb.GraphAccessTest do
 
     render_click(owner_view, "toggle_lock_graph")
     refute Repo.reload!(graph).is_locked
+
+    assert has_element?(
+             owner_view,
+             "#node-tools-popover-#{response.id} [id^='node-tool-pros-cons-']:not([disabled])"
+           )
+
     render_click(visitor, "answer", %{"vertex" => %{"content" => "An allowed contribution"}})
     assert length(GraphManager.vertices(graph.title)) == count + 1
   end

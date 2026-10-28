@@ -386,6 +386,11 @@ defmodule DialecticWeb.WorkspaceBarComp do
   attr :id, :string, required: true
   attr :prompt_mode, :string, required: true
   attr :current_user, :any, required: true
+  attr :field, :any, default: nil
+  attr :heading, :string, default: "Next AI answer"
+
+  attr :hint, :string,
+    default: "Applies to new AI answers. Existing answers keep their original level."
 
   def answer_level_dropdown(assigns) do
     level =
@@ -429,6 +434,14 @@ defmodule DialecticWeb.WorkspaceBarComp do
       data-prompt-mode={@level}
       class="contents"
     >
+      <input
+        :if={@field}
+        id={@id <> "-input"}
+        name={@field.name}
+        type="hidden"
+        value={@level}
+        data-answer-level-input
+      />
       <button
         id={@id <> "-toggle"}
         type="button"
@@ -442,7 +455,7 @@ defmodule DialecticWeb.WorkspaceBarComp do
           :for={level <- @levels}
           data-answer-level-icon={level.mode}
           hidden={level.mode != @level}
-          class="inline-flex shrink-0"
+          class="shrink-0"
           aria-hidden="true"
         ><.icon name={level.icon} class="h-3.5 w-3.5" /></span>
         <span data-answer-level-label>{answer_level_label(@level)}</span>
@@ -455,7 +468,7 @@ defmodule DialecticWeb.WorkspaceBarComp do
         class="order-last min-w-0 basis-full rounded-xl border border-stone-300 bg-stone-50 p-1.5 text-slate-950"
       >
         <p id={@id <> "-heading"} class="px-2.5 py-1.5 text-xs font-semibold text-slate-500">
-          Next AI answer
+          {@heading}
         </p>
         <div
           role="listbox"
@@ -471,8 +484,8 @@ defmodule DialecticWeb.WorkspaceBarComp do
             tabindex={if(level.mode == @level, do: "0", else: "-1")}
             aria-selected={to_string(level.mode == @level)}
             aria-label={level.label}
-            phx-click="set_prompt_mode"
-            phx-value-prompt_mode={level.mode}
+            phx-click={if(is_nil(@field), do: "set_prompt_mode")}
+            phx-value-prompt_mode={if(is_nil(@field), do: level.mode)}
             data-answer-level-choice={level.mode}
             class="flex min-h-14 w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left hover:bg-stone-100 focus-visible:outline-2 focus-visible:outline-teal-800 aria-selected:bg-slate-950 aria-selected:text-white"
           >
@@ -498,7 +511,7 @@ defmodule DialecticWeb.WorkspaceBarComp do
           id={@id <> "-hint"}
           class="mt-1 border-t border-slate-100 px-2.5 pt-2 pb-1 text-xs leading-5 text-slate-500"
         >
-          Applies to new AI answers. Existing answers keep their original level.
+          {@hint}
         </p>
       </div>
     </div>

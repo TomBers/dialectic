@@ -1125,6 +1125,7 @@ defmodule DialecticWeb.LearningLive do
                   module={DialecticWeb.NewGridForm}
                   id="learning-new-grid-form"
                   form={@new_grid_form}
+                  current_user={@current_user}
                   label="Create a grid"
                   context={@collection && "Added to #{group_kind(@collection)}: #{@collection.name}"}
                   busy={@creating_grid?}

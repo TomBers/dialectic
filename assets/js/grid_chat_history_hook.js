@@ -20,12 +20,12 @@ export default {
 
     this.handleEvent("grid_chat_message", ({ storage_key, message }) => {
       if (storage_key !== this.storageKey) return;
-      this.messages = mergeMessages(this.messages, [message]);
       try {
-        this.messages = mergeMessages(this.readMessages(), this.messages);
+        this.messages = mergeMessages(this.readMessages(), [message]);
         localStorage.setItem(`${this.storageKey}:messages`, JSON.stringify(this.messages));
         this.showSavedStatus();
       } catch {
+        this.messages = mergeMessages(this.messages, [message]);
         this.showStorageError();
       }
     });
@@ -42,7 +42,21 @@ export default {
     });
 
     this.onStorageError = () => this.showStorageError();
+    this.onStorage = (event) => {
+      if (event.storageArea && event.storageArea !== localStorage) return;
+      if (event.key !== null && event.key !== `${this.storageKey}:messages`) return;
+      try {
+        this.messages = this.readMessages();
+        this.showSavedStatus();
+        if (event.key === null || event.newValue === null) {
+          this.pushEvent("sync_grid_chat_history", { messages: this.messages });
+        }
+      } catch {
+        this.showStorageError();
+      }
+    };
     window.addEventListener("grid-chat-storage-error", this.onStorageError);
+    window.addEventListener("storage", this.onStorage);
     this.restore();
   },
 
@@ -54,7 +68,7 @@ export default {
   },
 
   reconnected() {
-    this.restore();
+    this.restore(true);
   },
 
   readMessages() {
@@ -68,14 +82,14 @@ export default {
     }
   },
 
-  restore() {
+  restore(sync = false) {
     try {
-      this.messages = mergeMessages(this.readMessages(), this.messages);
+      this.messages = this.readMessages();
       this.showSavedStatus();
     } catch {
       this.showStorageError();
     }
-    this.pushEvent("restore_grid_chat", { messages: this.messages });
+    this.pushEvent(sync ? "sync_grid_chat_history" : "restore_grid_chat", { messages: this.messages });
   },
 
   showSavedStatus() {
@@ -88,5 +102,6 @@ export default {
 
   destroyed() {
     window.removeEventListener("grid-chat-storage-error", this.onStorageError);
+    window.removeEventListener("storage", this.onStorage);
   },
 };

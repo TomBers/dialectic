@@ -23,12 +23,12 @@ defmodule DialecticWeb.LearningCreationTest do
     refute has_element?(view, "#new-idea-level-step")
 
     assert has_element?(view, "#new-idea-create-submit", "Create a grid")
-    assert has_element?(view, "#new-idea-mode option[value='expert']")
+    assert has_element?(view, "#learning-new-grid-form-answer-level-expert[role='option']")
     assert has_element?(view, "#learning-new-grid-form-privacy", "Only you can access it")
 
     view
-    |> form("#learning-new-grid-form", vertex: %{content: question, mode: "expert"})
-    |> render_submit()
+    |> form("#learning-new-grid-form", vertex: %{content: question})
+    |> render_submit(%{"vertex" => %{"mode" => "expert"}})
 
     {path, _flash} = assert_redirect(view, 2_000)
     graph = Graphs.get_graph_by_title(title)

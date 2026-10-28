@@ -549,6 +549,17 @@ defmodule DialecticWeb.GraphLiveTest do
       assert has_element?(view, "#node-title-header-1 #node-title-type-1", "Starting question")
       assert has_element?(view, "#origin-quick-help", "How it works")
       refute has_element?(view, "#origin-onboarding-1")
+
+      render_hook(view, "open_prompt_settings", %{})
+      assert has_element?(view, "#flash-info", "Open an answer to choose the level")
+
+      graph_id = :sys.get_state(view.pid).socket.assigns.graph_id
+      answer = GraphManager.add_node(graph_id, %Vertex{class: "answer", content: "An answer"})
+      GraphManager.add_edges(graph_id, answer, [GraphManager.find_node_by_id(graph_id, "2")])
+
+      render_hook(view, "open_prompt_settings", %{})
+      assert_push_event(view, "open_answer_level", %{})
+      assert :sys.get_state(view.pid).socket.assigns.node.id == answer.id
     end
 
     test "keeps whole-node and selected-passage inquiries in the shared action surface", %{

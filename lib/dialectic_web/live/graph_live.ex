@@ -211,6 +211,10 @@ defmodule DialecticWeb.GraphLive do
     {:noreply, GridChat.restore_history(socket, messages)}
   end
 
+  def handle_event("sync_grid_chat_history", %{"messages" => messages}, socket) do
+    {:noreply, GridChat.sync_history(socket, messages)}
+  end
+
   def handle_event("clear_grid_chat_history", _params, socket) do
     {:noreply, GridChat.clear_history(socket)}
   end
@@ -225,7 +229,11 @@ defmodule DialecticWeb.GraphLive do
       if GraphHelpers.origin_branching_disabled?(socket.assigns.node) do
         socket.assigns.graph_id
         |> GraphManager.vertices()
-        |> Enum.find(&(&1.class == "answer" && !Map.get(&1, :deleted, false)))
+        |> Enum.map(&GraphManager.vertex_label(socket.assigns.graph_id, &1))
+        |> Enum.find(fn
+          %{class: "answer"} = node -> !Map.get(node, :deleted, false)
+          _ -> false
+        end)
       else
         socket.assigns.node
       end
@@ -2988,7 +2996,7 @@ defmodule DialecticWeb.GraphLive do
         "headline" => graph_struct.title,
         "description" => description,
         "url" => canonical,
-        "image" => base_url <> ~p"/images/graph_live.webp",
+        "image" => base_url <> ~p"/images/rationalgrid-social.png",
         "dateModified" => DateTime.to_iso8601(graph_struct.updated_at),
         "datePublished" => DateTime.to_iso8601(graph_struct.inserted_at),
         "publisher" => %{
@@ -3007,7 +3015,7 @@ defmodule DialecticWeb.GraphLive do
       page_title: graph_struct.title,
       graph_owner_name: owner_name,
       graph_creator: creator,
-      og_image: base_url <> ~p"/images/graph_live.webp",
+      og_image: base_url <> ~p"/images/rationalgrid-social.png",
       page_description: description,
       canonical_url: canonical,
       og_type: "article",

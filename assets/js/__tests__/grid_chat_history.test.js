@@ -47,21 +47,36 @@ it("persists received messages, caps and deduplicates them, and restores after r
   const second = mount(historyHook);
   expect(second.pushEvent).toHaveBeenLastCalledWith("restore_grid_chat", { messages: saved });
   second.reconnected();
-  expect(second.pushEvent).toHaveBeenLastCalledWith("restore_grid_chat", { messages: saved });
+  expect(second.pushEvent).toHaveBeenLastCalledWith("sync_grid_chat_history", { messages: saved });
+
+  localStorage.removeItem(`${key}:messages`);
+  second.reconnected();
+  expect(second.messages).toEqual([]);
+  expect(second.pushEvent).toHaveBeenLastCalledWith("sync_grid_chat_history", { messages: [] });
 });
 
 it("keeps accounts and grids separate and clears only the selected history", () => {
   const first = mount(historyHook);
   const second = mount(historyHook, "grid-chat:v1:user:2:example");
+  const peer = mount(historyHook);
   receive(first, "one");
+  receive(peer, "peer-message");
   receive(second, "two");
   first.handlers.grid_chat_message({storage_key: second.storageKey, message: {id: "wrong"}});
-  expect(JSON.parse(localStorage.getItem(`${key}:messages`))).toHaveLength(1);
+  expect(JSON.parse(localStorage.getItem(`${key}:messages`))).toHaveLength(2);
 
   first.handlers.grid_chat_history_cleared({storage_key: key});
   expect(localStorage.getItem(`${key}:messages`)).toBeNull();
   expect(localStorage.getItem(`${second.storageKey}:messages`)).not.toBeNull();
-  receive(first, "new");
+  window.dispatchEvent(new StorageEvent("storage", {
+    key: `${key}:messages`, newValue: null, storageArea: localStorage,
+  }));
+  expect(peer.messages).toEqual([]);
+  expect(peer.pushEvent).toHaveBeenLastCalledWith("sync_grid_chat_history", { messages: [] });
+  expect(second.messages.map(message => message.id)).toEqual(["two"]);
+
+  peer.messages = [{id: "stale", body: "An old cached message"}];
+  receive(peer, "new");
   expect(JSON.parse(localStorage.getItem(`${key}:messages`)).map(m => m.id)).toEqual(["new"]);
   expect(mount(historyHook, `${key}-another-grid`).pushEvent)
     .toHaveBeenCalledWith("restore_grid_chat", {messages: []});

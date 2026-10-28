@@ -189,7 +189,7 @@ defmodule DialecticWeb.HomeLiveTest do
            )
 
     refute has_element?(view, "#home-video-hero form")
-    assert has_element?(view, "#home-private-reassurance", "Your grids start private")
+    refute has_element?(view, "#home-private-reassurance")
     refute has_element?(view, "#home-video-hero a:not(#home-hero-sign-up-link)")
     refute has_element?(view, "#home-video-hero button:not(#home-example-video-play)")
   end
@@ -199,7 +199,7 @@ defmodule DialecticWeb.HomeLiveTest do
     assert has_element?(view, "#home-hero-logo")
     assert has_element?(view, "#home-hero-brand", "RationalGrid")
     assert has_element?(view, "#home-hero-title", "Learn today. Remember tomorrow.")
-    assert has_element?(view, "#home-hero-subheading", "organised in a grid")
+    assert has_element?(view, "#home-hero-subheading", "Go beyond easy answers")
     assert has_element?(view, "#home-concern-comparisons-link[href='/compare']")
     refute has_element?(view, "#home-hero-comparisons-link")
     assert has_element?(view, "#home-hero-background[srcset][sizes='100vw']")

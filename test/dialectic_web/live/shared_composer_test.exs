@@ -54,7 +54,6 @@ defmodule DialecticWeb.SharedComposerTest do
       assert has_element?(view, "##{id}-comment[data-shortcut-action='comment']", "Post thought")
       assert has_element?(view, "##{id}-ask[data-shortcut-action='ask']", "Ask AI")
       assert has_element?(view, "##{id} [aria-controls][aria-expanded]")
-      assert has_element?(view, "##{id}-sharing-hint")
       assert has_element?(view, "##{id}-primary-actions textarea")
       assert has_element?(view, "##{id}-primary-actions ##{id}-ask")
       assert has_element?(view, "##{id}-answer-level-options[hidden]")
@@ -64,7 +63,7 @@ defmodule DialecticWeb.SharedComposerTest do
                "##{id}-answer-level-toggle[aria-expanded='false'][aria-controls='#{id}-answer-level-options']"
              )
 
-      assert has_element?(view, "##{id}-thinking-tools", "Explore this idea further")
+      assert has_element?(view, "##{id}-thinking-tools")
 
       for platform <- ~w(mac other) do
         keycap =

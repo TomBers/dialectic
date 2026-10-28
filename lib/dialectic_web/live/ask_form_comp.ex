@@ -173,9 +173,7 @@ defmodule DialecticWeb.AskFormComp do
               <span>Post thought</span><.shortcut_keycap shift />
             </button>
           </div>
-          <p id={"#{@id}-sharing-hint"} class="mt-2 px-1 text-xs leading-5 text-slate-600">
-            Ask AI for a response, or add your own thought. Both are shared in this discussion.
-          </p>
+
           <p
             :if={@context in [:selection, :answer]}
             id={"#{@id}-status"}
@@ -219,7 +217,7 @@ defmodule DialecticWeb.AskFormComp do
             <span class="text-xs font-normal text-slate-600">Optional</span>
           </h3>
           <p id={"#{@id}-learning-description"} class="mt-1 text-xs leading-5 text-slate-600">
-            Get key questions to explore next, helping you examine the idea and develop your own understanding—like working with a critical thinking tutor.
+            Get key questions to explore next, helping you examine the idea and develop your understanding.
           </p>
           <%= if @current_user do %>
             <.input
@@ -229,7 +227,7 @@ defmodule DialecticWeb.AskFormComp do
               value={Map.get(@form.params, "guided_learning", false)}
               variant="learning_plan"
               label="Add a learning plan"
-              description="Include a plan with my next AI response."
+              description=""
               aria-describedby={"#{@id}-learning-description"}
             />
           <% else %>
@@ -270,9 +268,8 @@ defmodule DialecticWeb.AskFormComp do
             >
               <span class="inquiry-disclosure-icon"><.icon name="hero-light-bulb" class="h-4 w-4" /></span>
               <span class="min-w-0 flex-1">
-                <span data-tools-closed class={[@tools_open && "hidden"]}>Explore this idea further</span>
+                <span data-tools-closed class={[@tools_open && "hidden"]}>Show thinking tools</span>
                 <span data-tools-open class={[!@tools_open && "hidden"]}>Hide thinking tools</span>
-                <span class="mt-0.5 block text-xs font-normal leading-5 text-slate-600">Clarify concepts, question assumptions, and consider other perspectives.</span>
               </span>
               <.shortcut_keycap key="T" modifier="none" />
             </button>
@@ -282,7 +279,7 @@ defmodule DialecticWeb.AskFormComp do
             role="group"
             aria-label="Critical thinking tools"
             phx-hook={if(@context == :node, do: "ToolsMenu")}
-            phx-update="ignore"
+            phx-update={if(@context in [:selection, :answer], do: "ignore")}
             hidden={@context in [:selection, :answer] || !@tools_open}
             data-open={to_string(@tools_open)}
             data-selection-advanced-tools={@context in [:selection, :answer]}

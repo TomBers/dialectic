@@ -131,23 +131,31 @@ defmodule DialecticWeb.OutlineNavigation do
       end)
 
     children = Enum.group_by(rows, & &1.parent_id)
+    rows_by_id = Map.new(rows, &{&1.id, &1})
 
     Enum.map(rows, fn row ->
       direct = Map.get(children, row.id, [])
       comments = Enum.count(direct, &(&1.class == "user"))
       directions = length(direct) - comments
 
+      comment_parent_ids =
+        [row.id | row.ancestors]
+        |> Enum.map(&Map.fetch!(rows_by_id, &1))
+        |> Enum.filter(&(&1.class == "user" && !is_nil(&1.parent_id)))
+        |> Enum.map(& &1.parent_id)
+
       Map.merge(row, %{
         has_children?: direct != [],
         comments: comments,
         directions: directions,
-        branch?: directions > 1
+        branch?: directions > 1,
+        comment_parent_ids: comment_parent_ids
       })
     end)
   end
 
   defp hidden_row?(row, expanded_ids, comment_ids) do
     Enum.any?(row.ancestors, &(not MapSet.member?(expanded_ids, &1))) ||
-      (row.class == "user" && row.parent_id && !MapSet.member?(comment_ids, row.parent_id))
+      Enum.any?(row.comment_parent_ids, &(not MapSet.member?(comment_ids, &1)))
   end
 end

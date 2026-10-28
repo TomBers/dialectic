@@ -145,6 +145,16 @@ defmodule DialecticWeb.GridChat do
 
   def restore_history(socket, _messages), do: socket
 
+  def sync_history(socket, messages) when is_list(messages) do
+    socket
+    |> Phoenix.LiveView.stream(:chat_messages, [], reset: true)
+    |> assign_message_ids([])
+    |> Phoenix.Component.assign(:chat_history_restored?, false)
+    |> restore_history(messages)
+  end
+
+  def sync_history(socket, _messages), do: socket
+
   def clear_history(socket) do
     socket
     |> Phoenix.LiveView.stream(:chat_messages, [], reset: true)

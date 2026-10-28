@@ -31,6 +31,13 @@ defmodule DialecticWeb.GridChatHistoryTest do
 
     storage_key = GridChat.storage_key(graph.title, nil)
     assert_push_event(view, "grid_chat_history_cleared", %{storage_key: ^storage_key})
+
+    render_hook(view, "sync_grid_chat_history", %{messages: [second]})
+    assert has_element?(view, "#chat_messages-#{second.id}")
+    render_hook(view, "sync_grid_chat_history", %{messages: []})
+    refute has_element?(view, "#chat_messages-#{second.id}")
+    assert has_element?(view, "#grid-chat-toggle[aria-label='Open viewer chat']")
+    refute_push_event(view, "grid_chat_history_cleared", %{storage_key: ^storage_key})
   end
 
   test "restoration is bounded and rejects malformed messages", %{conn: conn} do

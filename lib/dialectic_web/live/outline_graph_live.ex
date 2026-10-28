@@ -709,7 +709,7 @@ defmodule DialecticWeb.OutlineGraphLive do
         "description" => description,
         "url" => canonical,
         "mainEntityOfPage" => %{"@type" => "WebPage", "@id" => canonical},
-        "image" => base_url <> ~p"/images/graph_live.webp",
+        "image" => base_url <> ~p"/images/rationalgrid-social.png",
         "dateModified" => DateTime.to_iso8601(graph_db.updated_at),
         "datePublished" => DateTime.to_iso8601(graph_db.inserted_at),
         "publisher" => %{
@@ -791,7 +791,7 @@ defmodule DialecticWeb.OutlineGraphLive do
       default_page_description: description,
       canonical_url: canonical,
       og_type: "article",
-      og_image: base_url <> ~p"/images/graph_live.webp",
+      og_image: base_url <> ~p"/images/rationalgrid-social.png",
       json_ld: json_ld,
       noindex: !indexable_graph?(graph_db)
     )
@@ -854,7 +854,7 @@ defmodule DialecticWeb.OutlineGraphLive do
       page_title: HighlightShare.page_title(graph, highlight),
       page_description: HighlightShare.page_description(graph, highlight),
       canonical_url: HighlightShare.share_url(graph, highlight),
-      og_image: HighlightShare.image_url(graph, highlight),
+      og_image: DialecticWeb.Endpoint.url() <> ~p"/images/rationalgrid-social.png",
       noindex: true
     )
   end
@@ -869,7 +869,7 @@ defmodule DialecticWeb.OutlineGraphLive do
       page_title: graph.title,
       page_description: description,
       canonical_url: canonical,
-      og_image: base_url <> ~p"/images/graph_live.webp",
+      og_image: base_url <> ~p"/images/rationalgrid-social.png",
       noindex: !indexable_graph?(graph)
     )
   end

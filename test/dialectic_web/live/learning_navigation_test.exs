@@ -102,7 +102,12 @@ defmodule DialecticWeb.LearningNavigationTest do
 
     assert has_element?(view, "#new-idea-input", "An unfinished question")
     assert has_element?(view, "#learning-new-grid-form[data-selected-mode='expert']")
-    assert has_element?(view, "#new-idea-mode option[value='expert'][selected]")
+
+    assert has_element?(
+             view,
+             "#learning-new-grid-form-answer-level[data-prompt-mode='expert']"
+           )
+
     assert has_element?(view, "#new-idea-create-submit", "Create a grid")
     refute Dialectic.DbActions.Graphs.get_graph_by_title("An unfinished question")
 
