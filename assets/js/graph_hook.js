@@ -5,7 +5,6 @@ import { extractListItems } from "./list_detection_hook.js";
 import { syncSelectedNodeUrl } from "./selected_node_url.js";
 import { showToast, copyToClipboard } from "./toast.js";
 import { syncGraphAppearanceStorage } from "./appearance_preferences.js";
-import { projectQuestionEdges, questionEdgesFor, resolveGraphNode } from "./graph_question_edges.js";
 
 const RIGHT_DRAWER_SELECTOR = "[data-right-drawer]";
 const GRAPH_VIEWPORT_STORAGE_PREFIX = "dialectic:graph-viewport:";
@@ -242,7 +241,7 @@ const ensureVisible = (cy, container, nodeId) => {
       return;
     }
 
-    const n = resolveGraphNode(cy, nodeId);
+    const n = cy.getElementById(String(nodeId));
     if (!n || n.length === 0) return;
 
     const rect = container.getBoundingClientRect();
@@ -499,7 +498,7 @@ const graphHook = {
     this._syncReaderPathFocus({ force: true });
     this._centerOnNodeVisible = (id) => {
       try {
-        const n = this.cy.getElementById(id);
+        const n = this.cy.getElementById(String(id));
         if (!n || n.length === 0) return;
 
         // Keep structure stable: only pan if the node is off screen
@@ -834,7 +833,7 @@ const graphHook = {
         if (!id) return;
         const n =
           this.cy && typeof this.cy.getElementById === "function"
-            ? this.cy.getElementById(id)
+            ? this.cy.getElementById(String(id))
             : null;
         if (!n || n.length === 0) return;
 
@@ -858,7 +857,8 @@ const graphHook = {
 
         // Track if we've already reflowed for this node
         if (!this._reflowedNodes) this._reflowedNodes = new Set();
-        const needsReflow = isFirstTitleSet && !this._reflowedNodes.has(id);
+        const needsReflow = n.hasClass("question") ||
+          (isFirstTitleSet && !this._reflowedNodes.has(id));
 
         // Batch updates to prevent multiple redraws
         if (this.cy && typeof this.cy.startBatch === "function") {
@@ -894,7 +894,7 @@ const graphHook = {
       try {
         // Update selected highlighting to reflect the newly selected node
         this.cy.elements().removeClass("selected");
-        const nodeToCenter = resolveGraphNode(this.cy, id);
+        const nodeToCenter = this.cy.getElementById(String(id));
         if (nodeToCenter.length > 0) {
           const needsReflow =
             typeof this.cy.ensureNodeVisible === "function"
@@ -993,11 +993,7 @@ const graphHook = {
 
         if (!ids || ids.length === 0) return;
 
-        const idSet = new Set(ids);
-        ids.forEach((id) => {
-          const related = questionEdgesFor(this.cy, id);
-          related.forEach((edge) => idSet.add(edge.target().id()));
-        });
+        const idSet = new Set(ids.map(String));
         const allNodes = this.cy.nodes();
         let needsReflow = false;
 
@@ -1020,8 +1016,7 @@ const graphHook = {
         this.cy.edges().forEach((e) => {
           const srcMatch = idSet.has(e.source().id());
           const tgtMatch = idSet.has(e.target().id());
-          const questionMatch = (e.data("questionIds") || []).some((id) => idSet.has(id));
-          if (srcMatch || tgtMatch || questionMatch) {
+          if (srcMatch || tgtMatch) {
             e.addClass("search-match");
           } else {
             e.addClass("search-dimmed");
@@ -1135,11 +1130,10 @@ const graphHook = {
         if (!ids || ids.length === 0) return;
 
         ids.forEach((id) => {
-          const n = resolveGraphNode(this.cy, id);
+          const n = this.cy.getElementById(String(id));
           if (n && n.length > 0) {
             n.addClass("combine-selected");
           }
-          questionEdgesFor(this.cy, id).addClass("combine-selected");
         });
       } catch (_e) {}
     });
@@ -1375,7 +1369,7 @@ const graphHook = {
     try {
       this.cy.zoom(stored.zoom);
       const anchorNode = stored.anchor?.nodeId
-        ? this.cy.getElementById(stored.anchor.nodeId)
+        ? this.cy.getElementById(String(stored.anchor.nodeId))
         : null;
 
       if (
@@ -1522,11 +1516,10 @@ const graphHook = {
     } catch (_e) {}
   },
 
-  _parseGraphElements(graphStr = this.el.dataset.graph, { questionsAsEdges = true } = {}) {
+  _parseGraphElements(graphStr = this.el.dataset.graph) {
     try {
       const parsed = graphStr ? JSON.parse(graphStr) : [];
-      const elements = Array.isArray(parsed) ? parsed : [];
-      return questionsAsEdges ? projectQuestionEdges(elements) : elements;
+      return Array.isArray(parsed) ? parsed : [];
     } catch (_e) {
       return [];
     }
@@ -1693,7 +1686,7 @@ const graphHook = {
     const keepIds = new Set((ids || []).map((id) => String(id)));
     const orderedPositions = this._buildOrderedPresentationPositions(ids);
 
-    return this._parseGraphElements(graphStr, { questionsAsEdges: false }).reduce((acc, el) => {
+    return this._parseGraphElements(graphStr).reduce((acc, el) => {
       if (!el || !el.data) return acc;
 
       if (
@@ -2209,7 +2202,7 @@ const graphHook = {
     // Highlight the selected node
     if (this.cy && currentNode) {
       this.cy.elements().removeClass("selected");
-      resolveGraphNode(this.cy, currentNode).addClass("selected");
+      this.cy.getElementById(String(currentNode)).addClass("selected");
       if (typeof this.cy.applySelectionContext === "function") {
         this.cy.applySelectionContext(currentNode);
       }
@@ -2394,7 +2387,7 @@ const graphHook = {
     }
 
     this.cy.elements().removeClass("selected");
-    resolveGraphNode(this.cy, node).addClass("selected");
+    this.cy.getElementById(String(node)).addClass("selected");
     if (typeof this.cy.applySelectionContext === "function") {
       this.cy.applySelectionContext(node);
     }

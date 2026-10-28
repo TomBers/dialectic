@@ -98,7 +98,7 @@ describe("graph layout proportions", () => {
     expect(nodeStyle.ghost).toBe("no");
   });
 
-  it("reveals generation relationships only for contextual edges", () => {
+  it("describes generation relationships on every edge", () => {
     const styles = graphStyle("spaced");
     const edgeStyle = styleFor(styles, "edge");
     const hoverStyle = styleFor(styles, ".edge-hover");
@@ -128,7 +128,7 @@ describe("graph layout proportions", () => {
       target: () => ({ classes: () => [] }),
     };
 
-    expect(edgeStyle.label).toBe("");
+    expect(edgeStyle.label(relationEdge)).toBe("tests with a counterexample");
     expect(hoverStyle.label(relationEdge)).toBe("tests with a counterexample");
     expect(selectedStyle.label(relationEdge)).toBe("tests with a counterexample");
     expect(hoverStyle.label(relatedIdeasEdge)).toBe("explores related ideas");

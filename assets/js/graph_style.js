@@ -250,6 +250,8 @@ export function graphStyle(viewMode = "spaced", options = {}) {
     "font-weight": 600,
     color: highContrast ? "#0f172a" : "#334155",
     "text-rotation": "none",
+    "text-wrap": "wrap",
+    "text-max-width": isCompact ? 100 : 140,
     "text-margin-y": isCompact ? -6 : -9,
     "text-background-color": "#ffffff",
     "text-background-opacity": highContrast ? 1 : 0.92,
@@ -348,11 +350,11 @@ export function graphStyle(viewMode = "spaced", options = {}) {
       },
     },
 
-    // Edge styling — quieter by default, stronger on context/hover
+    // Every connection describes its relationship; selection strengthens the context.
     {
       selector: "edge",
       style: {
-        label: "",
+        ...relationshipLabelStyle,
         width: highContrast ? (isCompact ? 1.3 : 1.8) : isCompact ? 1 : 1.4,
         "line-color": highContrast ? "#334155" : "#64748b",
         "line-fill": "solid",
@@ -366,7 +368,7 @@ export function graphStyle(viewMode = "spaced", options = {}) {
         "target-arrow-shape": "triangle",
         "target-arrow-color": highContrast ? "#334155" : "#64748b",
         "arrow-scale": isCompact ? 0.58 : 0.76,
-        opacity: highContrast ? 0.76 : 0.62,
+        opacity: highContrast ? 0.86 : 0.74,
         "transition-property": "line-color target-arrow-color width opacity",
         "transition-duration": transitionDuration("150ms"),
         "transition-timing-function": "ease-in-out-sine",
@@ -448,6 +450,17 @@ export function graphStyle(viewMode = "spaced", options = {}) {
             : 1.5,
         "border-opacity": 1,
         color: highContrast ? cols[nodeType].text : defaultNodeStyle.text,
+        ...(nodeType === "question" ? {
+          width: (node) => isCompact ? getCompactNodeWidth(node) : 220,
+          "text-max-width": (node) => isCompact ? getCompactNodeWidth(node) - 8 : 200,
+          "font-size": isCompact ? 11 : 14,
+          padding: isCompact ? "6px" : "10px",
+          "corner-radius": isCompact ? 10 : 14,
+          "background-color": highContrast ? "#ffffff" : "#f0f9ff",
+          "border-color": highContrast ? "#0369a1" : "#7dd3fc",
+          "border-style": "dashed",
+          color: highContrast ? "#082f49" : cols.question.text,
+        } : {}),
       },
     });
 
@@ -461,7 +474,7 @@ export function graphStyle(viewMode = "spaced", options = {}) {
         ),
         "border-color": cols[nodeType].hoverBorder || cols[nodeType].border,
         "border-width": isCompact ? 2 : 2.5,
-        "border-style": "solid",
+        "border-style": nodeType === "question" ? "dashed" : "solid",
         color: defaultNodeStyle.text,
       },
     });
@@ -476,7 +489,7 @@ export function graphStyle(viewMode = "spaced", options = {}) {
         ),
         "border-color": cols[nodeType].selectedBorder,
         "border-width": isCompact ? 2.5 : 3,
-        "border-style": "solid",
+        "border-style": nodeType === "question" ? "dashed" : "solid",
         color: defaultNodeStyle.selectedText,
         "underlay-color": cols[nodeType].selectedBorder,
         "underlay-opacity": 0.08,
@@ -489,7 +502,7 @@ export function graphStyle(viewMode = "spaced", options = {}) {
   }
 
   base_style.push({
-    selector: "node.selected-neighbor",
+    selector: "node.selected-neighbor:not(.question)",
     style: {
       "border-width": isCompact ? 2 : 2.75,
       "border-style": "solid",
@@ -626,58 +639,6 @@ export function graphStyle(viewMode = "spaced", options = {}) {
       "transition-property": "underlay-opacity, border-width, border-color",
       "transition-duration": transitionDuration("200ms"),
       "transition-timing-function": "ease-in-out-quad",
-    },
-  });
-
-  base_style.push({
-    selector: "node.question-endpoint, node.question-endpoint.selected, node.question-endpoint.selected-neighbor",
-    style: {
-      width: isCompact ? 180 : 260,
-      height: 1,
-      "min-width": 0,
-      "min-height": 0,
-      padding: 0,
-      label: "",
-      "background-opacity": 0,
-      "border-width": 0,
-      "underlay-opacity": 0,
-    },
-  });
-
-  base_style.push({
-    selector: "edge.question-edge, edge.question-edge.selected-edge, edge.question-edge.edge-hover, edge.question-edge.presentation-edge-active",
-    style: {
-      ...relationshipLabelStyle,
-      label: "data(questionLabel)",
-      "font-size": isCompact ? 11 : 14,
-      "font-weight": 500,
-      "text-wrap": "wrap",
-      "text-max-width": isCompact ? 180 : 260,
-      "text-margin-y": 0,
-      "text-background-opacity": 1,
-      "text-background-padding": isCompact ? 3 : 5,
-      "text-border-width": 0,
-      "text-events": "yes",
-      color: highContrast ? "#082f49" : cols.question.text,
-      opacity: highContrast ? 1 : 0.9,
-      "target-arrow-shape": (edge) =>
-        edge.target().hasClass("question-endpoint") ? "none" : "triangle",
-      "line-style": (edge) =>
-        edge.target().hasClass("question-endpoint") ? "dashed" : "solid",
-    },
-  });
-
-  base_style.push({
-    selector: "edge.question-edge.search-dimmed",
-    style: { opacity: 0.08 },
-  });
-
-  base_style.push({
-    selector: "edge.question-edge.combine-selected",
-    style: {
-      "text-background-color": "#ede9fe",
-      "font-weight": 700,
-      opacity: 1,
     },
   });
 
