@@ -490,7 +490,7 @@ defmodule DialecticWeb.AmbassadorLive do
                 My Learning, save bookmarks and highlights, and explore with others.
                 Branded hubs and revenue sharing are still in development. <a
                   id="amb-faq-try-link"
-                  href={~p"/?focus=grid#start-here"}
+                  href={~p"/my/learning?new=true"}
                   class="font-semibold underline underline-offset-4"
                 >Try RationalGrid today</a>.
               </p>

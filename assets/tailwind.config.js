@@ -21,6 +21,35 @@ module.exports = {
   plugins: [
     require("@tailwindcss/forms"),
     require("@tailwindcss/typography"),
+    plugin(function ({ matchComponents, theme }) {
+      const iconsDir = path.join(__dirname, "icons/brands");
+      const values = Object.fromEntries(
+        fs.readdirSync(iconsDir)
+          .filter((file) => file.endsWith(".svg"))
+          .map((file) => [path.basename(file, ".svg"), file]),
+      );
+
+      matchComponents(
+        {
+          brand: (file) => {
+            const content = fs.readFileSync(path.join(iconsDir, file), "utf8");
+            const mask = `url("data:image/svg+xml,${encodeURIComponent(content)}")`;
+            return {
+              "-webkit-mask-image": mask,
+              "mask-image": mask,
+              "mask-repeat": "no-repeat",
+              "mask-position": "center",
+              "mask-size": "contain",
+              "background-color": "currentColor",
+              display: "inline-block",
+              width: theme("spacing.5"),
+              height: theme("spacing.5"),
+            };
+          },
+        },
+        { values },
+      );
+    }),
     // Allows prefixing tailwind classes with LiveView classes to add rules
     // only when LiveView classes are applied, for example:
     //

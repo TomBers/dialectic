@@ -89,6 +89,7 @@ defmodule Dialectic.DbActions.Sharing do
   2. The user is the owner.
   3. The user's email is in the share list.
   """
+  def can_access?(_user, %Graph{is_deleted: true}), do: false
   def can_access?(nil, %Graph{is_public: true}), do: true
   def can_access?(nil, _graph), do: false
 
@@ -100,6 +101,22 @@ defmodule Dialectic.DbActions.Sharing do
       true -> false
     end
   end
+
+  def can_access?(user, %Graph{is_deleted: deleted} = graph, token) when deleted != true do
+    can_access?(user, graph) or
+      (is_binary(token) and token != "" and is_binary(graph.share_token) and
+         Plug.Crypto.secure_compare(token, graph.share_token))
+  end
+
+  def can_access?(_user, _graph, _token), do: false
+
+  def can_edit?(user, graph, token \\ nil)
+
+  def can_edit?(%User{id: id} = user, %Graph{is_locked: locked} = graph, token)
+      when not is_nil(id) and locked != true,
+      do: can_access?(user, graph, token)
+
+  def can_edit?(_user, _graph, _token), do: false
 
   defp has_email_access?(email, graph_title) do
     Repo.exists?(

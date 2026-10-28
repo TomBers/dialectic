@@ -9,7 +9,7 @@ defmodule DialecticWeb.ShareModalCompTest do
   alias DialecticWeb.ShareModalComp
 
   describe "share links" do
-    test "share modal uses the generated share card in graph mode" do
+    test "share modal opens reader links by default without image download controls" do
       graph = GraphFixtures.insert_graph(%{title: "Share Modal Graph"})
 
       html =
@@ -27,44 +27,18 @@ defmodule DialecticWeb.ShareModalCompTest do
 
       expected_url =
         DialecticWeb.Endpoint.url() <>
-          DialecticWeb.GraphPathHelper.graph_editor_path(graph)
+          DialecticWeb.GraphPathHelper.graph_path(graph)
 
       assert html =~ ~s(value="#{expected_url}")
-      assert html =~ "Download image"
-      assert html =~ "data-download-share-card"
-      assert html =~ ~s(id="grid-share-preview")
-      assert html =~ "data-share-card-canvas"
-      assert html =~ ~s(data-card-text="Share Modal Graph")
-      assert html =~ ~s(data-download-filename="share-modal-graph-grid.png")
-      assert html =~ ~s(id="share-image-landscape")
-      assert html =~ ~s(aria-pressed="true")
-      refute html =~ "data-download-grid-png"
+      document = LazyHTML.from_fragment(html)
+      assert LazyHTML.query(document, "#share-copy-btn") |> Enum.count() == 1
+      assert LazyHTML.query(document, "#share-social-whatsapp") |> Enum.count() == 1
+
+      assert LazyHTML.query(document, "#share-image-options, #share-download-image, canvas")
+             |> Enum.count() == 0
     end
 
-    test "portrait format updates the preview URL, proportions, and filename" do
-      graph = GraphFixtures.insert_graph(%{title: "Portrait Share Modal Graph", is_public: true})
-
-      html =
-        render_component(ShareModalComp,
-          id: "share-modal",
-          show: true,
-          graph_struct: graph,
-          current_user: nil,
-          selected_node: %{id: "1"},
-          presentation_mode: :off,
-          presentation_slide_ids: [],
-          presentation_title: "",
-          share_node: false,
-          share_image_orientation: :portrait
-        )
-
-      assert html =~ ~s(id="share-image-portrait")
-      assert html =~ ~s(data-orientation="portrait")
-      assert html =~ "aspect-[4/5]"
-      assert html =~ ~s(data-download-filename="portrait-share-modal-graph-grid-portrait.png")
-    end
-
-    test "reader share downloads a generated grid title image" do
+    test "reader share keeps link sharing without image downloads" do
       graph = GraphFixtures.insert_graph(%{title: "Reader Share Modal Graph", is_public: true})
 
       html =
@@ -82,12 +56,9 @@ defmodule DialecticWeb.ShareModalCompTest do
           show_preview: false
         )
 
-      assert html =~ "Download image"
-      assert html =~ "data-download-share-card"
-      assert html =~ ~s(aria-label="Grid share image preview")
-      assert html =~ ~s(data-card-text="Reader Share Modal Graph")
-      assert html =~ ~s(data-download-filename="reader-share-modal-graph-grid.png")
-      refute html =~ "data-download-grid-png"
+      document = LazyHTML.from_fragment(html)
+      assert LazyHTML.query(document, "#share-copy-btn, #share-social-email") |> Enum.count() == 2
+      assert LazyHTML.query(document, "#share-download-image, canvas") |> Enum.count() == 0
     end
 
     test "share modal keeps graph mode for node and presentation links" do
@@ -126,9 +97,14 @@ defmodule DialecticWeb.ShareModalCompTest do
         |> Phoenix.HTML.safe_to_string()
 
       assert html =~ ~s(value="#{escaped_expected_url}")
+      document = LazyHTML.from_fragment(html)
+      assert LazyHTML.query(document, "#share-social-whatsapp") |> Enum.count() == 1
+      assert LazyHTML.query(document, "#share-social-email") |> Enum.count() == 1
+      assert LazyHTML.query(document, "#share-social-x") |> Enum.count() == 0
+      assert LazyHTML.query(document, "#share-social-linkedin") |> Enum.count() == 0
     end
 
-    test "share modal switches to quote-specific urls and preview copy for highlights" do
+    test "share modal keeps quote-specific URLs and sharing text for highlights" do
       graph = GraphFixtures.insert_graph(%{title: "Quote Share Modal Graph", is_public: true})
 
       selected_highlight = %{
@@ -166,45 +142,11 @@ defmodule DialecticWeb.ShareModalCompTest do
       assert html =~ "Share Quote"
       assert html =~ "Quote Share Link"
       assert html =~ ~s(value="#{escaped_expected_url}")
-      assert html =~ ~s(id="quote-share-preview")
-      assert html =~ "data-share-card-canvas"
       assert html =~ "Philosophy is a battle against the bewitchment"
-      assert html =~ ~s(data-card-grid-title="Quote Share Modal Graph")
-      refute html =~ "<object"
-      assert html =~ "Download PNG"
-      assert html =~ ~s(data-download-share-card="quote-share-preview")
-      assert html =~ ~s(data-download-filename="quote-share-modal-graph-quote-77.png")
+      document = LazyHTML.from_fragment(html)
+      assert LazyHTML.query(document, "#share-download-image, canvas") |> Enum.count() == 0
       assert html =~ "Quote link copied to clipboard!"
       refute html =~ "Link to current node"
-    end
-
-    test "quote image download filename caps long graph titles" do
-      long_title = Enum.join(List.duplicate("Very Long Download Title", 8), " ")
-      graph = GraphFixtures.insert_graph(%{title: long_title, is_public: true})
-
-      html =
-        render_component(ShareModalComp,
-          id: "share-modal",
-          show: true,
-          graph_struct: graph,
-          current_user: nil,
-          selected_node: %{id: "1"},
-          selected_highlight: %{
-            id: 123,
-            node_id: "5",
-            selected_text_snapshot: "A compact quote."
-          },
-          presentation_mode: :off,
-          presentation_slide_ids: [],
-          presentation_title: "",
-          share_node: false,
-          share_target: :reader,
-          show_preview: false
-        )
-
-      assert [_, filename] = Regex.run(~r/data-download-filename="([^"]+)"/, html)
-      assert String.ends_with?(filename, "-quote-123.png")
-      assert byte_size(filename) <= 96 + byte_size("-quote-123.png")
     end
   end
 end

@@ -2,6 +2,31 @@ defmodule DialecticWeb.PageControllerTest do
   use DialecticWeb.ConnCase
   import Dialectic.GraphFixtures
 
+  test "guests cannot generate grid tags", %{conn: conn} do
+    graph = insert_graph(%{title: "Guest tag request"})
+
+    conn = post(conn, ~p"/graphs/#{graph.title}/generate_tags")
+
+    assert redirected_to(conn) == ~p"/users/log_in"
+    assert Phoenix.Flash.get(conn.assigns.flash, :error) =~ "Sign in or create an account"
+    assert Dialectic.Repo.reload!(graph).tags == graph.tags
+  end
+
+  test "signed-in viewers cannot generate tags for inaccessible or locked grids", %{conn: conn} do
+    user = Dialectic.AccountsFixtures.user_fixture()
+
+    for attrs <- [%{is_public: false}, %{is_locked: true}] do
+      graph =
+        insert_graph(
+          Map.put(attrs, :title, "Restricted tags #{System.unique_integer([:positive])}")
+        )
+
+      response = conn |> log_in_user(user) |> post(~p"/graphs/#{graph.title}/generate_tags")
+      assert response(response, 403)
+      assert Dialectic.Repo.reload!(graph).tags == graph.tags
+    end
+  end
+
   test "retired reader routes return 404 while the current reader remains available", %{
     conn: conn
   } do
@@ -17,62 +42,51 @@ defmodule DialecticWeb.PageControllerTest do
   end
 
   test "guide describes the current workflow and links to the grid form", %{conn: conn} do
-    conn = get(conn, ~p"/intro/how")
+    document = conn |> get(~p"/intro/how") |> html_response(200) |> LazyHTML.from_document()
 
-    html = html_response(conn, 200)
+    assert document |> LazyHTML.query("#guide-hero h1") |> LazyHTML.text() =~
+             "Get to know your AI workshop."
 
-    assert html
-           |> LazyHTML.from_document()
-           |> LazyHTML.query("#guide-hero h1")
-           |> LazyHTML.text() =~ "Get to know your AI workshop."
+    for id <- ~w(guide-flow-step-ask guide-flow-step-share guide-shared-paths
+                 guide-bookmark-nodes guide-save-highlights guide-live-editing
+                 guide-grid-visibility guide-public-profile guide-explanation-level
+                 guide-translate-node guide-search-grid guide-follow-thread
+                 guide-create-synthesis guide-evidence-grounding guide-echo-chambers
+                 guide-present-grid guide-export-grid guide-contribution-history
+                 guide-follow-updates guide-focused-sharing guide-learning-plan) do
+      refute Enum.empty?(LazyHTML.query(document, "##{id}"))
+    end
 
-    assert html =~ ~s(id="guide-hero")
+    for id <- ~w(guide-start-grid-link guide-own-question-link) do
+      assert document |> LazyHTML.query("##{id}") |> LazyHTML.attribute("href") ==
+               ["/my/learning?new=true"]
+    end
 
-    assert html
-           |> LazyHTML.from_document()
-           |> LazyHTML.query("#guide-hero p")
-           |> LazyHTML.text() =~ "Use tools to question, explain, and challenge ideas."
+    assert Enum.empty?(LazyHTML.query(document, "a[href*='focus=grid']"))
 
-    assert html =~ "What makes a life feel meaningful?"
-    assert html =~ ~s(id="guide-new-grid-privacy")
-    assert html =~ "Step 2 · Read"
-    assert html =~ "Step 4 · Examine"
-    assert html =~ ~s(id="guide-critical-thinking-tools")
-    assert html =~ ~s(id="guide-examine-heading")
-    assert html =~ "Use the critical-thinking tools."
-    assert html =~ ~s(id="guide-critical-thinking-collaboration")
-    assert html =~ "More than a list of AI prompts."
-    assert html =~ "Philosophy for All and philosopher and educator Peter Worley"
-    assert html =~ "the final judgement remains yours"
-    assert html =~ ~s(id="guide-flow-step-ask")
-    assert html =~ ~s(id="guide-flow-step-share")
-    assert html =~ ~s(id="guide-shared-paths")
-    assert html =~ ~s(id="guide-bookmark-nodes")
-    assert html =~ ~s(id="guide-save-highlights")
-    assert html =~ ~s(id="guide-live-editing")
-    assert html =~ ~s(id="guide-grid-visibility")
-    assert html =~ ~s(id="guide-public-profile")
-    assert html =~ ~s(id="guide-explanation-level")
-    refute html =~ "Plain"
-    assert html =~ "Simple"
-    assert html =~ "Expanded"
-    assert html =~ ~s(id="guide-translate-node")
-    assert html =~ ~s(id="guide-search-grid")
-    assert html =~ ~s(id="guide-group-grid")
-    assert html =~ ~s(id="guide-create-synthesis")
-    assert html =~ ~s(id="guide-evidence-grounding")
-    assert html =~ "primary material and original research"
-    assert html =~ ~s(id="guide-echo-chambers")
-    assert html =~ ~s(id="guide-present-grid")
-    assert html =~ ~s(id="guide-export-grid")
-    assert html =~ ~s(id="guide-contribution-history")
-    assert html =~ ~s(id="guide-follow-updates")
-    assert html =~ ~s(id="guide-focused-sharing")
-    assert html =~ "Bookmark an idea"
-    assert html =~ "Save as a highlight"
-    assert html =~ "Edit and talk together live"
-    assert html =~ ~s(id="guide-start-grid-link")
-    assert html =~ ~s(href="/?focus=grid#start-here")
+    for {selector, text} <- [
+          {"#guide-new-grid-privacy", "start private"},
+          {"#guide-new-grid-privacy", "contributing requires signing in"},
+          {"#guide-explanation-level", "beside Ask AI"},
+          {"#guide-explanation-level", "descriptions inline"},
+          {"#guide-learning-plan", "Add a learning plan"},
+          {"#guide-learning-plan", "both Read and Grid"},
+          {"#guide-critical-thinking-tools", "Show thinking tools"},
+          {"#guide-critical-thinking-collaboration",
+           "Philosophy for All and philosopher and educator Peter Worley"},
+          {"#guide-critical-thinking-collaboration", "the final judgement remains yours"},
+          {"#guide-bookmark-nodes", "Save for later"},
+          {"#guide-save-highlights", "expand its saved passages inline"},
+          {"#guide-export-grid", "More → Download"},
+          {"#guide-contribution-history", "Grid history"},
+          {"#guide-live-editing", "saved only in this browser"},
+          {"#guide-grid-visibility", "Who can view and contribute"},
+          {"#guide-follow-updates", "Account menu"},
+          {"#guide-shared-paths", "Choose where the link starts"},
+          {"#guide-evidence-grounding", "primary material and original research"}
+        ] do
+      assert document |> LazyHTML.query(selector) |> LazyHTML.text() =~ text
+    end
   end
 
   test "AI exploration page balances benefits with common objections", %{conn: conn} do

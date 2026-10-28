@@ -15,6 +15,7 @@
       )
     }
     data-graph-id={@graph_id}
+    data-mobile-map-enabled="true"
     data-mobile-inquiry={to_string(@mobile_inquiry?)}
     data-presenting={if(@presentation_mode == :presenting, do: "true", else: "false")}
     data-anonymous={to_string(is_nil(@current_user))}
@@ -192,34 +193,6 @@
       }
     />
 
-    <nav
-      :if={!@mobile_inquiry? && @presentation_mode != :presenting}
-      id="graph-mobile-tools-nav"
-      aria-label="Grid actions"
-      class="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-2 sm:hidden"
-    >
-      <.link
-        id="graph-mobile-back-to-reader"
-        navigate={
-          graph_path(
-            @graph_struct,
-            Map.get(@node || %{}, :id),
-            graph_nav_params(@token, @reader_path_endpoint, @learning_return)
-          )
-        }
-        class="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-slate-800"
-      >
-        <.icon name="hero-arrow-left" class="h-4 w-4" /> Back to Reader
-      </.link>
-      <.live_component
-        module={DialecticWeb.DocumentMenuComp}
-        id="mobile-document-menu"
-        can_edit={@can_edit}
-        graph_struct={@graph_struct}
-        layout_target="#graph-layout"
-      />
-    </nav>
-
     <div
       :if={@mobile_inquiry? && @presentation_mode != :presenting}
       id="mobile-inquiry-header"
@@ -271,7 +244,7 @@
             if(@mobile_inquiry?,
               do: "relative z-0 flex min-h-0 flex-1 md:flex-none",
               else:
-                "hidden md:flex fixed inset-x-0 bottom-0 z-90 max-h-[min(72vh,44rem)] rounded-t-[1.75rem] border p-4 shadow-[0_-24px_48px_-30px_rgba(15,23,42,0.35)]"
+                "hidden md:flex fixed inset-x-0 bottom-16 z-90 max-h-[min(72vh,44rem)] rounded-t-[1.75rem] border p-4 shadow-[0_-24px_48px_-30px_rgba(15,23,42,0.35)]"
             )
           ]}
         >
@@ -290,6 +263,9 @@
               id="node-comp"
               node={@node}
               search_highlight={@search_highlight}
+              node_highlights={
+                Enum.filter(@highlights, &(&1.node_id == Map.get(@node || %{}, :id)))
+              }
               user={@user}
               form={@form}
               streaming={@node && MapSet.member?(@streaming_nodes, @node.id)}
@@ -323,44 +299,6 @@
           )
         ]}
       >
-        <%= if !@mobile_inquiry? && @presentation_mode != :presenting do %>
-          <div
-            id="graph-mobile-reader-fallback"
-            class="absolute inset-0 flex md:hidden"
-          >
-            <div class="flex w-full items-center justify-center px-5 py-8">
-              <div class="w-full max-w-sm rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-[0_20px_40px_-28px_rgba(15,23,42,0.35)]">
-                <div class="flex items-start gap-3">
-                  <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-slate-600">
-                    <.icon name="hero-document-text" class="h-5 w-5" />
-                  </span>
-
-                  <div class="min-w-0 flex-1">
-                    <h2 class="text-sm font-semibold text-slate-950">Grid tools on mobile</h2>
-                    <p class="mt-1 text-sm leading-6 text-slate-600">
-                      Use the tools menu here, or return to Reader to continue the discussion.
-                    </p>
-
-                    <.link
-                      id="graph-mobile-reader-link"
-                      navigate={
-                        graph_path(
-                          @graph_struct,
-                          Map.get(@node || %{}, :id),
-                          graph_nav_params(@token, @reader_path_endpoint, @learning_return)
-                        )
-                      }
-                      class="mt-4 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3.5 py-2 text-sm font-semibold text-slate-900"
-                    >
-                      <.icon name="hero-arrow-right" class="h-4 w-4" /> Open Reader
-                    </.link>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        <% end %>
-
         <div
           :if={map_size(@background_generations) > 0 and @presentation_mode != :presenting}
           id="background-generations"
@@ -436,7 +374,7 @@
           id="cy"
           class={[
             "graph-territory-surface relative h-full w-full flex-1",
-            @presentation_mode != :presenting && "hidden md:block",
+            @presentation_mode != :presenting && "block",
             if(@presentation_mode == :presenting, do: "border-l-0")
           ]}
           data-graph-id={@graph_id}
@@ -461,6 +399,20 @@
           phx-hook="Graph"
         >
           <%= if @presentation_mode != :presenting do %>
+            <.link
+              :if={@node}
+              id="mobile-map-read-selected"
+              navigate={
+                graph_path(
+                  @graph_struct,
+                  @node.id,
+                  graph_nav_params(@token, @reader_path_endpoint, @learning_return)
+                )
+              }
+              class="absolute bottom-5 left-1/2 z-30 inline-flex min-h-11 -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full bg-teal-800 px-5 py-2 text-sm font-semibold text-white shadow-lg md:hidden"
+            >
+              <.icon name="hero-document-text" class="h-4 w-4" /> Read selected idea
+            </.link>
             <.grid_chat_toggle
               graph_id={@graph_id}
               presence_count={@presence_count}
@@ -540,7 +492,7 @@
                 data-graph-hint
                 class="max-w-[17rem] rounded-lg bg-white/95 px-2 py-1 text-[11px] text-slate-500"
               >
-                <span>Click a box to open it in the reader.</span>
+                <span>Choose a box, then Read to explore it.</span>
               </div>
             </div>
           <% end %>
@@ -658,6 +610,7 @@
         </div>
 
         <.grid_chat_drawer
+          graph_id={@graph_id}
           presences={@streams.presences}
           messages={@streams.chat_messages}
           chat_form={@chat_form}
@@ -666,10 +619,27 @@
           avatar_url={@chat_avatar_url}
         />
 
+        <DialecticWeb.WorkspaceBarComp.tools_drawer
+          id="grid-history-panel"
+          layout_target="#graph-layout"
+          mode={:graph}
+          title="Grid history"
+          subtitle="How this grid was built"
+        >
+          <.live_component
+            module={DialecticWeb.GridHistoryComp}
+            id="grid-history-comp"
+            graph_id={@graph_id}
+            graph_struct={@graph_struct}
+            creator={@graph_creator}
+          />
+        </DialecticWeb.WorkspaceBarComp.tools_drawer>
+
         <DialecticWeb.WorkspaceBarComp.tools_drawer id="right-panel" layout_target="#graph-layout">
           <.live_component
             module={DialecticWeb.SettingsMenuComp}
             id="settings-menu"
+            highlights_count={length(@highlights)}
             following_graph?={@following_graph?}
             reader_style={@reader_style}
             graph_id={@graph_id}
@@ -843,10 +813,84 @@
       </div>
     <% end %>
 
+    <nav
+      :if={@presentation_mode != :presenting}
+      id="graph-mobile-toolbar"
+      aria-label="Grid actions"
+      class="reader-mobile-toolbar"
+    >
+      <button
+        id="graph-mobile-explore"
+        type="button"
+        phx-click={JS.dispatch("toggle-explore", to: "#graph-layout")}
+        data-explore-toggle
+        aria-controls="side-drawer"
+        aria-expanded="false"
+        aria-label="Show details"
+      >
+        <span data-explore-hide-icon aria-hidden="true" class="hidden"><.icon
+          name="hero-chevron-double-left"
+          class="h-5 w-5"
+        /></span>
+        <span data-explore-show-icon aria-hidden="true"><.icon
+          name="hero-bars-3-bottom-left"
+          class="h-5 w-5"
+        /></span>
+        <span data-explore-label>Show details</span>
+      </button>
+      <.link navigate={
+        graph_path(
+          @graph_struct,
+          Map.get(@node || %{}, :id),
+          graph_nav_params(@token, @reader_path_endpoint, @learning_return)
+        )
+      }>
+        <.icon name="hero-document-text" class="h-5 w-5" /><span>Read</span>
+      </.link>
+      <button id="graph-mobile-search" type="button" phx-click="open_search_overlay_click">
+        <.icon name="hero-magnifying-glass" class="h-5 w-5" /><span>Search</span>
+      </button>
+      <.link
+        :if={@can_edit}
+        id="graph-mobile-ask"
+        navigate={
+          graph_path(
+            @graph_struct,
+            Map.get(@node || %{}, :id),
+            Keyword.put(
+              graph_nav_params(@token, @reader_path_endpoint, @learning_return),
+              :ask,
+              "true"
+            )
+          )
+        }
+      >
+        <.icon name="hero-chat-bubble-left-right" class="h-5 w-5" /><span>Ask</span>
+      </.link>
+      <span
+        :if={!@can_edit && @current_user}
+        class="flex flex-col items-center justify-center gap-1 text-xs text-slate-400"
+      ><.icon name="hero-lock-closed" class="h-5 w-5" />Read only</span>
+      <.link :if={!@current_user} id="graph-mobile-sign-in" href={~p"/users/log_in"}>
+        <.icon name="hero-user" class="h-5 w-5" /><span>Sign in</span>
+      </.link>
+      <button
+        id="graph-mobile-more"
+        type="button"
+        phx-click={JS.dispatch("toggle-panel", to: "#graph-layout", detail: %{id: "right-panel"})}
+        data-panel-toggle="right-panel"
+        aria-controls="right-panel"
+        aria-expanded="false"
+      >
+        <.icon name="hero-ellipsis-horizontal" class="h-5 w-5" /><span>More</span>
+      </button>
+    </nav>
+
     <%!-- Selection Actions Modal --%>
     <div phx-hook="SelectionActions" id="selection-actions-hook">
       <.live_component
         module={DialecticWeb.SelectionActionsComp}
+        prompt_mode={@graph_struct.prompt_mode || "university"}
         id="selection-actions"
         current_user={@current_user}
         graph_id={@graph_id}

@@ -2,6 +2,7 @@ defmodule DialecticWeb.ActivityLive do
   use DialecticWeb, :live_view
 
   import Ecto.Query
+  import DialecticWeb.ActivityComponents, only: [activity_actor: 1]
 
   alias Dialectic.Accounts.{Graph, User}
   alias Dialectic.Accounts.ProfileBanner
@@ -224,7 +225,7 @@ defmodule DialecticWeb.ActivityLive do
     |> join(:inner, [log], graph in Graph, on: graph.title == log.graph_title)
     |> where([log, graph], graph.user_id == ^user.id and log.action != "graph.created")
     |> where([_log, graph], graph.is_deleted != true)
-    |> preload([_log, graph], graph: graph)
+    |> preload([_log, graph], graph: graph, actor: [])
     |> Repo.all()
     |> group_logs("your_grids", :owned_grid_updated, "Your grid got updates", "Open latest")
   end
@@ -596,6 +597,10 @@ defmodule DialecticWeb.ActivityLive do
     do: GridActivity.actor_name(actor_name)
 
   defp item_actor(_item), do: "Someone"
+
+  defp item_actor_record(%{actor: %User{} = actor}), do: actor
+  defp item_actor_record(%{latest_log: %{actor: %User{} = actor}}), do: actor
+  defp item_actor_record(_item), do: nil
 
   defp item_action(%{type: :user_followed_you}), do: "followed you"
   defp item_action(%{type: :grid_followed}), do: "followed your grid"
@@ -974,12 +979,11 @@ defmodule DialecticWeb.ActivityLive do
                             class="text-sm leading-5 text-slate-700"
                             aria-label={"#{item_actor(item)} #{item_action(item)}"}
                           >
-                            <span
+                            <.activity_actor
                               id={"activity-feed-actor-#{item.id}"}
-                              class="font-semibold text-slate-950"
-                            >
-                              {item_actor(item)}
-                            </span>
+                              actor={item_actor_record(item)}
+                              name={item_actor(item)}
+                            />
                             <span>{item_action(item)}</span>
                           </p>
                           <div class="flex items-center gap-1.5">
@@ -1115,12 +1119,11 @@ defmodule DialecticWeb.ActivityLive do
                             <span class="mt-1.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-amber-500 ring-1 ring-amber-200"></span>
                             <div class="min-w-0">
                               <p class="text-xs leading-5 text-slate-700">
-                                <span
+                                <.activity_actor
                                   id={"activity-log-actor-#{log.id}"}
-                                  class="font-semibold text-slate-950"
-                                >
-                                  {GridActivity.actor_name(log.actor_name)}
-                                </span>
+                                  actor={log.actor}
+                                  name={log.actor_name}
+                                />
                                 <span>{GridActivity.action_label(log)}</span>
                               </p>
                               <time

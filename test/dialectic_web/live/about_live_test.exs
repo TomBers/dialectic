@@ -6,14 +6,13 @@ defmodule DialecticWeb.AboutLiveTest do
   test "renders the essential about-page content", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/about")
 
-    assert has_element?(view, "#about-value-proposition", "AI workshop")
-    assert has_element?(view, "#about-purpose", "Remember more. Understand more.")
-    assert has_element?(view, "#about-tools", "Tools and a place to use them")
-    assert has_element?(view, "#about-tool-explore", "Learn with others")
-    assert has_element?(view, "#about-tool-organise", "Give each subject a home")
-    assert has_element?(view, "#about-tool-keep", "Find it again and build on it")
-    assert has_element?(view, "#about-audiences", "Who RationalGrid is for")
-    assert has_element?(view, "#about-team", "The team behind RationalGrid")
+    assert has_element?(view, "#about-team h1#about-team-heading", "The team behind RationalGrid")
+    assert has_element?(view, "#about-team", "People behind the project")
+    refute has_element?(view, "#about-hero")
+    refute has_element?(view, "#about-visible-learning")
+    refute has_element?(view, "#about-purpose")
+    refute has_element?(view, "#about-tools")
+    refute has_element?(view, "#about-audiences")
     assert has_element?(view, "#about-tom-berman", "one of the first engineers at Octopus Energy")
 
     assert has_element?(
@@ -22,13 +21,6 @@ defmodule DialecticWeb.AboutLiveTest do
            )
 
     assert has_element?(view, "#about-key-facts", "Core offering")
-    assert has_element?(view, ~s(#about-start-grid-link[href="/?focus=grid#start-here"]))
-
-    assert has_element?(
-             view,
-             ~s(#about-mobile-community-link[href="/community"]),
-             "Explore community grids"
-           )
 
     assert has_element?(
              view,

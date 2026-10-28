@@ -68,18 +68,23 @@ export function showToast(message, opts = {}) {
  * @param {string} text – The text to copy.
  */
 export function fallbackCopy(text) {
+  const previousFocus = document.activeElement;
   const ta = document.createElement("textarea");
   ta.value = text;
   ta.style.position = "fixed";
   ta.style.opacity = "0";
-  document.body.appendChild(ta);
+  const container = previousFocus?.closest('[role="dialog"]') || document.body;
+  container.appendChild(ta);
   ta.select();
+  let copied = false;
   try {
-    document.execCommand("copy");
+    copied = document.execCommand("copy");
   } catch (_e) {
     /* best-effort */
   }
-  document.body.removeChild(ta);
+  ta.remove();
+  previousFocus?.focus({ preventScroll: true });
+  return copied;
 }
 
 /**
@@ -90,12 +95,12 @@ export function fallbackCopy(text) {
  * @param {string} text – The text to copy.
  * @returns {Promise<void>}
  */
-export function copyToClipboard(text) {
+export async function copyToClipboard(text) {
   if (navigator.clipboard && navigator.clipboard.writeText) {
-    return navigator.clipboard.writeText(text).catch(() => {
-      fallbackCopy(text);
-    });
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch { /* Try the selection-based fallback below. */ }
   }
-  fallbackCopy(text);
-  return Promise.resolve();
+  return fallbackCopy(text);
 }

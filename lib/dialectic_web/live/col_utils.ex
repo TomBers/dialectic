@@ -68,6 +68,9 @@ defmodule DialecticWeb.ColUtils do
   def tool_color_class("highlight"),
     do: "bg-amber-50/70 text-amber-800 ring-1 ring-amber-200/70"
 
+  def tool_color_class("pros_cons"),
+    do: "tool-pro-con-icon text-slate-800 ring-1 ring-stone-300"
+
   def tool_color_class(type), do: badge_class(type)
 
   @doc """

@@ -38,6 +38,18 @@ defmodule DialecticWeb.GraphHelpers do
 
   def origin_node?(_node), do: false
 
+  def existing_follow_up_questions_json(%{children: children}) when is_list(children) do
+    children
+    |> Enum.filter(fn child ->
+      Map.get(child, :class) == "question" and not Map.get(child, :deleted, false)
+    end)
+    |> Enum.map(fn child -> child |> Map.get(:content, "") |> to_string() |> String.trim() end)
+    |> Enum.reject(&(&1 == ""))
+    |> Jason.encode!()
+  end
+
+  def existing_follow_up_questions_json(_node), do: "[]"
+
   defp live_children(%{} = node) do
     node
     |> Map.get(:children, [])
@@ -224,11 +236,11 @@ defmodule DialecticWeb.GraphHelpers do
     node = GraphActions.find_node(socket.assigns.graph_id, node_id)
 
     cond do
-      !socket.assigns.can_edit ->
-        {:error, "This graph is locked"}
-
       is_nil(socket.assigns.current_user) ->
         {:error, "Sign in to use passage actions. Your draft will stay here."}
+
+      !socket.assigns.can_edit ->
+        {:error, "This graph is locked"}
 
       is_nil(node) || Map.get(node, :deleted, false) ->
         {:error, "Choose an existing response to continue."}
@@ -269,8 +281,8 @@ defmodule DialecticWeb.GraphHelpers do
   """
   def check_selection_action_allowed(socket) do
     cond do
-      not socket.assigns.can_edit -> {:error, :locked}
       socket.assigns.current_user == nil -> {:error, :unauthenticated}
+      not socket.assigns.can_edit -> {:error, :locked}
       true -> :ok
     end
   end

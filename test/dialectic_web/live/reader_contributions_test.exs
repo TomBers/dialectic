@@ -8,7 +8,9 @@ defmodule DialecticWeb.ReaderContributionsTest do
 
   alias Dialectic.Graph.GraphActions
 
-  setup do
+  setup %{conn: conn} do
+    user = user_fixture()
+
     graph =
       insert_graph(%{
         title: "Mobile inquiry #{System.unique_integer([:positive])}",
@@ -49,69 +51,56 @@ defmodule DialecticWeb.ReaderContributionsTest do
         }
       })
 
-    %{graph: graph}
+    %{graph: graph, user: user, guest_conn: conn, conn: log_in_user(conn, user)}
   end
 
-  test "responding from the reader offers guests questions and comments with account benefits", %{
-    conn: conn,
+  test "guests see account actions instead of a contribution form", %{
+    guest_conn: conn,
     graph: graph
   } do
     {:ok, reader, _} = live(conn, ~p"/g/#{graph.slug}?node=2")
-    refute has_element?(reader, "#reader-add-thought")
-    refute has_element?(reader, "#reader-contribute-2")
-    refute has_element?(reader, "#outline-reading-node-1-ask")
-    assert has_element?(reader, "#outline-reading-node-2-ask", "Respond to this answer")
-
-    assert has_element?(reader, "button#outline-reading-node-2-ask[aria-expanded='false']")
-    refute has_element?(reader, "#outline-reading-node-2-ask[href]")
-    assert has_element?(reader, "#reader-answer-drawer-2[hidden]")
-    reader |> element("#outline-reading-node-2-ask") |> render_click()
-
-    assert has_element?(
-             reader,
-             "#outline-reading-node-2-ask[aria-expanded='true']",
-             "Hide response form"
-           )
-
-    refute has_element?(reader, "#reader-answer-drawer-2[hidden]")
-    refute has_element?(reader, "#reader-answer-drawer-2 [aria-modal='true']")
-    assert has_element?(reader, "#answer-actions-2[data-action-context='answer']")
-    refute has_element?(reader, "#selection-sign-in-required-answer-actions-2")
-    assert has_element?(reader, "#selection-input-form-answer-actions-2-guest-access")
-    assert has_element?(reader, "#selection-input-form-answer-actions-2-comment")
-    assert has_element?(reader, "#selection-input-form-answer-actions-2-ask")
-    assert has_element?(reader, "#answer-bookmark-login-answer-actions-2[href='/users/log_in']")
-    refute has_element?(reader, "#answer-action-bookmark-answer-actions-2")
-
-    refute has_element?(reader, "#answer-actions-2 [data-selection-action='highlight_only']")
+    assert has_element?(reader, "#reader-contribution-sign-in-register[href='/users/register']")
+    assert has_element?(reader, "#reader-contribution-sign-in-login[href='/users/log_in']")
+    assert has_element?(reader, "#reader-workspace-bar-share")
+    refute has_element?(reader, "#outline-reading-node-2-ask")
+    refute has_element?(reader, "#reader-answer-drawer-2")
+    refute has_element?(reader, "#selection-input-form-answer-actions-2")
   end
 
-  test "a guest can post a thought directly from the reader", %{conn: conn, graph: graph} do
+  test "a guest cannot post a thought directly from the reader", %{guest_conn: conn, graph: graph} do
     {:ok, reader, _} = live(conn, ~p"/g/#{graph.slug}?node=2")
-    reader |> element("#outline-reading-node-2-ask") |> render_click()
     before_ids = GraphManager.vertices(graph.title)
 
-    reader
-    |> with_target("#answer-actions-2")
-    |> render_hook("action", %{
-      "action" => "comment",
-      "nodeId" => "2",
-      "input" => "A guest perspective from the reader",
-      "request_id" => "guest-reader-comment"
-    })
+    for action <- ~w(comment ask_question explain pros_cons related_ideas clarify bookmark) do
+      send(
+        reader.pid,
+        {:answer_action,
+         %{
+           "action" => action,
+           "nodeId" => "2",
+           "input" => "A guest perspective from the reader",
+           "request_id" => "guest-reader-comment"
+         }}
+      )
 
-    render(reader)
-    [comment] = new_nodes(graph, before_ids)
-    assert comment.class == "user"
-    assert comment.user == "anonymous"
-    assert has_element?(reader, "#reading-node-#{comment.id}", comment.content)
+      render(reader)
+
+      assert_push_event(reader, "selection:result", %{
+        request_id: "guest-reader-comment",
+        status: "error"
+      })
+    end
+
+    assert new_nodes(graph, before_ids) == []
     refute_enqueued(worker: Dialectic.Workers.LocalWorker, args: %{graph: graph.title})
   end
 
-  test "posting a thought returns a guest to the saved contribution without generating AI", %{
-    conn: conn,
-    graph: graph
-  } do
+  test "posting a thought returns a signed-in contributor to the saved contribution without generating AI",
+       %{
+         conn: conn,
+         graph: graph,
+         user: user
+       } do
     {:ok, reader, _} = live(conn, ~p"/g/#{graph.slug}?node=2")
     {:ok, inquiry, _} = live(conn, ~p"/g/#{graph.slug}/graph?node=2&focus=ask")
     before_ids = GraphManager.vertices(graph.title)
@@ -126,11 +115,17 @@ defmodule DialecticWeb.ReaderContributionsTest do
     [comment] = new_nodes(graph, before_ids)
     assert comment.class == "user"
     assert comment.content == content
-    assert comment.user == "anonymous"
+    assert comment.user == user.email
     assert Enum.map(GraphActions.find_node(graph.title, comment.id).parents, & &1.id) == ["2"]
 
     assert has_element?(returned_reader, "#reading-node-#{comment.id}", content)
-    assert has_element?(returned_reader, "#reader-contributor-#{comment.id}", "Thought · Guest")
+
+    assert has_element?(
+             returned_reader,
+             "#reader-contributor-#{comment.id}",
+             "Thought · @#{user.username}"
+           )
+
     assert has_element?(returned_reader, "#flash-info", "Your thought was added")
     refute has_element?(returned_reader, "#reader-view-new-thoughts")
     refute_enqueued(worker: Dialectic.Workers.LocalWorker, args: %{graph: graph.title})
@@ -194,9 +189,9 @@ defmodule DialecticWeb.ReaderContributionsTest do
     assert has_element?(reader, "#reading-node-#{answer.id} h2", "Retention test")
   end
 
-  test "learning plans retain the existing account requirement", %{conn: conn, graph: graph} do
+  test "learning plans retain the existing account requirement", %{guest_conn: conn, graph: graph} do
     {:ok, guest, _} = live(conn, ~p"/g/#{graph.slug}/graph?node=2&focus=ask")
-    assert has_element?(guest, "#global-chat-form-guided-learning-signup")
+    assert has_element?(guest, "#node-inquiry-actions-2-sign-in-register")
     before_ids = GraphManager.vertices(graph.title)
 
     render_submit(guest, "reply-and-answer", %{

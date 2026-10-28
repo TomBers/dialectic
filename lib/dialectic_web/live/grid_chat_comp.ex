@@ -63,6 +63,7 @@ defmodule DialecticWeb.GridChatComp do
   end
 
   attr :presences, :any, required: true
+  attr :graph_id, :string, required: true
   attr :messages, :any, required: true
   attr :chat_form, :any, required: true
   attr :presence_count, :integer, default: 0
@@ -180,6 +181,25 @@ defmodule DialecticWeb.GridChatComp do
               </div>
             </div>
           </div>
+          <div class="mt-2 flex items-center justify-between gap-2 text-[11px] text-slate-500">
+            <p
+              id="grid-chat-history-status"
+              phx-hook="GridChatHistory"
+              phx-update="ignore"
+              data-storage-key={DialecticWeb.GridChat.storage_key(@graph_id, @current_user)}
+              role="status"
+            >
+              Last 100 messages saved in this browser only.
+            </p>
+            <button
+              id="grid-chat-clear-history"
+              type="button"
+              phx-click="clear_grid_chat_history"
+              class="shrink-0 underline hover:text-slate-800"
+            >
+              Clear history
+            </button>
+          </div>
         </div>
 
         <div
@@ -246,6 +266,8 @@ defmodule DialecticWeb.GridChatComp do
             id="grid-chat-form"
             phx-submit="send_grid_chat"
             phx-hook="GridChatForm"
+            phx-update="ignore"
+            data-storage-key={DialecticWeb.GridChat.storage_key(@graph_id, @current_user)}
             class="flex items-end gap-2"
           >
             <div class="min-w-0 flex-1 [&_label]:sr-only">

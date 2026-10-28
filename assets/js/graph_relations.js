@@ -27,6 +27,10 @@ const RELATION_LABELS = {
 };
 
 export const edgeRelationLabel = (edge) => {
+  if (Array.isArray(edge.data("questionIds")) && edge.data("questionLabel")) {
+    return edge.data("questionLabel");
+  }
+
   const relation = edge.data("relation");
   if (relation && RELATION_LABELS[relation]) return RELATION_LABELS[relation];
 

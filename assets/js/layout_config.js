@@ -12,6 +12,23 @@ const stableElementSort = (elementA, elementB) => {
 const dagreRenderingOptions = {
   nodeDimensionsIncludeLabels: true,
   sort: stableElementSort,
+  minLen: (edge) => {
+    const label = edge.data("questionLabel");
+    if (!label) return 1;
+    const fontSize = edge.pstyle("font-size").pfValue || 14;
+    const width = edge.pstyle("text-max-width").pfValue || 260;
+    const charactersPerLine = Math.max(1, Math.floor(width / (fontSize * 0.55)));
+    const lines = label.split("\n").reduce((total, line) =>
+      total + Math.max(1, Math.ceil(line.length / charactersPerLine)), 0);
+    const direction = typeof localStorage === "undefined"
+      ? "TB" : localStorage.getItem("graph_direction") || "TB";
+    const horizontal = direction === "LR" || direction === "RL";
+    const labelSize = horizontal
+      ? Math.min(width, label.length * fontSize * 0.55)
+      : lines * fontSize * 1.35;
+    const rankSeparation = fontSize < 12 ? 56 : 104;
+    return Math.max(1, Math.ceil((labelSize + 20) / rankSeparation));
+  },
 };
 
 export const layoutConfig = {
@@ -20,9 +37,9 @@ export const layoutConfig = {
     name: "dagre",
     rankDir: "TB",
     // Spacing adjustments for better proportions
-    nodeSep: 52, // Keep sibling branches distinct across the canvas
-    edgeSep: 40, // Leave room to distinguish parallel relationship tracks
-    rankSep: 80, // Bring related ideas closer without shrinking their text
+    nodeSep: 64, // Keep sibling branches distinct across the canvas
+    edgeSep: 46, // Leave room to distinguish parallel relationship tracks
+    rankSep: 104, // Give each level more vertical breathing room
     // Visual enhancement settings
     spacingFactor: 1.04, // Slight vertical bias without spreading the whole graph
     padding: 30, // Minimum padding around the graph

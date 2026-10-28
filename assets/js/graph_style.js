@@ -208,6 +208,22 @@ const COMPACT_NODE_LINE_HEIGHT = 1.25;
 const GRAPH_LABEL_FONT_FAMILY =
   'InterVariable, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
 
+const graphTaxiDirection = () => {
+  const direction = localStorage.getItem("graph_direction") || "TB";
+  return direction === "LR" || direction === "RL" ? "horizontal" : "vertical";
+};
+
+const stableTaxiTurn = (edge) => {
+  const edgeId = String(typeof edge.id === "function" ? edge.id() : "");
+  let hash = 0;
+
+  for (const character of edgeId) {
+    hash = (hash * 31 + character.charCodeAt(0)) >>> 0;
+  }
+
+  return `${38 + (hash % 7) * 4}%`;
+};
+
 
 const mixWithWhite = (hexColor, whiteRatio) => {
   const normalized = String(hexColor || "").replace("#", "");
@@ -341,7 +357,11 @@ export function graphStyle(viewMode = "spaced", options = {}) {
         "line-color": highContrast ? "#334155" : "#64748b",
         "line-fill": "solid",
         "line-cap": "round",
-        "curve-style": "bezier",
+        "curve-style": "round-taxi",
+        "taxi-direction": graphTaxiDirection,
+        "taxi-turn": stableTaxiTurn,
+        "taxi-turn-min-distance": isCompact ? 12 : 18,
+        "taxi-radius": isCompact ? 8 : 12,
         "edge-distances": "intersection",
         "target-arrow-shape": "triangle",
         "target-arrow-color": highContrast ? "#334155" : "#64748b",
@@ -606,6 +626,58 @@ export function graphStyle(viewMode = "spaced", options = {}) {
       "transition-property": "underlay-opacity, border-width, border-color",
       "transition-duration": transitionDuration("200ms"),
       "transition-timing-function": "ease-in-out-quad",
+    },
+  });
+
+  base_style.push({
+    selector: "node.question-endpoint, node.question-endpoint.selected, node.question-endpoint.selected-neighbor",
+    style: {
+      width: isCompact ? 180 : 260,
+      height: 1,
+      "min-width": 0,
+      "min-height": 0,
+      padding: 0,
+      label: "",
+      "background-opacity": 0,
+      "border-width": 0,
+      "underlay-opacity": 0,
+    },
+  });
+
+  base_style.push({
+    selector: "edge.question-edge, edge.question-edge.selected-edge, edge.question-edge.edge-hover, edge.question-edge.presentation-edge-active",
+    style: {
+      ...relationshipLabelStyle,
+      label: "data(questionLabel)",
+      "font-size": isCompact ? 11 : 14,
+      "font-weight": 500,
+      "text-wrap": "wrap",
+      "text-max-width": isCompact ? 180 : 260,
+      "text-margin-y": 0,
+      "text-background-opacity": 1,
+      "text-background-padding": isCompact ? 3 : 5,
+      "text-border-width": 0,
+      "text-events": "yes",
+      color: highContrast ? "#082f49" : cols.question.text,
+      opacity: highContrast ? 1 : 0.9,
+      "target-arrow-shape": (edge) =>
+        edge.target().hasClass("question-endpoint") ? "none" : "triangle",
+      "line-style": (edge) =>
+        edge.target().hasClass("question-endpoint") ? "dashed" : "solid",
+    },
+  });
+
+  base_style.push({
+    selector: "edge.question-edge.search-dimmed",
+    style: { opacity: 0.08 },
+  });
+
+  base_style.push({
+    selector: "edge.question-edge.combine-selected",
+    style: {
+      "text-background-color": "#ede9fe",
+      "font-weight": 700,
+      opacity: 1,
     },
   });
 

@@ -5,6 +5,7 @@ import { extractListItems } from "./list_detection_hook.js";
 import { syncSelectedNodeUrl } from "./selected_node_url.js";
 import { showToast, copyToClipboard } from "./toast.js";
 import { syncGraphAppearanceStorage } from "./appearance_preferences.js";
+import { projectQuestionEdges, questionEdgesFor, resolveGraphNode } from "./graph_question_edges.js";
 
 const RIGHT_DRAWER_SELECTOR = "[data-right-drawer]";
 const GRAPH_VIEWPORT_STORAGE_PREFIX = "dialectic:graph-viewport:";
@@ -241,7 +242,7 @@ const ensureVisible = (cy, container, nodeId) => {
       return;
     }
 
-    const n = cy.getElementById(nodeId);
+    const n = resolveGraphNode(cy, nodeId);
     if (!n || n.length === 0) return;
 
     const rect = container.getBoundingClientRect();
@@ -893,7 +894,7 @@ const graphHook = {
       try {
         // Update selected highlighting to reflect the newly selected node
         this.cy.elements().removeClass("selected");
-        const nodeToCenter = this.cy.getElementById(id);
+        const nodeToCenter = resolveGraphNode(this.cy, id);
         if (nodeToCenter.length > 0) {
           const needsReflow =
             typeof this.cy.ensureNodeVisible === "function"
@@ -901,7 +902,7 @@ const graphHook = {
               : false;
           nodeToCenter.addClass("selected");
           if (typeof this.cy.applySelectionContext === "function") {
-            this.cy.applySelectionContext(nodeToCenter);
+            this.cy.applySelectionContext(id);
           }
 
           // Keep the dataset in sync so other consumers (and hooks) can rely on it
@@ -993,6 +994,10 @@ const graphHook = {
         if (!ids || ids.length === 0) return;
 
         const idSet = new Set(ids);
+        ids.forEach((id) => {
+          const related = questionEdgesFor(this.cy, id);
+          related.forEach((edge) => idSet.add(edge.target().id()));
+        });
         const allNodes = this.cy.nodes();
         let needsReflow = false;
 
@@ -1015,7 +1020,8 @@ const graphHook = {
         this.cy.edges().forEach((e) => {
           const srcMatch = idSet.has(e.source().id());
           const tgtMatch = idSet.has(e.target().id());
-          if (srcMatch || tgtMatch) {
+          const questionMatch = (e.data("questionIds") || []).some((id) => idSet.has(id));
+          if (srcMatch || tgtMatch || questionMatch) {
             e.addClass("search-match");
           } else {
             e.addClass("search-dimmed");
@@ -1124,15 +1130,16 @@ const graphHook = {
       if (!this.cy) return;
       try {
         // Remove previous combine markers
-        this.cy.nodes().removeClass("combine-selected");
+        this.cy.elements().removeClass("combine-selected");
 
         if (!ids || ids.length === 0) return;
 
         ids.forEach((id) => {
-          const n = this.cy.getElementById(id);
+          const n = resolveGraphNode(this.cy, id);
           if (n && n.length > 0) {
             n.addClass("combine-selected");
           }
+          questionEdgesFor(this.cy, id).addClass("combine-selected");
         });
       } catch (_e) {}
     });
@@ -1140,7 +1147,7 @@ const graphHook = {
     this.handleEvent("combine_clear_highlights", () => {
       if (!this.cy) return;
       try {
-        this.cy.nodes().removeClass("combine-selected");
+        this.cy.elements().removeClass("combine-selected");
       } catch (_e) {}
     });
 
@@ -1515,10 +1522,11 @@ const graphHook = {
     } catch (_e) {}
   },
 
-  _parseGraphElements(graphStr = this.el.dataset.graph) {
+  _parseGraphElements(graphStr = this.el.dataset.graph, { questionsAsEdges = true } = {}) {
     try {
       const parsed = graphStr ? JSON.parse(graphStr) : [];
-      return Array.isArray(parsed) ? parsed : [];
+      const elements = Array.isArray(parsed) ? parsed : [];
+      return questionsAsEdges ? projectQuestionEdges(elements) : elements;
     } catch (_e) {
       return [];
     }
@@ -1685,7 +1693,7 @@ const graphHook = {
     const keepIds = new Set((ids || []).map((id) => String(id)));
     const orderedPositions = this._buildOrderedPresentationPositions(ids);
 
-    return this._parseGraphElements(graphStr).reduce((acc, el) => {
+    return this._parseGraphElements(graphStr, { questionsAsEdges: false }).reduce((acc, el) => {
       if (!el || !el.data) return acc;
 
       if (
@@ -2147,7 +2155,9 @@ const graphHook = {
     this.cy = draw_graph(
       this._container,
       this,
-      JSON.parse(graphStr),
+      this._readPresentationState().mode === "presenting"
+        ? this._buildPresentationElements(this._presentationIds || [], graphStr)
+        : this._parseGraphElements(graphStr),
       currentNode,
       currentViewMode,
       graphId,
@@ -2199,7 +2209,7 @@ const graphHook = {
     // Highlight the selected node
     if (this.cy && currentNode) {
       this.cy.elements().removeClass("selected");
-      this.cy.getElementById(currentNode).addClass("selected");
+      resolveGraphNode(this.cy, currentNode).addClass("selected");
       if (typeof this.cy.applySelectionContext === "function") {
         this.cy.applySelectionContext(currentNode);
       }
@@ -2215,6 +2225,8 @@ const graphHook = {
 
     // Simply re-layout with the new direction
     if (this.cy) {
+      // Re-evaluate direction-aware connector routing before repositioning nodes.
+      this.cy.style().update();
       layoutGraph(this.cy, {}, () => {
         // Restore zoom and pan after layout
         try {
@@ -2382,7 +2394,7 @@ const graphHook = {
     }
 
     this.cy.elements().removeClass("selected");
-    this.cy.getElementById(node).addClass("selected");
+    resolveGraphNode(this.cy, node).addClass("selected");
     if (typeof this.cy.applySelectionContext === "function") {
       this.cy.applySelectionContext(node);
     }

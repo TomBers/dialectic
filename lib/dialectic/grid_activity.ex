@@ -19,8 +19,10 @@ defmodule Dialectic.GridActivity do
     Log
     |> where([log], log.graph_title == ^graph_title)
     |> maybe_since(since)
+    |> maybe_before(Keyword.get(opts, :before))
     |> order_by([log], desc: log.inserted_at, desc: log.id)
     |> limit(^limit)
+    |> preload(:actor)
     |> Repo.all()
   end
 
@@ -284,6 +286,16 @@ defmodule Dialectic.GridActivity do
       node_id: node_id(node_or_id),
       metadata: Map.merge(node_metadata, stringify_metadata(metadata))
     }
+  end
+
+  defp maybe_before(query, nil), do: query
+
+  defp maybe_before(query, {inserted_at, id}) do
+    where(
+      query,
+      [log],
+      log.inserted_at < ^inserted_at or (log.inserted_at == ^inserted_at and log.id < ^id)
+    )
   end
 
   defp maybe_since(query, nil), do: query

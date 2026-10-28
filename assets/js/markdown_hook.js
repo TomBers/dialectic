@@ -705,7 +705,7 @@ function readExistingFollowUpQuestions(root) {
 
 function buildFollowUpPanel(root, questions, askQuestion, existingQuestions) {
   const panel = document.createElement("div");
-  panel.className = "not-prose mt-3 grid gap-2";
+  panel.className = "not-prose follow-up-questions";
   panel.setAttribute("data-follow-up-question-panel", "true");
 
   questions.forEach((question, index) => {
@@ -715,12 +715,7 @@ function buildFollowUpPanel(root, questions, askQuestion, existingQuestions) {
     const button = document.createElement("button");
     button.type = "button";
     button.id = `${root.id || "markdown"}-follow-up-${index + 1}`;
-    button.className =
-      "group flex w-full items-start gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-left text-sm font-medium leading-5 text-slate-800 shadow-sm transition hover:border-sky-300 hover:bg-sky-50 hover:text-slate-950 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 disabled:cursor-wait disabled:opacity-70";
-    if (alreadyAsked) {
-      button.className =
-        "group flex w-full items-start gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-left text-sm font-medium leading-5 text-slate-500 shadow-sm disabled:cursor-not-allowed disabled:opacity-80";
-    }
+    button.className = "follow-up-question";
     button.setAttribute("data-follow-up-question", question);
     button.setAttribute(
       "aria-label",
@@ -734,34 +729,38 @@ function buildFollowUpPanel(root, questions, askQuestion, existingQuestions) {
     }
 
     const number = document.createElement("span");
-    number.className =
-      "mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-sky-100 text-[11px] font-semibold text-sky-700 group-hover:bg-sky-200";
-    if (alreadyAsked) {
-      number.className =
-        "mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-slate-200 text-[11px] font-semibold text-slate-500";
-    }
+    number.className = "follow-up-question-number";
+    number.setAttribute("aria-hidden", "true");
     number.textContent = String(index + 1);
 
     const text = document.createElement("span");
-    text.className = "min-w-0 flex-1";
+    text.className = "follow-up-question-text";
     text.textContent = question;
 
-    button.append(number, text);
+    const status = document.createElement("span");
+    status.className = "follow-up-question-status";
+    status.textContent = alreadyAsked ? "Asked" : "Ask AI";
+    button.append(number, text, status);
 
-    if (alreadyAsked) {
-      const status = document.createElement("span");
-      status.className =
-        "ml-auto shrink-0 rounded-full bg-slate-200 px-2 py-0.5 text-[11px] font-semibold text-slate-600";
-      status.textContent = "Asked";
-      button.appendChild(status);
-    }
-
-    button.addEventListener("click", () => {
+    button.addEventListener("click", async () => {
       if (typeof askQuestion !== "function") return;
       if (button.disabled) return;
 
       button.disabled = true;
-      askQuestion(question);
+      button.setAttribute("aria-busy", "true");
+      status.textContent = "Asking…";
+      try {
+        const reply = await askQuestion(question);
+        if (reply?.error) {
+          button.disabled = false;
+          status.textContent = "Ask AI";
+        }
+      } catch (_error) {
+        button.disabled = false;
+        status.textContent = "Ask AI";
+      } finally {
+        button.removeAttribute("aria-busy");
+      }
     });
 
     panel.appendChild(button);
@@ -945,12 +944,20 @@ function renderMdInto(el, askQuestion) {
 const Markdown = {
   mounted() {
     renderMdInto(this.el, (question) => {
-      this.pushEvent("reply-and-answer", { vertex: { content: question } });
+      return new Promise((resolve) => {
+        const params = { vertex: { content: question } };
+        if (this.el.dataset.followUpNodeId) params.node_id = this.el.dataset.followUpNodeId;
+        this.pushEvent("reply-and-answer", params, resolve);
+      });
     });
   },
   updated() {
     renderMdInto(this.el, (question) => {
-      this.pushEvent("reply-and-answer", { vertex: { content: question } });
+      return new Promise((resolve) => {
+        const params = { vertex: { content: question } };
+        if (this.el.dataset.followUpNodeId) params.node_id = this.el.dataset.followUpNodeId;
+        this.pushEvent("reply-and-answer", params, resolve);
+      });
     });
   },
 };

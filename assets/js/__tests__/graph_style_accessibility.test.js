@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { graphStyle } from "../graph_style.js";
 
 const styleFor = (styles, selector) =>
-  styles.find((entry) => entry.selector === selector)?.style;
+  styles.find((entry) => entry.selector.split(", ").includes(selector))?.style;
 
 describe("graph accessibility styles", () => {
   it("strengthens node colour, borders, and edges in high contrast mode", () => {
@@ -11,12 +11,19 @@ describe("graph accessibility styles", () => {
       highContrast: true,
     });
 
-    expect(styleFor(highContrast, "node.question")["background-color"]).not.toBe(
-      styleFor(regular, "node.question")["background-color"],
+    expect(styleFor(highContrast, "node.thesis")["background-color"]).not.toBe(
+      styleFor(regular, "node.thesis")["background-color"],
     );
-    expect(styleFor(highContrast, "node.question")["border-width"]).toBeGreaterThan(
-      styleFor(regular, "node.question")["border-width"],
+    expect(styleFor(highContrast, "node.thesis")["border-width"]).toBeGreaterThan(
+      styleFor(regular, "node.thesis")["border-width"],
     );
+    expect(styleFor(highContrast, "edge.question-edge").color).not.toBe(
+      styleFor(regular, "edge.question-edge").color,
+    );
+    for (const styles of [regular, highContrast]) {
+      expect(styleFor(styles, "edge.question-edge")["text-border-width"]).toBe(0);
+      expect(styleFor(styles, "edge.question-edge").label).toBe("data(questionLabel)");
+    }
     expect(styleFor(highContrast, "edge").opacity).toBeGreaterThan(
       styleFor(regular, "edge").opacity,
     );

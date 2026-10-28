@@ -2,6 +2,31 @@ defmodule DialecticWeb.WorkspaceBarComp do
   use DialecticWeb, :html
   alias DialecticWeb.ColUtils
 
+  attr :id, :string, required: true
+
+  def contribution_sign_in(assigns) do
+    ~H"""
+    <section id={@id} class="rounded-xl border border-stone-300 bg-[#f4f1e9] p-4">
+      <h3 class="text-sm font-semibold text-slate-950">Continue your thinking</h3>
+      <p class="mt-1 text-sm leading-6 text-slate-700">
+        Anyone can read this grid. Sign in to ask questions, post thoughts and use the thinking tools.
+      </p>
+      <div class="mt-3 flex flex-wrap items-center gap-4">
+        <.link
+          id={@id <> "-register"}
+          href={~p"/users/register"}
+          class="inline-flex min-h-11 items-center justify-center rounded-lg bg-teal-800 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-800"
+        >Create a free account</.link>
+        <.link
+          id={@id <> "-login"}
+          href={~p"/users/log_in"}
+          class="inline-flex min-h-11 items-center text-sm font-semibold text-teal-800 underline underline-offset-4"
+        >Sign in</.link>
+      </div>
+    </section>
+    """
+  end
+
   attr :mode, :atom, required: true, values: [:reader, :graph]
   attr :graph_struct, :map, required: true
   attr :node_id, :string, default: nil
@@ -24,30 +49,8 @@ defmodule DialecticWeb.WorkspaceBarComp do
 
     ~H"""
     <header id={@prefix <> "-header"} class="workspace-header">
-      <div id={@prefix <> "-heading"} class="workspace-heading">
-        <.link
-          id={@prefix <> "-header-back-link"}
-          href={@return_context.path}
-          title={"Back to #{@return_context.label}"}
-          class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 transition hover:border-slate-300 hover:bg-slate-100 hover:text-slate-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 active:bg-slate-200"
-        >
-          <.icon name="hero-arrow-left" class="h-5 w-5" />
-          <span class="sr-only">Back to {@return_context.label}</span>
-        </.link>
-        <div class="flex min-w-0 flex-1 flex-col justify-center gap-0.5">
-          <h1
-            id={@prefix <> "-title"}
-            class="min-w-0 truncate text-base font-semibold leading-snug text-slate-900"
-            title={@graph_struct.title}
-          >
-            {@graph_struct.title}
-          </h1>
-          <p class="truncate text-xs leading-4 text-slate-500" title={@return_context.label}>
-            {@return_context.label}
-          </p>
-        </div>
-      </div>
-      <div id={@prefix <> "-top-menu"} class="workspace-menu hidden sm:flex">
+      <h1 id={@prefix <> "-title"} class="sr-only">{@graph_struct.title}</h1>
+      <nav id={@prefix <> "-top-menu"} aria-label="Grid actions" class="workspace-menu">
         <.workspace_bar
           id={@prefix <> "-workspace-bar"}
           mode={@mode}
@@ -56,106 +59,87 @@ defmodule DialecticWeb.WorkspaceBarComp do
           nav_params={@nav_params}
           show_search
           search_click="open_search_overlay_click"
-          highlights_click={
-            JS.dispatch("toggle-panel", to: @layout_target, detail: %{id: "highlights-drawer"})
-          }
-          highlights_count={@highlights_count}
-          highlights_panel_id="highlights-drawer"
+          show_highlights={false}
           show_share={false}
           compact
         />
         <div class="workspace-context-actions">
-          <div
-            id={@prefix <> "-settings-actions"}
-            class="workspace-menu-group"
-            role="group"
-            aria-label="Answer and access settings"
+          <.grid_history_button id={@prefix <> "-grid-history"} layout_target={@layout_target} />
+          <button
+            id={@prefix <> "-workspace-bar-share"}
+            type="button"
+            phx-click="open_share_modal"
+            data-analytics-event="grid_share_opened"
+            data-analytics-location="workspace_bar"
+            aria-label="Share grid"
+            title="Share grid"
+            class="workspace-action workspace-icon-action workspace-share"
           >
-            <.answer_level_dropdown
-              id={@prefix <> "-workspace-bar-level"}
-              prompt_mode={@prompt_mode || @graph_struct.prompt_mode || "university"}
-              current_user={@current_user}
-              compact
-            />
-            <.visibility_dropdown
-              id={@prefix <> "-access-settings"}
-              graph_struct={@graph_struct}
-              current_user={@current_user}
-              compact
-            />
-            <.live_component
-              module={DialecticWeb.DocumentMenuComp}
-              id="document-menu"
-              can_edit={!@graph_struct.is_locked}
-              layout_target={@layout_target}
-              compact={true}
-            />
-          </div>
-          <div
-            id={@prefix <> "-sharing-actions"}
-            class="workspace-menu-group"
-            role="group"
-            aria-label="Sharing and updates"
+            <.icon name="hero-share" class="h-4 w-4" />
+          </button>
+          <button
+            id={@prefix <> "-more"}
+            type="button"
+            phx-click={JS.dispatch("toggle-panel", to: @layout_target, detail: %{id: "right-panel"})}
+            data-panel-toggle="right-panel"
+            aria-controls="right-panel"
+            aria-expanded="false"
+            class="workspace-action hidden sm:inline-flex"
           >
-            <.share_button
-              id={@prefix <> "-workspace-bar-share"}
-              mode={@mode}
-              click="open_share_modal"
-              compact
-            />
-            <%= if @current_user do %>
-              <button
-                id={"#{@prefix}-follow-grid-button"}
-                type="button"
-                phx-click={if(@following_graph?, do: "unfollow_graph", else: "follow_graph")}
-                aria-label={
-                  if(@following_graph?,
-                    do: "Stop receiving grid updates in Activity",
-                    else: "Get notified about grid changes in Activity"
-                  )
-                }
-                aria-pressed={to_string(@following_graph?)}
-                title={
-                  if(@following_graph?,
-                    do: "Updates from this grid appear in Activity. Click to turn them off.",
-                    else: "Get notified when this grid changes and see updates in Activity."
-                  )
-                }
-                class={[
-                  "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-slate-600 transition duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 sm:h-7 sm:w-7",
-                  if(@following_graph?,
-                    do: "border-sky-200 bg-sky-100 text-sky-700 hover:bg-sky-200",
-                    else:
-                      "border-transparent bg-slate-50 hover:bg-slate-100 hover:text-slate-950 sm:bg-transparent"
-                  )
-                ]}
-              >
-                <.icon
-                  name={if(@following_graph?, do: "hero-bell-solid", else: "hero-bell-alert")}
-                  class="h-4 w-4"
-                />
-              </button>
-            <% else %>
-              <.link
-                navigate={~p"/users/log_in"}
-                id={"#{@prefix}-follow-grid-login-link"}
-                aria-label="Sign in to get notified about grid changes in Activity"
-                title="Sign in to get notified when this grid changes and see updates in Activity."
-                class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-transparent bg-slate-50 text-slate-600 transition duration-150 hover:bg-slate-100 hover:text-slate-950 sm:h-7 sm:w-7 sm:bg-transparent"
-              >
-                <.icon name="hero-bell-alert" class="h-4 w-4" />
-              </.link>
-            <% end %>
-          </div>
+            <.icon name="hero-ellipsis-horizontal" class="h-5 w-5" /><span>More</span>
+          </button>
         </div>
-      </div>
+        <.link
+          id={@prefix <> "-header-close-link"}
+          navigate={@return_context.path}
+          title={"Close grid and return to #{@return_context.label}"}
+          aria-label={"Close grid and return to #{@return_context.label}"}
+          class="workspace-action workspace-icon-action"
+        >
+          <.icon name="hero-x-mark" class="h-5 w-5" />
+          <span class="sr-only">Close grid and return to {@return_context.label}</span>
+        </.link>
+      </nav>
     </header>
     """
   end
 
   attr :id, :string, required: true
   attr :layout_target, :string, required: true
+  attr :class, :string, default: nil
+
+  defp grid_history_button(assigns) do
+    ~H"""
+    <button
+      id={@id}
+      type="button"
+      phx-click={
+        JS.dispatch("toggle-panel",
+          to: @layout_target,
+          detail: %{id: "grid-history-panel"}
+        )
+        |> JS.push("open_grid_history")
+      }
+      data-panel-toggle="grid-history-panel"
+      aria-controls="grid-history-panel"
+      aria-expanded="false"
+      aria-label="Grid history: see how this grid was built"
+      title="See how this grid was built and who contributed"
+      class={[
+        "workspace-action workspace-icon-action workspace-history",
+        @class
+      ]}
+    >
+      <.icon name="hero-clock" class="h-4 w-4" />
+    </button>
+    """
+  end
+
+  attr :id, :string, required: true
+  attr :layout_target, :string, required: true
   attr :mode, :atom, default: :graph, values: [:reader, :graph]
+  attr :title, :string, default: "More"
+  attr :subtitle, :string, default: nil
   slot :inner_block, required: true
 
   def tools_drawer(assigns) do
@@ -164,25 +148,28 @@ defmodule DialecticWeb.WorkspaceBarComp do
       id={@id}
       data-right-drawer
       role="region"
-      aria-labelledby="grid-tools-title"
+      aria-labelledby={@id <> "-title"}
       tabindex="-1"
       class={[
-        "tools-drawer right-0 z-50 flex w-0 flex-col overflow-hidden border-l border-gray-200 bg-white opacity-0 transform translate-x-full transition-all duration-300 ease-in-out",
+        "tools-drawer right-0 z-50 flex w-0 flex-col overflow-hidden border-l border-stone-400 bg-white opacity-0 transform translate-x-full transition-all duration-300 ease-in-out",
         if(@mode == :reader,
           do: "fixed bottom-0 top-10 lg:absolute lg:top-0",
           else: "absolute inset-y-0"
         )
       ]}
     >
-      <div class="tools-drawer-header flex shrink-0 items-center justify-between gap-2 border-b border-slate-200 bg-white px-3 py-2">
-        <h2 id="grid-tools-title" class="text-sm font-semibold text-gray-900">Grid tools</h2>
+      <div class="tools-drawer-header flex shrink-0 items-center justify-between gap-2 border-b border-slate-950 bg-slate-950 px-3 py-2">
+        <div>
+          <h2 id={@id <> "-title"} class="text-base font-semibold text-white">{@title}</h2>
+          <p :if={@subtitle} class="mt-1 text-xs leading-5 text-stone-300">{@subtitle}</p>
+        </div>
         <button
-          id="grid-tools-close"
+          id={@id <> "-close"}
           data-panel-close
           type="button"
           phx-click={JS.dispatch("toggle-panel", to: @layout_target, detail: %{id: @id})}
-          class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50"
-          aria-label="Close grid tools"
+          class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-slate-600 text-white hover:bg-slate-800"
+          aria-label={"Close #{@title}"}
         >
           <.icon name="hero-x-mark" class="h-4 w-4" />
         </button>
@@ -256,7 +243,7 @@ defmodule DialecticWeb.WorkspaceBarComp do
             data-view-transition-direction="graph"
             aria-current={if(@mode == :graph, do: "page", else: nil)}
             class={mode_link_classes(@mode == :graph, @compact)}
-            title="Open grid view"
+            title="Explore the grid"
             aria-label="Grid view"
           >
             <img src={~p"/images/favicon-32.png"} alt="" class="h-4 w-4" />
@@ -298,7 +285,7 @@ defmodule DialecticWeb.WorkspaceBarComp do
           aria-label={search_button_label(@mode)}
         >
           <.icon name="hero-magnifying-glass" class="h-4 w-4" />
-          <span class={if(@compact, do: "hidden xl:inline", else: "hidden sm:inline")}>
+          <span class={if(@compact, do: "hidden sm:inline", else: "hidden sm:inline")}>
             Search
           </span>
           <kbd class={kbd_classes(@compact)}>
@@ -373,106 +360,141 @@ defmodule DialecticWeb.WorkspaceBarComp do
   attr :id, :string, required: true
   attr :prompt_mode, :string, required: true
   attr :current_user, :any, required: true
-  attr :compact, :boolean, default: false
-  attr :inline, :boolean, default: false
-  attr :hide_heading, :boolean, default: false
+  attr :field, :any, default: nil
+  attr :heading, :string, default: "Next AI answer"
+
+  attr :hint, :string,
+    default: "Applies to new AI answers. Existing answers keep their original level."
 
   def answer_level_dropdown(assigns) do
+    level =
+      case assigns.prompt_mode do
+        mode when mode in ["simple", "high_school"] -> "high_school"
+        "expert" -> "expert"
+        _ -> "university"
+      end
+
     assigns =
-      assign(
-        assigns,
-        :level,
-        if(assigns.prompt_mode == "simple", do: "high_school", else: assigns.prompt_mode)
+      assign(assigns,
+        level: level,
+        levels: [
+          %{
+            mode: "high_school",
+            label: "Simple",
+            icon: "hero-light-bulb",
+            description: "Plain language and examples"
+          },
+          %{
+            mode: "university",
+            label: "Expanded",
+            icon: "hero-book-open",
+            description: "Context and evidence"
+          },
+          %{
+            mode: "expert",
+            label: "In-depth",
+            icon: "hero-academic-cap",
+            description: "Detailed analysis"
+          }
+        ]
       )
 
     ~H"""
     <div
-      id={@id <> "-dropdown"}
-      phx-hook={if(!@inline, do: "WorkspaceDropdown")}
-      class="workspace-dropdown"
+      id={@id}
+      phx-hook="AnswerLevelDropdown"
+      phx-update="ignore"
+      data-answer-level-dropdown
+      data-prompt-mode={@level}
+      class="contents"
     >
+      <input
+        :if={@field}
+        id={@id <> "-input"}
+        name={@field.name}
+        type="hidden"
+        value={@level}
+        data-answer-level-input
+      />
       <button
-        :if={!@inline}
-        id={@id}
+        id={@id <> "-toggle"}
         type="button"
-        popovertarget={@id <> "-options"}
+        data-answer-level-toggle
         aria-controls={@id <> "-options"}
         aria-expanded="false"
-        aria-haspopup="dialog"
-        aria-label={"Explanation level: #{answer_level_label(@level)}. Change explanation level"}
-        title={"Explanation level: #{answer_level_label(@level)}. Change explanation level"}
-        class={dropdown_trigger_classes(@compact, :level)}
+        aria-label={"Change AI answer level. Current level: #{answer_level_label(@level)}"}
+        class="inline-flex min-h-11 items-center gap-1 rounded-md px-2 text-[11px] font-normal text-slate-600 hover:bg-stone-100 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-800"
       >
-        <.icon name="hero-square-3-stack-3d" class="h-4 w-4 shrink-0" />
-        <span class={if(@compact, do: "hidden md:inline", else: "flex-1 text-left")}>
-          {if(@compact,
-            do: answer_level_label(@level),
-            else: "Answer level: #{answer_level_label(@level)}"
-          )}
-        </span>
-        <.icon name="hero-chevron-down" class="h-3 w-3 shrink-0" />
+        <span
+          :for={level <- @levels}
+          data-answer-level-icon={level.mode}
+          hidden={level.mode != @level}
+          class="shrink-0"
+          aria-hidden="true"
+        ><.icon name={level.icon} class="h-3.5 w-3.5" /></span>
+        <span data-answer-level-label>{answer_level_label(@level)}</span>
+        <.icon name="hero-chevron-down" class="h-3 w-3" />
       </button>
       <div
-        id={if(@inline, do: @id, else: @id <> "-options")}
-        popover={if(!@inline, do: "auto")}
-        tabindex="-1"
-        role={if(@inline, do: "group", else: "dialog")}
-        aria-labelledby={@id <> "-heading"}
-        class={if(@inline, do: "workspace-settings-section", else: "workspace-dropdown-panel")}
+        id={@id <> "-options"}
+        data-answer-level-options
+        hidden
+        class="order-last min-w-0 basis-full rounded-xl border border-stone-300 bg-stone-50 p-1.5 text-slate-950"
       >
-        <h2
-          id={@id <> "-heading"}
-          class={if(@hide_heading, do: "sr-only", else: "workspace-dropdown-heading")}
+        <p id={@id <> "-heading"} class="px-2.5 py-1.5 text-xs font-semibold text-slate-500">
+          {@heading}
+        </p>
+        <div
+          role="listbox"
+          aria-labelledby={@id <> "-heading"}
+          aria-describedby={@id <> "-hint"}
+          class="grid grid-cols-[repeat(auto-fit,minmax(min(100%,12rem),1fr))] gap-1"
         >
-          <span class="workspace-dropdown-heading-icon">
-            <.icon name="hero-square-3-stack-3d" class="h-4 w-4" />
-          </span>
-          Answer level
-        </h2>
-        <button
-          :for={
-            {value, label, description, icon} <- [
-              {"high_school", "Simple", "Plain language, examples, and key ideas.", "hero-bars-2"},
-              {"university", "Expanded", "Defined terminology, context, and sourced evidence.",
-               "hero-bars-3"},
-              {"expert", "In-depth", "Rigorous analysis and competing interpretations.",
-               "hero-bars-4"}
-            ]
-          }
-          id={@id <> "-" <> value}
-          type="button"
-          phx-click="set_prompt_mode"
-          phx-value-prompt_mode={value}
-          data-dropdown-choice={if(!@inline, do: "")}
-          aria-pressed={to_string(@level == value)}
-          class="workspace-dropdown-choice"
-        >
-          <span class="workspace-dropdown-option-icon">
-            <.icon name={icon} class="h-4 w-4" />
-          </span>
-          <span class="min-w-0 flex-1">
-            <span class="workspace-dropdown-option-title flex items-center gap-1.5">
-              {label}
-              <.icon
-                :if={is_nil(@current_user) && value != "high_school"}
-                name="hero-lock-closed"
-                class="h-3 w-3"
-              />
+          <button
+            :for={level <- @levels}
+            id={@id <> "-" <> level.mode}
+            type="button"
+            role="option"
+            tabindex={if(level.mode == @level, do: "0", else: "-1")}
+            aria-selected={to_string(level.mode == @level)}
+            aria-label={level.label}
+            phx-click={if(is_nil(@field), do: "set_prompt_mode")}
+            phx-value-prompt_mode={if(is_nil(@field), do: level.mode)}
+            data-answer-level-choice={level.mode}
+            class="flex min-h-14 w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left hover:bg-stone-100 focus-visible:outline-2 focus-visible:outline-teal-800 aria-selected:bg-slate-950 aria-selected:text-white"
+          >
+            <span class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-teal-800 text-white"><.icon
+              name={level.icon}
+              class="h-4 w-4"
+            /></span>
+            <span class="min-w-0 flex-1">
+              <span class="block text-sm font-semibold">{level.label}</span>
+              <span class="answer-level-description mt-0.5 block text-xs leading-4 text-slate-600">{level.description}</span>
+              <span
+                :if={!@current_user && level.mode != "high_school"}
+                class="answer-level-description block text-xs text-slate-600"
+              >Sign in to use</span>
             </span>
-            <span class="mt-1 block text-xs leading-5 text-slate-500">{description}</span>
-          </span>
-          <span class="workspace-dropdown-check">
-            <.icon :if={@level == value} name="hero-check" class="h-4 w-4" />
-          </span>
-        </button>
-        <p class="workspace-dropdown-footer">
-          <.icon name="hero-information-circle" class="mt-0.5 h-3.5 w-3.5 shrink-0" />
-          <span>Applies to new AI answers. Existing answers keep their original level.</span>
+            <span data-answer-level-check hidden={level.mode != @level} aria-hidden="true"><.icon
+              name="hero-check"
+              class="h-4 w-4 shrink-0 text-teal-200"
+            /></span>
+          </button>
+        </div>
+        <p
+          id={@id <> "-hint"}
+          class="mt-1 border-t border-slate-100 px-2.5 pt-2 pb-1 text-xs leading-5 text-slate-500"
+        >
+          {@hint}
         </p>
       </div>
     </div>
     """
   end
+
+  def answer_level_label(mode) when mode in ["simple", "high_school"], do: "Simple"
+  def answer_level_label("expert"), do: "In-depth"
+  def answer_level_label(_mode), do: "Expanded"
 
   attr :id, :string, required: true
   attr :graph_struct, :map, required: true
@@ -581,7 +603,7 @@ defmodule DialecticWeb.WorkspaceBarComp do
         <% end %>
         <p class="workspace-dropdown-footer">
           <.icon name="hero-information-circle" class="mt-0.5 h-3.5 w-3.5 shrink-0" />
-          <span>Controls who can view. Editing permissions are in Tools.</span>
+          <span>Controls who can find and view this grid.</span>
         </p>
       </div>
     </div>
@@ -599,11 +621,6 @@ defmodule DialecticWeb.WorkspaceBarComp do
   defp normalize_node_id(nil), do: nil
   defp normalize_node_id(value), do: to_string(value)
 
-  def answer_level_label("simple"), do: "Simple"
-  def answer_level_label("high_school"), do: "Simple"
-  def answer_level_label("expert"), do: "In-depth"
-  def answer_level_label(_mode), do: "Expanded"
-
   defp bar_classes(true) do
     [
       "flex w-full max-w-full flex-nowrap items-center gap-2 whitespace-nowrap sm:w-auto sm:shrink-0"
@@ -617,24 +634,24 @@ defmodule DialecticWeb.WorkspaceBarComp do
   end
 
   defp segment_classes(true) do
-    "hidden items-center rounded-full border border-slate-300 bg-slate-200/80 p-1 shadow-inner sm:inline-flex"
+    "inline-flex items-center rounded-lg border border-stone-300 bg-stone-200 p-0.5"
   end
 
   defp segment_classes(false) do
-    "hidden items-center rounded-full border border-slate-300 bg-slate-200/80 p-1 shadow-inner sm:inline-flex"
+    "inline-flex items-center rounded-lg border border-stone-300 bg-stone-200 p-0.5"
   end
 
   defp mode_link_classes(true, true) do
     [
       "inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-semibold transition",
-      "bg-white text-slate-950 shadow-sm ring-1 ring-slate-300"
+      "bg-slate-950 text-white shadow-sm ring-1 ring-slate-950"
     ]
   end
 
   defp mode_link_classes(true, false) do
     [
       "inline-flex h-8 items-center gap-2 rounded-full px-3.5 text-sm font-semibold transition",
-      "bg-white text-slate-950 shadow-sm ring-1 ring-slate-300"
+      "bg-slate-950 text-white shadow-sm ring-1 ring-slate-950"
     ]
   end
 
@@ -652,7 +669,7 @@ defmodule DialecticWeb.WorkspaceBarComp do
     ]
   end
 
-  defp mode_label_classes(true), do: "hidden lg:inline"
+  defp mode_label_classes(true), do: "inline"
   defp mode_label_classes(false), do: "inline"
 
   defp divider_classes(true) do

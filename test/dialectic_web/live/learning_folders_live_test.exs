@@ -241,7 +241,7 @@ defmodule DialecticWeb.LearningFoldersLiveTest do
     {:ok, view, _} = live(conn, ~p"/my/learning?collection=#{leaf.id}")
 
     view
-    |> element("#new-idea-input")
+    |> form("#learning-new-grid-form")
     |> render_change(%{"vertex" => %{"content" => "An unfinished question"}})
 
     view |> element("#learning-new-folder") |> render_click()

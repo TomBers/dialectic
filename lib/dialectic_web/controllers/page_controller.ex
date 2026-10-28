@@ -24,19 +24,35 @@ defmodule DialecticWeb.PageController do
         |> redirect(to: ~p"/")
 
       graph ->
-        Dialectic.Categorisation.AutoTagger.tag_graph(graph)
+        generate_graph_tags(conn, graph)
+    end
+  end
 
-        referer = get_req_header(conn, "referer") |> List.first()
+  defp generate_graph_tags(%{assigns: %{current_user: nil}} = conn, _graph) do
+    conn
+    |> put_flash(:error, "Sign in or create an account to contribute to this grid.")
+    |> redirect(to: ~p"/users/log_in")
+  end
 
-        conn =
-          conn
-          |> put_flash(:info, "Generating tags for \"#{graph.title}\" in the background...")
+  defp generate_graph_tags(conn, graph) do
+    if Dialectic.DbActions.Sharing.can_edit?(conn.assigns[:current_user], graph) do
+      Dialectic.Categorisation.AutoTagger.tag_graph(graph)
 
-        if referer do
-          redirect(conn, external: referer)
-        else
-          redirect(conn, to: ~p"/")
-        end
+      referer = get_req_header(conn, "referer") |> List.first()
+
+      conn =
+        conn
+        |> put_flash(:info, "Generating tags for \"#{graph.title}\" in the background...")
+
+      if referer do
+        redirect(conn, external: referer)
+      else
+        redirect(conn, to: ~p"/")
+      end
+    else
+      conn
+      |> put_status(:forbidden)
+      |> text("You do not have permission to edit this grid")
     end
   end
 
@@ -133,11 +149,7 @@ defmodule DialecticWeb.PageController do
 
   # Check if user has access to the graph (same logic as LiveViews)
   defp has_access?(user, graph_struct, params) do
-    token_param = Map.get(params, "token")
-
-    Dialectic.DbActions.Sharing.can_access?(user, graph_struct) or
-      (is_binary(token_param) and is_binary(graph_struct.share_token) and
-         Plug.Crypto.secure_compare(token_param, graph_struct.share_token))
+    Dialectic.DbActions.Sharing.can_access?(user, graph_struct, Map.get(params, "token"))
   end
 
   def guide(conn, _params) do

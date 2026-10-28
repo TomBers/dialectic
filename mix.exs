@@ -50,7 +50,7 @@ defmodule Dialectic.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
-      {:tidewave, "~> 0.5", only: [:dev]},
+      {:tidewave, "~> 0.9.2", only: [:dev]},
       {:bcrypt_elixir, "~> 3.0"},
       {:phoenix, "~> 1.8.12"},
       {:phoenix_ecto, "~> 4.5"},
@@ -78,7 +78,7 @@ defmodule Dialectic.MixProject do
       {:gettext, "~> 1.0"},
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.2.0"},
-      {:bandit, "~> 1.13"},
+      {:bandit, "~> 1.14.1"},
       {:req, "~> 0.7.3"},
       {:igniter, "~> 0.8.4"},
       {:oban, "~> 2.19"},

@@ -41,6 +41,7 @@ defmodule DialecticWeb.SelectionActionsComp do
      |> assign(assigns)
      |> assign_new(:highlight_only, fn -> false end)
      |> assign_new(:context, fn -> :selection end)
+     |> assign_new(:prompt_mode, fn -> "university" end)
      |> assign_new(:presentation, fn -> :modal end)
      |> assign_new(:node_id, fn -> nil end)
      |> assign_new(:answer_title, fn -> nil end)
@@ -323,6 +324,7 @@ defmodule DialecticWeb.SelectionActionsComp do
           id={"selection-inquiry-actions-#{@id}"}
           owner_id={@id}
           context={@context}
+          prompt_mode={@prompt_mode}
           graph_id={@graph_id}
           can_edit={@can_edit}
           current_user={@current_user}

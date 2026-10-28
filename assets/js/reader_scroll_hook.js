@@ -255,10 +255,7 @@ const ReaderScrollHook = {
     this.keyboardTarget = null;
     if (target.nodeId) this.scrollToNode(target.nodeId);
     const mobileOutline = source.closest("#outline-mobile-nav-panel");
-    const desktopOutlineButton = document.getElementById("reader-workspace-bar-outline-desktop");
-    const outlineButton = desktopOutlineButton?.getClientRects().length
-      ? desktopOutlineButton
-      : document.getElementById("reader-workspace-bar-outline");
+    const outlineButton = document.getElementById("reader-workspace-bar-outline");
     const focusTarget = mobileOutline?.classList.contains("hidden") ? outlineButton : source;
     focusTarget?.focus({ preventScroll: !!source.closest("#outline-tree") });
     pendingHistoryFocus = null;

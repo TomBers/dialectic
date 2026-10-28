@@ -109,7 +109,11 @@ defmodule DialecticWeb.InquiryActionsComp do
 
     ~H"""
     <div id={"#{@id}-content"} class="min-w-0">
-      <div data-keyboard-composer class="space-y-2.5 scroll-mt-6 scroll-mb-6">
+      <DialecticWeb.WorkspaceBarComp.contribution_sign_in
+        :if={!@current_user}
+        id={"#{@id}-sign-in"}
+      />
+      <div :if={@current_user} data-keyboard-composer class="space-y-2.5 scroll-mt-6 scroll-mb-6">
         <div
           :if={!@highlight_only}
           id={
@@ -118,11 +122,7 @@ defmodule DialecticWeb.InquiryActionsComp do
               else: "selection-custom-inquiry-#{@owner_id}"
             )
           }
-          class={[
-            "relative min-w-0",
-            @context == :node &&
-              "rounded-xl border border-slate-300 bg-white p-2 transition focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-100/70"
-          ]}
+          class="relative min-w-0"
         >
           <.live_component
             module={DialecticWeb.AskFormComp}
@@ -136,6 +136,7 @@ defmodule DialecticWeb.InquiryActionsComp do
               )
             }
             context={@context}
+            prompt_mode={@prompt_mode}
             form={@form}
             graph_id={@graph_id}
             current_user={@current_user}
@@ -154,27 +155,6 @@ defmodule DialecticWeb.InquiryActionsComp do
             <:quick_actions>
               <%= if @context in [:selection, :answer] do %>
                 <.tool_button
-                  :if={@context == :answer && @current_user}
-                  id={"answer-action-bookmark-#{@owner_id}"}
-                  icon="hero-bookmark"
-                  label="Bookmark"
-                  tone="highlight"
-                  shortcut="b"
-                  selection_action="bookmark"
-                  pressed={false}
-                  rest={%{"data-answer-bookmark" => "true"}}
-                  disabled={false}
-                  compact
-                />
-                <.link
-                  :if={@context == :answer && !@current_user}
-                  id={"answer-bookmark-login-#{@owner_id}"}
-                  href={~p"/users/log_in"}
-                  class="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-stone-300 px-3 py-2 text-xs font-semibold text-teal-800 hover:bg-stone-50"
-                >
-                  <.icon name="hero-lock-closed" class="h-4 w-4" /> Log in to bookmark
-                </.link>
-                <.tool_button
                   :if={@context == :selection}
                   id={"selection-action-highlight-#{@owner_id}"}
                   icon="hero-bookmark"
@@ -190,7 +170,8 @@ defmodule DialecticWeb.InquiryActionsComp do
                   id={"selection-action-explain-#{@owner_id}"}
                   icon="hero-question-mark-circle"
                   label="Explain"
-                  tone="question"
+                  description="Make this idea easier to understand."
+                  tone="explain"
                   shortcut="e"
                   selection_action="explain"
                   disable_if_links="explain"
@@ -201,7 +182,8 @@ defmodule DialecticWeb.InquiryActionsComp do
                   id={action_id(assigns, "pros-cons")}
                   icon="hero-scale"
                   label="Pro | Con"
-                  tone="thesis"
+                  description="Weigh supporting and opposing arguments."
+                  tone="pros_cons"
                   shortcut="a"
                   selection_action="pros_cons"
                   disable_if_links="pro,con"
@@ -212,6 +194,7 @@ defmodule DialecticWeb.InquiryActionsComp do
                   id={action_id(assigns, "related")}
                   icon="hero-light-bulb"
                   label="Related ideas"
+                  description="Find connections worth exploring."
                   tone="ideas"
                   shortcut="r"
                   selection_action="related_ideas"
@@ -224,7 +207,8 @@ defmodule DialecticWeb.InquiryActionsComp do
                   id={action_id(assigns, "pros-cons")}
                   icon="hero-scale"
                   label="Pro | Con"
-                  tone="thesis"
+                  description="Weigh supporting and opposing arguments."
+                  tone="pros_cons"
                   shortcut="a"
                   event="node_branch"
                   node_id={@node.id}
@@ -235,6 +219,7 @@ defmodule DialecticWeb.InquiryActionsComp do
                   id={action_id(assigns, "connect")}
                   icon="hero-arrows-pointing-in"
                   label="Synthesis"
+                  description="Connect ideas to build a new understanding."
                   tone="synthesis"
                   shortcut="c"
                   event={
@@ -252,6 +237,7 @@ defmodule DialecticWeb.InquiryActionsComp do
                   id={action_id(assigns, "related")}
                   icon="hero-light-bulb"
                   label="Related ideas"
+                  description="Find connections worth exploring."
                   tone="ideas"
                   shortcut="r"
                   event="node_related_ideas"
@@ -259,72 +245,16 @@ defmodule DialecticWeb.InquiryActionsComp do
                   disabled={!@can_edit}
                   compact
                 />
-                <% noted? = @user in (Map.get(@node, :noted_by) || []) %>
-                <% bookmark_description =
-                  cond do
-                    !@current_user -> "Log in to bookmark"
-                    noted? -> "Remove bookmark"
-                    true -> "Bookmark this node"
-                  end %>
-                <.tool_button
-                  id={"graph-bookmark-node-#{@node.id}"}
-                  icon={if(noted?, do: "hero-bookmark-solid", else: "hero-bookmark")}
-                  label={
-                    cond do
-                      !@current_user -> "Log in to bookmark"
-                      noted? -> "Bookmarked"
-                      true -> "Bookmark"
-                    end
-                  }
-                  tone="highlight"
-                  shortcut="b"
-                  event={if(noted?, do: "unnote", else: "note")}
-                  pressed={noted?}
-                  rest={
-                    %{
-                      "phx-value-node" => @node.id,
-                      "aria-label" => bookmark_description,
-                      "title" => bookmark_description
-                    }
-                  }
-                  disabled={false}
-                  compact
-                />
               <% end %>
             </:quick_actions>
-            <div
-              id={tools_menu_id(assigns)}
-              role="group"
-              aria-label="Thinking tools"
-              phx-hook={if(@context == :node, do: "ToolsMenu")}
-              phx-update="ignore"
-              hidden={@context in [:selection, :answer] || !@advanced_tools_open}
-              data-open={to_string(@advanced_tools_open)}
-              data-selection-advanced-tools={@context in [:selection, :answer]}
-              data-trigger-id={advanced_toggle_id(assigns)}
-              phx-target={if(@context == :node, do: @myself)}
-              class="min-w-0 pt-1"
-            >
-              <.advanced_tools
-                context={@context}
-                sections={@critical_tool_sections}
-                graph_id={@graph_id}
-                node={@node}
-                owner_id={@owner_id}
-                can_edit={@can_edit}
-              />
-              <button
-                id={"#{tools_menu_id(assigns)}-done"}
-                type="button"
-                data-tools-close
-                class="inquiry-disclosure mt-2 py-1.5 pl-1.5 pr-3"
-              >
-                <span class="inquiry-disclosure-icon">
-                  <.icon name="hero-chevron-up" class="h-4 w-4" />
-                </span>
-                Hide tools
-              </button>
-            </div>
+            <.advanced_tools
+              context={@context}
+              sections={@critical_tool_sections}
+              graph_id={@graph_id}
+              node={@node}
+              owner_id={@owner_id}
+              can_edit={@can_edit}
+            />
           </.live_component>
         </div>
         <div :if={@highlight_only}>
@@ -342,10 +272,10 @@ defmodule DialecticWeb.InquiryActionsComp do
         </div>
         <p :if={!@highlight_only} class="hidden px-1 text-[10px] text-slate-500 md:block">
           <%= if @context in [:selection, :answer] do %>
-            / to write · T for tools · Esc to leave the form, then close · Option/Alt + Shift + A / R / E / {if(
-              @context == :answer,
-              do: "B",
-              else: "H"
+            / to write · T for tools · Esc to leave the form, then close · Option/Alt + Shift + A / R / E{if(
+              @context == :selection,
+              do: " / H",
+              else: ""
             )} to use tools when not typing
           <% else %>
             T for tools · Esc to leave the form · Option/Alt + Shift + A / C / R / B to use tools when not typing
@@ -365,7 +295,7 @@ defmodule DialecticWeb.InquiryActionsComp do
         <h4 class="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
           {section.title}
         </h4>
-        <div class="inquiry-tools-toolbar grid min-w-0 grid-cols-2 gap-1.5">
+        <div class="inquiry-tools-toolbar grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2">
           <.tool_button
             :for={tool <- section.tools}
             id={tool_id(assigns, tool.key)}
@@ -376,6 +306,7 @@ defmodule DialecticWeb.InquiryActionsComp do
             icon={tool.icon}
             label={tool.label}
             tone={tool.key}
+            description={tool.blurb}
             rest={%{"title" => tool.blurb}}
             disabled={!@can_edit}
             compact
@@ -415,12 +346,12 @@ defmodule DialecticWeb.InquiryActionsComp do
       disabled={@disabled}
       {@rest}
       class={[
-        "group/tool flex min-h-11 min-w-0 rounded-xl border bg-white text-left text-slate-700 transition duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-500 disabled:cursor-not-allowed disabled:opacity-50",
+        "group/tool flex min-h-11 min-w-0 rounded-lg border bg-white text-left text-slate-950 transition duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 disabled:cursor-not-allowed disabled:opacity-50",
         if(@compact,
           do:
-            "inquiry-tool-compact aria-pressed:border-amber-300 aria-pressed:bg-amber-50 items-center gap-2 border-slate-200/80 py-1.5 pl-1.5 pr-3 shadow-sm shadow-slate-900/[0.03] hover:border-slate-300 hover:bg-slate-50",
+            "inquiry-tool-compact aria-pressed:border-amber-800 aria-pressed:bg-amber-100 items-center gap-2 border-stone-300 py-1.5 pl-1.5 pr-3 hover:border-teal-700 hover:bg-stone-50",
           else:
-            "w-full items-start gap-3 border-transparent p-2.5 hover:border-slate-200 hover:shadow-sm"
+            "w-full items-start gap-3 border-stone-300 p-2.5 hover:border-teal-700 hover:bg-stone-50"
         )
       ]}
     >
@@ -432,7 +363,7 @@ defmodule DialecticWeb.InquiryActionsComp do
       </span>
       <span class={[
         "min-w-0 flex-1",
-        @compact && "flex items-center justify-between gap-2"
+        @compact && !@description && "flex items-center justify-between gap-2"
       ]}>
         <span data-tool-label class="block min-w-0 text-[13px] font-medium leading-5">{@label}</span>
         <.shortcut_keycap
@@ -441,7 +372,7 @@ defmodule DialecticWeb.InquiryActionsComp do
           modifier="alt"
           shift
         />
-        <span :if={@description} class="mt-0.5 block text-xs leading-4 text-slate-500">{@description}</span>
+        <span :if={@description} class="mt-0.5 block text-xs leading-4 text-slate-700">{@description}</span>
       </span>
       <.shortcut_keycap :if={!@compact && @shortcut} key={@shortcut} modifier="alt" shift quiet />
     </button>

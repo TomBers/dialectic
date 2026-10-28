@@ -55,14 +55,17 @@ defmodule DialecticWeb.SiteNavigation do
         />
 
         <.link
+          :if={@current_user}
           id="desktop-new-grid-nav-link"
-          href={if @current_user, do: ~p"/my/learning?new=true", else: ~p"/?focus=grid#start-here"}
+          href={~p"/my/learning?new=true"}
+          aria-label="Create a grid"
+          title="Create a grid"
           class={[
-            "ml-1 h-8 shrink-0 items-center justify-center rounded-md bg-teal-300 px-2 font-semibold text-slate-950 hover:bg-teal-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-300 sm:px-2.5",
-            if(@current_user, do: "inline-flex", else: "hidden md:inline-flex")
+            "ml-1 h-8 shrink-0 items-center justify-center gap-1 rounded-md bg-teal-300 px-2 font-semibold text-slate-950 hover:bg-teal-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-300 sm:px-2.5",
+            "inline-flex"
           ]}
         >
-          {if @current_user, do: "+ Private grid", else: "+ Public grid"}
+          <.icon name="hero-plus" class="h-4 w-4" /> Grid
         </.link>
 
         <%= if @current_user do %>
@@ -76,6 +79,7 @@ defmodule DialecticWeb.SiteNavigation do
               "inline-flex h-9 items-center gap-1 rounded-md px-1.5 font-medium hover:bg-slate-800 hover:text-white focus-visible:outline-2 focus-visible:outline-teal-300 sm:px-2",
               @active_path in [
                 "/u/#{@current_user.username}",
+                "/activity",
                 "/users/settings",
                 "/intro/how",
                 "/about",
@@ -92,7 +96,7 @@ defmodule DialecticWeb.SiteNavigation do
             id="account-menu"
             popover="auto"
             aria-label="Account links"
-            class="fixed bottom-auto left-auto right-2 top-12 m-0 w-56 max-w-[calc(100vw-1rem)] rounded-xl border border-slate-200 bg-white p-2 text-sm text-slate-700 shadow-xl sm:right-4"
+            class="fixed bottom-auto left-auto top-12 m-0 w-56 max-w-[calc(100vw-1rem)] rounded-xl border border-slate-200 bg-white p-2 text-sm text-slate-700 shadow-xl"
           >
             <.account_link
               id="account-profile-link"
@@ -100,6 +104,13 @@ defmodule DialecticWeb.SiteNavigation do
               label="My Profile"
               icon="hero-user-circle"
               active={@active_path == "/u/#{@current_user.username}"}
+            />
+            <.account_link
+              id="account-activity-link"
+              href={~p"/activity"}
+              label="Activity"
+              icon="hero-bolt"
+              active={@active_path == "/activity"}
             />
             <.account_link
               id="account-settings-link"
@@ -127,8 +138,8 @@ defmodule DialecticWeb.SiteNavigation do
               :if={@current_user.is_admin}
               id="account-curate-link"
               href={~p"/admin/curated"}
-              label="Curate"
-              icon="hero-star"
+              label="Admin dashboard"
+              icon="hero-chart-bar-square"
               active={@active_path == "/admin/curated"}
             />
             <div class="my-1 border-t border-slate-100"></div>
@@ -144,7 +155,12 @@ defmodule DialecticWeb.SiteNavigation do
         <% else %>
           <.link
             id="global-sign-up-link"
-            href={~p"/users/register"}
+            href={
+              if @active_path == "/",
+                do: ~p"/users/register?#{%{return_to: ~p"/my/learning?new=true"}}",
+                else: ~p"/users/register"
+            }
+            data-preserve-auth-return={if @active_path == "/", do: "false"}
             data-analytics-event="sign_up_cta_clicked"
             data-analytics-location="global_navigation"
             class="ml-1 inline-flex h-8 items-center rounded-md bg-teal-300 px-2 font-semibold text-slate-950 hover:bg-teal-200 sm:px-3"

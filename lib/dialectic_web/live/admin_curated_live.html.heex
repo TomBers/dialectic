@@ -1,0 +1,517 @@
+<Layouts.app flash={@flash}>
+  <div id="admin-dashboard" class="min-h-screen bg-[#f4f1e9] text-slate-950">
+    <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+      <header class="rounded-2xl bg-slate-900 p-6 text-white sm:p-8">
+        <div class="flex flex-wrap items-start justify-between gap-5">
+          <div>
+            <p class="mb-2 text-xs font-semibold uppercase tracking-widest text-emerald-300">
+              RationalGrid · Administration
+            </p>
+            <h1 class="font-serif text-3xl font-semibold sm:text-4xl">Admin dashboard</h1>
+            <p class="mt-2 max-w-xl text-sm text-slate-300">
+              A live view of your community, background work and system.
+            </p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button
+              id="admin-refresh"
+              type="button"
+              phx-click="refresh_dashboard"
+              disabled={@refreshing}
+              class="inline-flex min-h-11 items-center gap-2 rounded-lg border border-slate-600 px-4 py-2 text-sm font-semibold hover:bg-slate-800 disabled:opacity-50"
+            >
+              <.icon
+                name="hero-arrow-path"
+                class={["h-4 w-4", @refreshing && "motion-safe:animate-spin"]}
+              /> Refresh
+            </button>
+            <.link
+              id="admin-import-link"
+              navigate={~p"/admin/graphs/import"}
+              class="inline-flex min-h-11 items-center gap-2 rounded-lg bg-emerald-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-emerald-200"
+            >
+              <.icon name="hero-arrow-up-tray" class="h-4 w-4" /> Import graph JSON
+            </.link>
+          </div>
+        </div>
+        <div class="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-700 pt-4 text-xs text-slate-300">
+          <p id="admin-refresh-status" role="status">
+            <%= cond do %>
+              <% @dashboard_error -> %>
+                Live statistics unavailable{if @dashboard,
+                  do: " · showing data from #{timestamp(@dashboard.measured_at)}"}
+              <% @dashboard -> %>
+                Updated
+                <time id="admin-updated-at" datetime={DateTime.to_iso8601(@dashboard.measured_at)}>{Calendar.strftime(
+                  @dashboard.measured_at,
+                  "%H:%M:%S UTC"
+                )}</time>
+                · refreshes every 30 seconds
+              <% true -> %>
+                Loading system data…
+            <% end %>
+          </p>
+          <nav aria-label="Dashboard sections" class="flex gap-4 font-semibold text-white">
+            <a href="#admin-system" class="hover:underline">System</a>
+            <a href="#admin-community" class="hover:underline">Community</a>
+            <a href="#admin-curation" class="hover:underline">Manage grids</a>
+          </nav>
+        </div>
+      </header>
+
+      <div
+        :if={@dashboard_error}
+        id="admin-dashboard-error"
+        role="alert"
+        class="mt-5 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950"
+      >
+        Live statistics are temporarily unavailable. Use Refresh to try again. Grid management is still available below.
+      </div>
+      <p
+        :if={!@dashboard && !@dashboard_error}
+        id="admin-dashboard-loading"
+        role="status"
+        class="py-8 text-sm text-slate-600"
+      >
+        Loading community and system statistics…
+      </p>
+
+      <div :if={@dashboard} id="admin-overview" class="mt-6">
+        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <.stat
+            id="admin-stat-users"
+            label="Registered users"
+            value={number(@dashboard.users.total)}
+            icon="hero-users"
+            detail={"#{number(@dashboard.users.new_week)} joined in the last 7 days"}
+          />
+          <.stat
+            id="admin-stat-grids"
+            label="Total grids"
+            value={number(@dashboard.grids.total)}
+            icon="hero-squares-2x2"
+            detail={"#{number(@dashboard.grids.new_week)} created in the last 7 days · includes hidden grids"}
+          />
+          <.stat
+            id="admin-stat-contributors"
+            label="Contributors · 7 days"
+            value={number(@dashboard.activity.contributors_week)}
+            icon="hero-pencil-square"
+            detail="Accounts with recorded grid activity"
+          />
+          <.stat
+            id="admin-stat-viewers"
+            label="In grids now"
+            value={number(@dashboard.runtime.viewers)}
+            icon="hero-signal"
+            detail={"Across #{@dashboard.runtime.open_grids} grids · includes guests, excludes other pages"}
+          />
+        </div>
+
+        <section
+          id="admin-system"
+          aria-labelledby="admin-system-heading"
+          class="mt-8 scroll-mt-20"
+        >
+          <div class="mb-4 flex flex-wrap items-end justify-between gap-2">
+            <h2 id="admin-system-heading" class="font-serif text-2xl font-semibold">
+              System at a glance
+            </h2>
+            <span class="rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold uppercase text-slate-700">{@dashboard.runtime.environment}</span>
+          </div>
+          <div class="grid gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+            <div class="min-w-0 rounded-xl border border-stone-300 bg-white p-5">
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <h3 class="font-semibold">Background work</h3>
+                <span class={[
+                  "rounded-full px-3 py-1 text-xs font-semibold",
+                  if(@dashboard.queue_totals.retrying + @dashboard.queue_totals.failed > 0,
+                    do: "bg-amber-100 text-amber-900",
+                    else: "bg-emerald-100 text-emerald-900"
+                  )
+                ]}>
+                  {if @dashboard.queue_totals.retrying + @dashboard.queue_totals.failed > 0,
+                    do: "Jobs need attention",
+                    else: "No retries or recent failures"}
+                </span>
+              </div>
+              <p class="mt-1 text-xs text-slate-500">
+                Queue counts across the system. Done and failed counts cover the last 24 hours.
+              </p>
+              <div
+                class="mt-4 overflow-x-auto"
+                role="region"
+                aria-label="Background queues"
+                tabindex="0"
+              >
+                <table class="w-full text-left text-sm">
+                  <thead class="border-b border-stone-200 text-xs text-slate-500">
+                    <tr>
+                      <th scope="col" class="py-3 pr-4 font-medium">Queue</th><th
+                        scope="col"
+                        class="px-2 font-medium"
+                      >
+                        Waiting
+                      </th><th scope="col" class="px-2 font-medium">Running</th><th
+                        scope="col"
+                        class="px-2 font-medium"
+                      >
+                        Scheduled
+                      </th><th scope="col" class="px-2 font-medium">Retrying</th><th
+                        scope="col"
+                        class="px-2 font-medium"
+                      >
+                        Done
+                      </th><th scope="col" class="pl-2 font-medium">Failed</th>
+                    </tr>
+                  </thead>
+                  <tbody id="admin-queues" phx-update="stream" class="divide-y divide-stone-100">
+                    <tr :for={{id, queue} <- @streams.queues} id={id}>
+                      <th scope="row" class="whitespace-nowrap py-4 pr-4 font-semibold">
+                        {queue_label(queue.id)}
+                        <span class="mt-1 block text-xs font-normal text-slate-500">{queue.local_status}</span>
+                      </th>
+                      <td class="px-2 tabular-nums">{number(queue.waiting)}</td><td class="px-2 tabular-nums">
+                        {number(queue.running)}
+                      </td><td class="px-2 tabular-nums">{number(queue.scheduled)}</td>
+                      <td class={[
+                        "px-2 tabular-nums",
+                        queue.retrying > 0 && "font-bold text-amber-800"
+                      ]}>
+                        {number(queue.retrying)}
+                      </td><td class="px-2 tabular-nums">{number(queue.completed)}</td><td class={[
+                        "pl-2 tabular-nums",
+                        queue.failed > 0 && "font-bold text-red-700"
+                      ]}>
+                        {number(queue.failed)}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div id="admin-attention-jobs" phx-update="stream" class="mt-2 space-y-2">
+                <div
+                  :for={{id, job} <- @streams.attention_jobs}
+                  id={id}
+                  class="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-950"
+                >
+                  <span class="break-all"><strong>Job #{job.id}</strong>
+                  · {job.worker |> String.split(".") |> List.last()} · {job.queue}</span>
+                  <span>{if job.state == "retryable", do: "Retrying", else: "Failed"} · attempt {job.attempt}/{job.max_attempts}</span>
+                </div>
+              </div>
+            </div>
+            <div class="rounded-xl border border-stone-300 bg-white p-5">
+              <h3 class="font-semibold">Server & database</h3>
+              <dl class="mt-4 divide-y divide-stone-100 text-sm">
+                <.system_row label="Database" value={"Connected · #{@dashboard.database_ms} ms"} />
+                <.system_row
+                  label="Job service"
+                  value={
+                    if @dashboard.runtime.jobs_running?,
+                      do: "Running on this node",
+                      else: "Not running on this node"
+                  }
+                />
+                <.system_row label="VM uptime" value={uptime(@dashboard.runtime.uptime_seconds)} />
+                <.system_row
+                  label="VM memory"
+                  value={"#{number(@dashboard.runtime.memory_mb)} MB"}
+                />
+                <.system_row label="Processes" value={number(@dashboard.runtime.processes)} />
+                <.system_row label="Loaded grids" value={number(@dashboard.runtime.loaded_grids)} />
+              </dl>
+              <p class="mt-4 break-all text-xs text-slate-500">
+                Node: {@dashboard.runtime.node} · v{@dashboard.runtime.version}<br />Runtime figures refer to this server. A database check does not test external AI providers.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section
+          id="admin-community"
+          aria-labelledby="admin-community-heading"
+          class="mt-8 scroll-mt-20"
+        >
+          <h2 id="admin-community-heading" class="mb-4 font-serif text-2xl font-semibold">
+            Community & content
+          </h2>
+          <div class="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <.small_stat
+              label="Public / private grids"
+              value={"#{number(@dashboard.grids.public)} / #{number(@dashboard.grids.private)}"}
+              detail="Excludes hidden grids"
+            />
+            <.small_stat
+              label="Users with a grid"
+              value={number(@dashboard.users.creators)}
+              detail={"#{number(@dashboard.users.confirmed)} accounts have a confirmed email"}
+            />
+            <.small_stat
+              label="Recorded actions · 24h"
+              value={number(@dashboard.activity.events_day)}
+              detail="Grid creation, questions, thoughts and edits"
+            />
+            <.small_stat
+              label="Hidden / without owner"
+              value={"#{number(@dashboard.grids.hidden)} / #{number(@dashboard.grids.ownerless)}"}
+              detail="Ownerless count excludes hidden grids"
+            />
+          </div>
+          <div class="grid gap-5 lg:grid-cols-2">
+            <section
+              aria-labelledby="admin-new-users-heading"
+              class="min-w-0 rounded-xl border border-stone-300 bg-white p-5"
+            >
+              <h3 id="admin-new-users-heading" class="font-semibold">Newest accounts</h3>
+              <div
+                id="admin-recent-users"
+                phx-update="stream"
+                class="mt-3 divide-y divide-stone-100"
+              >
+                <p id="admin-users-empty" class="hidden py-4 text-sm text-slate-500 only:block">
+                  No accounts yet.
+                </p>
+                <div
+                  :for={{id, user} <- @streams.recent_users}
+                  id={id}
+                  class="flex flex-wrap items-center justify-between gap-2 py-3 text-sm"
+                >
+                  <div class="min-w-0">
+                    <p class="break-all font-semibold">{user.username || "No username yet"}</p><p class="break-all text-xs text-slate-500">
+                      {user.email}
+                    </p>
+                  </div>
+                  <time
+                    datetime={DateTime.to_iso8601(user.inserted_at)}
+                    class="text-xs text-slate-500"
+                  >{timestamp(user.inserted_at)}</time>
+                </div>
+              </div>
+            </section>
+            <section
+              aria-labelledby="admin-recent-grids-heading"
+              class="min-w-0 rounded-xl border border-stone-300 bg-white p-5"
+            >
+              <h3 id="admin-recent-grids-heading" class="font-semibold">
+                Recently updated grids
+              </h3>
+              <div
+                id="admin-recent-grids"
+                phx-update="stream"
+                class="mt-3 divide-y divide-stone-100"
+              >
+                <p id="admin-grids-empty" class="hidden py-4 text-sm text-slate-500 only:block">
+                  No grids yet.
+                </p>
+                <div :for={{id, grid} <- @streams.recent_grids} id={id} class="py-3">
+                  <.link
+                    navigate={~p"/g/#{grid.slug || grid.title}"}
+                    class="block break-words text-sm font-semibold hover:text-indigo-700 hover:underline"
+                  >{grid.title}</.link>
+                  <p class="mt-1 text-xs text-slate-500">
+                    {grid.username ||
+                      if(grid.user_id, do: "User ##{grid.user_id}", else: "No owner")} · {cond do
+                      grid.is_deleted -> "Hidden"
+                      grid.is_public -> "Public"
+                      true -> "Private"
+                    end} · {timestamp(grid.updated_at)}
+                  </p>
+                </div>
+              </div>
+            </section>
+          </div>
+        </section>
+      </div>
+
+      <section
+        id="admin-curation"
+        aria-labelledby="admin-curation-heading"
+        class="mt-10 scroll-mt-20 border-t border-stone-300 pt-7"
+      >
+        <h2 id="admin-curation-heading" class="font-serif text-2xl font-semibold">
+          Manage grids
+        </h2>
+        <p class="mt-1 text-sm text-slate-600">
+          Choose what appears in the curated and partner sections of Community, or hide grids from discovery.
+        </p>
+        <div class="mt-5 rounded-xl border border-stone-300 bg-white p-5 sm:p-6">
+          <h3 class="mb-4 font-semibold">Find a grid to feature or hide</h3>
+          <.form
+            for={@search_form}
+            id="curated-search-form"
+            phx-change="search_graphs"
+            phx-submit="search_graphs"
+          >
+            <.input
+              field={@search_form[:search]}
+              type="search"
+              label="Search for a grid"
+              placeholder="Search by title…"
+              phx-debounce="300"
+              autocomplete="off"
+            />
+          </.form>
+          <div class="mt-4 grid items-end gap-4 sm:grid-cols-[auto_minmax(0,1fr)]">
+            <fieldset>
+              <legend class="mb-2 text-sm font-medium">Add to section</legend>
+              <div class="flex gap-2">
+                <button
+                  :for={section <- ["curated", "featured"]}
+                  id={"admin-select-#{section}"}
+                  type="button"
+                  phx-click="set_section"
+                  phx-value-section={section}
+                  aria-pressed={to_string(@add_section == section)}
+                  class={[
+                    "min-h-11 rounded-lg px-4 py-2 text-sm font-semibold",
+                    if(@add_section == section,
+                      do: "bg-slate-900 text-white",
+                      else: "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                    )
+                  ]}
+                >{String.capitalize(section)}</button>
+              </div>
+            </fieldset>
+            <.form for={@note_form} id="curated-note-form" phx-change="update_note">
+              <.input
+                field={@note_form[:note]}
+                type="text"
+                label="Note (optional)"
+                placeholder="Why this grid is notable…"
+                phx-debounce="300"
+              />
+            </.form>
+          </div>
+          <div
+            id="admin-search-results"
+            phx-update="stream"
+            class="mt-4 divide-y divide-stone-200"
+          >
+            <p id="admin-search-empty" class="hidden py-2 text-sm text-slate-500 only:block">
+              {if @search_term == "",
+                do: "Search to find public grids available for curation.",
+                else: "No matching grids found."}
+            </p>
+            <div
+              :for={{id, item} <- @streams.search_results}
+              id={id}
+              class="flex flex-wrap items-center justify-between gap-3 py-4"
+            >
+              <div class="min-w-0 flex-1 basis-56">
+                <.link
+                  navigate={~p"/g/#{item.graph.slug || item.graph.title}"}
+                  class="break-words text-sm font-semibold hover:underline"
+                >{item.graph.title}</.link>
+                <div class="mt-1 flex flex-wrap gap-1">
+                  <span
+                    :for={tag <- item.graph.tags || []}
+                    class="rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-600"
+                  >{tag_label(tag)}</span>
+                </div>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <button
+                  id={id <> "-add"}
+                  type="button"
+                  phx-click="add_curated"
+                  phx-value-title={item.graph.title}
+                  phx-value-section={@add_section}
+                  class="inline-flex min-h-11 items-center gap-1 rounded-lg bg-indigo-700 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-600"
+                ><.icon name="hero-plus" class="h-4 w-4" /> Add to {@add_section}</button>
+                <button
+                  id={id <> "-hide"}
+                  type="button"
+                  phx-click="soft_delete"
+                  phx-value-title={item.graph.title}
+                  class="inline-flex min-h-11 items-center gap-1 rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-800 hover:bg-red-100"
+                ><.icon name="hero-eye-slash" class="h-4 w-4" /> Hide</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-5 grid items-start gap-5 lg:grid-cols-2">
+          <section
+            aria-labelledby="admin-curated-heading"
+            class="min-w-0 rounded-xl border border-stone-300 bg-white p-5"
+          >
+            <h3 id="admin-curated-heading" class="mb-3 flex items-center gap-2 font-semibold">
+              <.icon name="hero-star" class="h-5 w-5 text-amber-600" /> Curated Grids
+              <span class="text-sm font-normal text-slate-500">({@curated_count} shown)</span>
+            </h3>
+            <div id="admin-curated-list" phx-update="stream" class="divide-y divide-stone-100">
+              <p id="admin-curated-empty" class="hidden py-3 text-sm text-slate-500 only:block">
+                No curated grids yet.
+              </p>
+              <.curation_row
+                :for={{id, item} <- @streams.curated}
+                id={id}
+                item={item}
+                section="curated"
+              />
+            </div>
+          </section>
+          <section
+            aria-labelledby="admin-featured-heading"
+            class="min-w-0 rounded-xl border border-stone-300 bg-white p-5"
+          >
+            <h3 id="admin-featured-heading" class="mb-3 flex items-center gap-2 font-semibold">
+              <.icon name="hero-users" class="h-5 w-5 text-indigo-700" /> Featured by Partners
+              <span class="text-sm font-normal text-slate-500">({@featured_count} shown)</span>
+            </h3>
+            <div id="admin-featured-list" phx-update="stream" class="divide-y divide-stone-100">
+              <p id="admin-featured-empty" class="hidden py-3 text-sm text-slate-500 only:block">
+                No featured grids yet.
+              </p>
+              <.curation_row
+                :for={{id, item} <- @streams.featured}
+                id={id}
+                item={item}
+                section="featured"
+              />
+            </div>
+          </section>
+        </div>
+        <details
+          id="admin-hidden-section"
+          class="mt-5 rounded-xl border border-stone-300 bg-white p-5"
+        >
+          <summary class="cursor-pointer font-semibold">
+            Hidden from Homepage
+            <span class="text-sm font-normal text-slate-500">({@hidden_count} shown)</span>
+          </summary>
+          <p class="mt-2 text-sm text-slate-500">
+            These grids are hidden from normal discovery. Showing up to 50, most recently hidden or updated first.
+          </p>
+          <div id="admin-hidden-list" phx-update="stream" class="mt-3 divide-y divide-stone-100">
+            <p id="admin-hidden-empty" class="hidden py-3 text-sm text-slate-500 only:block">
+              No hidden grids.
+            </p>
+            <div
+              :for={{id, item} <- @streams.hidden}
+              id={id}
+              class="flex flex-wrap items-center justify-between gap-3 py-3"
+            >
+              <div class="min-w-0 flex-1 basis-56">
+                <p class="break-words text-sm font-semibold">{item.graph.title}</p><p
+                  :if={item.author_name}
+                  class="text-xs text-slate-500"
+                >
+                  by {item.author_name}
+                </p>
+              </div>
+              <button
+                id={id <> "-restore"}
+                type="button"
+                phx-click="restore_graph"
+                phx-value-title={item.graph.title}
+                class="inline-flex min-h-11 items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-900 hover:bg-emerald-100"
+              ><.icon name="hero-eye" class="h-4 w-4" /> Restore</button>
+            </div>
+          </div>
+        </details>
+      </section>
+    </div>
+  </div>
+</Layouts.app>

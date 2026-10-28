@@ -10,7 +10,7 @@ defmodule DialecticWeb.LearningLive do
   @page_size 24
 
   @impl true
-  def mount(_params, session, socket) do
+  def mount(params, session, socket) do
     {:ok, _} = Learning.initialize_topics(socket.assigns.current_user)
 
     {:ok,
@@ -23,9 +23,11 @@ defmodule DialecticWeb.LearningLive do
        editing?: false,
        search: "",
        search_form: to_form(%{"q" => ""}),
-       new_grid_form: to_form(new_grid_changeset(), as: :vertex),
+       new_grid_form:
+         to_form(new_grid_changeset(%{"content" => params["initial_prompt"] || ""}), as: :vertex),
        creating_grid?: false,
        new_grid_requested?: false,
+       resume_grid_draft?: params["resume"] == "grid",
        show_new_grid?: false,
        llm_actor_id: session["llm_actor_id"] || "learning:#{socket.id}",
        collection_form: to_form(Learning.change_collection()),
@@ -554,7 +556,7 @@ defmodule DialecticWeb.LearningLive do
     {:noreply,
      socket
      |> assign(:creating_grid?, false)
-     |> put_flash(:error, "Could not finish creating your private grid. Please try again.")}
+     |> put_flash(:error, "Could not finish creating your grid. Please try again.")}
   end
 
   defp file_new_grid(socket, nil, _graph), do: socket
@@ -568,12 +570,12 @@ defmodule DialecticWeb.LearningLive do
         put_flash(
           socket,
           :error,
-          "Your private grid was created, but could not be added to that topic or collection. Find it in My Learning."
+          "Your grid was created, but could not be added to that topic or collection. Find it in My Learning."
         )
     end
   end
 
-  defp new_grid_changeset(params \\ %{}) do
+  defp new_grid_changeset(params) do
     {%{content: "", mode: "high_school"}, %{content: :string, mode: :string}}
     |> Ecto.Changeset.cast(params, [:content, :mode])
     |> Ecto.Changeset.update_change(:content, &String.trim(&1 || ""))
@@ -1028,14 +1030,14 @@ defmodule DialecticWeb.LearningLive do
                   patch={new_grid_path(@collection)}
                   aria-current={if(@show_new_grid?, do: "page")}
                   class={[
-                    "inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold",
+                    "inline-flex min-h-11 items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold",
                     if(@show_new_grid?,
                       do: "bg-slate-950 text-white",
-                      else: "text-slate-600 hover:bg-white"
+                      else: "bg-teal-800 text-white hover:bg-teal-900"
                     )
                   ]}
                 >
-                  <.icon name="hero-plus" class="h-4 w-4" /> New grid
+                  <.icon name="hero-plus" class="h-4 w-4" /> Create a grid
                 </.link>
                 <.form
                   :if={!@show_new_grid?}
@@ -1117,20 +1119,18 @@ defmodule DialecticWeb.LearningLive do
                 :if={@show_new_grid?}
                 hidden={@creating_folder? || @editing?}
                 id="learning-create-grid"
-                class="mt-4 max-w-xl"
+                class="mt-5 max-w-2xl rounded-lg border border-stone-300 bg-white p-5 sm:p-7"
               >
                 <.live_component
                   module={DialecticWeb.NewGridForm}
                   id="learning-new-grid-form"
                   form={@new_grid_form}
-                  label="Start a private grid"
+                  current_user={@current_user}
+                  label="Create a grid"
                   context={@collection && "Added to #{group_kind(@collection)}: #{@collection.name}"}
                   busy={@creating_grid?}
                   placeholder="Ask a question or name a topic"
-                  submit_label="Continue"
-                  create_label="Create private grid"
-                  minimal={true}
-                  authenticated={true}
+                  resume_draft={@resume_grid_draft?}
                 />
               </div>
 

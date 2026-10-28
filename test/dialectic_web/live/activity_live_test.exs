@@ -33,7 +33,12 @@ defmodule DialecticWeb.ActivityLiveTest do
     viewer = named_user("stream-viewer")
     follower = named_user("stream-follower")
     followed_author = named_user("stream-author")
-    graph_author = named_user("stream-graph-author")
+
+    graph_author =
+      named_user("stream-graph-author")
+      |> Ecto.Changeset.change(avatar_path: "/images/activity-avatar.png")
+      |> Dialectic.Repo.update!()
+
     owned_graph = create_graph(viewer, "owned-stream-grid")
     followed_graph = create_graph(graph_author, "followed-stream-grid")
 
@@ -68,8 +73,8 @@ defmodule DialecticWeb.ActivityLiveTest do
 
     assert html
            |> LazyHTML.from_document()
-           |> LazyHTML.query("#userHeader a[href='/activity']")
-           |> LazyHTML.attribute("href") == []
+           |> LazyHTML.query("#account-activity-link[aria-current='page']")
+           |> LazyHTML.attribute("href") == ["/activity"]
 
     assert has_element?(lv, "#activity-summary")
     assert has_element?(lv, "#activity-tabs")
@@ -84,6 +89,16 @@ defmodule DialecticWeb.ActivityLiveTest do
     assert render(lv) =~ followed_user_graph.title
     assert has_element?(lv, "#activity-item-followed-grid-log-#{followed_graph_log.id}")
     assert has_element?(lv, "#activity-feed-actor-followed-grid-log-#{followed_graph_log.id}")
+
+    assert has_element?(
+             lv,
+             "#activity-feed-actor-followed-grid-log-#{followed_graph_log.id}[href='/u/stream-graph-author']"
+           )
+
+    assert has_element?(
+             lv,
+             "#activity-feed-actor-followed-grid-log-#{followed_graph_log.id}-avatar[src='/images/activity-avatar.png']"
+           )
 
     assert has_element?(
              lv,

@@ -21,6 +21,7 @@ describe("graph layout proportions", () => {
       expect(layout.rankSep).toBeGreaterThan(layout.nodeSep);
       expect(layout.nodeSep).toBeGreaterThan(layout.edgeSep);
     }
+    expect(layoutConfig.baseLayout).toMatchObject({ nodeSep: 64, edgeSep: 46, rankSep: 104 });
   });
 
   it("uses label dimensions and stable node ordering independently of edge routing", () => {
@@ -41,7 +42,7 @@ describe("graph layout proportions", () => {
     }
   });
 
-  it("keeps initial and newly added edges compatible with WebGL", () => {
+  it("keeps initial and newly added edges on rounded orthogonal routes", () => {
     const cy = cytoscape({
       headless: true,
       styleEnabled: true,
@@ -70,7 +71,9 @@ describe("graph layout proportions", () => {
     cy.add({ data: { id: "c-a", source: "c", target: "a" } });
     cy.edges().forEach((edge) => {
       expect(edge.pstyle("line-fill").value).toBe("solid");
-      expect(edge.pstyle("curve-style").value).toBe("bezier");
+      expect(edge.pstyle("curve-style").value).toBe("round-taxi");
+      expect(edge.pstyle("taxi-direction").value).toBe("vertical");
+      expect(edge.pstyle("taxi-radius").pfValue).toBe(12);
     });
 
     cy.destroy();

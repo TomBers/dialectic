@@ -2,6 +2,7 @@ defmodule DialecticWeb.CommunityBrowsingTest do
   use DialecticWeb.ConnCase, async: true
 
   import Dialectic.GraphFixtures
+  import Dialectic.AccountsFixtures
   import Phoenix.LiveViewTest
 
   alias Dialectic.DbActions.Graphs
@@ -97,7 +98,9 @@ defmodule DialecticWeb.CommunityBrowsingTest do
     end
   end
 
-  test "all public grids are browsable across stable pages, including small grids", %{conn: conn} do
+  test "owned public grids are browsable across stable pages, including small grids", %{
+    conn: conn
+  } do
     graphs =
       for index <- 1..14,
           do: graph("Grid #{String.pad_leading(to_string(index), 2, "0")}", ["Sociology"])
@@ -106,6 +109,11 @@ defmodule DialecticWeb.CommunityBrowsingTest do
     draft = graph("Draft grid", ["Sociology"], %{is_published: false})
     deleted = graph("Deleted grid", ["Sociology"], %{is_deleted: true})
 
+    anonymous =
+      insert_graph(%{title: "Anonymous grid"})
+      |> Ecto.Changeset.change(tags: ["Sociology"])
+      |> Repo.update!()
+
     {:ok, view, _} = live(conn, ~p"/community?tag=sociology")
 
     assert has_element?(view, "#community-result-count", "1–12 of 14 grids")
@@ -113,7 +121,7 @@ defmodule DialecticWeb.CommunityBrowsingTest do
     assert has_element?(view, "#community-grid-list > article:nth-of-type(12)")
     refute has_element?(view, "#community-grid-list > article:nth-of-type(13)")
 
-    for hidden <- [private, draft, deleted] do
+    for hidden <- [private, draft, deleted, anonymous] do
       refute has_element?(view, "#community-grid-#{hidden.slug}")
     end
 
@@ -371,7 +379,11 @@ defmodule DialecticWeb.CommunityBrowsingTest do
 
   defp graph(title, tags, attrs \\ %{}) do
     insert_graph(Map.merge(%{title: title}, attrs))
-    |> Ecto.Changeset.change(tags: tags, inserted_at: ~U[2026-01-01 12:00:00Z])
+    |> Ecto.Changeset.change(
+      user_id: user_fixture().id,
+      tags: tags,
+      inserted_at: ~U[2026-01-01 12:00:00Z]
+    )
     |> Repo.update!()
   end
 

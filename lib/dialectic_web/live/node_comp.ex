@@ -40,7 +40,11 @@ defmodule DialecticWeb.NodeComp do
        graph_struct: Map.get(assigns, :graph_struct),
        graph_owner_id: Map.get(assigns, :graph_owner_id),
        current_user: Map.get(assigns, :current_user),
-       can_edit: Map.get(assigns, :can_edit, true),
+       can_edit: Map.get(assigns, :can_edit, false),
+       node_highlights: Map.get(assigns, :node_highlights, []),
+       node_highlights_open:
+         node_id == Map.get(socket.assigns, :node_id) &&
+           Map.get(socket.assigns, :node_highlights_open, false),
        menu_visible: Map.get(assigns, :menu_visible, true),
        streaming: Map.get(assigns, :streaming, false),
        guided_actions: guided_actions,
@@ -50,6 +54,11 @@ defmodule DialecticWeb.NodeComp do
        presentation_mode: Map.get(assigns, :presentation_mode, :off),
        token: Map.get(assigns, :token)
      )}
+  end
+
+  @impl true
+  def handle_event("toggle_node_highlights", _params, socket) do
+    {:noreply, assign(socket, :node_highlights_open, !socket.assigns.node_highlights_open)}
   end
 
   @regeneratable_classes [
@@ -76,23 +85,6 @@ defmodule DialecticWeb.NodeComp do
   end
 
   defp show_regenerate_cta?(_node), do: false
-
-  defp existing_follow_up_questions_json(%{children: children}) when is_list(children) do
-    children
-    |> Enum.filter(fn child ->
-      Map.get(child, :class) == "question" and not Map.get(child, :deleted, false)
-    end)
-    |> Enum.map(fn child ->
-      child
-      |> Map.get(:content, "")
-      |> to_string()
-      |> String.trim()
-    end)
-    |> Enum.reject(&(&1 == ""))
-    |> Jason.encode!()
-  end
-
-  defp existing_follow_up_questions_json(_node), do: "[]"
 
   defp guided_options(assigns, key, node, fallback) do
     case Map.get(assigns, key, []) do
@@ -357,17 +349,23 @@ defmodule DialecticWeb.NodeComp do
                       "relative",
                       if(origin_meta?,
                         do: "mb-5 rounded-xl bg-slate-950 px-4 py-4 shadow-sm",
-                        else:
-                          "mb-6 rounded-xl border border-slate-200 bg-slate-50/90 px-4 py-3.5 shadow-sm"
+                        else: "mb-5 border-b border-stone-300 pb-5"
                       )
                     ]}
                   >
-                    <div class="min-w-0">
+                    <% noted? = @user in (Map.get(@node, :noted_by) || []) %>
+                    <% bookmark_description =
+                      cond do
+                        !@current_user -> "Log in to bookmark"
+                        noted? -> "Remove bookmark"
+                        true -> "Bookmark this node"
+                      end %>
+                    <div class="mb-3 flex flex-wrap items-center gap-x-2 gap-y-1">
                       <p
                         id={"node-title-type-#{@node.id}"}
                         class={[
-                          "mb-1.5 pr-10 text-[11px] font-semibold uppercase tracking-[0.16em]",
-                          if(origin_meta?, do: "text-teal-200", else: "text-teal-700")
+                          "text-xs font-semibold",
+                          if(origin_meta?, do: "text-teal-200", else: "text-teal-900")
                         ]}
                       >
                         {if(origin_meta?,
@@ -375,6 +373,26 @@ defmodule DialecticWeb.NodeComp do
                           else: DialecticWeb.ColUtils.node_type_label(@node.class)
                         )}
                       </p>
+                      <DialecticWeb.NodeReadingTools.node_actions
+                        prefix="graph"
+                        node_id={@node.id}
+                        bookmarked?={noted?}
+                        bookmark_description={bookmark_description}
+                        highlight_count={length(@node_highlights)}
+                        open?={@node_highlights_open}
+                        toggle_target={@myself}
+                        dark={origin_meta?}
+                        shortcut
+                      />
+                    </div>
+                    <DialecticWeb.NodeReadingTools.node_highlights
+                      prefix="graph"
+                      node_id={@node.id}
+                      graph_id={@graph_id}
+                      highlights={@node_highlights}
+                      open?={@node_highlights_open}
+                    />
+                    <div class="min-w-0">
                       <h2 class={[
                         "reader-heading reader-title break-words font-semibold leading-[1.15] tracking-tight",
                         if(origin_meta?, do: "reader-title-origin text-white", else: "text-slate-950")
@@ -387,40 +405,6 @@ defmodule DialecticWeb.NodeComp do
                         ></span>
                       </h2>
                     </div>
-                    <span
-                      :if={GraphHelpers.origin_branching_disabled?(@node)}
-                      class="absolute right-3 top-2.5 flex items-center gap-2"
-                    >
-                      <% noted? =
-                        Enum.any?(Map.get(@node, :noted_by, []), fn u -> u == @user end) %>
-                      <button
-                        id={"graph-bookmark-node-#{@node.id}"}
-                        type="button"
-                        class={[
-                          "inline-flex h-8 w-8 flex-none items-center justify-center rounded-full border transition-all",
-                          if(noted?,
-                            do: "border-amber-300 bg-amber-100 text-amber-800 hover:bg-amber-200",
-                            else:
-                              if(origin_meta?,
-                                do:
-                                  "border-white/20 bg-white/10 text-slate-300 hover:border-amber-300 hover:bg-amber-50 hover:text-amber-800",
-                                else:
-                                  "border-slate-200 bg-white text-slate-500 hover:border-amber-300 hover:bg-amber-50 hover:text-amber-800"
-                              )
-                          )
-                        ]}
-                        phx-click={if noted?, do: "unnote", else: "note"}
-                        phx-value-node={@node.id}
-                        aria-label={if(noted?, do: "Remove bookmark", else: "Bookmark this node")}
-                        aria-pressed={to_string(noted?)}
-                        title={if(noted?, do: "Remove bookmark", else: "Bookmark this node")}
-                      >
-                        <.icon
-                          name={if(noted?, do: "hero-bookmark-solid", else: "hero-bookmark")}
-                          class="h-4 w-4"
-                        />
-                      </button>
-                    </span>
                   </header>
                   <article
                     class="reader-prose prose prose-slate max-w-none w-full prose-headings:font-serif prose-headings:tracking-tight prose-a:break-words"
@@ -454,7 +438,7 @@ defmodule DialecticWeb.NodeComp do
                     <div
                       class={[
                         "w-full pb-2",
-                        if(origin_meta?, do: "px-1 sm:px-2", else: "px-4")
+                        origin_meta? && "px-1 sm:px-2"
                       ]}
                       data-children={length(@node.children)}
                       id={"list-detector-" <> @node.id}
@@ -531,12 +515,17 @@ defmodule DialecticWeb.NodeComp do
                       <% else %>
                         <div
                           phx-hook="Markdown"
+                          phx-update="ignore"
                           class="cursor-text selection:bg-amber-200/80 selection:text-slate-900"
                           id={"markdown-body-#{@node.id}"}
                           data-md={@node.content || ""}
                           data-grounding={DialecticWeb.MarkdownGrounding.encode(@node)}
                           data-body-only="true"
-                          data-existing-follow-up-questions={existing_follow_up_questions_json(@node)}
+                          data-follow-up-node-id={@node.id}
+                          data-enhance-follow-up-questions={to_string(@can_edit)}
+                          data-existing-follow-up-questions={
+                            GraphHelpers.existing_follow_up_questions_json(@node)
+                          }
                         >
                         </div>
                       <% end %>
@@ -550,19 +539,19 @@ defmodule DialecticWeb.NodeComp do
                       data-external="true"
                       data-role="origin-intro"
                     >
-                      <div class="border-b border-slate-200 bg-slate-50/80 px-4 py-3 sm:px-5">
-                        <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                          Start here
+                      <div class="px-4 py-4 text-sm leading-6 text-slate-600 sm:px-5">
+                        <p>
+                          Open a connected box to read an answer, then ask a follow-up to explore further.
                         </p>
-                        <h3 class="reader-heading mt-1 text-lg font-semibold leading-6 tracking-tight text-slate-950">
-                          How to use the grid
-                        </h3>
-                      </div>
-
-                      <div class="px-4 py-2.5 sm:px-5">
-                        <.live_component
-                          module={DialecticWeb.OriginOnboardingComp}
-                          id={"origin-onboarding-#{@node.id}"}
+                        <button
+                          id="origin-quick-help"
+                          type="button"
+                          phx-click="open_help_modal"
+                          class="mt-2 min-h-11 font-semibold text-teal-800 hover:underline"
+                        >How it works</button>
+                        <DialecticWeb.WorkspaceBarComp.contribution_sign_in
+                          :if={!@current_user}
+                          id={"node-inquiry-actions-#{@node.id}-sign-in"}
                         />
                       </div>
                     </div>
