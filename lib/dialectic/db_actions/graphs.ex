@@ -291,6 +291,8 @@ defmodule Dialectic.DbActions.Graphs do
   defp public_tag_rows_query do
     tags_query =
       from g in Graph,
+        join: author in Dialectic.Accounts.User,
+        on: author.id == g.user_id,
         where: g.is_published == true,
         where: g.is_public == true,
         where: g.is_deleted == false or is_nil(g.is_deleted),
