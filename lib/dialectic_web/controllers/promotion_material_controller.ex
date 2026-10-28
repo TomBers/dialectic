@@ -4,11 +4,18 @@ defmodule DialecticWeb.PromotionMaterialController do
   alias Dialectic.Content
   alias Dialectic.Content.PromotionMaterial
 
-  def index(conn, _params) do
-    with :ok <- authorize(conn) do
-      json(conn, PromotionMaterial.list_graphs())
+  def index(conn, params) do
+    with :ok <- authorize(conn),
+         {:ok, curated?} <- curated_filter(params) do
+      json(conn, PromotionMaterial.list_graphs(curated: curated?))
     else
-      error -> auth_error(conn, error)
+      {:error, :invalid_curated} ->
+        conn
+        |> put_status(:bad_request)
+        |> json(%{error: "curated must be true or false"})
+
+      error ->
+        auth_error(conn, error)
     end
   end
 
@@ -24,6 +31,15 @@ defmodule DialecticWeb.PromotionMaterialController do
         conn
         |> put_status(:not_found)
         |> json(%{error: "Grid not found"})
+    end
+  end
+
+  defp curated_filter(params) do
+    case Map.get(params, "curated") do
+      nil -> {:ok, false}
+      "true" -> {:ok, true}
+      "false" -> {:ok, false}
+      _ -> {:error, :invalid_curated}
     end
   end
 

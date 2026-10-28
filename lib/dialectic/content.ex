@@ -4,9 +4,10 @@ defmodule Dialectic.Content do
   import Ecto.Query
 
   alias Dialectic.Accounts.Graph
+  alias Dialectic.Accounts.CuratedGrid
   alias Dialectic.Repo
 
-  def list_public_graphs do
+  def list_public_graphs(opts \\ []) do
     query =
       from g in Graph,
         where: g.is_published == true,
@@ -20,6 +21,16 @@ defmodule Dialectic.Content do
              g.data,
              g.data
            )}
+
+    query =
+      if Keyword.get(opts, :curated, false) do
+        curated_titles =
+          from c in CuratedGrid, where: c.section == "curated", select: c.graph_title
+
+        from g in query, where: g.title in subquery(curated_titles)
+      else
+        query
+      end
 
     Repo.all(query)
   end

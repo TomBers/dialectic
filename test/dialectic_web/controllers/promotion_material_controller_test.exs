@@ -5,6 +5,7 @@ defmodule DialecticWeb.PromotionMaterialControllerTest do
   import Dialectic.GraphFixtures
 
   alias Dialectic.Content.PromotionMaterial
+  alias Dialectic.DbActions.Graphs
   alias Dialectic.Highlights
 
   @token "test-promotion-token"
@@ -70,6 +71,67 @@ defmodule DialecticWeb.PromotionMaterialControllerTest do
     slugs = Enum.map(response["grids"], & &1["slug"])
     refute Enum.any?(slugs, &(&1 == private_graph.slug))
     refute Enum.any?(slugs, &(&1 == deleted_graph.slug))
+  end
+
+  test "filters to eligible grids in the curated section", %{conn: conn} do
+    curated = promotion_graph("Promotion Curated Grid")
+    private = promotion_graph("Promotion Private Curated Grid", is_public: false)
+    unpublished = promotion_graph("Promotion Unpublished Curated Grid", is_published: false)
+    deleted = promotion_graph("Promotion Deleted Curated Grid", is_deleted: true)
+    other = promotion_graph("Promotion Non Curated Grid")
+    featured = promotion_graph("Promotion Featured Grid")
+
+    for graph <- [curated, private, unpublished, deleted] do
+      assert {:ok, _} = Graphs.add_curated_grid(%{graph_title: graph.title, section: "curated"})
+    end
+
+    assert {:ok, _} = Graphs.add_curated_grid(%{graph_title: featured.title, section: "featured"})
+    assert {:ok, _} = Graphs.add_curated_grid(%{graph_title: curated.title, section: "featured"})
+
+    response =
+      conn
+      |> authed()
+      |> get(~p"/api/promotion/grids?curated=true")
+      |> json_response(200)
+
+    slugs = Enum.map(response["grids"], & &1["slug"])
+    assert Enum.count(slugs, &(&1 == curated.slug)) == 1
+    assert response["count"] == length(slugs)
+
+    for graph <- [private, unpublished, deleted, other, featured] do
+      refute graph.slug in slugs
+    end
+  end
+
+  test "curated=false returns the same grids as an unfiltered request", %{conn: conn} do
+    curated = promotion_graph("Promotion Curated Unfiltered Grid")
+    other = promotion_graph("Promotion Other Unfiltered Grid")
+    assert {:ok, _} = Graphs.add_curated_grid(%{graph_title: curated.title, section: "curated"})
+
+    unfiltered = conn |> authed() |> get(~p"/api/promotion/grids") |> json_response(200)
+
+    response =
+      conn
+      |> authed()
+      |> get(~p"/api/promotion/grids?curated=false")
+      |> json_response(200)
+
+    assert response == unfiltered
+    slugs = Enum.map(response["grids"], & &1["slug"])
+    assert curated.slug in slugs
+    assert other.slug in slugs
+  end
+
+  test "rejects invalid curated filters", %{conn: conn} do
+    for value <- ["yes", "", ["true"]] do
+      response =
+        conn
+        |> authed()
+        |> get(~p"/api/promotion/grids", %{"curated" => value})
+        |> json_response(400)
+
+      assert response == %{"error" => "curated must be true or false"}
+    end
   end
 
   test "returns graph metadata, raw graph data, and highlights", %{conn: conn} do
