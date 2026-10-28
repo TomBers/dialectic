@@ -1,7 +1,6 @@
 defmodule DialecticWeb.WorkspaceBarComp do
   use DialecticWeb, :html
   alias DialecticWeb.ColUtils
-  import DialecticWeb.ActivityComponents, only: [activity_actor: 1]
 
   attr :id, :string, required: true
 
@@ -38,7 +37,6 @@ defmodule DialecticWeb.WorkspaceBarComp do
   attr :highlights_count, :integer, default: 0
   attr :prompt_mode, :string, default: nil
   attr :return_context, :map, default: nil
-  attr :creator, :any, default: nil
 
   def workspace_header(assigns) do
     assigns =
@@ -51,68 +49,8 @@ defmodule DialecticWeb.WorkspaceBarComp do
 
     ~H"""
     <header id={@prefix <> "-header"} class="workspace-header">
-      <div id={@prefix <> "-heading"} class="workspace-heading">
-        <.link
-          id={@prefix <> "-header-back-link"}
-          navigate={@return_context.path}
-          title={"Back to #{@return_context.label}"}
-          class="workspace-back"
-        >
-          <.icon name="hero-arrow-left" class="h-5 w-5" />
-          <span class="sr-only">Back to {@return_context.label}</span>
-        </.link>
-        <div class="min-w-0 flex-1">
-          <h1
-            id={@prefix <> "-title"}
-            class="text-base font-semibold leading-snug text-slate-950 sm:text-lg"
-          >
-            {@graph_struct.title}
-          </h1>
-          <div
-            id={@prefix <> "-byline"}
-            class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500"
-          >
-            <span class="inline-flex min-w-0 items-center gap-1">
-              By
-              <.activity_actor
-                id={@prefix <> "-creator"}
-                actor={@creator}
-                name="Community contributor"
-              />
-            </span>
-            <span aria-hidden="true">·</span>
-            <span class="inline-flex items-center gap-1">
-              <.icon
-                name={if(@graph_struct.is_public, do: "hero-globe-alt", else: "hero-lock-closed")}
-                class="h-3.5 w-3.5"
-              />
-              {if(@graph_struct.is_public, do: "Public", else: "Private")}
-            </span>
-            <span :if={@graph_struct.is_locked} class="text-slate-500">· Read only</span>
-          </div>
-        </div>
-      </div>
+      <h1 id={@prefix <> "-title"} class="sr-only">{@graph_struct.title}</h1>
       <nav id={@prefix <> "-top-menu"} aria-label="Grid actions" class="workspace-menu">
-        <button
-          id={@prefix <> "-workspace-bar-outline-desktop"}
-          type="button"
-          phx-click={JS.dispatch("toggle-explore", to: @layout_target)}
-          data-explore-toggle
-          aria-controls={if(@mode == :reader, do: "outline-tree", else: "side-drawer")}
-          aria-label={if(@mode == :reader, do: "Hide outline", else: "Hide details")}
-          aria-expanded="true"
-          class="workspace-action hidden sm:inline-flex"
-        >
-          <span data-explore-hide-icon aria-hidden="true"><.icon
-            name="hero-chevron-double-left"
-            class="h-4 w-4"
-          /></span>
-          <span data-explore-show-icon aria-hidden="true" class="hidden"><.icon
-            name="hero-bars-3-bottom-left"
-            class="h-4 w-4"
-          /></span>
-          <span data-explore-label>{if(@mode == :reader, do: "Hide outline", else: "Hide details")}</span>
-        </button>
         <.workspace_bar
           id={@prefix <> "-workspace-bar"}
           mode={@mode}
@@ -133,9 +71,11 @@ defmodule DialecticWeb.WorkspaceBarComp do
             phx-click="open_share_modal"
             data-analytics-event="grid_share_opened"
             data-analytics-location="workspace_bar"
-            class="workspace-action workspace-share"
+            aria-label="Share grid"
+            title="Share grid"
+            class="workspace-action workspace-icon-action workspace-share"
           >
-            <.icon name="hero-share" class="h-4 w-4" /><span>Share</span>
+            <.icon name="hero-share" class="h-4 w-4" />
           </button>
           <button
             id={@prefix <> "-more"}
@@ -149,6 +89,16 @@ defmodule DialecticWeb.WorkspaceBarComp do
             <.icon name="hero-ellipsis-horizontal" class="h-5 w-5" /><span>More</span>
           </button>
         </div>
+        <.link
+          id={@prefix <> "-header-close-link"}
+          navigate={@return_context.path}
+          title={"Close grid and return to #{@return_context.label}"}
+          aria-label={"Close grid and return to #{@return_context.label}"}
+          class="workspace-action workspace-icon-action"
+        >
+          <.icon name="hero-x-mark" class="h-5 w-5" />
+          <span class="sr-only">Close grid and return to {@return_context.label}</span>
+        </.link>
       </nav>
     </header>
     """
@@ -176,12 +126,11 @@ defmodule DialecticWeb.WorkspaceBarComp do
       aria-label="Grid history: see how this grid was built"
       title="See how this grid was built and who contributed"
       class={[
-        "workspace-action workspace-history",
+        "workspace-action workspace-icon-action workspace-history",
         @class
       ]}
     >
       <.icon name="hero-clock" class="h-4 w-4" />
-      <span>Grid history</span>
     </button>
     """
   end

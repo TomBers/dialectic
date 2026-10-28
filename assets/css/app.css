@@ -491,20 +491,7 @@
 
 @layer components {
     .workspace-header {
-        @apply relative z-20 flex shrink-0 flex-wrap items-center gap-x-4 gap-y-1 border-b border-stone-400 bg-[#f4f1e9] px-4 py-2;
-    }
-
-    .workspace-heading {
-        @apply flex min-w-0 items-center gap-2;
-        flex: 1 1 22rem;
-    }
-
-    .workspace-heading h1 {
-        overflow-wrap: anywhere;
-    }
-
-    .workspace-back {
-        @apply inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-slate-700 transition hover:bg-stone-200 hover:text-slate-950;
+        @apply relative z-20 flex shrink-0 items-center border-b border-stone-300 bg-[#faf9f5] px-3 py-1;
     }
 
     .workspace-menu {
@@ -527,12 +514,8 @@
         @apply inline-flex min-h-11 shrink-0 items-center justify-center gap-1.5 rounded-md px-2.5 py-2 text-xs font-semibold text-slate-800 transition hover:bg-stone-200 hover:text-slate-950;
     }
 
-    .workspace-history {
-        @apply border border-teal-900 bg-teal-800 text-white hover:bg-teal-900 hover:text-white;
-    }
-
-    .workspace-share {
-        @apply border border-stone-400 bg-white;
+    .workspace-icon-action {
+        @apply w-11 px-0;
     }
 
     .workspace-action:not([data-explore-toggle])[aria-expanded="true"] {
@@ -3127,9 +3110,7 @@ button[type="submit"]:active {
 }
 
 @media (max-width: 639px) {
-    .workspace-header { gap: 0.25rem; padding: 0.5rem 0.75rem; }
-    .workspace-heading { gap: 0.5rem; }
-    .workspace-back { width: 2rem; }
+    .workspace-header { padding-inline: 0.5rem; }
     .workspace-menu { gap: 0.25rem; }
     .workspace-context-actions { gap: 0.125rem; }
     .workspace-action { padding-inline: 0.5rem; }
@@ -3143,9 +3124,7 @@ button[type="submit"]:active {
 
 @media (min-width: 1024px) {
     .reader-scroll-shell { grid-template-columns: 17rem minmax(0, 1fr); }
-    #outline-layout[data-outline-collapsed="true"] .reader-scroll-shell,
     .reader-scroll-shell[data-reader-panel-open="true"] { grid-template-columns: minmax(0, 1fr); }
-    #outline-layout[data-outline-collapsed="true"] #outline-tree,
     .reader-scroll-shell[data-reader-panel-open="true"] #outline-tree { display: none; }
     .reader-scroll-shell[data-reader-panel-open="true"] #outline-detail { margin-right: 24rem; }
 }

@@ -296,8 +296,6 @@ hooks.GraphLayout = {
     const graphId = this.el.dataset.graphId;
     syncGraphAppearanceStorage(this.el.dataset);
 
-    this.outlineCollapsed = false;
-    try { this.outlineCollapsed = localStorage.getItem("rg:explore-collapsed") === "true"; } catch (_error) {}
     this.sideDrawerOpen = window.matchMedia("(min-width: 768px)").matches || this.el.dataset.mobileInquiry === "true";
     this._applySideDrawerState(this.sideDrawerOpen, {dispatchResize: false});
     this._syncExploreState();
@@ -495,20 +493,6 @@ hooks.GraphLayout = {
     this.el.addEventListener("toggle-explore", () => {
       if (this.el.id === "graph-layout") {
         this._applySideDrawerState(!this.sideDrawerOpen);
-        return;
-      }
-      if (window.matchMedia("(min-width: 1024px)").matches) {
-        const wasOpen = !this.outlineCollapsed && !this.activePanelId;
-        this._closeAllPanels();
-        this._drawerNavigation.close();
-        this.outlineCollapsed = wasOpen;
-        this._syncExploreState();
-        try { localStorage.setItem("rg:explore-collapsed", String(this.outlineCollapsed)); } catch (_error) {}
-        if (this.outlineCollapsed) document.getElementById("reader-workspace-bar-outline-desktop")?.focus({preventScroll: true});
-      } else {
-        this._closeAllPanels();
-        this._drawerNavigation.close();
-        this._applyMobileOutlineState(document.getElementById("outline-mobile-nav-panel")?.classList.contains("hidden"));
       }
     });
 
@@ -678,12 +662,9 @@ hooks.GraphLayout = {
     outlineDetail.classList.remove("lg:pr-96");
   },
   _syncExploreState() {
-    this.el.dataset.outlineCollapsed = String(Boolean(this.outlineCollapsed));
     const grid = this.el.id === "graph-layout";
-    const desktopOutline = window.matchMedia("(min-width: 1024px)").matches;
-    const open = grid ? Boolean(this.sideDrawerOpen) :
-      desktopOutline ? !this.outlineCollapsed && !this.activePanelId : Boolean(this.mobileOutlineOpen);
-    const controls = grid ? "side-drawer" : desktopOutline ? "outline-tree" : "outline-mobile-nav-panel";
+    const open = grid ? Boolean(this.sideDrawerOpen) : Boolean(this.mobileOutlineOpen);
+    const controls = grid ? "side-drawer" : "outline-mobile-nav-panel";
 
     this.el.querySelectorAll("[data-explore-toggle]").forEach((button) => {
       const action = `${open ? "Hide" : "Show"} ${grid ? "details" : "outline"}`;
@@ -897,9 +878,7 @@ hooks.GraphLayout = {
   _applyMobileOutlineState(shouldOpen) {
     this.mobileOutlineOpen = Boolean(shouldOpen);
     const panel = document.getElementById("outline-mobile-nav-panel");
-    const mobileButton = document.getElementById("reader-workspace-bar-outline");
-    const desktopButton = document.getElementById("reader-workspace-bar-outline-desktop");
-    const button = mobileButton?.getClientRects().length ? mobileButton : desktopButton;
+    const button = document.getElementById("reader-workspace-bar-outline");
 
     if (!panel || !button) return;
 
@@ -927,7 +906,12 @@ hooks.GraphLayout = {
       this._mobileOutlineFocus = null;
       panel.inert = true;
       panel.setAttribute("aria-hidden", "true");
-      if (returnFocus) button.focus({preventScroll: true});
+      if (returnFocus) {
+        const focusTarget = button.getClientRects().length ? button :
+          document.querySelector('#outline-tree [aria-current="location"]') ||
+          document.getElementById("reader-header-close-link");
+        focusTarget?.focus({preventScroll: true});
+      }
       panel.classList.remove("opacity-100", "translate-x-0");
       panel.classList.add("opacity-0", "translate-x-8", "pointer-events-none");
 

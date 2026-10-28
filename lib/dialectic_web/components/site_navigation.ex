@@ -138,8 +138,8 @@ defmodule DialecticWeb.SiteNavigation do
               :if={@current_user.is_admin}
               id="account-curate-link"
               href={~p"/admin/curated"}
-              label="Curate"
-              icon="hero-star"
+              label="Admin dashboard"
+              icon="hero-chart-bar-square"
               active={@active_path == "/admin/curated"}
             />
             <div class="my-1 border-t border-slate-100"></div>

@@ -38,7 +38,6 @@
       :if={@presentation_mode != :presenting}
       mode={:graph}
       graph_struct={@graph_struct}
-      creator={@graph_creator}
       node_id={Map.get(@node || %{}, :id)}
       nav_params={graph_nav_params(@token, @reader_path_endpoint, @learning_return)}
       layout_target="#graph-layout"

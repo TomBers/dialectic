@@ -431,10 +431,13 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     graph = create_graph()
     {:ok, view, _} = live(log_in_user(conn, user_fixture()), ~p"/g/#{graph.slug}")
     refute has_element?(view, "#reading-node-2 > button")
-    assert has_element?(view, "#reader-node-actions-2 #outline-reading-node-2-ask")
-    assert has_element?(view, "#reader-reading-tools-2 #reader-bookmark-node-2")
-    assert has_element?(view, "#reader-node-header-2 #reader-bookmark-node-2")
-    assert has_element?(view, "#reader-node-header-2 #reader-node-2-highlights")
+    refute has_element?(view, "#reader-node-actions-2")
+    assert has_element?(view, "#reading-node-2[data-reading-kind='question']")
+    assert has_element?(view, "#reading-title-2.reader-question-title")
+    refute has_element?(view, "#reader-reading-tools-2")
+    refute has_element?(view, "#reader-node-header-2 #reader-bookmark-node-2")
+    refute has_element?(view, "#reader-node-header-2 #reader-node-2-highlights")
+    refute has_element?(view, "#outline-reading-node-2-ask")
     refute has_element?(view, "#reader-node-actions-2 #reader-bookmark-node-2")
     render_click(view, "open_follow_up", %{"id" => "2"})
     assert has_element?(view, "#reader-answer-drawer-2:not([hidden])")
@@ -528,7 +531,7 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
 
     refute has_element?(view, "#reader-style-custom")
     refute has_element?(view, "#reader-appearance-panel")
-    assert has_element?(view, "#right-panel #details-reading-style")
+    assert has_element?(view, "#right-panel #reading-style-options")
     assert has_element?(view, "#right-panel #details-export")
     refute has_element?(view, "#right-panel #reader-grid-tools-presentation")
     view |> element("#reader-style-large_print") |> render_click()
@@ -1252,33 +1255,33 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     {:ok, view, _html} =
       conn
       |> log_in_user(user)
-      |> live(~p"/g/#{graph.slug}?node=2")
+      |> live(~p"/g/#{graph.slug}?node=3")
 
-    assert has_element?(view, "#reader-bookmark-node-2[aria-pressed='false']")
-    assert has_element?(view, "#reader-bookmark-node-2 .hero-bookmark")
+    assert has_element?(view, "#reader-bookmark-node-3[aria-pressed='false']")
+    assert has_element?(view, "#reader-bookmark-node-3 .hero-bookmark")
 
     view
-    |> element("#reader-bookmark-node-2")
+    |> element("#reader-bookmark-node-3")
     |> render_click()
 
-    assert Notes.list_noted_node_ids(graph.title, user) == ["2"]
-    assert has_element?(view, "#reader-bookmark-node-2[aria-pressed='true']")
-    assert has_element?(view, "#reader-bookmark-node-2 .hero-bookmark-solid")
+    assert Notes.list_noted_node_ids(graph.title, user) == ["3"]
+    assert has_element?(view, "#reader-bookmark-node-3[aria-pressed='true']")
+    assert has_element?(view, "#reader-bookmark-node-3 .hero-bookmark-solid")
 
     view
-    |> element("#reader-bookmark-node-2")
+    |> element("#reader-bookmark-node-3")
     |> render_click()
 
     assert Notes.list_noted_node_ids(graph.title, user) == []
-    assert has_element?(view, "#reader-bookmark-node-2[aria-pressed='false']")
+    assert has_element?(view, "#reader-bookmark-node-3[aria-pressed='false']")
   end
 
   test "reader bookmark prompts logged-out readers to sign in", %{conn: conn} do
     graph = create_graph()
-    {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=2")
+    {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=3")
 
     view
-    |> element("#reader-bookmark-node-2")
+    |> element("#reader-bookmark-node-3")
     |> render_click()
 
     assert has_element?(view, "#reader-login-modal")

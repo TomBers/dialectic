@@ -229,16 +229,18 @@ defmodule DialecticWeb.RightPanelComp do
         <.icon name="hero-bookmark" class="h-4 w-4 text-slate-600" /> Saved highlights
         <span class="ml-auto text-xs text-slate-600">{@highlights_count}</span>
       </button>
-      <details
-        id="details-reading-style"
-        class="group rounded-lg border border-stone-300 bg-white"
+      <section
+        id="reading-style-options"
+        aria-labelledby="reading-style-heading"
+        class="rounded-lg border border-stone-300 bg-white"
       >
-        <summary
+        <h3
           id="reading-style-heading"
-          class="cursor-pointer px-3 py-2.5 text-xs font-semibold text-gray-800"
+          tabindex="-1"
+          class="px-3 py-2.5 text-xs font-semibold text-gray-800"
         >
           Reading options
-        </summary>
+        </h3>
         <div class="grid grid-cols-2 gap-1.5 border-t border-stone-300 p-2">
           <button
             :for={
@@ -260,7 +262,7 @@ defmodule DialecticWeb.RightPanelComp do
             <span class="mt-0.5 block text-[11px] font-normal">{description}</span>
           </button>
         </div>
-      </details>
+      </section>
 
       <p class="px-3 pb-1 pt-5 text-xs font-semibold uppercase tracking-wide text-slate-600">
         This grid

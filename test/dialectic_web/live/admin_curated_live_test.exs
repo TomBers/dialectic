@@ -84,8 +84,9 @@ defmodule DialecticWeb.AdminCuratedLiveTest do
       user = user_fixture() |> make_admin()
       conn = log_in_user(conn, user)
 
-      {:ok, _view, html} = live(conn, ~p"/admin/curated")
-      assert html =~ "Manage Curated Grids"
+      {:ok, view, _html} = live(conn, ~p"/admin/curated")
+      assert has_element?(view, "#admin-dashboard")
+      assert has_element?(view, "#admin-curation")
     end
   end
 

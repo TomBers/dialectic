@@ -2,7 +2,7 @@
   <div
     id="outline-layout"
     phx-hook="GraphLayout"
-    class="reading-appearance flex w-full flex-col overflow-hidden bg-[#f4f1e9]"
+    class="reading-appearance flex w-full flex-col overflow-hidden bg-[#faf9f5]"
     style="height: calc(100vh - 2.5rem); height: calc(100dvh - 2.5rem);"
     data-graph-id={@graph_id}
     data-anonymous={to_string(is_nil(@current_user))}
@@ -27,7 +27,6 @@
     <DialecticWeb.WorkspaceBarComp.workspace_header
       mode={:reader}
       graph_struct={@graph_struct}
-      creator={@graph_creator}
       node_id={@selected_node_id}
       nav_params={reader_nav_params(@nav_params, @path_focus_ids)}
       layout_target="#outline-layout"
@@ -74,22 +73,13 @@
       <aside
         id="outline-tree"
         aria-label="Conversation outline"
-        class="hidden min-h-0 overflow-y-auto border-b border-stone-300 bg-[#f4f1e9] lg:block lg:border-b-0 lg:border-r"
+        class="hidden min-h-0 overflow-y-auto border-b border-stone-300 bg-[#faf9f5] lg:block lg:border-b-0 lg:border-r"
         phx-hook="OutlineNav"
       >
-        <div class="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-stone-300 bg-[#f4f1e9] px-4 py-3">
+        <div class="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-stone-300 bg-[#faf9f5] px-4 py-3">
           <div>
-            <h2 class="text-sm font-semibold text-slate-950">Grid outline</h2><p class="mt-1 text-xs text-slate-600">
-              Follow an idea that interests you.
-            </p>
+            <h2 class="text-sm font-semibold text-slate-950">Grid outline</h2>
           </div>
-          <button
-            id="reader-explore-close"
-            type="button"
-            phx-click={JS.dispatch("toggle-explore", to: "#outline-layout")}
-            aria-label="Hide outline"
-            class="inline-flex h-11 w-9 shrink-0 items-center justify-center rounded-md text-slate-600 hover:bg-stone-200"
-          ><.icon name="hero-x-mark" class="h-4 w-4" /></button>
         </div>
         <div
           :if={@paths_filtered?}
@@ -216,6 +206,7 @@
               <%= for {reading_node, index} <- Enum.with_index(@visible_reading_chain) do %>
                 <% reading_response_level = Map.get(reading_node, :response_level) %>
                 <% selected_reading_node? = reading_node.id == @selected_node_id %>
+                <% question? = reading_node.class == "question" %>
                 <% node_highlights =
                   Enum.filter(@visible_highlights, &(&1.node_id == reading_node.id)) %>
                 <% node_highlight_count = length(node_highlights) %>
@@ -224,13 +215,14 @@
                   tabindex="-1"
                   aria-labelledby={"reading-title-#{reading_node.id}"}
                   data-reading-selected={to_string(selected_reading_node?)}
+                  data-reading-kind={reading_node.class}
                   class={[
                     if(index == 0,
                       do: "bg-slate-950 px-4 py-3 text-white sm:px-6 sm:py-4",
                       else: "bg-white px-4 sm:px-6"
                     ),
                     index > 0 &&
-                      if(String.trim(reading_node.body_content || "") == "",
+                      if(question? || String.trim(reading_node.body_content || "") == "",
                         do: "py-4 sm:py-5",
                         else: "py-5 sm:py-6"
                       ),
@@ -317,8 +309,8 @@
                   <% else %>
                     <header id={"reader-node-header-#{reading_node.id}"}>
                       <div class="flex flex-wrap items-center gap-2 text-[13px] font-medium text-slate-500 sm:text-sm">
-                        <span>Then</span>
-                        <span class="h-1 w-1 rounded-full bg-slate-300"></span>
+                        <span :if={!question?}>Then</span>
+                        <span :if={!question?} class="h-1 w-1 rounded-full bg-slate-300"></span>
                         <span
                           id={"reader-contributor-#{reading_node.id}"}
                           class={[
@@ -329,7 +321,7 @@
                           {contribution_label(reading_node, @contributor_names)}
                         </span>
                         <span
-                          :if={response_level_label(reading_response_level)}
+                          :if={!question? && response_level_label(reading_response_level)}
                           id={"reader-response-level-#{reading_node.id}"}
                           data-response-level={reading_response_level}
                           class={[
@@ -344,6 +336,7 @@
                           {response_level_label(reading_response_level)} level
                         </span>
                         <DialecticWeb.NodeReadingTools.node_actions
+                          :if={!question?}
                           prefix="reader"
                           node_id={reading_node.id}
                           bookmarked?={bookmarked?}
@@ -352,6 +345,7 @@
                         />
                       </div>
                       <DialecticWeb.NodeReadingTools.node_highlights
+                        :if={!question?}
                         prefix="reader"
                         node_id={reading_node.id}
                         graph_id={@graph_id}
@@ -360,7 +354,13 @@
                       />
                       <h2
                         id={"reading-title-#{reading_node.id}"}
-                        class="reader-heading reader-title mt-3 break-words font-semibold leading-[1.15] tracking-tight text-slate-950"
+                        class={[
+                          "reader-heading break-words font-semibold text-slate-950",
+                          if(question?,
+                            do: "reader-question-title mt-2 leading-snug",
+                            else: "reader-title mt-3 leading-[1.15] tracking-tight"
+                          )
+                        ]}
                       >
                         {reading_node.full_title || reading_node.title}
                       </h2>
@@ -430,13 +430,21 @@
                     <% end %>
 
                     <div
+                      :if={
+                        @can_edit && contribution_target?(reading_node) &&
+                          (!question? || @answer_drawer_node_id == reading_node.id)
+                      }
                       id={"reader-node-actions-#{reading_node.id}"}
-                      class="mt-6 space-y-3 border-t border-slate-200 pt-4"
+                      class={[
+                        "space-y-3",
+                        if(question?, do: "mt-1", else: "mt-6 border-t border-slate-200 pt-4")
+                      ]}
                     >
                       <%= if @can_edit && contribution_target?(reading_node) do %>
                         <% response_label = response_action_label(reading_node) %>
                         <% drawer_open? = @answer_drawer_node_id == reading_node.id %>
                         <button
+                          :if={!question?}
                           id={"outline-reading-node-#{reading_node.id}-ask"}
                           type="button"
                           phx-click="toggle_answer_drawer"
@@ -492,7 +500,12 @@
                                 NodeTitleHelper.extract_node_title(reading_node, max_length: 180)
                               }
                               bookmarked={MapSet.member?(@bookmarked_node_ids, reading_node.id)}
-                              trigger_id={"outline-reading-node-#{reading_node.id}-ask"}
+                              trigger_id={
+                                if(question?,
+                                  do: "outline-end-follow-up",
+                                  else: "outline-reading-node-#{reading_node.id}-ask"
+                                )
+                              }
                               current_user={@current_user}
                               graph_id={@graph_id}
                               can_edit={@can_edit}

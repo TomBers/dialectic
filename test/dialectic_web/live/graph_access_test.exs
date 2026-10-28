@@ -95,7 +95,7 @@ defmodule DialecticWeb.GraphAccessTest do
     refute Sharing.can_edit?(owner, deleted, graph.share_token)
   end
 
-  test "reader and grid headers keep the same controls and layout", %{
+  test "reader and grid headers keep compact controls and a close action", %{
     conn: conn,
     owner: owner,
     graph: graph
@@ -106,8 +106,13 @@ defmodule DialecticWeb.GraphAccessTest do
 
     for {view, prefix} <- [{reader, "reader"}, {grid, "graph"}] do
       assert has_element?(view, "##{prefix}-header ##{prefix}-more[aria-controls='right-panel']")
-      assert has_element?(view, "##{prefix}-header ##{prefix}-byline", "Public")
-      assert has_element?(view, "##{prefix}-creator[href='/u/#{owner.username}']")
+      refute has_element?(view, "##{prefix}-byline")
+      refute has_element?(view, "##{prefix}-creator")
+
+      assert has_element?(
+               view,
+               "##{prefix}-top-menu > a:last-child[aria-label='Close grid and return to Community'][href='/community']"
+             )
 
       assert has_element?(
                view,
@@ -115,30 +120,25 @@ defmodule DialecticWeb.GraphAccessTest do
              )
 
       assert has_element?(view, "##{prefix}-workspace-bar-share")
-      assert has_element?(view, "##{prefix}-workspace-bar-outline-desktop[data-explore-toggle]")
-      assert has_element?(view, "##{prefix}-workspace-bar-outline-desktop [data-explore-label]")
-
-      assert has_element?(
-               view,
-               "##{prefix}-workspace-bar-outline-desktop [data-explore-hide-icon]"
-             )
-
-      assert has_element?(
-               view,
-               "##{prefix}-workspace-bar-outline-desktop [data-explore-show-icon]"
-             )
-
       assert has_element?(view, "##{prefix}-workspace-bar-graph[aria-label='Grid view']", "Grid")
       refute has_element?(view, "##{prefix}-header [popovertarget]")
       refute has_element?(view, "##{prefix}-header #graph-help-button")
     end
 
+    refute has_element?(reader, "#reader-workspace-bar-outline-desktop")
+    refute has_element?(reader, "#reader-explore-close")
+
+    assert has_element?(
+             reader,
+             "#reader-workspace-bar-outline[aria-controls='outline-mobile-nav-panel']"
+           )
+
     assert has_element?(reader, "#reader-workspace-bar-reader[aria-current='page']")
     assert has_element?(grid, "#graph-workspace-bar-graph[aria-current='page']")
-    assert has_element?(grid, "#graph-workspace-bar-outline-desktop[aria-controls='side-drawer']")
+    refute has_element?(grid, "#graph-workspace-bar-outline-desktop")
     assert has_element?(grid, "#graph-mobile-explore[aria-controls='side-drawer']")
     refute has_element?(grid, "#grid-tools-reading-style")
-    assert has_element?(grid, "#details-reading-style #reader-style-screen")
+    assert has_element?(grid, "#reading-style-options #reader-style-screen")
     assert has_element?(reader, "#reader-style-book", "Serif")
     assert has_element?(reader, "#right-panel.fixed.top-10")
     assert has_element?(reader, "#right-panel .tools-drawer-header #right-panel-close")
@@ -244,7 +244,7 @@ defmodule DialecticWeb.GraphAccessTest do
 
       view |> element("#share-visibility-private") |> render_click()
       refute Repo.reload!(graph).is_public
-      assert has_element?(view, "##{prefix}-byline", "Private")
+      assert has_element?(view, "#share-access-summary", "Anyone with this private link")
       assert has_element?(view, "#share-visibility-private[aria-pressed='true']")
       view |> element("#share-visibility-public") |> render_click()
       assert Repo.reload!(graph).is_public
@@ -265,8 +265,8 @@ defmodule DialecticWeb.GraphAccessTest do
     for path <- [~p"/g/#{graph.slug}/graph", ~p"/g/#{graph.slug}"] do
       {:ok, view, _html} = live(log_in_user(conn, owner), path)
       assert has_element?(view, "#right-panel-title", "More")
-      assert has_element?(view, "#right-panel #details-reading-style")
-      refute has_element?(view, "#details-reading-style[open]")
+      assert has_element?(view, "#right-panel #reading-style-options")
+      refute has_element?(view, "#reading-style-options summary")
       assert has_element?(view, "#right-panel #more-saved-highlights")
       assert has_element?(view, "#right-panel #reader-tools-follow")
       assert has_element?(view, "#right-panel #details-export")
