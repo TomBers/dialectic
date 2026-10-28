@@ -22,7 +22,7 @@ defmodule DialecticWeb.AboutLiveTest do
            )
 
     assert has_element?(view, "#about-key-facts", "Core offering")
-    assert has_element?(view, ~s(#about-start-grid-link[href="/?focus=grid#start-here"]))
+    assert has_element?(view, ~s(#about-start-grid-link[href="/my/learning?new=true"]))
 
     assert has_element?(
              view,

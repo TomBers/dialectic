@@ -4,7 +4,10 @@ const GraphKeyboardNavigation = {
   mounted() {
     this.updateShortcutLabels();
     this.grid = () => this.el.querySelector("#cy-inner");
-    this.reader = () => this.el.querySelector("#side-drawer-scroll");
+    this.reader = () => {
+      const reader = this.el.querySelector("#side-drawer-scroll");
+      return reader?.closest("[inert]") ? null : reader;
+    };
     this.focusRegion = (region) => {
       if (region && region.getClientRects().length) region.focus({ preventScroll: true });
     };
@@ -24,6 +27,7 @@ const GraphKeyboardNavigation = {
       if (!(target instanceof Element) || !this.el.contains(target)) return;
       if (target.closest("[data-right-drawer]")) return;
       if (target.closest('[role="dialog"], [aria-modal="true"]')) return;
+      if (target.closest("[data-answer-level-dropdown]")) return;
       if (!event.metaKey && !event.ctrlKey && !event.altKey && event.key === "Tab" && event.shiftKey && this.reader() && this.grid()) {
         event.preventDefault();
         event.stopPropagation();

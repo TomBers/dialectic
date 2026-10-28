@@ -68,57 +68,46 @@ defmodule DialecticWeb.LearningNavigationTest do
     end
   end
 
-  test "signed-in creation is private and homepage creation is explicitly public", %{conn: conn} do
+  test "home directs signed-in creation to My Learning and guests to signup", %{conn: conn} do
     {:ok, view, html} = live(conn, ~p"/")
-
-    assert has_element?(
-             view,
-             "#home-private-grid-link[href='/my/learning?new=true']",
-             "My Learning"
-           )
-
-    refute has_element?(view, "#home-private-grid-signup-link")
-
-    assert has_element?(
-             view,
-             "#home-public-creation-note",
-             "Create a public grid anyone can explore"
-           )
+    assert has_element?(view, "#home-hero-start-grid-link[href='/my/learning?new=true']")
+    refute has_element?(view, "#new-idea-form")
 
     assert LazyHTML.from_document(html)
            |> LazyHTML.query("#desktop-new-grid-nav-link")
            |> LazyHTML.attribute("href") == ["/my/learning?new=true"]
 
     {:ok, private, _} = live(conn, ~p"/my/learning?new=true")
-    assert has_element?(private, "#learning-new-grid-form-panel label", "Start a private grid")
+    assert has_element?(private, "#learning-new-grid-form-panel h2", "Create a grid")
     {:ok, _guest, html} = live(build_conn(), ~p"/")
 
     assert LazyHTML.from_document(html)
            |> LazyHTML.query("#desktop-new-grid-nav-link")
-           |> LazyHTML.attribute("href") == ["/?focus=grid#start-here"]
+           |> LazyHTML.attribute("href") == []
+
+    assert LazyHTML.from_document(html)
+           |> LazyHTML.query("#global-sign-up-link")
+           |> LazyHTML.attribute("href") == [
+             "/users/register?return_to=%2Fmy%2Flearning%3Fnew%3Dtrue"
+           ]
   end
 
-  test "an authenticated resume restores the question and depth without creating a grid", %{
-    conn: conn
-  } do
-    {:ok, view, _} = live(conn, ~p"/?resume=grid")
+  test "an authenticated resume restores the private question and detail without creating a grid",
+       %{conn: conn} do
+    {:ok, view, _} = live(conn, ~p"/my/learning?new=true&resume=grid")
 
     view
-    |> element("#new-idea-form")
+    |> element("#learning-new-grid-form")
     |> render_hook("restore_draft", %{content: "An unfinished question", mode: "expert"})
 
     assert has_element?(view, "#new-idea-input", "An unfinished question")
-    assert has_element?(view, "#new-idea-level-step")
-    assert has_element?(view, "#new-idea-form[data-selected-mode='expert']")
-    assert has_element?(view, "#new-idea-create-submit", "Create public grid")
+    assert has_element?(view, "#learning-new-grid-form[data-selected-mode='expert']")
+    assert has_element?(view, "#new-idea-mode option[value='expert'][selected]")
+    assert has_element?(view, "#new-idea-create-submit", "Create a grid")
     refute Dialectic.DbActions.Graphs.get_graph_by_title("An unfinished question")
-    {:ok, guest, _} = live(build_conn(), ~p"/?resume=grid")
 
-    guest
-    |> element("#new-idea-form")
-    |> render_hook("restore_draft", %{content: "An unfinished question", mode: "expert"})
-
-    refute has_element?(guest, "#new-idea-level-step")
+    assert {:error, {:redirect, %{to: "/users/log_in"}}} =
+             live(build_conn(), ~p"/my/learning?new=true&resume=grid")
   end
 
   test "community keeps learning and creation available without duplicate header actions", %{

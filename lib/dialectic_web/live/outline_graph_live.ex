@@ -23,8 +23,6 @@ defmodule DialecticWeb.OutlineGraphLive do
 
   require Logger
 
-  @max_outline_indent 4
-
   on_mount {DialecticWeb.UserAuth, :mount_current_user}
   on_mount DialecticWeb.GraphAccess
 
@@ -143,7 +141,11 @@ defmodule DialecticWeb.OutlineGraphLive do
         do: push_event(socket, "open_reader_tools", %{}),
         else: socket
 
-    {:noreply, socket}
+    if params["ask"] == "true" do
+      handle_event("open_follow_up", %{}, socket)
+    else
+      {:noreply, socket}
+    end
   end
 
   @impl true
@@ -281,6 +283,32 @@ defmodule DialecticWeb.OutlineGraphLive do
   def handle_info(_msg, socket), do: {:noreply, socket}
 
   @impl true
+  def handle_event(
+        "reply-and-answer",
+        %{"vertex" => %{"content" => question}, "node_id" => node_id},
+        socket
+      ) do
+    params = %{"action" => "ask_question", "input" => question, "nodeId" => node_id}
+
+    if Enum.any?(socket.assigns.visible_reading_chain, &(&1.id == node_id)) do
+      case DialecticWeb.AnswerActions.perform(socket, params) do
+        {:ok, result} ->
+          {:noreply, socket} = finish_selection_action(socket, result)
+          {:reply, %{}, socket}
+
+        {:error, message} ->
+          {:reply, %{error: message}, put_flash(socket, :error, message)}
+      end
+    else
+      {:reply, %{error: "Choose an existing response to ask about."}, socket}
+    end
+  end
+
+  def handle_event("open_grid_history", _params, socket) do
+    send_update(DialecticWeb.GridHistoryComp, id: "grid-history-comp", refresh: true)
+    {:noreply, socket}
+  end
+
   def handle_event("preview_reader_appearance", %{"user" => params}, socket) do
     {style, params} = apply_reading_style(params)
     params = Map.take(params, ["reading_font", "reading_density"])
@@ -325,6 +353,46 @@ defmodule DialecticWeb.OutlineGraphLive do
     if socket.assigns.can_edit && node && contribution_target?(node) do
       open_node_id = if socket.assigns.answer_drawer_node_id == node_id, do: nil, else: node_id
       {:noreply, assign(socket, :answer_drawer_node_id, open_node_id)}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  def handle_event("toggle_outline_branch", %{"id" => id}, socket) do
+    socket =
+      if Enum.any?(socket.assigns.outline_nodes, &(&1.id == id)),
+        do: update(socket, :expanded_outline_ids, &toggle_membership(&1, id)),
+        else: socket
+
+    {:noreply, socket}
+  end
+
+  def handle_event("toggle_outline_comments", %{"id" => id}, socket) do
+    socket =
+      if Enum.any?(socket.assigns.outline_nodes, &(&1.id == id)) do
+        socket
+        |> update(:expanded_comment_ids, &toggle_membership(&1, id))
+        |> update(:expanded_outline_ids, &MapSet.put(&1, id))
+      else
+        socket
+      end
+
+    {:noreply, socket}
+  end
+
+  def handle_event("open_follow_up", params, socket) do
+    node =
+      Enum.find(
+        socket.assigns.visible_reading_chain,
+        &(&1.id == params["id"] && contribution_target?(&1))
+      ) ||
+        Enum.find(Enum.reverse(socket.assigns.visible_reading_chain), &contribution_target?/1)
+
+    if socket.assigns.can_edit && node do
+      {:noreply,
+       socket
+       |> assign(:answer_drawer_node_id, node.id)
+       |> push_event("focus_reader_composer", %{id: node.id})}
     else
       {:noreply, socket}
     end
@@ -664,9 +732,12 @@ defmodule DialecticWeb.OutlineGraphLive do
     assign(socket,
       graph_id: graph_db.title,
       graph_struct: graph_db,
+      graph_creator: if(graph_db.user_id, do: Dialectic.Repo.get(User, graph_db.user_id)),
       graph_topic: graph_topic,
       live_view_topic: graph_topic,
       answer_drawer_node_id: nil,
+      expanded_outline_ids: MapSet.new(),
+      expanded_comment_ids: MapSet.new(),
       selection_pending_node_ids: RequestQueue.pending_node_ids(graph_db.title),
       pending_refresh_timer: nil,
       user: UserUtils.current_identity(socket.assigns),
@@ -969,6 +1040,16 @@ defmodule DialecticWeb.OutlineGraphLive do
       |> MapSet.new()
 
     socket
+    |> update(
+      :expanded_outline_ids,
+      &MapSet.union(
+        &1,
+        MapSet.new(Enum.map(selected_path ++ visible_reading_chain, fn node -> node.id end))
+      )
+    )
+    |> update(:expanded_comment_ids, fn ids ->
+      if selected_node.class == "user", do: MapSet.union(ids, selected_path_ids), else: ids
+    end)
     |> assign(
       selected_node_id: selected_node.id,
       node: selected_node,
@@ -988,6 +1069,10 @@ defmodule DialecticWeb.OutlineGraphLive do
       can_choose_path?: can_choose_path?
     )
     |> assign_visible_highlights()
+  end
+
+  defp toggle_membership(set, id) do
+    if MapSet.member?(set, id), do: MapSet.delete(set, id), else: MapSet.put(set, id)
   end
 
   defp can_choose_path?(outline_nodes, focused_outline_nodes, selected_node_id) do
@@ -1154,6 +1239,7 @@ defmodule DialecticWeb.OutlineGraphLive do
     |> GraphManager.path_to_node(selected_node)
     |> Enum.reverse()
     |> Enum.filter(&visible_node?/1)
+    |> Enum.map(&GraphActions.find_node(graph_id, &1.id))
     |> Enum.map(&enrich_node/1)
   end
 
@@ -1544,16 +1630,6 @@ defmodule DialecticWeb.OutlineGraphLive do
   defp response_level_badge_class(_response_level),
     do: "bg-slate-100 text-slate-700 ring-slate-600/10"
 
-  defp outline_indent_style(indent, step \\ 0.45) do
-    visible_indent = min(max(indent, 0), @max_outline_indent)
-    "padding-left: #{0.75 + visible_indent * step}rem;"
-  end
-
-  defp outline_indent_guides(indent) do
-    visible_indent = min(max(indent, 0), @max_outline_indent)
-    List.duplicate(:guide, visible_indent)
-  end
-
   defp sort_key(id) do
     case Integer.parse(to_string(id)) do
       {int, _rest} -> {0, int}
@@ -1575,22 +1651,6 @@ defmodule DialecticWeb.OutlineGraphLive do
       |> String.downcase()
 
     "Respond to this #{label}"
-  end
-
-  defp highlight_excerpt(%{selected_text_snapshot: text}) when is_binary(text) do
-    case String.trim(text) do
-      "" -> "Highlighted passage"
-      trimmed -> trimmed
-    end
-  end
-
-  defp highlight_excerpt(_highlight), do: "Highlighted passage"
-
-  defp highlight_link_title(outline_nodes, node_id) do
-    case Enum.find(outline_nodes, &(&1.id == node_id)) do
-      nil -> "Connected idea"
-      node -> node.full_title || node.title || "Connected idea"
-    end
   end
 
   defp reader_nav_params(nav_params, []), do: nav_params

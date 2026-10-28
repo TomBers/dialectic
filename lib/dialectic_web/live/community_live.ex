@@ -42,6 +42,7 @@ defmodule DialecticWeb.CommunityLive do
         dom_id: fn item -> graph_dom_id(item.graph, "community-grid") end
       )
       |> stream(:graphs, [])
+      |> stream(:creators, [])
 
     {:ok, socket, layout: false}
   end
@@ -314,6 +315,54 @@ defmodule DialecticWeb.CommunityLive do
                   </p>
                 </div>
               </details>
+              <section
+                id="community-people"
+                aria-labelledby="community-people-heading"
+                class="mt-5 rounded-lg border border-stone-300 bg-white p-4"
+              >
+                <h2 id="community-people-heading" class="text-sm font-semibold">
+                  People to explore with
+                </h2>
+                <p class="mt-1 text-xs leading-5 text-slate-500">
+                  <%= if @active_tag do %>
+                    Creators sharing public grids about {tag_label(@active_tag)}. Visit a profile to follow or connect through their links.
+                  <% else %>
+                    Choose a topic to find people exploring the same interests.
+                  <% end %>
+                </p>
+                <div id="community-creators" phx-update="stream" class="mt-3 space-y-3">
+                  <div id="community-creators-empty" class="hidden only:block text-xs text-slate-500">
+                    <span :if={@active_tag}>No other creators with public profiles in this topic yet.</span>
+                  </div>
+                  <.link
+                    :for={{id, creator} <- @streams.creators}
+                    id={id}
+                    navigate={~p"/u/#{creator.username}"}
+                    class="flex items-center gap-2 text-sm text-slate-700 hover:text-teal-800"
+                  >
+                    <img
+                      :if={creator.avatar_url && creator.avatar_url != ""}
+                      src={creator.avatar_url}
+                      alt=""
+                      class="h-8 w-8 shrink-0 rounded-full object-cover"
+                    />
+                    <.icon
+                      :if={!creator.avatar_url || creator.avatar_url == ""}
+                      name="hero-user-circle"
+                      class="h-8 w-8 shrink-0 text-slate-400"
+                    />
+                    <span class="min-w-0">
+                      <span class="block truncate font-semibold">{creator.username}</span>
+                      <span class="block text-xs text-slate-500">{creator.grid_count} public {if creator.grid_count ==
+                                                                                                   1,
+                                                                                                 do:
+                                                                                                   "grid",
+                                                                                                 else:
+                                                                                                   "grids"}</span>
+                    </span>
+                  </.link>
+                </div>
+              </section>
             </aside>
 
             <section id="community-search" aria-label="Community grid results" class="min-w-0">
@@ -424,6 +473,8 @@ defmodule DialecticWeb.CommunityLive do
                   <.community_grid_row
                     id={id}
                     graph={item.graph}
+                    author_name={item.author_name}
+                    author_avatar_url={item.author_avatar_url}
                     matches={Map.get(item, :matches, [])}
                     selected_tag={@active_tag}
                     can_generate_tags={admin?(@current_user)}
@@ -448,7 +499,7 @@ defmodule DialecticWeb.CommunityLive do
                 </h2>
                 <.link
                   id="community-contribute-create-grid"
-                  navigate={~p"/?focus=grid#start-here"}
+                  navigate={~p"/my/learning?new=true"}
                   class="mt-4 inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-teal-800 px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-800"
                 >Create a grid<.icon name="hero-arrow-right" class="h-4 w-4" /></.link>
               </div>
@@ -607,6 +658,8 @@ defmodule DialecticWeb.CommunityLive do
 
   attr :id, :string, required: true
   attr :graph, :map, required: true
+  attr :author_name, :string, default: nil
+  attr :author_avatar_url, :string, default: nil
   attr :matches, :list, default: []
   attr :selected_tag, :string, default: nil
   attr :can_generate_tags, :boolean, default: false
@@ -637,6 +690,30 @@ defmodule DialecticWeb.CommunityLive do
           {@title}
         </.link>
       </h3>
+
+      <div class="mt-2 text-xs text-slate-500">
+        <%= if @author_name && @author_name != "" do %>
+          <.link
+            id={@id <> "-creator"}
+            navigate={~p"/u/#{@author_name}"}
+            class="inline-flex items-center gap-1.5 font-medium text-teal-800 hover:underline"
+          >
+            <img
+              :if={@author_avatar_url && @author_avatar_url != ""}
+              src={@author_avatar_url}
+              alt=""
+              class="h-5 w-5 rounded-full object-cover"
+            />
+            <.icon
+              :if={!@author_avatar_url || @author_avatar_url == ""}
+              name="hero-user-circle"
+              class="h-4 w-4"
+            /> By {@author_name}
+          </.link>
+        <% else %>
+          <span id={@id <> "-creator-anonymous"}>Anonymous creator</span>
+        <% end %>
+      </div>
 
       <div
         data-role="community-grid-meta"
@@ -820,6 +897,13 @@ defmodule DialecticWeb.CommunityLive do
       noindex: noindex
     )
     |> stream(:graphs, entries, reset: true)
+    |> stream(
+      :creators,
+      Graphs.list_public_creators(socket.assigns.active_tag,
+        exclude_user_id: socket.assigns.current_user && socket.assigns.current_user.id
+      ),
+      reset: true
+    )
   end
 
   defp stream_topics(socket, opts \\ []) do

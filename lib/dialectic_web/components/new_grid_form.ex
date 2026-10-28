@@ -13,280 +13,137 @@ defmodule DialecticWeb.NewGridForm do
 
   @impl true
   def update(assigns, socket) do
-    socket =
-      socket
-      |> assign(assigns)
-      |> assign_new(:id, fn -> "new-idea-form" end)
-      |> assign_new(:placeholder, fn ->
-        "Ask a question or name a topic"
-      end)
-      |> assign_new(:submit_label, fn -> "Next" end)
-      |> assign_new(:create_label, fn -> "Create grid" end)
-      |> assign_new(:autofocus, fn -> false end)
-      |> assign_new(:minimal, fn -> false end)
-      |> assign_new(:authenticated, fn -> false end)
-      |> assign_new(:label, fn -> nil end)
-      |> assign_new(:context, fn -> nil end)
-      |> assign_new(:busy, fn -> false end)
-      |> assign_new(:resume_draft, fn -> false end)
-      |> assign_new(:selected_mode, fn -> "high_school" end)
-      |> assign_new(:show_level_prompt, fn -> false end)
-      |> assign_new(:content, fn %{form: form} ->
-        Phoenix.HTML.Form.normalize_value("text", form[:content].value)
-      end)
-
-    {:ok, socket}
-  end
-
-  @impl true
-  def handle_event("select_mode", %{"mode" => mode}, socket) do
-    if restricted_mode?(mode) and not socket.assigns.authenticated do
-      send(self(), {:answer_level_login_required, mode})
-      {:noreply, assign(socket, selected_mode: mode)}
-    else
-      {:noreply, assign(socket, selected_mode: mode)}
-    end
+    {:ok,
+     socket
+     |> assign(assigns)
+     |> assign_new(:placeholder, fn -> "Ask a question or name a topic" end)
+     |> assign_new(:label, fn -> "Create a grid" end)
+     |> assign_new(:context, fn -> nil end)
+     |> assign_new(:busy, fn -> false end)
+     |> assign_new(:resume_draft, fn -> false end)
+     |> assign_new(:selected_mode, fn -> "high_school" end)
+     |> assign_new(:content, fn %{form: form} -> form[:content].value || "" end)}
   end
 
   @impl true
   def handle_event("restore_draft", %{"content" => content, "mode" => mode}, socket)
       when is_binary(content) and mode in ["high_school", "university", "expert"] do
-    if socket.assigns.authenticated && socket.assigns.resume_draft do
-      {:reply, %{restored: true},
-       assign(socket,
-         content: content,
-         selected_mode: mode,
-         show_level_prompt: String.trim(content) != ""
-       )}
+    if socket.assigns.resume_draft do
+      {:reply, %{restored: true}, assign(socket, content: content, selected_mode: mode)}
     else
       {:reply, %{restored: false}, socket}
     end
   end
 
-  def handle_event("restore_draft", _params, socket),
-    do: {:reply, %{restored: false}, socket}
+  def handle_event("restore_draft", _params, socket), do: {:reply, %{restored: false}, socket}
 
   @impl true
-  def handle_event("update_content", %{"vertex" => %{"content" => content}}, socket) do
+  def handle_event("update_content", %{"vertex" => params}, socket) do
     {:noreply,
      assign(socket,
-       content: content,
-       show_level_prompt: socket.assigns.show_level_prompt and String.trim(content) != ""
+       content: Map.get(params, "content", socket.assigns.content),
+       selected_mode: Map.get(params, "mode", socket.assigns.selected_mode)
      )}
   end
 
   @impl true
-  def handle_event("submit_prompt", %{"vertex" => %{"content" => content}}, socket) do
-    trimmed_content = String.trim(content)
+  def handle_event("submit_prompt", %{"vertex" => params}, socket) do
+    content = String.trim(params["content"] || "")
+    mode = Map.get(params, "mode", socket.assigns.selected_mode)
 
-    cond do
-      trimmed_content == "" ->
-        {:noreply, assign(socket, content: content, show_level_prompt: false)}
-
-      socket.assigns.show_level_prompt ->
-        send(self(), {:submit_new_grid, trimmed_content, socket.assigns.selected_mode})
-
-        {:noreply, assign(socket, content: trimmed_content, show_level_prompt: false)}
-
-      true ->
-        {:noreply, assign(socket, content: content, show_level_prompt: true)}
+    if content != "" && !socket.assigns.busy do
+      send(self(), {:submit_new_grid, content, mode})
     end
-  end
 
-  @impl true
-  def handle_event("edit_prompt", _params, socket) do
-    {:noreply, assign(socket, :show_level_prompt, false)}
+    {:noreply, assign(socket, content: content, selected_mode: mode)}
   end
 
   @impl true
   def render(assigns) do
     ~H"""
     <div id={@id <> "-panel"} class="w-full">
-      <label :if={@label} for="new-idea-input" class="mb-3 block text-base font-semibold">
-        {@label}
-      </label>
-      <p :if={@context} id={@id <> "-context"} class="mb-3 text-sm text-teal-800">
+      <div class="flex items-center gap-2 text-teal-800">
+        <.icon name="hero-plus-circle" class="h-5 w-5" />
+        <h2 class="text-xl font-semibold text-slate-950">{@label}</h2>
+      </div>
+      <p
+        id={@id <> "-privacy"}
+        class="mt-2 flex max-w-xl items-start gap-2 text-sm leading-6 text-slate-600"
+      >
+        <.icon name="hero-lock-closed" class="mt-1 h-4 w-4 shrink-0" />
+        <span><strong class="font-medium text-slate-700">Visibility:</strong>
+        Only you can access it until you choose to share it or make it public.</span>
+      </p>
+      <p :if={@context} id={@id <> "-context"} class="mt-3 text-sm font-medium text-teal-800">
         {@context}
       </p>
-      <fieldset id={@id <> "-fields"} disabled={@busy}>
-        <.form
-          for={@form}
-          phx-submit="submit_prompt"
-          phx-target={@myself}
-          id={@id}
-          phx-hook="NewGridDraft"
-          data-resume-draft={to_string(@resume_draft)}
-          data-selected-mode={@selected_mode}
-          class="w-full relative"
-        >
-          <div class="flex flex-col gap-3 sm:gap-1.5">
-            <div class="relative min-h-[3.2rem]">
-              <textarea
-                name={@form[:content].name}
-                id="new-idea-input"
-                aria-label="What would you like to learn?"
-                placeholder={@placeholder}
-                phx-hook="AutoExpandTextarea"
-                phx-change="update_content"
-                phx-target={@myself}
-                rows="1"
-                class={[
-                  "box-border block w-full overflow-hidden rounded-md bg-white text-slate-950 shadow-[inset_0_1px_2px_rgba(15,23,42,0.05)]",
-                  "border border-slate-300/90",
-                  "focus:border-teal-600 focus:ring-4 focus:ring-teal-100 focus:outline-none resize-none",
-                  "text-[0.95rem] leading-[1.45] sm:text-[1.05rem] sm:leading-[1.5]",
-                  "placeholder:text-slate-500",
-                  "px-3.5 sm:pl-5 sm:pr-28",
-                  "py-2.5",
-                  "min-h-[3rem] sm:min-h-[3.2rem]"
+      <.form
+        for={@form}
+        id={@id}
+        phx-submit="submit_prompt"
+        phx-change="update_content"
+        phx-target={@myself}
+        phx-hook="NewGridDraft"
+        data-resume-draft={to_string(@resume_draft)}
+        data-selected-mode={@selected_mode}
+        class="mt-5"
+      >
+        <fieldset id={@id <> "-fields"} disabled={@busy} class="min-w-0 space-y-4">
+          <.input
+            field={@form[:content]}
+            id="new-idea-input"
+            type="textarea"
+            value={@content}
+            label="What would you like to learn?"
+            placeholder={@placeholder}
+            rows="3"
+            required
+            autocomplete="off"
+            class="block min-h-28 w-full resize-y rounded-md border border-stone-400 bg-white px-4 py-3 text-base leading-6 text-slate-950 placeholder:text-slate-500 focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-700/20"
+          />
+          <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div id="new-idea-answer-detail" class="flex items-center gap-2 text-xs text-slate-500">
+              <label for="new-idea-mode" class="shrink-0">Answer detail</label>
+              <.input
+                field={@form[:mode]}
+                id="new-idea-mode"
+                type="select"
+                value={@selected_mode}
+                aria-label="Answer detail"
+                options={[
+                  {"Simple", "high_school"},
+                  {"Expanded", "university"},
+                  {"In-depth", "expert"}
                 ]}
-                autocomplete="off"
-                required
-                autofocus={@autofocus}
-                phx-mounted={@autofocus && JS.focus()}
-              >{@content}</textarea>
-              <%= if !@show_level_prompt do %>
-                <div class="absolute right-2 top-2 bottom-2 hidden w-24 items-start justify-center sm:flex">
-                  <button
-                    type="submit"
-                    id="new-idea-submit"
-                    data-analytics-event="grid_prompt_continued"
-                    data-analytics-location="question_form"
-                    phx-disable-with="Next..."
-                    class="inline-flex min-h-[2.35rem] w-full items-center justify-center rounded-md border border-transparent bg-slate-900 px-0 py-1.5 text-sm font-semibold leading-none text-white shadow-sm transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {@submit_label}
-                  </button>
-                </div>
-              <% end %>
+                class="min-h-11 rounded-md border border-stone-300 bg-white py-2 pl-3 pr-8 text-sm text-slate-600 focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-700/20"
+              />
             </div>
-
-            <%= if !@show_level_prompt do %>
-              <div class="sm:hidden">
-                <button
-                  type="submit"
-                  id="new-idea-submit-mobile"
-                  data-analytics-event="grid_prompt_continued"
-                  data-analytics-location="question_form_mobile"
-                  phx-disable-with="Next..."
-                  class="inline-flex w-full items-center justify-center gap-2 rounded-md border border-transparent bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-transform active:scale-[0.98] hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <.icon name="hero-arrow-right" class="h-4 w-4" />
-                  {@submit_label}
-                </button>
-              </div>
-            <% end %>
-
-            <%= if !@show_level_prompt and !@minimal do %>
-              <div class="flex flex-col gap-1 px-1 text-xs text-slate-600 sm:flex-row sm:items-center sm:justify-between">
-                <p>Step 1 of 2: enter your starting point.</p>
-                <p class="hidden sm:block">Next: choose how detailed the answer should be.</p>
-              </div>
-            <% end %>
-          </div>
-
-          <%= if @show_level_prompt do %>
-            <div
-              id="new-idea-level-step"
-              class="mt-3 animate-fade-in-up border border-stone-300 border-l-4 border-l-teal-700 bg-[#f4f1e9] px-3 py-3 shadow-sm"
+            <button
+              id="new-idea-create-submit"
+              type="submit"
+              phx-disable-with="Creating your grid…"
+              data-analytics-event="grid_creation_requested"
+              data-analytics-location="my_learning"
+              class="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md bg-teal-800 px-5 py-3 text-base font-semibold text-white hover:bg-teal-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 disabled:cursor-wait disabled:opacity-60 sm:w-auto"
             >
-              <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div class="space-y-1">
-                  <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-teal-800">
-                    Step 2 of 2
-                  </p>
-                  <p class="text-sm font-semibold text-slate-900">
-                    {if(@minimal,
-                      do: "Choose an answer depth.",
-                      else: "Choose the language and depth for your first answers."
-                    )}
-                  </p>
-                  <p :if={!@minimal} class="text-xs text-slate-600">
-                    This controls how technical the explanation sounds and which sources it draws on—not how difficult your question is. You can change it later.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  phx-click="edit_prompt"
-                  phx-target={@myself}
-                  class="inline-flex w-full items-center justify-center rounded-md border border-stone-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-teal-600 hover:text-slate-900 sm:w-auto sm:justify-start sm:border-transparent sm:bg-transparent sm:px-0 sm:py-0 sm:text-xs sm:shadow-none"
-                >
-                  <.icon name="hero-pencil-square" class="h-4 w-4 sm:hidden" /> Edit prompt
-                </button>
-              </div>
-
-              <div class="mt-3 flex w-full justify-center">
-                <div class="mx-auto flex w-full border border-stone-300 bg-white p-0.5 shadow-inner sm:inline-flex sm:w-auto">
-                  <%= for {mode, label, description} <- [
-                  {"high_school", "Simple", "Plain language, concrete examples, and key ideas."},
-                  {"university", "Expanded", "Defined terminology, wider context, and sourced evidence."},
-                  {"expert", "In-depth", "Rigorous analysis, primary sources, and competing interpretations."}
-                ] do %>
-                    <button
-                      type="button"
-                      id={"new-idea-mode-#{mode}"}
-                      phx-click="select_mode"
-                      phx-value-mode={mode}
-                      phx-target={@myself}
-                      data-requires-login={to_string(!@authenticated && restricted_mode?(mode))}
-                      data-analytics-event="answer_depth_selected"
-                      data-analytics-location="question_form"
-                      data-analytics-answer-depth={mode}
-                      title={
-                        if(!@authenticated && restricted_mode?(mode),
-                          do: "Sign in to unlock #{label}",
-                          else: label
-                        )
-                      }
-                      class={[
-                        "group flex flex-1 flex-col items-center px-2 py-2 text-center transition-colors duration-150 sm:flex-initial sm:px-3 sm:py-2",
-                        if(@selected_mode == mode,
-                          do: "border border-slate-900 bg-slate-900 text-white shadow-sm",
-                          else: "text-slate-600 hover:bg-white hover:text-slate-900 active:bg-white"
-                        )
-                      ]}
-                    >
-                      <span class="inline-flex items-center gap-1 text-xs font-semibold">
-                        {label}
-                        <.icon
-                          :if={!@authenticated && restricted_mode?(mode)}
-                          name="hero-lock-closed"
-                          class="h-3 w-3"
-                        />
-                      </span>
-                      <span class={[
-                        "mt-0.5 hidden max-w-40 text-[10px] leading-4 sm:block",
-                        if(@selected_mode == mode, do: "text-slate-300", else: "text-slate-500")
-                      ]}>
-                        {description}
-                      </span>
-                    </button>
-                  <% end %>
-                </div>
-              </div>
-
-              <div class="mt-3 flex justify-end">
-                <button
-                  type="submit"
-                  id="new-idea-create-submit"
-                  data-analytics-event="grid_creation_requested"
-                  data-analytics-location="question_form"
-                  phx-disable-with="Starting..."
-                  class="inline-flex w-full items-center justify-center gap-2 rounded-md border border-transparent bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
-                >
-                  {@create_label} <.icon name="hero-arrow-right" class="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-          <% end %>
-        </.form>
-      </fieldset>
-      <p :if={@busy} id={@id <> "-progress"} role="status" class="text-sm text-teal-800">
+              Create a grid <.icon name="hero-arrow-right" class="h-4 w-4" />
+            </button>
+          </div>
+          <p class="text-xs leading-5 text-slate-500">
+            AI will help you get started. You can ask follow-up questions, add your own thoughts and change the answer detail later.
+          </p>
+        </fieldset>
+      </.form>
+      <p
+        :if={@busy}
+        id={@id <> "-progress"}
+        role="status"
+        class="mt-4 flex items-center gap-2 text-sm font-medium text-teal-800"
+      >
+        <.icon name="hero-arrow-path" class="h-4 w-4 animate-spin motion-reduce:animate-none" />
         Creating your grid…
       </p>
     </div>
     """
   end
-
-  defp restricted_mode?(mode), do: mode in ["university", "expert"]
 end

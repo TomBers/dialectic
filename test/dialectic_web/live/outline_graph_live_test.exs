@@ -427,17 +427,50 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert has_element?(other_view, "#reader-source-status-5[data-source-status='no_links']")
   end
 
-  test "mobile reader actions apply styles without a standalone ask flow", %{conn: conn} do
+  test "follow-up action opens and focuses the existing answer composer", %{conn: conn} do
+    graph = create_graph()
+    {:ok, view, _} = live(conn, ~p"/g/#{graph.slug}")
+    refute has_element?(view, "#reading-node-2 > button")
+    assert has_element?(view, "#reader-node-actions-2 #outline-reading-node-2-ask")
+    assert has_element?(view, "#reader-reading-tools-2 #reader-bookmark-node-2")
+    assert has_element?(view, "#reader-node-header-2 #reader-bookmark-node-2")
+    assert has_element?(view, "#reader-node-header-2 #reader-node-2-highlights")
+    refute has_element?(view, "#reader-node-actions-2 #reader-bookmark-node-2")
+    render_click(view, "open_follow_up", %{"id" => "2"})
+    assert has_element?(view, "#reader-answer-drawer-2:not([hidden])")
+
+    assert has_element?(
+             view,
+             "#selection-input-form-answer-actions-2-answer-level",
+             "Next AI answer"
+           )
+
+    assert_push_event(view, "focus_reader_composer", %{id: "2"})
+    refute has_element?(view, "#reader-header [popovertarget]")
+  end
+
+  test "outline branches can be expanded without changing the selected idea", %{conn: conn} do
+    graph = create_graph()
+    {:ok, view, _} = live(conn, ~p"/g/#{graph.slug}")
+    assert has_element?(view, "#outline-row-5[hidden]")
+    view |> element("#outline-branch-4") |> render_click()
+    refute has_element?(view, "#outline-row-5[hidden]")
+    assert has_element?(view, "#outline-node-1[aria-current='location']")
+    view |> element("#outline-branch-4") |> render_click()
+    assert has_element?(view, "#outline-row-5[hidden]")
+  end
+
+  test "mobile reader actions expose exploration, questions, search, and More", %{conn: conn} do
     graph = create_graph()
     {:ok, view, _} = live(conn, ~p"/g/#{graph.slug}?node=2&path=4")
     assert has_element?(view, "#reader-mobile-toolbar[aria-label='Reader actions']")
 
     assert has_element?(
              view,
-             "#reader-mobile-toolbar #reader-mobile-highlights[aria-controls='highlights-drawer']"
+             "#reader-mobile-toolbar #reader-mobile-ask"
            )
 
-    refute has_element?(view, "#reader-mobile-ask")
+    assert has_element?(view, "#reader-mobile-ask")
     refute has_element?(view, "#reader-workspace-bar-ask-question")
 
     assert has_element?(view, "#reader-mobile-more[aria-controls='right-panel']")
@@ -454,7 +487,7 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     view |> element("#reader-mobile-search") |> render_click()
     assert has_element?(view, "#outline-quick-search-input")
     view |> element("#outline-quick-search-close") |> render_click()
-    view |> element("#reader-tools-share") |> render_click()
+    view |> element("#reader-workspace-bar-share") |> render_click()
     assert has_element?(view, "#share-modal-hook")
   end
 
@@ -467,7 +500,7 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
 
     assert has_element?(
              view,
-             "#document-menu-settings-document-menu[aria-controls='right-panel']"
+             "#reader-more[aria-controls='right-panel']"
            )
 
     refute has_element?(view, "#reader-style-custom")
@@ -662,17 +695,8 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert Enum.find(assigns.compare_branches, &(&1.id == "3")).active?
     assert has_element?(view, "#outline-node-3")
 
-    assert has_element?(
-             view,
-             "#outline-response-level-3[data-response-level='expert']",
-             "In-depth"
-           )
-
-    assert has_element?(
-             view,
-             "#outline-mobile-response-level-3[data-response-level='expert']",
-             "In-depth"
-           )
+    refute has_element?(view, "#outline-response-level-3")
+    refute has_element?(view, "#outline-mobile-response-level-3")
 
     assert has_element?(view, "#reading-node-1")
     assert has_element?(view, "#reading-node-2")
@@ -734,11 +758,11 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert has_element?(view, "#reading-node-4[data-reading-selected='true']")
     assert has_element?(view, "#reading-node-5")
     assert has_element?(view, "#outline-end-state")
-    assert has_element?(view, "#outline-end-editor-link")
+    assert has_element?(view, "#outline-end-follow-up")
 
     assert has_element?(
              view,
-             ~s(#outline-end-editor-link[href="/g/#{graph.slug}/graph?node=5"])
+             ~s(#outline-end-follow-up[phx-value-id="5"])
            )
 
     assert has_element?(view, "#outline-branch-compare")
@@ -788,14 +812,14 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
 
     assert has_element?(
              view,
-             "#outline-node-3 + #outline-choose-path",
-             "Choose this path"
+             "#outline-row-3 #outline-choose-path",
+             "Focus on this thread"
            )
 
     assert has_element?(
              view,
-             "#outline-mobile-node-3 + #outline-mobile-choose-path",
-             "Choose this path"
+             "#outline-mobile-row-3 #outline-mobile-choose-path",
+             "Focus on this thread"
            )
 
     assert has_element?(view, "#outline-node-4")
@@ -807,15 +831,15 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert has_element?(view, "#outline-node-1")
     assert has_element?(view, "#outline-node-2")
     assert has_element?(view, "#outline-node-3[data-outline-selected='true']")
-    assert has_element?(view, "#outline-node-1[style='padding-left: 0.75rem;']")
-    assert has_element?(view, "#outline-node-2[style='padding-left: 0.75rem;']")
-    assert has_element?(view, "#outline-node-3[style='padding-left: 0.75rem;']")
+    assert has_element?(view, "#outline-row-1[style='margin-left: 0.0rem;']")
+    assert has_element?(view, "#outline-row-2[style='margin-left: 0.0rem;']")
+    assert has_element?(view, "#outline-row-3[style='margin-left: 0.0rem;']")
     refute has_element?(view, "#outline-node-2", "Split")
     refute has_element?(view, "#outline-node-3", "Here")
     refute has_element?(view, "#outline-node-4")
     refute has_element?(view, "#outline-node-5")
     refute has_element?(view, "#outline-mobile-node-4")
-    assert has_element?(view, "#outline-show-all-paths", "Clear path filter")
+    assert has_element?(view, "#outline-show-all-paths", "Show all threads")
     assert has_element?(view, "#outline-mobile-show-all-paths", "Clear filter")
 
     view |> element("#outline-node-2") |> render_click()
@@ -841,8 +865,8 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
 
     {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=2")
 
-    assert has_element?(view, "#outline-node-2 + #outline-choose-path")
-    assert has_element?(view, "#outline-mobile-node-2 + #outline-mobile-choose-path")
+    assert has_element?(view, "#outline-row-2 #outline-choose-path")
+    assert has_element?(view, "#outline-mobile-row-2 #outline-mobile-choose-path")
   end
 
   test "restores a shared reader path from the URL", %{conn: conn} do
@@ -1141,14 +1165,14 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
       |> log_in_user(user)
       |> live(~p"/g/#{graph.slug}?node=2")
 
-    assert has_element?(view, "#reader-follow-grid-button[aria-pressed='false']")
+    assert has_element?(view, "#reader-tools-follow[aria-pressed='false']")
 
     view
-    |> element("#reader-follow-grid-button")
+    |> element("#reader-tools-follow")
     |> render_click()
 
     assert Follows.following_graph?(user, graph)
-    assert has_element?(view, "#reader-follow-grid-button[aria-pressed='true']")
+    assert has_element?(view, "#reader-tools-follow[aria-pressed='true']")
 
     {:ok, grid_view, _html} =
       view
@@ -1158,11 +1182,11 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
 
     assert has_element?(
              grid_view,
-             "#graph-follow-grid-button[aria-pressed='true'] .hero-bell-solid"
+             "#reader-tools-follow[aria-pressed='true'] .hero-bell"
            )
 
     grid_view
-    |> element("#graph-follow-grid-button")
+    |> element("#reader-tools-follow")
     |> render_click()
 
     refute Follows.following_graph?(user, graph)
@@ -1175,7 +1199,7 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
 
     assert has_element?(
              reader_view,
-             "#reader-follow-grid-button[aria-pressed='false'] .hero-bell-alert"
+             "#reader-tools-follow[aria-pressed='false'] .hero-bell"
            )
   end
 
@@ -1269,8 +1293,8 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
 
     {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=4")
 
-    assert has_element?(view, "#reader-workspace-bar-highlights")
-    assert has_element?(view, "#reader-workspace-bar-highlights", "1")
+    assert has_element?(view, "#more-saved-highlights")
+    assert has_element?(view, "#more-saved-highlights", "1")
     assert has_element?(view, "#highlights-drawer", "1 saved passage and connected ideas")
     assert has_element?(view, "#reader-highlights-close")
   end
@@ -1343,7 +1367,7 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
 
     {:ok, view, _html} = live(conn, ~p"/g/#{graph.slug}?node=4&path=5")
 
-    assert has_element?(view, "#reader-workspace-bar-highlights", "1")
+    assert has_element?(view, "#more-saved-highlights", "1")
     assert has_element?(view, "#highlights-drawer", "1 saved passage and connected ideas")
     assert has_element?(view, "#highlight-card-#{visible_highlight.id}")
     refute has_element?(view, "#highlight-card-#{hidden_highlight.id}")
@@ -1353,7 +1377,7 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     |> render_click()
 
     assert_patch(view, ~p"/g/#{graph.slug}?node=4")
-    assert has_element?(view, "#reader-workspace-bar-highlights", "2")
+    assert has_element?(view, "#more-saved-highlights", "2")
     assert has_element?(view, "#highlight-card-#{visible_highlight.id}")
     assert has_element?(view, "#highlight-card-#{hidden_highlight.id}")
   end

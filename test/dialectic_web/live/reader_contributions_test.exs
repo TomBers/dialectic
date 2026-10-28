@@ -80,7 +80,8 @@ defmodule DialecticWeb.ReaderContributionsTest do
     assert has_element?(reader, "#selection-input-form-answer-actions-2-guest-access")
     assert has_element?(reader, "#selection-input-form-answer-actions-2-comment")
     assert has_element?(reader, "#selection-input-form-answer-actions-2-ask")
-    assert has_element?(reader, "#answer-bookmark-login-answer-actions-2[href='/users/log_in']")
+    assert has_element?(reader, "#reader-reading-tools-2 #reader-bookmark-node-2")
+    refute has_element?(reader, "#answer-bookmark-login-answer-actions-2")
     refute has_element?(reader, "#answer-action-bookmark-answer-actions-2")
 
     refute has_element?(reader, "#answer-actions-2 [data-selection-action='highlight_only']")

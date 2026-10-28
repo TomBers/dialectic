@@ -21,7 +21,9 @@ defmodule DialecticWeb.WorkspaceSettings do
         socket
 
       normalized in [:university, :expert] && is_nil(socket.assigns.current_user) ->
-        assign(socket, show_login_modal: true)
+        socket
+        |> assign(show_login_modal: true)
+        |> sync_answer_level()
 
       true ->
         mode_str = Atom.to_string(normalized)
@@ -30,15 +32,28 @@ defmodule DialecticWeb.WorkspaceSettings do
              {:ok, updated} <-
                graph |> Graph.changeset(%{prompt_mode: mode_str}) |> Dialectic.Repo.update() do
           :ok = ModeServer.set_mode(socket.assigns.graph_id, normalized)
-          assign(socket, prompt_mode: mode_str, graph_struct: updated)
+
+          socket
+          |> assign(prompt_mode: mode_str, graph_struct: updated)
+          |> sync_answer_level()
         else
           nil ->
-            put_flash(socket, :error, "This grid is no longer available.")
+            socket
+            |> put_flash(:error, "This grid is no longer available.")
+            |> sync_answer_level()
 
           {:error, _} ->
-            put_flash(socket, :error, "Could not update the answer level. Please try again.")
+            socket
+            |> put_flash(:error, "Could not update the answer level. Please try again.")
+            |> sync_answer_level()
         end
     end
+  end
+
+  defp sync_answer_level(socket) do
+    mode = socket.assigns.graph_struct.prompt_mode || "university"
+    mode = if mode == "simple", do: "high_school", else: mode
+    push_event(socket, "answer_level_changed", %{mode: mode})
   end
 
   def set_visibility(socket, visibility) when visibility in ["public", "private"] do

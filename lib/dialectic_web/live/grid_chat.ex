@@ -17,6 +17,8 @@ defmodule DialecticWeb.GridChat do
       chat_avatar_loaded?: false,
       chat_has_messages?: false,
       chat_message_count: 0,
+      chat_message_ids: [],
+      chat_history_restored?: false,
       chat_form: empty_form()
     }
   end
@@ -24,6 +26,11 @@ defmodule DialecticWeb.GridChat do
   def empty_form, do: Phoenix.Component.to_form(%{}, as: :grid_chat)
 
   def topic(graph_id), do: "grid_chat:#{graph_id}"
+
+  def storage_key(graph_id, user) do
+    viewer = if user, do: "user:#{user.id}", else: "guest"
+    "grid-chat:v1:#{viewer}:#{URI.encode_www_form(graph_id)}"
+  end
 
   def subscribe(socket, graph_id) do
     PubSub.subscribe(Dialectic.PubSub, topic(graph_id))
@@ -91,17 +98,113 @@ defmodule DialecticWeb.GridChat do
   def handle_presence_leave(socket, _presence), do: refresh_presences(socket)
 
   def insert_message(socket, message) do
+    if message.id in socket.assigns.chat_message_ids do
+      socket
+    else
+      ids = Enum.take(socket.assigns.chat_message_ids ++ [message.id], -@message_count_limit)
+
+      socket
+      |> Phoenix.LiveView.stream_insert(:chat_messages, message,
+        at: -1,
+        limit: @message_stream_limit
+      )
+      |> assign_message_ids(ids)
+      |> Phoenix.LiveView.push_event("grid_chat_message", %{
+        storage_key: storage_key(socket.assigns.graph_id, socket.assigns[:current_user]),
+        message: message
+      })
+    end
+  end
+
+  def restore_history(%{assigns: %{chat_history_restored?: true}} = socket, _messages),
+    do: socket
+
+  def restore_history(socket, messages) when is_list(messages) do
+    messages =
+      messages
+      |> Enum.take(-@message_count_limit)
+      |> Enum.map(&restore_message/1)
+      |> Enum.reject(&is_nil/1)
+      |> Enum.uniq_by(& &1.id)
+      |> Enum.reject(&(&1.id in socket.assigns.chat_message_ids))
+
+    ids =
+      Enum.take(
+        Enum.map(messages, & &1.id) ++ socket.assigns.chat_message_ids,
+        -@message_count_limit
+      )
+
     socket
-    |> Phoenix.LiveView.stream_insert(:chat_messages, message,
-      at: -1,
+    |> Phoenix.LiveView.stream(:chat_messages, Enum.reverse(messages),
+      at: 0,
       limit: @message_stream_limit
     )
-    |> Phoenix.Component.assign(:chat_has_messages?, true)
-    |> Phoenix.Component.assign(
-      :chat_message_count,
-      min((socket.assigns[:chat_message_count] || 0) + 1, @message_count_limit)
+    |> assign_message_ids(ids)
+    |> Phoenix.Component.assign(:chat_history_restored?, true)
+  end
+
+  def restore_history(socket, _messages), do: socket
+
+  def clear_history(socket) do
+    socket
+    |> Phoenix.LiveView.stream(:chat_messages, [], reset: true)
+    |> assign_message_ids([])
+    |> Phoenix.Component.assign(:chat_history_restored?, true)
+    |> Phoenix.LiveView.push_event("grid_chat_history_cleared", %{
+      storage_key: storage_key(socket.assigns.graph_id, socket.assigns[:current_user])
+    })
+  end
+
+  defp assign_message_ids(socket, ids) do
+    Phoenix.Component.assign(socket,
+      chat_message_ids: ids,
+      chat_message_count: length(ids),
+      chat_has_messages?: ids != []
     )
   end
+
+  defp restore_message(
+         %{
+           "id" => id,
+           "author" => author,
+           "body" => body,
+           "sent_at_label" => sent_at_label
+         } = message
+       )
+       when is_binary(id) and is_binary(author) and is_binary(body) and
+              is_binary(sent_at_label) do
+    with {:ok, id} <- Ecto.UUID.cast(id),
+         true <- String.length(author) in 1..100,
+         true <- String.length(body) in 1..@max_message_length,
+         true <- Regex.match?(~r/^\d{2}:\d{2}$/, sent_at_label) do
+      author_id = message["author_id"]
+      avatar_url = message["author_avatar_url"]
+
+      %{
+        id: id,
+        author: author,
+        author_id: if(is_integer(author_id) and author_id > 0, do: author_id),
+        author_initials: initials_for_name(author),
+        author_avatar_url: safe_avatar_url(avatar_url),
+        body: body,
+        sent_at_label: sent_at_label
+      }
+    else
+      _ -> nil
+    end
+  end
+
+  defp restore_message(_message), do: nil
+
+  defp safe_avatar_url(url) when is_binary(url) and byte_size(url) <= 2048 do
+    case URI.parse(url) do
+      %URI{scheme: "https", host: host} when is_binary(host) -> url
+      %URI{scheme: nil, host: nil, path: "/" <> _} -> url
+      _ -> nil
+    end
+  end
+
+  defp safe_avatar_url(_url), do: nil
 
   def initials_for_name(name) do
     name

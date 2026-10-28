@@ -220,6 +220,31 @@ defmodule DialecticWeb.ShareModalComp do
                     <% end %>
                   </div>
 
+                  <details
+                    :if={
+                      !quote_share?(@selected_highlight) &&
+                        Sharing.can_manage?(@current_user, @graph_struct)
+                    }
+                    id="share-access-settings"
+                    class="mt-4 rounded-xl border border-slate-200 bg-white"
+                  >
+                    <summary class="min-h-11 cursor-pointer px-3 py-3 text-sm font-semibold text-slate-800">
+                      Who can view and contribute
+                    </summary>
+                    <div class="border-t border-slate-100 p-2">
+                      <DialecticWeb.WorkspaceBarComp.visibility_dropdown
+                        id="share-visibility"
+                        inline
+                        graph_struct={@graph_struct}
+                        current_user={@current_user}
+                      />
+                      <DialecticWeb.LockComp.render
+                        id="share-lock-graph"
+                        graph_struct={@graph_struct}
+                      />
+                    </div>
+                  </details>
+
                   <div
                     id="share-image-orientation"
                     class="mt-4 flex items-center justify-between gap-3"

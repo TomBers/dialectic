@@ -23,34 +23,43 @@ defmodule DialecticWeb.GraphAccessTest do
     {:ok, grid, _html} = live(conn, ~p"/g/#{graph.slug}/graph")
 
     for {view, prefix} <- [{reader, "reader"}, {grid, "graph"}] do
-      assert has_element?(view, "##{prefix}-header #document-menu-settings-document-menu")
-      assert has_element?(view, "##{prefix}-header ##{prefix}-access-settings", "Public")
-      assert has_element?(view, "##{prefix}-header ##{prefix}-workspace-bar-level", "Expanded")
-      assert has_element?(view, "##{prefix}-workspace-bar-level .hero-square-3-stack-3d")
+      assert has_element?(view, "##{prefix}-header ##{prefix}-more[aria-controls='right-panel']")
+      assert has_element?(view, "##{prefix}-header ##{prefix}-byline", "Public")
+      assert has_element?(view, "##{prefix}-creator[href='/u/#{owner.username}']")
+
+      assert has_element?(
+               view,
+               "##{prefix}-header ##{prefix}-grid-history[aria-controls='grid-history-panel']"
+             )
+
+      assert has_element?(view, "##{prefix}-workspace-bar-share")
+      assert has_element?(view, "##{prefix}-workspace-bar-outline-desktop[data-explore-toggle]")
+      assert has_element?(view, "##{prefix}-workspace-bar-outline-desktop [data-explore-label]")
+
+      assert has_element?(
+               view,
+               "##{prefix}-workspace-bar-outline-desktop [data-explore-hide-icon]"
+             )
+
+      assert has_element?(
+               view,
+               "##{prefix}-workspace-bar-outline-desktop [data-explore-show-icon]"
+             )
+
+      assert has_element?(view, "##{prefix}-workspace-bar-graph[aria-label='Grid view']", "Grid")
+      refute has_element?(view, "##{prefix}-header [popovertarget]")
       refute has_element?(view, "##{prefix}-header #graph-help-button")
-      refute has_element?(view, "##{prefix}-header #reader-workspace-bar-outline-desktop")
     end
 
-    controls = fn view, prefix ->
-      view
-      |> render()
-      |> LazyHTML.from_fragment()
-      |> LazyHTML.filter("##{prefix}-header button")
-      |> LazyHTML.to_tree()
-      |> Enum.map(fn {tag, attrs, _children} ->
-        attrs = Map.new(attrs)
-        {tag, String.replace_prefix(attrs["id"], prefix, "workspace"), attrs["class"]}
-      end)
-    end
-
-    assert controls.(reader, "reader") == controls.(grid, "graph")
     assert has_element?(reader, "#reader-workspace-bar-reader[aria-current='page']")
     assert has_element?(grid, "#graph-workspace-bar-graph[aria-current='page']")
+    assert has_element?(grid, "#graph-workspace-bar-outline-desktop[aria-controls='side-drawer']")
+    assert has_element?(grid, "#graph-mobile-explore[aria-controls='side-drawer']")
     refute has_element?(grid, "#grid-tools-reading-style")
     assert has_element?(grid, "#details-reading-style #reader-style-screen")
     assert has_element?(reader, "#reader-style-book", "Serif")
     assert has_element?(reader, "#right-panel.fixed.top-10")
-    assert has_element?(reader, "#right-panel .tools-drawer-header #grid-tools-close")
+    assert has_element?(reader, "#right-panel .tools-drawer-header #right-panel-close")
     assert has_element?(reader, "#right-panel .tools-drawer-header + .tools-drawer-content")
     assert has_element?(reader, "#right-panel[class~='lg:absolute']")
     assert has_element?(grid, "#right-panel.absolute")
@@ -71,130 +80,120 @@ defmodule DialecticWeb.GraphAccessTest do
     assert_push_event(view, "open_grid_tool", %{section: "configure"})
     assert has_element?(view, "#graph-keyboard-workspace.flex #right-panel")
     refute has_element?(view, "#graph-keyboard-workspace.hidden")
-    assert has_element?(view, "#graph-mobile-back-to-reader[href^='/g/#{graph.slug}?node=']")
-
-    assert has_element?(
-             view,
-             "#document-menu-settings-mobile-document-menu[aria-controls='right-panel']"
-           )
-
-    assert has_element?(view, "#graph-mobile-reader-link[href^='/g/#{graph.slug}?node=']")
-    refute has_element?(view, "#graph-mobile-back-to-reader[href*=tools]")
-    assert has_element?(view, "#side-drawer.hidden")
-    assert has_element?(view, "#cy.hidden")
+    assert has_element?(view, "#graph-workspace-bar-reader[href^='/g/#{graph.slug}?node=']")
+    assert has_element?(view, "#graph-more[aria-controls='right-panel']")
+    assert has_element?(view, "#graph-layout[data-mobile-map-enabled='true']")
+    refute has_element?(view, "#cy.hidden")
   end
 
-  test "owner can reach visibility and protection from grid tools", %{
+  test "grid history opens directly from both headers and refreshes contributions", %{
     conn: conn,
     owner: owner,
     graph: graph
   } do
-    {:ok, view, _html} = live(log_in_user(conn, owner), ~p"/g/#{graph.slug}/graph")
+    for {path, prefix} <- [
+          {~p"/g/#{graph.slug}/graph", "graph"},
+          {~p"/g/#{graph.slug}", "reader"}
+        ] do
+      {:ok, view, _html} = live(conn, path)
+      refute has_element?(view, "#right-panel #grid-activity-log")
 
-    assert has_element?(view, "#graph-header #graph-heading #graph-title")
-    assert has_element?(view, "#right-panel #graph-help-button")
-    refute has_element?(view, "#graph-header #graph-help-button")
-    assert has_element?(view, "#graph-header #graph-workspace-bar")
+      {:ok, log} =
+        Dialectic.GridActivity.record_node_comment_created(graph.title, owner, "1")
 
-    assert has_element?(view, "#graph-header #document-menu-settings-document-menu")
-    assert has_element?(view, "#graph-header #graph-access-settings", "Public")
-    refute has_element?(view, "#details-workspace[open]")
+      view |> element("##{prefix}-grid-history") |> render_click()
 
-    assert has_element?(
-             view,
-             "#graph-access-settings[popovertarget='graph-access-settings-options']"
-           )
+      assert has_element?(view, "#grid-history-panel-title", "Grid history")
+      assert has_element?(view, "#grid-history-description")
+      assert has_element?(view, "#grid-activity-log-#{log.id}")
 
-    refute has_element?(view, "#graph-access-settings-options #toggle_lock_graph")
+      assert has_element?(
+               view,
+               "#grid-activity-actor-#{log.id}[href='/u/#{owner.username}']"
+             )
 
-    view |> element("#graph-access-settings-private") |> render_click()
-    refute Repo.reload!(graph).is_public
-    assert has_element?(view, "#graph-access-settings", "Private")
-    assert has_element?(view, "#graph-access-settings .hero-lock-closed")
-
-    assert has_element?(view, "#graph-access-settings-private[aria-pressed='true']")
-    view |> element("#graph-access-settings-private") |> render_click()
-    refute Repo.reload!(graph).is_public
-
-    view |> element("#graph-access-settings-public") |> render_click()
-    assert Repo.reload!(graph).is_public
-    assert has_element?(view, "#graph-access-settings-public[aria-pressed='true']")
-
-    view |> element("#toggle_lock_graph") |> render_click()
-    assert Repo.reload!(graph).is_locked
-
-    refute has_element?(view, "#toggle_lock_graph[checked]")
-
-    view |> element("#toggle_lock_graph") |> render_click()
-    refute Repo.reload!(graph).is_locked
-
-    assert has_element?(view, "#toggle_lock_graph[checked]")
-
-    {:ok, reader, _html} = live(log_in_user(conn, owner), ~p"/g/#{graph.slug}")
-    reader |> element("#reader-workspace-bar-level-high_school") |> render_click()
-    assert has_element?(reader, "#reader-workspace-bar-level", "Simple")
-    assert Repo.reload!(graph).prompt_mode == "high_school"
-    reader |> element("#reader-access-settings-private") |> render_click()
-    refute Repo.reload!(graph).is_public
-    assert has_element?(reader, "#reader-access-settings", "Private")
-    reader |> element("#toggle_lock_graph") |> render_click()
-    assert Repo.reload!(graph).is_locked
-    assert has_element?(reader, "#right-panel #toggle_lock_graph")
-    refute has_element?(reader, "#reader-access-settings-options #toggle_lock_graph")
-    refute has_element?(reader, "#reader-grid-tools-configure")
-    refute has_element?(reader, "#reader-grid-tools-workspace")
+      view |> element("##{prefix}-grid-history") |> render_click()
+      assert has_element?(view, "#grid-history-origin")
+      assert has_element?(view, "#grid-activity-log-#{log.id}")
+    end
   end
 
-  test "tools separates editing from header settings", %{
+  test "history pages through older events without dropping loaded entries", %{
+    conn: conn,
+    owner: owner,
+    graph: graph
+  } do
+    events =
+      for _ <- 1..52 do
+        {:ok, event} = Dialectic.GridActivity.record_node_comment_created(graph.title, owner, "1")
+        event
+      end
+
+    oldest = hd(events)
+    newest = List.last(events)
+    {:ok, view, _} = live(conn, ~p"/g/#{graph.slug}")
+    view |> element("#reader-grid-history") |> render_click()
+    assert has_element?(view, "#grid-activity-log-#{newest.id}")
+    refute has_element?(view, "#grid-activity-log-#{oldest.id}")
+    view |> element("#grid-history-load-earlier") |> render_click()
+    assert has_element?(view, "#grid-activity-log-#{newest.id}")
+    view |> element("#grid-history-load-earlier") |> render_click()
+    assert has_element?(view, "#grid-activity-log-#{oldest.id}")
+    refute has_element?(view, "#grid-history-load-earlier")
+    view |> element("#reader-grid-history") |> render_click()
+    assert has_element?(view, "#grid-activity-log-#{newest.id}")
+    refute has_element?(view, "#grid-activity-log-#{oldest.id}")
+  end
+
+  test "owner manages visibility and contributions from Share", %{
+    conn: conn,
+    owner: owner,
+    graph: graph
+  } do
+    for {path, prefix} <- [
+          {~p"/g/#{graph.slug}/graph", "graph"},
+          {~p"/g/#{graph.slug}", "reader"}
+        ] do
+      {:ok, view, _html} = live(log_in_user(conn, owner), path)
+      view |> element("##{prefix}-workspace-bar-share") |> render_click()
+      assert has_element?(view, "#share-access-settings #share-visibility-public")
+      assert has_element?(view, "#share-access-settings #toggle_lock_graph")
+      refute has_element?(view, "#right-panel #toggle_lock_graph")
+
+      view |> element("#share-visibility-private") |> render_click()
+      refute Repo.reload!(graph).is_public
+      assert has_element?(view, "##{prefix}-byline", "Private")
+      assert has_element?(view, "#share-visibility-private[aria-pressed='true']")
+      view |> element("#share-visibility-public") |> render_click()
+      assert Repo.reload!(graph).is_public
+      view |> element("#toggle_lock_graph") |> render_click()
+      assert Repo.reload!(graph).is_locked
+      refute has_element?(view, "#toggle_lock_graph[checked]")
+      view |> element("#toggle_lock_graph") |> render_click()
+      refute Repo.reload!(graph).is_locked
+      assert has_element?(view, "#toggle_lock_graph[checked]")
+    end
+  end
+
+  test "More groups reading and grid actions without repeating history and access settings", %{
     conn: conn,
     owner: owner,
     graph: graph
   } do
     for path <- [~p"/g/#{graph.slug}/graph", ~p"/g/#{graph.slug}"] do
       {:ok, view, _html} = live(log_in_user(conn, owner), path)
-      refute has_element?(view, "#grid-tools-status")
-      refute has_element?(view, "#details-configure")
-      assert has_element?(view, "#tools-mobile-actions[class~='sm:hidden'] #tools-visibility")
-      assert has_element?(view, "#tools-mobile-actions #tools-answer-level")
+      assert has_element?(view, "#right-panel-title", "More")
+      assert has_element?(view, "#right-panel #details-reading-style")
+      refute has_element?(view, "#details-reading-style[open]")
+      assert has_element?(view, "#right-panel #more-saved-highlights")
+      assert has_element?(view, "#right-panel #reader-tools-follow")
+      assert has_element?(view, "#right-panel #details-export")
+      refute has_element?(view, "#right-panel #details-activity")
+      refute has_element?(view, "#right-panel #toggle_lock_graph")
+      refute has_element?(view, "#tools-mobile-actions")
 
-      assert has_element?(
-               view,
-               "#tools-answer-level[role='group'] #tools-answer-level-high_school"
-             )
-
-      assert has_element?(view, "#tools-visibility[role='group'] #tools-visibility-public")
-      refute has_element?(view, "#tools-mobile-actions [popover]")
-      refute has_element?(view, "#tools-mobile-actions [popovertarget]")
-      refute has_element?(view, "#details-answer-level[open]")
-      refute has_element?(view, "#details-visibility[open]")
-      view |> element("#details-answer-level > summary") |> render_click()
-      assert has_element?(view, "#details-answer-level[open]")
-      view |> element("#details-answer-level > summary") |> render_click()
-      refute has_element?(view, "#details-answer-level[open]")
-      view |> element("#details-visibility > summary") |> render_click()
-      assert has_element?(view, "#details-visibility[open]")
-      view |> element("#details-visibility > summary") |> render_click()
-
-      if has_element?(view, "#graph-layout") do
-        assert has_element?(
-                 view,
-                 "#details-activity ~ #grid-tools-presentation.hidden[class~='md:flex']"
-               )
-      else
-        refute has_element?(view, "#reader-grid-tools-presentation")
-        refute has_element?(view, "#grid-tools-presentation")
-      end
-
-      assert has_element?(view, "#tools-mobile-actions #reader-tools-share")
-      refute has_element?(view, "#details-workspace button")
-      refute has_element?(view, "#details-workspace #toggle_public_graph")
-
-      view |> element("#details-workspace > summary") |> render_click()
-      assert has_element?(view, "#details-workspace[open] #toggle_lock_graph")
-      view |> element("#details-workspace > summary") |> render_click()
-      refute has_element?(view, "#details-workspace[open]")
-      view |> element("#details-activity > summary") |> render_click()
-      assert has_element?(view, "#details-activity[open]")
+      if has_element?(view, "#graph-layout"),
+        do: assert(has_element?(view, "#grid-tools-presentation"))
     end
   end
 

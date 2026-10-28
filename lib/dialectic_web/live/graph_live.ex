@@ -207,23 +207,45 @@ defmodule DialecticWeb.GraphLive do
     {:noreply, GridChat.open(socket)}
   end
 
+  def handle_event("restore_grid_chat", %{"messages" => messages}, socket) do
+    {:noreply, GridChat.restore_history(socket, messages)}
+  end
+
+  def handle_event("clear_grid_chat_history", _params, socket) do
+    {:noreply, GridChat.clear_history(socket)}
+  end
+
   def handle_event("save_reader_appearance", %{"style" => style}, socket)
       when style in ["book", "screen", "large_print", "compact"] do
     {:noreply, DialecticWeb.ReadingStyles.save_appearance(socket, %{"reading_style" => style})}
   end
 
   def handle_event("open_prompt_settings", _params, socket) do
-    send_update(DialecticWeb.RightPanelComp, id: "right-panel-comp", open_section: "answer-level")
-    {:noreply, push_event(socket, "open_answer_level", %{})}
+    target =
+      if GraphHelpers.origin_branching_disabled?(socket.assigns.node) do
+        socket.assigns.graph_id
+        |> GraphManager.vertices()
+        |> Enum.find(&(&1.class == "answer" && !Map.get(&1, :deleted, false)))
+      else
+        socket.assigns.node
+      end
+
+    if target do
+      {:noreply, socket} = handle_event("node_clicked", %{"id" => target.id}, socket)
+      {:noreply, push_event(socket, "open_answer_level", %{})}
+    else
+      {:noreply,
+       put_flash(socket, :info, "Open an answer to choose the level of your next question.")}
+    end
+  end
+
+  def handle_event("open_grid_history", _params, socket) do
+    send_update(DialecticWeb.GridHistoryComp, id: "grid-history-comp", refresh: true)
+    {:noreply, socket}
   end
 
   def handle_event("open_access_settings", _params, socket) do
-    send_update(DialecticWeb.RightPanelComp,
-      id: "right-panel-comp",
-      open_section: "workspace"
-    )
-
-    {:noreply, socket}
+    {:noreply, assign(socket, :show_share_modal, true)}
   end
 
   def handle_event("set_prompt_mode", %{"prompt_mode" => mode}, socket) do
@@ -2978,22 +3000,13 @@ defmodule DialecticWeb.GraphLive do
         "isAccessibleForFree" => true
       })
 
-    # Resolve the graph owner's display name for presentation credits
-    owner_name =
-      case graph_db.user_id do
-        nil ->
-          nil
-
-        uid ->
-          case Repo.get(User, uid) do
-            nil -> nil
-            user -> User.display_name(user)
-          end
-      end
+    creator = if(graph_db.user_id, do: Repo.get(User, graph_db.user_id))
+    owner_name = if(creator, do: User.display_name(creator))
 
     assign(socket,
       page_title: graph_struct.title,
       graph_owner_name: owner_name,
+      graph_creator: creator,
       og_image: base_url <> ~p"/images/graph_live.webp",
       page_description: description,
       canonical_url: canonical,

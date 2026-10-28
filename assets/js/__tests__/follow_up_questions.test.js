@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { enhanceFollowUpQuestions } from "../markdown_hook.js";
+import Markdown, { enhanceFollowUpQuestions } from "../markdown_hook.js";
 
 function rootWith(html) {
   const root = document.createElement("div");
@@ -50,6 +50,40 @@ describe("enhanceFollowUpQuestions", () => {
       true,
     );
   });
+
+  it("allows retrying a question rejected by the server", async () => {
+    const root = rootWith(`
+      <h2>Follow-up questions</h2>
+      <ol><li>Question one?</li><li>Question two?</li><li>Question three?</li></ol>
+    `);
+    enhanceFollowUpQuestions(root, vi.fn().mockResolvedValue({ error: "Try again" }));
+    const button = root.querySelector("#markdown-body-test-follow-up-1");
+    button.click();
+    expect(button.getAttribute("aria-busy")).toBe("true");
+    await vi.waitFor(() => expect(button.disabled).toBe(false));
+    expect(button.hasAttribute("aria-busy")).toBe(false);
+    expect(button.textContent).toContain("Ask AI");
+  });
+
+  it.each(["markdown-body-2", "outline-markdown-body-2"])(
+    "sends the source answer ID from %s without opening a popup",
+    (id) => {
+      const root = rootWith("");
+      root.id = id;
+      root.dataset.followUpNodeId = "2";
+      root.dataset.md = "# An answer\n\n## Follow-up questions\n\n1. Question one?\n2. Question two?\n3. Question three?";
+      root.dataset.bodyOnly = "true";
+      const hook = { el: root, pushEvent: vi.fn() };
+      Markdown.mounted.call(hook);
+      root.querySelector(`#${id}-follow-up-1`).click();
+      expect(hook.pushEvent).toHaveBeenCalledWith(
+        "reply-and-answer",
+        { node_id: "2", vertex: { content: "Question one?" } },
+        expect.any(Function),
+      );
+      expect(root.querySelector("[popover], [role='dialog']")).toBeNull();
+    },
+  );
 
   it("does not convert lists without exactly three questions", () => {
     const root = rootWith(`

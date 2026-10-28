@@ -447,7 +447,10 @@ defmodule DialecticWeb.GraphLiveTest do
     end
 
     test "renders activity as a readable actor, action, target, and time", %{conn: conn} do
-      user = user_fixture()
+      user =
+        user_fixture()
+        |> Ecto.Changeset.change(avatar_path: "/images/activity-avatar.png")
+        |> Dialectic.Repo.update!()
 
       graph =
         Dialectic.GraphFixtures.insert_graph(%{
@@ -468,6 +471,8 @@ defmodule DialecticWeb.GraphLiveTest do
         |> log_in_user(user)
         |> live(~p"/g/#{graph.slug}/graph?node=2")
 
+      view |> element("#graph-grid-history") |> render_click()
+
       assert has_element?(
                view,
                "#grid-activity-actor-#{log.id}",
@@ -476,6 +481,12 @@ defmodule DialecticWeb.GraphLiveTest do
 
       assert has_element?(view, "#grid-activity-log-#{log.id}", "asked a follow-up question")
       assert has_element?(view, "#grid-activity-time-#{log.id}[datetime]")
+      assert has_element?(view, "#grid-activity-actor-#{log.id}[href='/u/#{user.username}']")
+
+      assert has_element?(
+               view,
+               "#grid-activity-actor-#{log.id}-avatar[src='/images/activity-avatar.png']"
+             )
 
       assert has_element?(
                view,
@@ -536,9 +547,8 @@ defmodule DialecticWeb.GraphLiveTest do
       {:ok, view, _html} = setup_live_with_data(conn, source_text_graph_data())
 
       assert has_element?(view, "#node-title-header-1 #node-title-type-1", "Starting question")
-      assert has_element?(view, "#origin-onboarding-1", "Open the first response")
-      assert has_element?(view, "#origin-onboarding-1", "Ask from any idea")
-      refute has_element?(view, "#origin-onboarding-1-first-response")
+      assert has_element?(view, "#origin-quick-help", "How it works")
+      refute has_element?(view, "#origin-onboarding-1")
     end
 
     test "keeps whole-node and selected-passage inquiries in the shared action surface", %{
@@ -600,33 +610,41 @@ defmodule DialecticWeb.GraphLiveTest do
       assert has_element?(view, "#selection-actions-focus-selection-actions-end[tabindex='0']")
     end
 
-    test "surfaces explanation level and opens its settings", %{conn: conn} do
-      {:ok, view, _html} = setup_live(conn)
-
-      assert has_element?(view, "#graph-header #graph-workspace-bar-level", "Expanded")
+    test "explanation level appears in the question composer", %{conn: conn} do
+      {:ok, view, _html} = setup_live_with_data(conn, source_text_graph_data())
+      render_click(view, "node_clicked", %{"id" => "2"})
+      assert has_element?(view, "#global-chat-form-answer-level [role='listbox']")
+      assert has_element?(view, "#global-chat-form-answer-level-options[hidden]")
+      assert has_element?(view, "#global-chat-form-answer-level-toggle[aria-expanded='false']")
 
       assert has_element?(
                view,
-               "#graph-workspace-bar-level[popovertarget='graph-workspace-bar-level-options']"
+               "#global-chat-form-answer-level-university[aria-selected='true'] .hero-book-open"
              )
 
-      assert has_element?(view, "#right-panel", "Grid tools")
+      assert has_element?(
+               view,
+               "#global-chat-form-answer-level-hint",
+               "Applies to new AI answers"
+             )
+
+      refute has_element?(view, "#graph-header #graph-workspace-bar-level")
       assert has_element?(view, "#right-panel #grid-tools-presentation")
-      refute has_element?(view, "#graph-header #document-menu-present-document-menu")
-      assert has_element?(view, "#graph-workspace-bar-level-options", "Applies to new AI answers")
-      assert has_element?(view, "#graph-workspace-bar-level-university[aria-pressed='true']")
+      refute has_element?(view, "#global-chat-form-answer-level [popover]")
+      refute has_element?(view, "#global-chat-form-answer-level select")
+      assert has_element?(view, "#global-chat-form-answer-level-high_school .hero-light-bulb")
+      assert has_element?(view, "#global-chat-form-answer-level-expert .hero-academic-cap")
+
+      view
+      |> element("#global-chat-form-answer-level-high_school")
+      |> render_click()
+
+      assert_push_event(view, "answer_level_changed", %{mode: "high_school"})
 
       assert has_element?(
                view,
-               "#document-menu-settings-document-menu[aria-label='Open grid tools']"
+               "#global-chat-form-answer-level[data-prompt-mode='high_school']"
              )
-
-      render_click(view, "set_prompt_mode", %{"prompt_mode" => "high_school"})
-
-      assert has_element?(view, "#graph-workspace-bar-level", "Simple")
-      assert has_element?(view, "#graph-workspace-bar-level-high_school[aria-pressed='true']")
-      assert has_element?(view, "#tools-answer-level-high_school[aria-pressed='true']")
-      refute has_element?(view, "#answer-level-simple")
     end
 
     test "prompts signed-out users before changing to a restricted level", %{conn: conn} do
@@ -641,6 +659,7 @@ defmodule DialecticWeb.GraphLiveTest do
       render_click(view, "set_prompt_mode", %{"prompt_mode" => "expert"})
 
       assert has_element?(view, "#login-modal", "Login Required")
+      assert_push_event(view, "answer_level_changed", %{mode: "high_school"})
 
       assert Dialectic.DbActions.Graphs.get_graph_by_title(graph.title).prompt_mode ==
                "high_school"
@@ -654,25 +673,25 @@ defmodule DialecticWeb.GraphLiveTest do
 
       assert has_element?(
                view,
-               "#graph-follow-grid-button[aria-pressed='false'] .hero-bell-alert"
+               "#reader-tools-follow[aria-pressed='false'] .hero-bell"
              )
 
       view
-      |> element("#graph-follow-grid-button")
+      |> element("#reader-tools-follow")
       |> render_click()
 
       assert Follows.following_graph?(user, graph)
-      assert has_element?(view, "#graph-follow-grid-button[aria-pressed='true'] .hero-bell-solid")
+      assert has_element?(view, "#reader-tools-follow[aria-pressed='true'] .hero-bell")
 
       view
-      |> element("#graph-follow-grid-button")
+      |> element("#reader-tools-follow")
       |> render_click()
 
       refute Follows.following_graph?(user, graph)
 
       assert has_element?(
                view,
-               "#graph-follow-grid-button[aria-pressed='false'] .hero-bell-alert"
+               "#reader-tools-follow[aria-pressed='false'] .hero-bell"
              )
     end
 
@@ -698,7 +717,7 @@ defmodule DialecticWeb.GraphLiveTest do
       assert has_element?(view, "#grid-chat-form")
       assert has_element?(view, "#grid-chat-viewers[tabindex='0'][role='region']")
       assert has_element?(view, "#grid-chat-messages[tabindex='0'][role='region']")
-      assert has_element?(view, "#graph-workspace-bar-highlights", "Highlights")
+      assert has_element?(view, "#more-saved-highlights", "Saved highlights")
 
       view
       |> element("#grid-chat-form")

@@ -40,7 +40,7 @@ defmodule DialecticWeb.AboutLive do
               <div class="mt-4 flex flex-wrap gap-4 text-sm font-semibold">
                 <.link
                   id="about-start-grid-link"
-                  href={~p"/?focus=grid#start-here"}
+                  href={~p"/my/learning?new=true"}
                   class="hidden border-b border-slate-500 pb-0.5 hover:border-teal-700 hover:text-teal-800 md:inline-flex"
                 >
                   Start a grid

@@ -20,6 +20,7 @@ defmodule DialecticWeb.SettingsMenuComp do
         search_term={@search_term}
         search_results={@search_results}
         highlights={@highlights}
+        highlights_count={length(@highlights)}
         prompt_mode={@prompt_mode}
         following_graph?={@following_graph?}
         token={@token}

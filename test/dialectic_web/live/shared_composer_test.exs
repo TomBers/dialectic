@@ -55,6 +55,16 @@ defmodule DialecticWeb.SharedComposerTest do
       assert has_element?(view, "##{id}-ask[data-shortcut-action='ask']", "Ask AI")
       assert has_element?(view, "##{id} [aria-controls][aria-expanded]")
       assert has_element?(view, "##{id}-sharing-hint")
+      assert has_element?(view, "##{id}-primary-actions textarea")
+      assert has_element?(view, "##{id}-primary-actions ##{id}-ask")
+      assert has_element?(view, "##{id}-answer-level-options[hidden]")
+
+      assert has_element?(
+               view,
+               "##{id}-answer-level-toggle[aria-expanded='false'][aria-controls='#{id}-answer-level-options']"
+             )
+
+      assert has_element?(view, "##{id}-thinking-tools", "Explore this idea further")
 
       for platform <- ~w(mac other) do
         keycap =
@@ -77,7 +87,7 @@ defmodule DialecticWeb.SharedComposerTest do
                "#selection-input-form-selection-actions-tools-toolbar #selection-action-#{action}-selection-actions"
              )
 
-      refute has_element?(
+      assert has_element?(
                view,
                "#selection-tools-popover-selection-actions #selection-action-#{action}-selection-actions"
              )
@@ -112,6 +122,11 @@ defmodule DialecticWeb.SharedComposerTest do
              "#global-chat-form-learning-options #global-chat-form-guided-learning"
            )
 
+    assert has_element?(view, "#global-chat-form-learning-heading", "Guide my thinking")
+    assert has_element?(view, "#global-chat-form-learning-description", "key questions")
+    assert has_element?(view, "#node-tools-popover-2[hidden]")
+    assert has_element?(view, "#graph-node-actions-2 #graph-node-2-highlights")
+
     refute has_element?(view, "#global-chat-form details #global-chat-form-guided-learning")
   end
 
@@ -124,12 +139,12 @@ defmodule DialecticWeb.SharedComposerTest do
     assert has_element?(
              view,
              "#graph-bookmark-node-2[aria-label='Log in to bookmark'][title='Log in to bookmark']",
-             "Log in to bookmark"
+             "Save for later"
            )
   end
 
   for locked? <- [false, true] do
-    test "the tool group saves and removes bookmarks without submitting the draft (locked: #{locked?})",
+    test "the node header saves and removes bookmarks without submitting the draft (locked: #{locked?})",
          %{
            conn: conn,
            graph: graph,
@@ -142,14 +157,14 @@ defmodule DialecticWeb.SharedComposerTest do
 
       {:ok, view, _} = live(log_in_user(conn, user), ~p"/g/#{graph.slug}/graph?node=2")
       before_ids = GraphManager.vertices(graph.title)
-      button = "#global-chat-form-tools-toolbar #graph-bookmark-node-2"
+      button = "#node-title-header-2 #graph-bookmark-node-2"
 
       assert has_element?(
                view,
                "#{button}[type='button'][data-reader-shortcut='b'][aria-pressed='false']:not([disabled])"
              )
 
-      refute has_element?(view, "#node-title-header-2 #graph-bookmark-node-2")
+      refute has_element?(view, "#global-chat-form-tools-toolbar #graph-bookmark-node-2")
 
       assert has_element?(
                view,
@@ -163,7 +178,7 @@ defmodule DialecticWeb.SharedComposerTest do
       end
 
       view |> element(button) |> render_click()
-      assert has_element?(view, "#{button}[aria-pressed='true']", "Bookmarked")
+      assert has_element?(view, "#{button}[aria-pressed='true']", "Saved")
 
       assert has_element?(
                view,
@@ -171,13 +186,12 @@ defmodule DialecticWeb.SharedComposerTest do
              )
 
       assert has_element?(view, "#{button} .hero-bookmark-solid")
-      assert has_element?(view, "#{button} [data-shortcut-label='mac']", "⌥ ⇧ B")
-      assert has_element?(view, "#{button} [data-shortcut-label='other']", "Alt+Shift+B")
+      assert has_element?(view, "#{button}[aria-keyshortcuts='Alt+Shift+B']")
       assert Dialectic.DbActions.Notes.list_noted_node_ids(graph.title, user) == ["2"]
       refute_push_event(view, "scroll_to_top", %{})
 
       view |> element(button) |> render_click()
-      assert has_element?(view, "#{button}[aria-pressed='false']", "Bookmark")
+      assert has_element?(view, "#{button}[aria-pressed='false']", "Save for later")
       assert Dialectic.DbActions.Notes.list_noted_node_ids(graph.title, user) == []
       refute_push_event(view, "scroll_to_top", %{})
 
@@ -190,11 +204,11 @@ defmodule DialecticWeb.SharedComposerTest do
     end
   end
 
-  test "bookmark in the tool group prompts guests to sign in", %{conn: conn, graph: graph} do
+  test "bookmark in the node header prompts guests to sign in", %{conn: conn, graph: graph} do
     {:ok, view, _} = live(conn, ~p"/g/#{graph.slug}/graph?node=2")
     refute has_element?(view, "#login-modal")
 
-    view |> element("#global-chat-form-tools-toolbar #graph-bookmark-node-2") |> render_click()
+    view |> element("#node-title-header-2 #graph-bookmark-node-2") |> render_click()
 
     assert has_element?(view, "#login-modal")
     assert has_element?(view, "#graph-bookmark-node-2[aria-pressed='false']")

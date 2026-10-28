@@ -154,6 +154,57 @@ defmodule DialecticWeb.ReaderAnswerActionsTest do
     end
   end
 
+  test "suggested questions use their own answer context and open progress inline", %{
+    conn: conn,
+    graph: graph
+  } do
+    {:ok, view, _} = live(conn, ~p"/g/#{graph.slug}?node=3")
+    before_ids = GraphManager.vertices(graph.title)
+
+    assert has_element?(
+             view,
+             "#outline-markdown-body-2[data-follow-up-node-id='2'][data-enhance-follow-up-questions='true'][phx-update='ignore']"
+           )
+
+    render_click(view, "reply-and-answer", %{
+      "node_id" => "2",
+      "vertex" => %{"content" => "How can I practise this?"}
+    })
+
+    nodes = created(graph, before_ids)
+    question = Enum.find(nodes, &(&1.class == "question"))
+    answer = Enum.find(nodes, &(&1.class == "answer"))
+    assert question.content == "How can I practise this?"
+    assert Enum.map(question.parents, & &1.id) == ["2"]
+    assert_patch(view, ~p"/g/#{graph.slug}?node=#{answer.id}")
+    assert has_element?(view, "#reader-generation-status-#{answer.id}")
+
+    assert has_element?(
+             view,
+             "#outline-markdown-body-2[data-existing-follow-up-questions='[\"How can I practise this?\"]']"
+           )
+
+    assert_enqueued(
+      worker: Dialectic.Workers.LocalWorker,
+      args: %{graph: graph.title, to_node: answer.id}
+    )
+  end
+
+  test "suggested questions reject missing targets and empty input", %{conn: conn, graph: graph} do
+    {:ok, view, _} = live(conn, ~p"/g/#{graph.slug}?node=2")
+    before_ids = GraphManager.vertices(graph.title)
+
+    for {node_id, content} <- [{"missing", "Why?"}, {"1", "Why?"}, {"2", "  "}] do
+      render_click(view, "reply-and-answer", %{
+        "node_id" => node_id,
+        "vertex" => %{"content" => content}
+      })
+    end
+
+    assert GraphManager.vertices(graph.title) == before_ids
+    refute_enqueued(worker: Dialectic.Workers.LocalWorker, args: %{graph: graph.title})
+  end
+
   test "the reader discovers an answer started from the grid", %{conn: conn, graph: graph} do
     {:ok, grid, _} = live(conn, ~p"/g/#{graph.slug}/graph?node=2&focus=ask")
     before_ids = GraphManager.vertices(graph.title)
@@ -347,6 +398,16 @@ defmodule DialecticWeb.ReaderAnswerActionsTest do
     {:ok, view, _} = live(conn, ~p"/g/#{graph.slug}?node=2")
     refute has_element?(view, "#outline-reading-node-2-ask")
     before_ids = GraphManager.vertices(graph.title)
+
+    assert has_element?(
+             view,
+             "#outline-markdown-body-2[data-enhance-follow-up-questions='false']"
+           )
+
+    render_click(view, "reply-and-answer", %{
+      "node_id" => "2",
+      "vertex" => %{"content" => "Blocked suggestion"}
+    })
 
     send(
       view.pid,

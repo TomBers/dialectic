@@ -318,10 +318,10 @@ defmodule DialecticWeb.CoreComponents do
         <%= if @variant == "learning_plan" do %>
           <div class="min-w-0 flex-1">
             <div class="flex flex-wrap items-center gap-1.5">
-              <span class="text-xs font-semibold text-gray-800">{@label}</span>
-              <.icon name="hero-sparkles" class="h-3.5 w-3.5 text-gray-400" />
+              <span class="text-xs font-semibold text-slate-950">{@label}</span>
+              <.icon name="hero-sparkles" class="h-3.5 w-3.5 text-teal-800" />
             </div>
-            <p :if={@description} class="mt-0.5 text-[11px] leading-4 text-gray-500">
+            <p :if={@description} class="mt-0.5 text-[11px] leading-4 text-slate-700">
               {@description}
             </p>
           </div>
@@ -343,7 +343,7 @@ defmodule DialecticWeb.CoreComponents do
                 class="peer sr-only"
                 {@rest}
               />
-              <div class="h-6 w-11 rounded-full bg-gray-300 transition peer-checked:bg-indigo-500 peer-focus-visible:ring-2 peer-focus-visible:ring-indigo-500 peer-focus-visible:ring-offset-2">
+              <div class="h-6 w-11 rounded-full bg-stone-400 transition peer-checked:bg-teal-800 peer-focus-visible:ring-2 peer-focus-visible:ring-teal-700 peer-focus-visible:ring-offset-2">
               </div>
               <div class="pointer-events-none absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-transform peer-checked:translate-x-5">
               </div>
@@ -368,13 +368,24 @@ defmodule DialecticWeb.CoreComponents do
   end
 
   def input(%{type: "select"} = assigns) do
+    assigns =
+      assign(
+        assigns,
+        :select_class,
+        if(assigns.class == @default_input_class,
+          do:
+            "mt-2 block w-full rounded-md border border-gray-300 bg-white shadow-sm focus:border-zinc-400 focus:ring-0 sm:text-sm",
+          else: assigns.class
+        )
+      )
+
     ~H"""
     <div>
       <.label for={@id}>{@label}</.label>
       <select
         id={@id}
         name={@name}
-        class="mt-2 block w-full rounded-md border border-gray-300 bg-white shadow-sm focus:border-zinc-400 focus:ring-0 sm:text-sm"
+        class={@select_class}
         multiple={@multiple}
         {@rest}
       >
@@ -641,6 +652,12 @@ defmodule DialecticWeb.CoreComponents do
   def icon(%{name: "hero-" <> _} = assigns) do
     ~H"""
     <span title={@tooltip} class={[@name, @class]} />
+    """
+  end
+
+  def icon(%{name: "brand-" <> _} = assigns) do
+    ~H"""
+    <span aria-hidden="true" title={@tooltip} class={[@name, @class]} />
     """
   end
 
