@@ -89,8 +89,19 @@ defmodule DialecticWeb.WorkspaceSettings do
       end
 
     case result do
-      {:ok, graph} -> assign(socket, graph_struct: graph, can_edit: !graph.is_locked)
-      {:error, _} -> put_flash(socket, :error, "Only the grid owner can change access settings.")
+      {:ok, graph} ->
+        assign(socket,
+          graph_struct: graph,
+          can_edit:
+            Dialectic.DbActions.Sharing.can_edit?(
+              socket.assigns[:current_user],
+              graph,
+              socket.assigns[:token]
+            )
+        )
+
+      {:error, _} ->
+        put_flash(socket, :error, "Only the grid owner can change access settings.")
     end
   end
 end

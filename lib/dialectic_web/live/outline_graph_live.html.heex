@@ -559,7 +559,10 @@
                         </p>
                       <% else %>
                         <p class="mt-3 text-xs font-medium text-amber-200/90">
-                          This grid is read only, so only the owner can continue it in the editor.
+                          {if(@graph_struct.is_locked,
+                            do: "The owner has turned off contributions to this grid.",
+                            else: "Sign in or create an account to continue the discussion."
+                          )}
                         </p>
                       <% end %>
                     </div>
@@ -579,6 +582,11 @@
                   </div>
                 </section>
             <% end %>
+
+            <DialecticWeb.WorkspaceBarComp.contribution_sign_in
+              :if={!@current_user && !@graph_struct.is_locked}
+              id="reader-contribution-sign-in"
+            />
 
             <% inactive_branches = Enum.reject(@compare_branches, & &1.active?) %>
             <% compare_section_hidden? =

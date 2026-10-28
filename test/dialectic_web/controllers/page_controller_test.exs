@@ -2,6 +2,31 @@ defmodule DialecticWeb.PageControllerTest do
   use DialecticWeb.ConnCase
   import Dialectic.GraphFixtures
 
+  test "guests cannot generate grid tags", %{conn: conn} do
+    graph = insert_graph(%{title: "Guest tag request"})
+
+    conn = post(conn, ~p"/graphs/#{graph.title}/generate_tags")
+
+    assert redirected_to(conn) == ~p"/users/log_in"
+    assert Phoenix.Flash.get(conn.assigns.flash, :error) =~ "Sign in or create an account"
+    assert Dialectic.Repo.reload!(graph).tags == graph.tags
+  end
+
+  test "signed-in viewers cannot generate tags for inaccessible or locked grids", %{conn: conn} do
+    user = Dialectic.AccountsFixtures.user_fixture()
+
+    for attrs <- [%{is_public: false}, %{is_locked: true}] do
+      graph =
+        insert_graph(
+          Map.put(attrs, :title, "Restricted tags #{System.unique_integer([:positive])}")
+        )
+
+      response = conn |> log_in_user(user) |> post(~p"/graphs/#{graph.title}/generate_tags")
+      assert response(response, 403)
+      assert Dialectic.Repo.reload!(graph).tags == graph.tags
+    end
+  end
+
   test "retired reader routes return 404 while the current reader remains available", %{
     conn: conn
   } do

@@ -109,7 +109,11 @@ defmodule DialecticWeb.InquiryActionsComp do
 
     ~H"""
     <div id={"#{@id}-content"} class="min-w-0">
-      <div data-keyboard-composer class="space-y-2.5 scroll-mt-6 scroll-mb-6">
+      <DialecticWeb.WorkspaceBarComp.contribution_sign_in
+        :if={!@current_user}
+        id={"#{@id}-sign-in"}
+      />
+      <div :if={@current_user} data-keyboard-composer class="space-y-2.5 scroll-mt-6 scroll-mb-6">
         <div
           :if={!@highlight_only}
           id={

@@ -190,7 +190,7 @@ defmodule DialecticWeb.AskFormComp do
           id={"#{@id}-guest-access"}
           class="mt-3 text-xs leading-5 text-slate-600"
         >
-          Try asking a question or posting a thought as a guest.
+          Reading is available without an account.
           <.link
             href={~p"/users/log_in"}
             class="font-semibold text-teal-800 underline underline-offset-2"
@@ -200,7 +200,7 @@ defmodule DialecticWeb.AskFormComp do
             href={~p"/users/register"}
             class="font-semibold text-teal-800 underline underline-offset-2"
           >create an account</.link>
-          to save bookmarks, highlight passages, and add personal learning plans.
+          to ask questions, post thoughts, save bookmarks and highlight passages.
         </p>
 
         <section

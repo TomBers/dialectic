@@ -44,9 +44,11 @@ defmodule DialecticWeb.OutlineGraphLive do
         token_param = Map.get(params, "token")
 
         has_access =
-          Dialectic.DbActions.Sharing.can_access?(socket.assigns[:current_user], graph_db) or
-            (is_binary(token_param) and is_binary(graph_db.share_token) and
-               Plug.Crypto.secure_compare(token_param, graph_db.share_token))
+          Dialectic.DbActions.Sharing.can_access?(
+            socket.assigns[:current_user],
+            graph_db,
+            token_param
+          )
 
         if has_access do
           try do
@@ -752,7 +754,12 @@ defmodule DialecticWeb.OutlineGraphLive do
       reader_appearance_status: nil,
       token: token_param,
       nav_params: token_params(token_param),
-      can_edit: !graph_db.is_locked,
+      can_edit:
+        Dialectic.DbActions.Sharing.can_edit?(
+          socket.assigns[:current_user],
+          graph_db,
+          token_param
+        ),
       outline_nodes: outline_nodes,
       contributor_names: contributor_names(outline_nodes),
       new_thought_ids: [],

@@ -15,9 +15,7 @@ defmodule DialecticWeb.HighlightController do
       is_nil(graph) ->
         {:error, :not_found}
 
-      Dialectic.DbActions.Sharing.can_access?(current_user, graph) or
-          (is_binary(token_param) and is_binary(graph.share_token) and
-             Plug.Crypto.secure_compare(token_param, graph.share_token)) ->
+      Dialectic.DbActions.Sharing.can_access?(current_user, graph, token_param) ->
         criteria = [mudg_id: mudg_id]
 
         criteria =

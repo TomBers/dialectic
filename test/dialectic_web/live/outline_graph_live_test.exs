@@ -429,7 +429,7 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
 
   test "follow-up action opens and focuses the existing answer composer", %{conn: conn} do
     graph = create_graph()
-    {:ok, view, _} = live(conn, ~p"/g/#{graph.slug}")
+    {:ok, view, _} = live(log_in_user(conn, user_fixture()), ~p"/g/#{graph.slug}")
     refute has_element?(view, "#reading-node-2 > button")
     assert has_element?(view, "#reader-node-actions-2 #outline-reading-node-2-ask")
     assert has_element?(view, "#reader-reading-tools-2 #reader-bookmark-node-2")
@@ -781,9 +781,10 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
     assert has_element?(view, "#reading-node-4[data-reading-selected='true']")
     assert has_element?(view, "#reading-node-5")
     assert has_element?(view, "#outline-end-state")
-    assert has_element?(view, "#outline-end-follow-up")
+    refute has_element?(view, "#outline-end-follow-up")
+    assert has_element?(view, "#reader-contribution-sign-in")
 
-    assert has_element?(
+    refute has_element?(
              view,
              ~s(#outline-end-follow-up[phx-value-id="5"])
            )

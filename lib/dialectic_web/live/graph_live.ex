@@ -177,9 +177,9 @@ defmodule DialecticWeb.GraphLive do
         socket =
           socket
           |> assign_defaults()
+          |> assign(token: params["token"])
           |> subscribe_to_topics(graph_title)
           |> assign_graph_data(graph_db, graph_struct, node, graph_title, user)
-          |> assign(token: params["token"])
           |> handle_initial_highlight(initial_highlight_id)
 
         {:ok, assign(socket, mobile_inquiry?: params["focus"] == "ask"), layout: false}
@@ -413,7 +413,12 @@ defmodule DialecticWeb.GraphLive do
            socket.assigns.current_user
          ) do
       {:ok, graph_struct} ->
-        can_edit = !graph_struct.is_locked
+        can_edit =
+          Dialectic.DbActions.Sharing.can_edit?(
+            socket.assigns[:current_user],
+            graph_struct,
+            socket.assigns[:token]
+          )
 
         {:noreply,
          socket
@@ -2802,9 +2807,7 @@ defmodule DialecticWeb.GraphLive do
         token_param = Map.get(params, "token")
 
         has_access =
-          Dialectic.DbActions.Sharing.can_access?(user, graph_db) or
-            (is_binary(token_param) and is_binary(graph_db.share_token) and
-               Plug.Crypto.secure_compare(token_param, graph_db.share_token))
+          Dialectic.DbActions.Sharing.can_access?(user, graph_db, token_param)
 
         if has_access do
           try do
@@ -2978,7 +2981,14 @@ defmodule DialecticWeb.GraphLive do
 
   defp assign_graph_data(socket, graph_db, graph_struct, node, graph_id, user) do
     changeset = GraphActions.create_new_node(user) |> Vertex.changeset()
-    can_edit = !graph_struct.is_locked
+
+    can_edit =
+      Dialectic.DbActions.Sharing.can_edit?(
+        socket.assigns[:current_user],
+        graph_struct,
+        socket.assigns[:token]
+      )
+
     {nav_up, nav_down, nav_left, nav_right} = compute_nav_flags(graph_id, node)
 
     base_url = DialecticWeb.Endpoint.url()

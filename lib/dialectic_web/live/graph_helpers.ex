@@ -236,11 +236,11 @@ defmodule DialecticWeb.GraphHelpers do
     node = GraphActions.find_node(socket.assigns.graph_id, node_id)
 
     cond do
-      !socket.assigns.can_edit ->
-        {:error, "This graph is locked"}
-
       is_nil(socket.assigns.current_user) ->
         {:error, "Sign in to use passage actions. Your draft will stay here."}
+
+      !socket.assigns.can_edit ->
+        {:error, "This graph is locked"}
 
       is_nil(node) || Map.get(node, :deleted, false) ->
         {:error, "Choose an existing response to continue."}
@@ -281,8 +281,8 @@ defmodule DialecticWeb.GraphHelpers do
   """
   def check_selection_action_allowed(socket) do
     cond do
-      not socket.assigns.can_edit -> {:error, :locked}
       socket.assigns.current_user == nil -> {:error, :unauthenticated}
+      not socket.assigns.can_edit -> {:error, :locked}
       true -> :ok
     end
   end

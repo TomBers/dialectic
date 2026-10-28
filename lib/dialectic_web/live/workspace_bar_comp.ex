@@ -3,6 +3,31 @@ defmodule DialecticWeb.WorkspaceBarComp do
   alias DialecticWeb.ColUtils
   import DialecticWeb.ActivityComponents, only: [activity_actor: 1]
 
+  attr :id, :string, required: true
+
+  def contribution_sign_in(assigns) do
+    ~H"""
+    <section id={@id} class="rounded-xl border border-stone-300 bg-[#f4f1e9] p-4">
+      <h3 class="text-sm font-semibold text-slate-950">Continue your thinking</h3>
+      <p class="mt-1 text-sm leading-6 text-slate-700">
+        Anyone can read this grid. Sign in to ask questions, post thoughts and use the thinking tools.
+      </p>
+      <div class="mt-3 flex flex-wrap items-center gap-4">
+        <.link
+          id={@id <> "-register"}
+          href={~p"/users/register"}
+          class="inline-flex min-h-11 items-center justify-center rounded-lg bg-teal-800 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-800"
+        >Create a free account</.link>
+        <.link
+          id={@id <> "-login"}
+          href={~p"/users/log_in"}
+          class="inline-flex min-h-11 items-center text-sm font-semibold text-teal-800 underline underline-offset-4"
+        >Sign in</.link>
+      </div>
+    </section>
+    """
+  end
+
   attr :mode, :atom, required: true, values: [:reader, :graph]
   attr :graph_struct, :map, required: true
   attr :node_id, :string, default: nil

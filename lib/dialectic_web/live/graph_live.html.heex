@@ -869,9 +869,12 @@
         <.icon name="hero-chat-bubble-left-right" class="h-5 w-5" /><span>Ask</span>
       </.link>
       <span
-        :if={!@can_edit}
+        :if={!@can_edit && @current_user}
         class="flex flex-col items-center justify-center gap-1 text-xs text-slate-400"
       ><.icon name="hero-lock-closed" class="h-5 w-5" />Read only</span>
+      <.link :if={!@current_user} id="graph-mobile-sign-in" href={~p"/users/log_in"}>
+        <.icon name="hero-user" class="h-5 w-5" /><span>Sign in</span>
+      </.link>
       <button
         id="graph-mobile-more"
         type="button"

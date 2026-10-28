@@ -40,7 +40,7 @@ defmodule DialecticWeb.NodeComp do
        graph_struct: Map.get(assigns, :graph_struct),
        graph_owner_id: Map.get(assigns, :graph_owner_id),
        current_user: Map.get(assigns, :current_user),
-       can_edit: Map.get(assigns, :can_edit, true),
+       can_edit: Map.get(assigns, :can_edit, false),
        node_highlights: Map.get(assigns, :node_highlights, []),
        node_highlights_open:
          node_id == Map.get(socket.assigns, :node_id) &&
@@ -549,6 +549,10 @@ defmodule DialecticWeb.NodeComp do
                           phx-click="open_help_modal"
                           class="mt-2 min-h-11 font-semibold text-teal-800 hover:underline"
                         >How it works</button>
+                        <DialecticWeb.WorkspaceBarComp.contribution_sign_in
+                          :if={!@current_user}
+                          id={"node-inquiry-actions-#{@node.id}-sign-in"}
+                        />
                       </div>
                     </div>
                   <% else %>

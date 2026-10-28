@@ -17,11 +17,11 @@ defmodule DialecticWeb.LockComp do
               <.icon
                 name="hero-lock-closed"
                 class="h-3.5 w-3.5 text-gray-400"
-                tooltip="When editing is on, anyone with access can add to this grid."
+                tooltip="When editing is on, signed-in people with access can add to this grid."
               />
             </div>
             <p class="mt-0.5 text-[11px] leading-4 text-gray-500">
-              On allows anyone with access to contribute.
+              On allows signed-in people with access to contribute.
             </p>
           </div>
 

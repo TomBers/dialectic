@@ -13,6 +13,88 @@ defmodule DialecticWeb.GraphAccessTest do
     %{owner: owner, graph: graph}
   end
 
+  test "guests can read and share both views but cannot submit grid changes", %{
+    conn: conn,
+    graph: graph
+  } do
+    GraphManager.get_graph(graph.title)
+
+    response =
+      GraphManager.add_node(graph.title, %Dialectic.Graph.Vertex{
+        class: "answer",
+        content: "A response anyone can read"
+      })
+
+    GraphManager.add_edges(graph.title, response, [GraphManager.find_node_by_id(graph.title, "1")])
+
+    GraphManager.save_graph(graph.title)
+    before_ids = GraphManager.vertices(graph.title)
+
+    for {path, prefix, prompt_id} <- [
+          {~p"/g/#{graph.slug}?node=#{response.id}", "reader", "reader-contribution-sign-in"},
+          {~p"/g/#{graph.slug}/graph?node=#{response.id}", "graph",
+           "node-inquiry-actions-#{response.id}-sign-in"}
+        ] do
+      {:ok, view, _} = live(conn, path)
+      assert has_element?(view, "##{prefix}-workspace-bar-share")
+      assert has_element?(view, "##{prompt_id}-register[href='/users/register']")
+      refute has_element?(view, "#global-chat-form")
+
+      for {event, params} <-
+            [
+              {"answer", %{"vertex" => %{"content" => "A guest thought"}}},
+              {"reply-and-answer", %{"vertex" => %{"content" => "A guest question"}}},
+              {"node:join_group", %{"node" => response.id, "parent" => "forged-group"}},
+              {"node:leave_group", %{"node" => response.id}},
+              {"start_stream", %{"title" => "Guest stream"}},
+              {"node_regenerate", %{"id" => response.id}},
+              {"set_prompt_mode", %{"prompt_mode" => "high_school"}}
+            ] ++
+              Enum.map(
+                ~w(branch_list submit_guided_paths apply_guided_next_action submit_explore_modal
+                 node_branch node_combine node_related_ideas node_clarify node_assumptions
+                 node_counterexample node_implications node_blind_spots node_says_who
+                 node_who_disagrees node_steel_man node_what_if delete_node node_move
+                 delete_stream execute_combine),
+                &{&1, %{}}
+              ) do
+        render_click(view, event, params)
+        assert has_element?(view, "#flash-error", "Sign in or create an account")
+        assert GraphManager.vertices(graph.title) == before_ids
+        assert GraphManager.vertex_label(graph.title, response.id).parent == response.parent
+        assert Repo.reload!(graph).prompt_mode == graph.prompt_mode
+      end
+    end
+  end
+
+  test "a private share link grants viewing without granting guest editing", %{
+    conn: conn,
+    graph: graph,
+    owner: owner
+  } do
+    {:ok, graph} = Graphs.toggle_graph_public(graph, owner)
+    contributor = user_fixture()
+
+    refute Sharing.can_access?(nil, graph, nil)
+    refute Sharing.can_access?(nil, graph, "wrong-token")
+    assert Sharing.can_access?(nil, graph, graph.share_token)
+    refute Sharing.can_edit?(nil, graph, graph.share_token)
+    assert Sharing.can_edit?(contributor, graph, graph.share_token)
+    refute Sharing.can_edit?(contributor, graph)
+
+    for path <- [~p"/g/#{graph.slug}", ~p"/g/#{graph.slug}/graph"] do
+      assert {:error, {:redirect, %{to: "/"}}} = live(conn, path)
+      {:ok, view, _} = live(conn, path <> "?token=#{graph.share_token}")
+      render_click(view, "node:join_group", %{"node" => "1", "parent" => "forged-group"})
+      assert has_element?(view, "#flash-error", "Sign in or create an account")
+      assert GraphManager.vertex_label(graph.title, "1").parent == nil
+    end
+
+    deleted = %{graph | is_deleted: true}
+    refute Sharing.can_access?(owner, deleted, graph.share_token)
+    refute Sharing.can_edit?(owner, deleted, graph.share_token)
+  end
+
   test "reader and grid headers keep the same controls and layout", %{
     conn: conn,
     owner: owner,
@@ -229,7 +311,7 @@ defmodule DialecticWeb.GraphAccessTest do
     owner: owner,
     graph: graph
   } do
-    {:ok, visitor, _html} = live(conn, ~p"/g/#{graph.slug}/graph")
+    {:ok, visitor, _html} = live(log_in_user(conn, user_fixture()), ~p"/g/#{graph.slug}/graph")
     {:ok, owner_view, _html} = live(log_in_user(conn, owner), ~p"/g/#{graph.slug}/graph")
 
     response =
@@ -261,6 +343,10 @@ defmodule DialecticWeb.GraphAccessTest do
 
     assert has_element?(visitor, "#flash-error", "locked")
     assert length(GraphManager.vertices(graph.title)) == count
+
+    render_click(visitor, "node:join_group", %{"node" => response.id, "parent" => "forged-group"})
+    assert has_element?(visitor, "#flash-error", "locked")
+    assert GraphManager.vertex_label(graph.title, response.id).parent == response.parent
 
     render_click(owner_view, "toggle_lock_graph")
     refute Repo.reload!(graph).is_locked
