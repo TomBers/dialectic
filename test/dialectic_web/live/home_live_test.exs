@@ -70,7 +70,7 @@ defmodule DialecticWeb.HomeLiveTest do
              "Product" in List.wrap(Map.get(entity, "@type"))
            end)
 
-    assert length(faq_page["mainEntity"]) == 6
+    assert length(faq_page["mainEntity"]) == 12
 
     assert Enum.any?(faq_page["mainEntity"], fn question ->
              question["name"] == "What are the AI usage limits?" and
@@ -411,8 +411,26 @@ defmodule DialecticWeb.HomeLiveTest do
     refute has_element?(view, "#home-concerns details")
     refute has_element?(view, "#home-faq-sources")
     refute has_element?(view, "#home-faq-chat-assistants")
-    refute has_element?(view, "#home-ai-limits-faq details:nth-child(4)")
+    refute has_element?(view, "#home-ai-limits-faq details:nth-child(10)")
     refute has_element?(view, "#new-idea-level-step")
+  end
+
+  test "practical questions cover ongoing exploration and the former About introduction", %{
+    conn: conn
+  } do
+    {:ok, view, _html} = live(conn, ~p"/")
+
+    for id <-
+          ~w(complex-questions recall organise-learning thinking-tools who-is-it-for community-contributions) do
+      assert has_element?(view, "#home-ai-limits-faq #home-faq-#{id} > summary")
+    end
+
+    assert has_element?(view, "#home-faq-complex-questions p", "a day, a month or a year later")
+    assert has_element?(view, "#home-faq-complex-questions p", "Grid history")
+    assert has_element?(view, "#home-faq-recall p", "Try explaining an idea")
+    assert has_element?(view, "#home-faq-organise-learning p", "Collections")
+    assert has_element?(view, "#home-faq-thinking-tools p", "Philosophy for All")
+    assert has_element?(view, "#home-faq-who-is-it-for p", "Journalists and writers")
   end
 
   test "all answer levels are included with a free account", %{conn: conn} do

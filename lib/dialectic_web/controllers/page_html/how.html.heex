@@ -14,10 +14,10 @@
       <div class="mt-8 flex flex-wrap gap-3">
         <a
           id="guide-start-grid-link"
-          href="/?focus=grid#start-here"
+          href={~p"/my/learning?new=true"}
           class="inline-flex items-center gap-2 rounded-md bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
         >
-          Start a grid <.icon name="hero-arrow-right" class="h-4 w-4" />
+          Create a grid <.icon name="hero-arrow-right" class="h-4 w-4" />
         </a>
         <a
           href="#guide-flow"
@@ -59,7 +59,7 @@
           </h2>
         </div>
         <p class="max-w-xl leading-7 text-slate-300 lg:justify-self-end">
-          Each question starts from an idea already in the grid, so the link stays clear. You choose what to explore next.
+          Start with your own question or build on a community grid. Follow the ideas that interest you and return as your understanding develops.
         </p>
       </div>
 
@@ -69,7 +69,7 @@
           {"2", "read", "Read", "See the answer and what led to it.", "border-cyan-300/40 bg-cyan-300/10 text-cyan-200"},
           {"3", "branch", "Branch", "Ask AI or add your own idea.", "border-violet-300/40 bg-violet-300/10 text-violet-200"},
           {"4", "examine", "Examine", "Check the idea from more than one side.", "border-rose-300/40 bg-rose-300/10 text-rose-200"},
-          {"5", "keep", "Keep", "Star ideas and save passages.", "border-amber-300/40 bg-amber-300/10 text-amber-200"},
+          {"5", "keep", "Keep", "Save ideas and highlight passages.", "border-amber-300/40 bg-amber-300/10 text-amber-200"},
           {"6", "share", "Share", "Edit together or publish.", "border-emerald-300/40 bg-emerald-300/10 text-emerald-200"}
         ] do %>
           <li
@@ -103,7 +103,7 @@
           What would you like to explore?
         </h2>
         <p class="mt-3 leading-7 text-slate-600">
-          Choose a prompt or start with your own. Questions can be practical, philosophical, or simply awkward to ask aloud.
+          Create a free account, open My Learning and choose <strong>Create a grid</strong>. Start with your own question or one of the examples below. You can also explore community grids and build on an idea someone else has started.
         </p>
       </div>
       <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -116,7 +116,7 @@
           {"What should concern us as AI becomes more common?", "Technology", "What should concern us most as AI becomes more common?"}
         ] do %>
           <a
-            href={"/?#{URI.encode_query(%{"initial_prompt" => prompt, "focus" => "grid"})}#start-here"}
+            href={~p"/my/learning?#{%{new: true, initial_prompt: prompt}}"}
             class="group border border-stone-300 border-l-4 border-l-teal-700 bg-white p-5 shadow-sm transition hover:border-slate-500"
           >
             <p class="text-xs font-semibold uppercase tracking-wide text-teal-700">{category}</p>
@@ -130,7 +130,9 @@
         <% end %>
       </div>
       <p id="guide-new-grid-privacy" class="mt-4 text-xs leading-5 text-slate-600">
-        New grids are public and editable by default. Anyone can read them and, while editing is on, contribute. Sign in before creating one if you want to control access in Settings, and never include sensitive details.
+        Grids created in My Learning start private. Visibility is a separate choice: use
+        <strong>Share</strong>
+        when you are ready to invite people or make a grid public. Anyone with access can read without an account; contributing requires signing in and an unlocked grid.
       </p>
       <div class="mt-5 border border-stone-300 bg-white p-5 sm:flex sm:items-center sm:justify-between sm:gap-5">
         <div>
@@ -141,7 +143,7 @@
         </div>
         <a
           id="guide-own-question-link"
-          href="/?focus=grid#start-here"
+          href={~p"/my/learning?new=true"}
           class="mt-4 inline-flex shrink-0 items-center justify-center gap-2 rounded-md bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 sm:mt-0"
         >
           <.icon name="hero-plus" class="h-4 w-4" /> Ask your own question
@@ -153,9 +155,14 @@
       >
         <.icon name="hero-adjustments-horizontal" class="mt-0.5 h-5 w-5 shrink-0 text-indigo-700" />
         <div>
-          <h3 class="text-sm font-semibold text-slate-950">Choose the explanation level</h3>
+          <h3 class="text-sm font-semibold text-slate-950">
+            Adjust the next AI answer if needed
+          </h3>
           <p class="mt-1 text-sm leading-6 text-slate-600">
-            Set the grid to <strong>Simple</strong>, <strong>Expanded</strong>, or <strong>In-depth</strong>. New AI answers use that language and depth. Change it later under <strong>Grid tools → Answer level</strong>.
+            Choose <strong>Simple</strong>, <strong>Expanded</strong>, or
+            <strong>In-depth</strong>
+            when creating a grid. Later, select the level beside <strong>Ask AI</strong>
+            to see the options and descriptions inline. It applies to new answers, so you can leave it alone until you need a different depth.
           </p>
         </div>
       </div>
@@ -203,13 +210,14 @@
           <li class="flex gap-3">
             <.icon name="hero-magnifying-glass" class="mt-1 h-4 w-4 shrink-0 text-teal-700" />
             <span>
-              <strong>Switch to Read</strong> to follow one clear path.
+              <strong>Switch between Read and Grid</strong>
+              using the top bar. Read follows a conversation; Grid shows how the ideas connect. In Read, hide the outline when you want more room for the answer.
             </span>
           </li>
           <li id="guide-translate-node" class="flex gap-3">
             <.icon name="hero-language" class="mt-1 h-4 w-4 shrink-0 text-teal-700" />
             <span>
-              <strong>Translate the current idea</strong> under Settings → Translate.
+              <strong>Translate the current idea</strong> under More → Translate this idea.
             </span>
           </li>
           <li id="guide-search-grid" class="flex gap-3">
@@ -218,11 +226,11 @@
               <strong>Search the whole grid</strong> from the top bar or press <kbd>⌘K</kbd>.
             </span>
           </li>
-          <li id="guide-group-grid" class="flex gap-3">
+          <li id="guide-follow-thread" class="flex gap-3">
             <.icon name="hero-folder" class="mt-1 h-4 w-4 shrink-0 text-teal-700" />
             <span>
-              <strong>Group large branches</strong>
-              under Settings → Collaboration, then focus on one group at a time.
+              <strong>Follow one thread</strong>
+              from the outline in Read, or select a connected idea in Grid to explore another branch.
             </span>
           </li>
         </ul>
@@ -239,7 +247,10 @@
           Choose how to go deeper.
         </h2>
         <p class="mt-3 leading-7 text-slate-600">
-          Start from the idea you are reading. Ask AI or add the next step yourself.
+          Sign in and start from the idea you are reading. Write a question or thought in the response form, then choose
+          <strong>Ask AI</strong>
+          for an answer or <strong>Post thought</strong>
+          to add your own contribution. On a locked grid, you can read but cannot contribute.
         </p>
       </div>
       <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -258,7 +269,7 @@
               name="hero-chat-bubble-bottom-center-text"
               class="h-5 w-5 shrink-0 text-teal-600"
             />
-            <h3 class="text-base font-semibold">Comment</h3>
+            <h3 class="text-base font-semibold">Post thought</h3>
           </div>
           <p class="mt-2 text-sm leading-6 text-slate-600">
             Add your own point, concern, example, or question.
@@ -270,7 +281,7 @@
             <h3 class="text-base font-semibold">Select a phrase</h3>
           </div>
           <p class="mt-2 text-sm leading-6 text-slate-600">
-            Open focused actions for one sentence or idea.
+            Highlight text to ask about a particular phrase or save the passage.
           </p>
         </article>
         <article class="border-t-4 border-indigo-600 bg-white p-5 shadow-sm">
@@ -282,6 +293,15 @@
             Explore nearby topics and new directions.
           </p>
         </article>
+      </div>
+      <div id="guide-learning-plan" class="mt-5 border border-stone-300 bg-white p-5">
+        <h3 class="flex items-center gap-2 text-base font-semibold">
+          <.icon name="hero-academic-cap" class="h-5 w-5 text-teal-800" /> Guide my thinking
+        </h3>
+        <p class="mt-2 text-sm leading-6 text-slate-600">
+          Want help deciding what to ask next? Select <strong>Add a learning plan</strong>
+          before asking AI. It suggests key questions to examine the idea and develop your understanding, much like a critical-thinking teacher. Suggested follow-up questions appear as buttons in both Read and Grid.
+        </p>
       </div>
     </section>
 
@@ -301,7 +321,7 @@
           Use the critical-thinking tools.
         </h2>
         <p class="mt-3 leading-7 text-slate-300">
-          Select an idea or passage, then choose how you want to check it.
+          Below the response form, select <strong>Show thinking tools</strong>. The tools expand inline: choose a way to examine the idea or a selected passage. Start with your own question whenever you already know what you want to ask.
         </p>
       </div>
 
@@ -374,7 +394,8 @@
         <div>
           <h3 class="font-serif text-xl font-semibold">Bring two ideas together.</h3>
           <p class="mt-1 max-w-3xl text-sm leading-6 text-slate-300">
-            Choose <strong class="text-white">Connect another idea</strong>, then select a second node. RationalGrid creates a synthesis while keeping both original paths attached.
+            Choose <strong class="text-white">Synthesis</strong>
+            from the thinking tools, then select a second idea. RationalGrid creates a synthesis while keeping both original paths attached.
           </p>
         </div>
       </div>
@@ -393,16 +414,18 @@
           Build a trail back to useful ideas.
         </h2>
         <p class="mt-3 leading-7 text-slate-600">
-          Save whole ideas or exact passages as you read. Your profile keeps them together so you can return and see the original text.
+          Save whole ideas or exact passages as you read. My Learning keeps them together so you can return to the original text, test what you remember and continue exploring.
         </p>
         <div class="mt-5 grid gap-3">
           <div id="guide-bookmark-nodes" class="border-t-2 border-amber-600 bg-white p-4">
             <div class="flex items-center gap-2">
               <.icon name="hero-bookmark" class="h-5 w-5 shrink-0 text-amber-600" />
-              <h3 class="text-sm font-semibold">Bookmark an idea</h3>
+              <h3 class="text-sm font-semibold">Save an idea for later</h3>
             </div>
             <p class="mt-1 text-xs leading-5 text-slate-600">
-              Select the bookmark beside an idea. It appears with that grid in your <strong>saved thinking</strong>, where you can jump back to it.
+              Select <strong>Save for later</strong>
+              at the top of an answer. Find it again in <strong>My Learning → Bookmarks</strong>
+              and jump back to its place in the grid.
             </p>
           </div>
           <div id="guide-save-highlights" class="border-t-2 border-indigo-600 bg-white p-4">
@@ -411,9 +434,8 @@
               <h3 class="text-sm font-semibold">Highlight a passage</h3>
             </div>
             <p class="mt-1 text-xs leading-5 text-slate-600">
-              Select text and choose <strong>Save as a highlight</strong>. The quote, source, and any note are stored under
-              <strong>Quotes and notes</strong>
-              on your profile.
+              Select text and choose <strong>Highlight</strong>. Use <strong>Highlights</strong>
+              at the top of the answer to expand its saved passages inline, or find them in <strong>My Learning → Highlights</strong>. This works the same way in Read and Grid.
             </p>
           </div>
           <div id="guide-export-grid" class="border-t-2 border-sky-600 bg-white p-4">
@@ -422,7 +444,7 @@
               <h3 class="text-sm font-semibold">Export the grid</h3>
             </div>
             <p class="mt-1 text-xs leading-5 text-slate-600">
-              Under <strong>Settings → Export</strong>, download the grid for your notes, as an image to share, or as data for other tools.
+              Under <strong>More → Download</strong>, export Markdown for your notes or JSON for other tools. Grid also offers an image download.
             </p>
           </div>
         </div>
@@ -465,7 +487,7 @@
 
       <ol class="grid gap-px overflow-hidden border border-slate-700 bg-slate-700 sm:grid-cols-3">
         <%= for {number, title, copy} <- [
-          {"01", "Choose", "Select Present, then click the nodes you want to show."},
+          {"01", "Choose", "On desktop, open Grid → More → Presentation, then select the ideas you want to show."},
           {"02", "Order", "Drag the selected nodes into a clear sequence."},
           {"03", "Share", "Present the path live or send its presentation link."}
         ] do %>
@@ -496,7 +518,8 @@
           Work together live, then choose what becomes public.
         </h2>
         <p class="mt-3 leading-7 text-slate-600">
-          A grid is a shared workspace, not a finished image. Send its link so other people can see what came before and add to it with you.
+          Select <strong>Share</strong>
+          in the top bar to copy a link or share through your apps. People can read without an account; they need to sign in to contribute, and the grid must be unlocked.
         </p>
       </div>
 
@@ -509,7 +532,7 @@
             </h3>
           </div>
           <p class="mt-2 text-sm leading-6 text-slate-600">
-            Share an editable link so people can branch and comment in the same grid. See who is viewing and use live chat to coordinate. Chat is temporary; add a comment when an idea should remain in the grid.
+            Invite people to ask questions and post thoughts in the same unlocked grid. See who is viewing and use chat to coordinate. The last 100 chat messages are saved only in this browser when browser storage is available; they do not follow you to another device. Post a thought when an idea should remain part of the grid.
           </p>
         </article>
 
@@ -519,9 +542,10 @@
             <h3 class="text-base font-semibold text-slate-950">Choose public or private</h3>
           </div>
           <p class="mt-2 text-sm leading-6 text-slate-600">
-            Under <strong>Settings → Collaboration</strong>, set <strong>Visibility</strong>
-            to <strong>Public</strong>
-            or <strong>Private</strong>. Anyone can open a public grid. Send a private link only to people you trust.
+            As the owner, open <strong>Share → Who can view and contribute</strong>
+            to choose <strong>Public</strong>
+            or <strong>Private</strong>
+            and control whether contributions are allowed. Public grids can appear in the community. Anyone with a private share link can read that grid, so send it only to people you trust.
           </p>
         </article>
 
@@ -543,8 +567,8 @@
             <h3 class="text-base font-semibold text-slate-950">See who added what</h3>
           </div>
           <p class="mt-2 text-sm leading-6 text-slate-600">
-            Open <strong>Settings → Activity</strong>
-            to see who added each question, branch, comment, or check. This helps teachers and teams see each person's work.
+            Open <strong>Grid history</strong>
+            from the top bar to see how the grid was built and who contributed each question, thought or change. It helps you retrace the reasoning and pick up work that has evolved over time.
           </p>
         </article>
 
@@ -554,8 +578,7 @@
             <h3 class="text-base font-semibold text-slate-950">Follow future updates</h3>
           </div>
           <p class="mt-2 text-sm leading-6 text-slate-600">
-            Select <strong>Follow</strong>
-            at the top of a public grid. New changes appear in <strong>Activity</strong>. Use the
+            Sign in and choose <strong>More → Follow this grid</strong>. New changes appear in <strong>Activity</strong>, available from the Account menu. Use the
             <strong>Following</strong>
             tab to manage the grids and people you follow.
           </p>
@@ -577,9 +600,9 @@
       <p id="guide-shared-paths" class="mt-5 flex gap-2 text-sm leading-6 text-slate-600">
         <.icon name="hero-link" class="mt-1 h-4 w-4 shrink-0 text-teal-700" />
         <span>
-          Share the whole grid or link directly to the current idea. Use <strong>Read</strong>
-          or <strong>Present</strong>
-          when you want to guide someone through a path.
+          In <strong>Share → Choose where the link starts</strong>, link to the current answer and choose
+          <strong>Read</strong>
+          or <strong>Grid</strong>. Read gives visitors a straightforward starting point; they can switch views at any time.
         </span>
       </p>
     </section>
@@ -596,7 +619,7 @@
       </p>
       <div class="mt-5 flex flex-wrap gap-3">
         <a
-          href="/?focus=grid#start-here"
+          href={~p"/my/learning?new=true"}
           class="inline-flex items-center gap-2 rounded-md bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
         >
           <.icon name="hero-plus" class="h-4 w-4" /> Create a grid

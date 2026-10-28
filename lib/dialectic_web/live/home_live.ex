@@ -68,15 +68,52 @@ defmodule DialecticWeb.HomeLive do
 
   @homepage_faqs [
     %{
+      id: "complex-questions",
+      question: "What if my question is complex or changes over time?",
+      answer:
+        "You do not need to settle it in one sitting. Explore different explanations, challenge assumptions and keep track of questions that remain open. Return a day, a month or a year later to add new evidence or change direction. Grid history shows who contributed and how the thinking developed, so you and others can build on the work already done."
+    },
+    %{
+      id: "recall",
+      question: "How can RationalGrid help me remember what I learn?",
+      answer:
+        "Save useful ideas and highlight passages, then return to them in My Learning. Try explaining an idea before reopening the answer: recall helps strengthen memory and reveals gaps in your understanding. Connect new ideas to what you know and compare perspectives with others to discover questions you might have missed."
+    },
+    %{
+      id: "organise-learning",
+      question: "How do I organise my learning and find it again?",
+      answer:
+        "My Learning brings your grids, bookmarks and highlights together. Topics come from grid tags; Collections let you organise subjects, projects or anything you are exploring. Open a topic or collection to revisit your saved work and continue where you left off."
+    },
+    %{
+      id: "thinking-tools",
+      question: "How do the critical-thinking tools help?",
+      answer:
+        "Use them to explain an idea, compare arguments, clarify terms, uncover assumptions and consider other perspectives. The tools were developed with Philosophy for All and philosopher and educator Peter Worley to help you question answers and build understanding. They support your judgement; important claims still need checking against their sources."
+    },
+    %{
+      id: "who-is-it-for",
+      question: "Who is RationalGrid for?",
+      answer:
+        "Anyone who wants to explore a question and return to it later. Students can organise subjects and revisit explanations for revision. Researchers can compare explanations, check sources and track open questions. Journalists and writers can keep claims, sources and counterarguments together. Curious learners can follow questions wherever they lead."
+    },
+    %{
       id: "cost",
       question: "How much does RationalGrid cost?",
-      answer: "RationalGrid is free to use. There are no paid pricing tiers."
+      answer:
+        "RationalGrid is a free, not-for-profit project. There are no paid pricing tiers, and the source code is publicly available on GitHub."
     },
     %{
       id: "ai-usage-limits",
       question: "What are the AI usage limits?",
       answer:
         "A free account includes Simple, Expanded and In-depth answers. Each person can have up to three AI requests in progress and make up to ten AI requests per minute; if a limit is reached, wait and try again."
+    },
+    %{
+      id: "community-contributions",
+      question: "Can I contribute to someone else's grid?",
+      answer:
+        "Yes. Sign in with a free account and open an unlocked community grid. Select an idea to ask a follow-up question, post your own thought or challenge an answer. Your contribution stays connected to the idea you are responding to, so others can build on it. If the owner has locked the grid, you can still read it, but cannot add to it."
     },
     %{
       id: "notion-obsidian",
@@ -253,7 +290,7 @@ defmodule DialecticWeb.HomeLive do
       <section
         id="popular-grids"
         aria-labelledby="home-learning-title"
-        class="relative isolate overflow-hidden border-b border-stone-300 bg-[#fbfaf6]"
+        class="relative isolate overflow-hidden border-b border-slate-800 bg-slate-950 text-white"
       >
         <div
           aria-hidden="true"
@@ -261,7 +298,7 @@ defmodule DialecticWeb.HomeLive do
         >
         </div>
         <div class="mx-auto w-full max-w-7xl px-5 py-8 sm:px-8 sm:py-10 lg:px-10">
-          <h2 id="home-learning-title" class="text-2xl font-semibold tracking-tight text-slate-950">
+          <h2 id="home-learning-title" class="text-2xl font-semibold tracking-tight text-white">
             Two ways to get started
           </h2>
           <.learning_journey current_user={@current_user} />
@@ -469,7 +506,7 @@ defmodule DialecticWeb.HomeLive do
     ~H"""
     <ul id="home-learning-steps" class="mt-3 grid gap-4 md:grid-cols-2 md:gap-8">
       <li id="home-learning-ask" class="flex items-start gap-3">
-        <.icon name="hero-plus-circle" class="mt-3 h-5 w-5 shrink-0 text-teal-800" />
+        <.icon name="hero-plus-circle" class="mt-3 h-5 w-5 shrink-0 text-teal-200" />
         <div>
           <h3>
             <.link
@@ -484,12 +521,12 @@ defmodule DialecticWeb.HomeLive do
                 if @current_user, do: "start_grid_clicked", else: "sign_up_cta_clicked"
               }
               data-analytics-location="home_learning_journey"
-              class="inline-flex min-h-11 items-center gap-2 rounded text-base font-semibold text-teal-800 underline decoration-teal-800/40 underline-offset-4 hover:text-teal-950 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-700"
+              class="inline-flex min-h-11 items-center gap-2 rounded text-base font-semibold text-teal-200 underline decoration-teal-200/40 underline-offset-4 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-200"
             >
               Create a grid <.icon name="hero-arrow-right" class="h-4 w-4" />
             </.link>
           </h3>
-          <p class="text-sm leading-6 text-slate-600">
+          <p class="text-sm leading-6 text-slate-300">
             <%= if @current_user do %>
               Ask your own question. AI gives you a starting answer to build on.
             <% else %>
@@ -499,7 +536,7 @@ defmodule DialecticWeb.HomeLive do
         </div>
       </li>
       <li id="home-learning-explore" class="flex items-start gap-3">
-        <.icon name="hero-user-group" class="mt-3 h-5 w-5 shrink-0 text-teal-800" />
+        <.icon name="hero-user-group" class="mt-3 h-5 w-5 shrink-0 text-teal-200" />
         <div>
           <h3>
             <.link
@@ -507,12 +544,12 @@ defmodule DialecticWeb.HomeLive do
               navigate={~p"/community"}
               data-analytics-event="community_clicked"
               data-analytics-location="home_community"
-              class="inline-flex min-h-11 items-center gap-2 rounded text-base font-semibold text-teal-800 underline decoration-teal-800/40 underline-offset-4 hover:text-teal-950 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-700"
+              class="inline-flex min-h-11 items-center gap-2 rounded text-base font-semibold text-teal-200 underline decoration-teal-200/40 underline-offset-4 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-200"
             >
               Explore community grids <.icon name="hero-arrow-right" class="h-4 w-4" />
             </.link>
           </h3>
-          <p class="text-sm leading-6 text-slate-600">
+          <p class="text-sm leading-6 text-slate-300">
             Find a topic someone else has explored. Open their grid, follow the ideas and choose one to take further.
           </p>
         </div>
@@ -520,9 +557,9 @@ defmodule DialecticWeb.HomeLive do
     </ul>
     <p
       id="home-learning-elaborate"
-      class="mt-5 border-t border-stone-300 pt-4 text-sm leading-6 text-slate-600"
+      class="mt-5 border-t border-slate-700 pt-4 text-sm leading-6 text-slate-300"
     >
-      <strong class="font-semibold text-slate-950">Then build on an idea.</strong>
+      <strong class="font-semibold text-white">Then build on an idea.</strong>
       Ask a follow-up question, add your own thought or challenge an answer. Each contribution stays connected, so you can follow how the thinking develops.
     </p>
     """
