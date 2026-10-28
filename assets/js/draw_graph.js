@@ -3,7 +3,6 @@ import dagre from "cytoscape-dagre";
 import { graphStyle } from "./graph_style";
 import { layoutConfig } from "./layout_config.js";
 import { createGraphRenderer } from "./graph_renderer.js";
-import { graphNodeId, questionEdgesFor, resolveGraphNode } from "./graph_question_edges.js";
 
 cytoscape.use(dagre);
 
@@ -188,7 +187,7 @@ export const frameReadingGraph = (
   const height = viewport.height - 2 * padding;
   if (width <= 0 || height <= 0) return false;
 
-  const focus = resolveGraphNode(cy, focusNodeId).filter(VISIBLE_GRAPH_NODE_FILTER).first();
+  const focus = cy.getElementById(String(focusNodeId)).filter(VISIBLE_GRAPH_NODE_FILTER).first();
   const node = focus.length ? focus : nodes.first();
   const bounds = nodes.boundingBox();
   const nodeBounds = node.boundingBox();
@@ -465,7 +464,7 @@ export function draw_graph(
       );
 
       const selected =
-        typeof nodeOrId === "string" ? resolveGraphNode(cy, nodeOrId) : nodeOrId;
+        typeof nodeOrId === "string" ? cy.getElementById(String(nodeOrId)) : nodeOrId;
 
       if (!selected || selected.length === 0 || selected.isParent()) return;
 
@@ -479,7 +478,6 @@ export function draw_graph(
       });
 
       contextualEdges.addClass("selected-edge");
-      if (typeof nodeOrId === "string") questionEdgesFor(cy, nodeOrId).addClass("selected-edge");
 
       contextualEdges
         .connectedNodes()
@@ -524,24 +522,6 @@ export function draw_graph(
     if (!isMouseDown) {
       container.style.cursor = isSpaceDown ? "grab" : "";
     }
-  });
-
-  cy.on("tap", "edge.question-edge", (event) => {
-    const edge = event.target;
-    const questionId = edge.data("questionNodeId");
-    if (!questionId) return;
-    cy.elements().removeClass("selected");
-    resolveGraphNode(cy, questionId).addClass("selected");
-    applySelectionContext(questionId);
-    context.pushEvent("node_clicked", { id: questionId });
-  });
-  cy.on("mouseover", "edge.question-edge", (event) => {
-    event.target.addClass("edge-hover");
-    if (!isSpaceDown && !isMouseDown) container.style.cursor = "pointer";
-  });
-  cy.on("mouseout", "edge.question-edge", (event) => {
-    event.target.removeClass("edge-hover");
-    if (!isMouseDown) container.style.cursor = isSpaceDown ? "grab" : "";
   });
 
   // Smooth, cursor-centered zoom
@@ -758,14 +738,14 @@ export function draw_graph(
         }
 
         if (target) {
-          context.pushEvent("node_clicked", { id: graphNodeId(target) });
+          context.pushEvent("node_clicked", { id: target.id() });
 
           cy.elements().removeClass("selected");
           target.addClass("selected");
 
           const finishNavigation = () => {
             applySelectionContext(target);
-            requestAnimationFrame(() => ensureVisible(cy, container, target.id()));
+            context._centerOnNodeVisible?.(target.id());
           };
           const needsReflow =
             typeof cy.ensureNodeVisible === "function"
@@ -854,7 +834,7 @@ export function draw_graph(
     // exit early for compound/group nodes so they are not navigable
     if (n.isParent()) return;
 
-    const nodeId = graphNodeId(n);
+    const nodeId = n.id();
 
     // Double-tap detection (within 300ms)
     const now = Date.now();
@@ -944,7 +924,7 @@ export function draw_graph(
     cy.elements().removeClass("selected");
     let initial = null;
     if (node) {
-      initial = resolveGraphNode(cy, node);
+      initial = cy.getElementById(String(node));
     }
     if (!initial || (initial.length !== undefined && initial.length === 0)) {
       const candidates = cy.nodes().filter((n) => !n.isParent());
@@ -975,7 +955,7 @@ export function draw_graph(
   // Depth-collapse events from LiveView
   handleServerEvent("expand_node", ({ id }) => {
     try {
-      const n = cy.getElementById(id);
+      const n = cy.getElementById(String(id));
       if (n && n.length > 0 && !n.isParent()) {
         expandNodeChildren(cy, n);
       }
@@ -984,7 +964,7 @@ export function draw_graph(
 
   handleServerEvent("collapse_node", ({ id }) => {
     try {
-      const n = cy.getElementById(id);
+      const n = cy.getElementById(String(id));
       if (n && n.length > 0 && !n.isParent()) {
         collapseNodeChildren(cy, n);
       }
@@ -1021,7 +1001,7 @@ export function draw_graph(
   cy.focusBranch = (nodeOrId) =>
     focusBranch(
       cy,
-      typeof nodeOrId === "string" ? resolveGraphNode(cy, nodeOrId) : nodeOrId,
+      typeof nodeOrId === "string" ? cy.getElementById(String(nodeOrId)) : nodeOrId,
       container,
     );
   cy.focusPath = (ids, onDone, focusOptions) =>
@@ -1030,9 +1010,9 @@ export function draw_graph(
   cy.reflowAfterVisibilityChange = (onDone, reflowOptions) =>
     reflowAfterVisibilityChange(cy, onDone, reflowOptions);
   cy.expandNodeChildren = (n) =>
-    expandNodeChildren(cy, typeof n === "string" ? cy.getElementById(n) : n);
+    expandNodeChildren(cy, typeof n === "string" ? cy.getElementById(String(n)) : n);
   cy.collapseNodeChildren = (n) =>
-    collapseNodeChildren(cy, typeof n === "string" ? cy.getElementById(n) : n);
+    collapseNodeChildren(cy, typeof n === "string" ? cy.getElementById(String(n)) : n);
 
   let viewportClampTimeout = null;
   const queueViewportClamp = () => {
@@ -1298,7 +1278,7 @@ function collapseAllDepth(cy, maxDepth) {
  * along the path from a root to it.
  */
 function ensureDepthVisible(cy, nodeId) {
-  const node = resolveGraphNode(cy, nodeId);
+  const node = cy.getElementById(String(nodeId));
   if (!node || node.length === 0 || !node.hasClass("depth-hidden")) return false;
 
   // Collect all ancestors via upward BFS
@@ -1344,19 +1324,10 @@ function clearBranchFocusState(cy) {
 
 function applyPathFocusState(cy, ids) {
   const requestedIds = [...new Set((ids || []).map((id) => String(id)))];
-  const requested = new Set(requestedIds);
   const pathNodes = cy.collection(
     requestedIds.flatMap((id) => {
-      const node = cy.getElementById(id);
-      if (node.length) return [node];
-      const connections = questionEdgesFor(cy, id).filter((edge) =>
-        requested.has(edge.target().id()),
-      );
-      if (connections.length) return connections.targets().toArray();
-      // Only a path ending at a question needs its answer/endpoint added.
-      // Earlier questions must not introduce another answer's side branch.
-      const endpoint = id === requestedIds.at(-1) ? resolveGraphNode(cy, id) : null;
-      return endpoint?.length ? [endpoint] : [];
+      const node = cy.getElementById(String(id));
+      return node.length ? [node] : [];
     }),
   );
   const pathIds = pathNodes.map((node) => node.id());
@@ -1443,7 +1414,7 @@ export function focusBranch(cy, node, container = cy.container?.()) {
   applyPathFocusState(cy, pathIds);
 
   if (cy._ownerHook?.pushEvent) {
-    const endpointId = graphNodeId(node);
+    const endpointId = node.id();
     cy._readerPathFocus = true;
     cy._ownerHook._localReaderPathEndpoint = endpointId;
     cy._ownerHook.pushEvent("set_reader_path", { id: endpointId });
@@ -1491,7 +1462,7 @@ export function clearBranchFocus(cy, container = cy.container?.()) {
 }
 
 function ensureNodeVisible(cy, nodeId) {
-  const node = resolveGraphNode(cy, nodeId);
+  const node = cy.getElementById(String(nodeId));
   const focusChanged =
     node && node.length > 0 && node.hasClass("focus-hidden")
       ? clearBranchFocusState(cy)

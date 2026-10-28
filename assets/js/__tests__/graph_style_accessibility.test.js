@@ -17,12 +17,15 @@ describe("graph accessibility styles", () => {
     expect(styleFor(highContrast, "node.thesis")["border-width"]).toBeGreaterThan(
       styleFor(regular, "node.thesis")["border-width"],
     );
-    expect(styleFor(highContrast, "edge.question-edge").color).not.toBe(
-      styleFor(regular, "edge.question-edge").color,
+    expect(styleFor(highContrast, "node.question").color).not.toBe(
+      styleFor(regular, "node.question").color,
     );
     for (const styles of [regular, highContrast]) {
-      expect(styleFor(styles, "edge.question-edge")["text-border-width"]).toBe(0);
-      expect(styleFor(styles, "edge.question-edge").label).toBe("data(questionLabel)");
+      expect(styleFor(styles, "node.question")["border-style"]).toBe("dashed");
+      expect(styleFor(styles, "node.question")["font-size"]).toBeLessThan(
+        styleFor(styles, "node")["font-size"],
+      );
+      expect(styleFor(styles, "edge").label).toBeTypeOf("function");
     }
     expect(styleFor(highContrast, "edge").opacity).toBeGreaterThan(
       styleFor(regular, "edge").opacity,

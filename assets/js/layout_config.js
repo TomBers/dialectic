@@ -12,23 +12,7 @@ const stableElementSort = (elementA, elementB) => {
 const dagreRenderingOptions = {
   nodeDimensionsIncludeLabels: true,
   sort: stableElementSort,
-  minLen: (edge) => {
-    const label = edge.data("questionLabel");
-    if (!label) return 1;
-    const fontSize = edge.pstyle("font-size").pfValue || 14;
-    const width = edge.pstyle("text-max-width").pfValue || 260;
-    const charactersPerLine = Math.max(1, Math.floor(width / (fontSize * 0.55)));
-    const lines = label.split("\n").reduce((total, line) =>
-      total + Math.max(1, Math.ceil(line.length / charactersPerLine)), 0);
-    const direction = typeof localStorage === "undefined"
-      ? "TB" : localStorage.getItem("graph_direction") || "TB";
-    const horizontal = direction === "LR" || direction === "RL";
-    const labelSize = horizontal
-      ? Math.min(width, label.length * fontSize * 0.55)
-      : lines * fontSize * 1.35;
-    const rankSeparation = fontSize < 12 ? 56 : 104;
-    return Math.max(1, Math.ceil((labelSize + 20) / rankSeparation));
-  },
+  minLen: 1,
 };
 
 export const layoutConfig = {

@@ -265,7 +265,7 @@ defmodule DialecticWeb.CommunityLive do
                   </.form>
                   <.link
                     id="community-all-topics"
-                    href={browse_path(@browse_params, %{"tag" => nil})}
+                    patch={browse_path(@browse_params, %{"tag" => nil})}
                     aria-current={if is_nil(@active_tag), do: "page"}
                     class={[
                       "mt-2 flex items-center justify-between rounded-md px-3 py-2 text-sm font-semibold",
@@ -283,7 +283,7 @@ defmodule DialecticWeb.CommunityLive do
                     <%= for {id, topic} <- @streams.topics do %>
                       <.link
                         id={id}
-                        href={browse_path(@browse_params, %{"tag" => topic.id})}
+                        patch={browse_path(@browse_params, %{"tag" => topic.id})}
                         aria-current={if @active_tag == topic.tag, do: "page"}
                         class={[
                           "flex min-w-0 items-center justify-between gap-2 rounded-md px-3 py-2 text-sm",
@@ -374,7 +374,7 @@ defmodule DialecticWeb.CommunityLive do
                 <%= for {category, label} <- [{"curated", "Curated grids"}, {"all", "All grids"}, {"partners", "Partner grids"}] do %>
                   <.link
                     id={"community-format-#{category}"}
-                    href={browse_path(@browse_params, %{"category" => category})}
+                    patch={browse_path(@browse_params, %{"category" => category})}
                     aria-current={if @active_category == category, do: "page"}
                     class={category_class(@active_category == category)}
                   >{label}</.link>
@@ -430,18 +430,18 @@ defmodule DialecticWeb.CommunityLive do
                 <.link
                   :if={@active_tag}
                   id="community-clear-topic"
-                  href={browse_path(@browse_params, %{"tag" => nil})}
+                  patch={browse_path(@browse_params, %{"tag" => nil})}
                   class="inline-flex items-center gap-1 rounded-full bg-teal-100 px-3 py-1.5 font-medium text-teal-900"
                 >{tag_label(@active_tag)}<.icon name="hero-x-mark" class="h-3.5 w-3.5" /><span class="sr-only">Remove topic filter</span></.link>
                 <.link
                   :if={@active_size != "all"}
                   id="community-clear-size"
-                  href={browse_path(@browse_params, %{"size" => nil})}
+                  patch={browse_path(@browse_params, %{"size" => nil})}
                   class="inline-flex items-center gap-1 rounded-full bg-teal-100 px-3 py-1.5 font-medium text-teal-900"
                 >{String.capitalize(@active_size)} grids<.icon name="hero-x-mark" class="h-3.5 w-3.5" /><span class="sr-only">Remove size filter</span></.link>
                 <.link
                   id="community-clear-filters"
-                  href={~p"/community"}
+                  patch={~p"/community"}
                   class="px-1 py-1.5 font-medium text-slate-600 underline underline-offset-2 hover:text-teal-800"
                 >Clear filters</.link>
               </div>
@@ -457,7 +457,7 @@ defmodule DialecticWeb.CommunityLive do
                 </p>
                 <.link
                   id="community-empty-reset"
-                  href={~p"/community?category=all"}
+                  patch={~p"/community?category=all"}
                   class="mt-4 inline-flex text-sm font-semibold text-teal-800 underline underline-offset-4"
                 >Browse all grids</.link>
               </div>
@@ -721,7 +721,7 @@ defmodule DialecticWeb.CommunityLive do
       >
         <.link
           :for={tag <- @tags}
-          href={~p"/community?tag=#{Graphs.normalize_tag(tag)}"}
+          patch={~p"/community?tag=#{Graphs.normalize_tag(tag)}"}
           class="transition hover:text-teal-800 hover:underline focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"
         >
           {tag_label(tag)}
