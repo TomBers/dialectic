@@ -332,6 +332,13 @@ defmodule Dialectic.DbActions.Graphs do
             )
         }
 
+    summaries =
+      if Keyword.get(opts, :category) == "all" do
+        from [_g, author] in summaries, where: not is_nil(author.id)
+      else
+        summaries
+      end
+
     query = from(g in subquery(summaries))
     search = opts |> Keyword.get(:search, "") |> String.trim()
     tag = Keyword.get(opts, :tag)

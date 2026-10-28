@@ -32,7 +32,7 @@ defmodule DialecticWeb.CommunityPeopleTest do
              ~s(#community-grid-#{grid.slug}-creator[href="/u/#{creator.username}"])
            )
 
-    assert has_element?(view, "#community-grid-#{anonymous.slug}-creator-anonymous")
+    refute has_element?(view, "#community-grid-#{anonymous.slug}")
     refute has_element?(view, "#community-creators a")
 
     render_patch(view, ~p"/community?tag=sociology")

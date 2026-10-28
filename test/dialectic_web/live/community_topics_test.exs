@@ -2,6 +2,7 @@ defmodule DialecticWeb.CommunityTopicsTest do
   use DialecticWeb.ConnCase, async: true
 
   import Dialectic.GraphFixtures
+  import Dialectic.AccountsFixtures
   import Phoenix.LiveViewTest
 
   alias Dialectic.Repo
@@ -264,7 +265,7 @@ defmodule DialecticWeb.CommunityTopicsTest do
 
   defp tagged_graph(title, tags, attrs \\ %{}) do
     insert_graph(Map.merge(%{title: title}, attrs))
-    |> Ecto.Changeset.change(tags: tags)
+    |> Ecto.Changeset.change(user_id: user_fixture().id, tags: tags)
     |> Repo.update!()
   end
 

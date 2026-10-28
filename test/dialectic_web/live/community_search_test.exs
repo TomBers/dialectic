@@ -7,11 +7,15 @@ defmodule DialecticWeb.CommunitySearchTest do
   alias Dialectic.DbActions.Graphs
 
   test "search supports questions, pagination, and resetting the result stream", %{conn: conn} do
+    user = Dialectic.AccountsFixtures.user_fixture()
+
     for index <- 1..14 do
       GraphFixtures.insert_graph(%{
         title: "Free will example #{index}",
         slug: "free-will-#{index}"
       })
+      |> Ecto.Changeset.change(user_id: user.id)
+      |> Dialectic.Repo.update!()
     end
 
     {:ok, view, _html} = live(conn, ~p"/community?category=all")
