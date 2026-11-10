@@ -132,6 +132,80 @@ defmodule DialecticWeb.McpDeepExplorationTest do
     assert Repo.aggregate(Oban.Job, :count) == 1
   end
 
+  test "live reads report native response progress while saved revisions remain unchanged", %{
+    api: api,
+    grid: grid
+  } do
+    path = ~p"/api/mcp/grids/#{grid.slug}/nodes/2"
+    saved = api |> get(path, revision: grid.data_revision) |> json_response(200)
+    GraphManager.get_graph(grid.title)
+
+    args = %{
+      "graph" => grid.title,
+      "to_node" => "2",
+      "question" => "Explain the cooling effect",
+      "live_view_topic" => "graph_update:#{grid.title}"
+    }
+
+    job = args |> Dialectic.Workers.LLMWorker.new() |> Oban.insert!()
+    waiting = args |> Dialectic.Workers.LocalWorker.new() |> Oban.insert!()
+
+    foreign =
+      Map.merge(args, %{"graph" => grid.title <> "-other", "to_node" => "1"})
+      |> Dialectic.Workers.LLMWorker.new()
+      |> Oban.insert!()
+
+    foreign |> Ecto.Changeset.change(state: "executing") |> Repo.update!()
+
+    GraphManager.set_node_content(grid.title, "2", "")
+    queued = api |> get(path) |> json_response(200)
+    assert queued["node"]["generation_status"] == "queued"
+    assert queued["node"]["content_status"] == "placeholder"
+
+    GraphManager.set_node_content(grid.title, "2", "A native answer is still streaming")
+    job = job |> Ecto.Changeset.change(state: "executing") |> Repo.update!()
+    streaming = api |> get(path) |> json_response(200)
+    assert streaming["node"]["generation_status"] == "generating"
+    assert streaming["node"]["content_status"] == "partial"
+    assert streaming["snapshot_revision"] == nil
+    assert api |> get(path, revision: grid.data_revision) |> json_response(200) == saved
+    root = api |> get(~p"/api/mcp/grids/#{grid.slug}/nodes/1") |> json_response(200)
+    assert root["node"]["generation_status"] == nil
+    assert root["node"]["content_status"] == "complete"
+
+    result =
+      api
+      |> post(~p"/api/mcp/grids/#{grid.slug}/actions", %{
+        request_id: Ecto.UUID.generate(),
+        node_id: "2",
+        action: "clarify",
+        expected_content_hash: streaming["node"]["content_hash"]
+      })
+      |> json_response(409)
+
+    assert result["code"] == "generation_in_progress"
+    refute result["request_accepted"]
+    assert Repo.aggregate(GridAction, :count) == 0
+    assert Repo.aggregate(Oban.Job, :count) == 3
+
+    waiting |> Ecto.Changeset.change(state: "completed") |> Repo.update!()
+
+    for state <- ["available", "scheduled", "retryable"] do
+      job |> Ecto.Changeset.change(state: state) |> Repo.update!()
+      read = api |> get(path) |> json_response(200)
+      assert read["node"]["generation_status"] == "queued"
+      assert read["node"]["content_status"] == "partial"
+      assert api |> get(path, revision: grid.data_revision) |> json_response(200) == saved
+    end
+
+    GraphManager.set_node_content(grid.title, "2", @answer)
+    job |> Ecto.Changeset.change(state: "completed") |> Repo.update!()
+    finished = api |> get(path) |> json_response(200)
+    assert finished["node"]["generation_status"] == nil
+    assert finished["node"]["content_status"] == "complete"
+    assert finished["snapshot_revision"] == grid.data_revision
+  end
+
   test "bad or stale selections and pending source answers cannot enqueue new generation", %{
     api: api,
     grid: grid

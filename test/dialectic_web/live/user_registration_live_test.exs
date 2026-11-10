@@ -37,6 +37,35 @@ defmodule DialecticWeb.UserRegistrationLiveTest do
   end
 
   describe "register user" do
+    test "MCP setup signup creates an account and returns to connected apps", %{conn: conn} do
+      feature =
+        conn |> get(~p"/features/ai-assistants") |> html_response(200) |> LazyHTML.from_document()
+
+      [registration_url] =
+        feature |> LazyHTML.query("#ai-assistants-connect") |> LazyHTML.attribute("href")
+
+      conn = get(recycle(conn), registration_url)
+      {:ok, lv, _html} = live(conn)
+
+      email = unique_user_email()
+      form = form(lv, "#registration_form", user: valid_user_attributes(email: email))
+      render_submit(form)
+      conn = follow_trigger_action(form, conn)
+
+      assert get_session(conn, :user_token)
+      assert redirected_to(conn) == ~p"/users/connections"
+
+      page =
+        conn
+        |> recycle()
+        |> get(redirected_to(conn))
+        |> html_response(200)
+        |> LazyHTML.from_document()
+
+      assert page |> LazyHTML.query("#mcp-connect") |> Enum.count() == 1
+      assert page |> LazyHTML.query("#mcp-account-notice") |> LazyHTML.text() =~ email
+    end
+
     test "creates account and logs the user in", %{conn: conn} do
       {:ok, lv, _html} = live(conn, ~p"/users/register")
 

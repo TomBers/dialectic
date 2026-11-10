@@ -49,16 +49,29 @@ defmodule Dialectic.Responses.RequestQueue do
   end
 
   def pending_node_ids(graph) do
+    graph |> active_node_statuses() |> Map.keys() |> MapSet.new()
+  end
+
+  def active_node_statuses(graph) do
     workers = Enum.map([LLMWorker, LocalWorker], &Oban.Worker.to_string/1)
 
     from(job in Oban.Job,
       where: job.worker in ^workers and job.state in ^@active_states,
       where: fragment("?->>'graph' = ?", job.args, ^graph),
-      select: fragment("?->>'to_node'", job.args)
+      select: {fragment("?->>'to_node'", job.args), job.state}
     )
     |> Repo.all()
-    |> MapSet.new()
-    |> MapSet.delete(nil)
+    |> Enum.reduce(%{}, fn
+      {nil, _state}, statuses ->
+        statuses
+
+      {node_id, state}, statuses ->
+        status = if state == "executing", do: "generating", else: "queued"
+
+        Map.update(statuses, node_id, status, fn existing ->
+          if existing == "generating", do: existing, else: status
+        end)
+    end)
   end
 
   def run_local(params) do

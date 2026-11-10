@@ -24,6 +24,11 @@ defmodule Dialectic.Integrations.GridContent do
         {operation.answer_node_id || operation.node_id, status}
       end)
 
+    statuses =
+      if is_nil(revision),
+        do: Map.merge(statuses, Dialectic.Responses.RequestQueue.active_node_statuses(title)),
+        else: statuses
+
     nodes = Enum.reject(data["nodes"] || [], &(&1["deleted"] == true))
     ids = MapSet.new(nodes, & &1["id"])
 
@@ -40,13 +45,12 @@ defmodule Dialectic.Integrations.GridContent do
       |> Enum.uniq()
       |> Enum.sort_by(&{&1.from, &1.to})
 
+    parents_by_node = Enum.group_by(edges, & &1.to, & &1.from)
+
     nodes =
       Enum.map(nodes, fn node ->
-        parents =
-          edges |> Enum.filter(&(&1.to == node["id"])) |> Enum.map(& &1.from) |> Enum.sort()
-
         status = statuses[node["id"]]
-        node(node, parents, status)
+        node(node, Map.get(parents_by_node, node["id"], []), status)
       end)
       |> Enum.sort_by(&sort_id(&1.id))
 
@@ -54,6 +58,8 @@ defmodule Dialectic.Integrations.GridContent do
   end
 
   def node(raw, parents, status) do
+    parents = Enum.sort(parents)
+
     raw =
       if is_struct(raw, Dialectic.Graph.Vertex),
         do: Dialectic.Graph.Vertex.serialize(raw),
@@ -68,7 +74,7 @@ defmodule Dialectic.Integrations.GridContent do
       content_hash: content_hash(content),
       class: raw["class"] || "",
       parent_node_id: List.first(parents),
-      parent_node_ids: Enum.sort(parents),
+      parent_node_ids: parents,
       sources: Dialectic.LLM.Grounding.sources(raw["grounding_metadata"]),
       generation_status: status,
       content_status: content_status(content, status)

@@ -85,6 +85,12 @@ defmodule DialecticWeb.UserSessionControllerTest do
             "//example.com/g/grid",
             "/\\example.com",
             "/users/log_out",
+            "//example.com/users/connections",
+            "https://example.com/users/connections",
+            "/users/connections?next=https://example.com",
+            "/users/connections/../log_out",
+            "/users/connections\\\\example.com",
+            "/users/connections\n",
             "/g/grid\n",
             "/g/%2f%2fexample.com"
           ] do
