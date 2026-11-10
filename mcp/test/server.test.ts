@@ -84,15 +84,15 @@ afterEach(async () => {
 
 test("discovers focused tools and capacity discovery with public or scoped access", async () => {
   const { tools } = await client.listTools();
-  assert.deepEqual(tools.map(tool => tool.name).sort(), ["explore_question", "search_public_grids", "list_my_grids", "read_grid", "create_grid", "add_grid_idea", "apply_grid_action", "get_operation", "get_server_capabilities"].sort());
+  assert.deepEqual(tools.map(tool => tool.name).sort(), ["explore_question", "search_public_grids", "list_my_grids", "read_grid", "create_grid", "add_grid_idea", "apply_grid_action", "get_operation", "get_server_capabilities", "read_grid_node", "get_exploration_tools", "create_learning_plan"].sort());
   assert.equal(tools.filter(tool => tool.name.endsWith("_method")).length, 0);
   for (const tool of tools) {
-    assert.equal(tool.annotations?.readOnlyHint, !["explore_question", "create_grid", "apply_grid_action", "add_grid_idea"].includes(tool.name));
+    assert.equal(tool.annotations?.readOnlyHint, !["explore_question", "create_grid", "apply_grid_action", "add_grid_idea", "create_learning_plan"].includes(tool.name));
     assert.equal(tool.annotations?.destructiveHint, false);
     assert.ok(tool.inputSchema);
     assert.ok(tool.outputSchema);
-    const scope = ["create_grid", "explore_question"].includes(tool.name) ? "grids:create" : ["read_grid", "list_my_grids", "get_operation"].includes(tool.name) ? "grids:read" : ["apply_grid_action", "add_grid_idea"].includes(tool.name) ? "grids:append" : undefined;
-    const securitySchemes = tool.name === "explore_question" ? [{ type: "oauth2", scopes: ["grids:create", "grids:read"] }] : tool.name === "read_grid" ? [{ type: "noauth" }, { type: "oauth2", scopes: ["grids:read"] }] : scope ? [{ type: "oauth2", scopes: [scope] }] : [{ type: "noauth" }];
+    const scope = ["create_grid", "explore_question"].includes(tool.name) ? "grids:create" : ["read_grid", "read_grid_node", "list_my_grids", "get_operation"].includes(tool.name) ? "grids:read" : ["apply_grid_action", "add_grid_idea", "create_learning_plan"].includes(tool.name) ? "grids:append" : undefined;
+    const securitySchemes = tool.name === "explore_question" ? [{ type: "oauth2", scopes: ["grids:create", "grids:read"] }] : ["read_grid", "read_grid_node"].includes(tool.name) ? [{ type: "noauth" }, { type: "oauth2", scopes: ["grids:read"] }] : scope ? [{ type: "oauth2", scopes: [scope] }] : [{ type: "noauth" }];
     assert.deepEqual(tool._meta?.securitySchemes, securitySchemes);
   }
   assert.equal(requests.length, 0);
@@ -259,7 +259,7 @@ test("guided exploration uses create permission and reports the whole workflow w
     exploration: { stage: "testing", completed_steps: 1, total_steps: 4, error: null },
     nodes: [{ id: "3", parent_node_id: "2", class: "answer", content: "A partial examination" }],
   };
-  const result = await authenticatedCall("explore_question", { ...exploration, user_id: 42, is_public: true });
+  const result = await authenticatedCall("explore_question", { ...exploration, strategy: "guided", user_id: 42, is_public: true });
   assert.deepEqual(result.structuredContent, upstreamBody);
   assert.equal(requests[0].url.pathname, "/api/mcp/explorations/guided");
   assert.deepEqual(JSON.parse(requests[0].body), { ...exploration, response_level: "university" });
@@ -267,6 +267,83 @@ test("guided exploration uses create permission and reports the whole workflow w
   assert.deepEqual(progress.structuredContent, upstreamBody);
   assert.equal(requests[1].method, "GET");
   assert.equal(requests.filter(request => request.method === "POST").length, 1);
+});
+
+test("new explorations default to an opening step so the assistant can adapt the next direction", async () => {
+  const exploration = { request_id: randomUUID(), question: "How can cities adapt to heat?" };
+  upstreamBody = { grid: { ...grid, visibility: "private" }, request_id: exploration.request_id, status: "queued",
+    node: { id: "1", parent_node_id: null, class: "origin", content: exploration.question },
+    answer_node: { id: "2", parent_node_id: "1", class: "answer", content: "" } };
+  const result = await authenticatedCall("explore_question", exploration);
+  assert.deepEqual(result.structuredContent, upstreamBody);
+  assert.equal(requests[0].url.pathname, "/api/mcp/explorations");
+  assert.deepEqual(JSON.parse(requests[0].body), { ...exploration, response_level: "university" });
+  assert.equal(result.structuredContent.exploration, undefined);
+});
+
+test("focused node reads preserve current content, passage references and structured learning plans", async () => {
+  const hash = "a".repeat(64);
+  upstreamBody = { grid: { ...grid, visibility: "public" }, node: {
+    id: "2", content: "A learning plan", class: "learning_plan", content_hash: hash, parent_node_id: "1", parent_node_ids: ["1"],
+    sources: [], generation_status: "completed", content_status: "complete",
+    source_reference: { node_id: "1", content_hash: hash, text: "a specific passage" },
+    learning_plan: { version: 1, title: "Urban heat", actions: [{ key: "assumptions", reason: "Test an assumption", target: { node_id: "1", title: "A claim", content: "a specific passage", source_hash: hash } }],
+      paths: [{ id: "path-1", label: "Local conditions", question: "Which conditions matter?", reason: "Test the limits" }] },
+    }, parents: [{ id: "1", class: "answer", content_hash: hash, content_status: "complete", preview: "A claim" }], children: [],
+    total_parents: 1, total_children: 0, child_node_ids: [], snapshot_revision: null, editing_enabled: true };
+  const result = await client.callTool({ name: "read_grid_node", arguments: { grid_id: grid.id, node_id: "2" } });
+  assert.deepEqual(result.structuredContent, upstreamBody);
+  assert.equal(requests[0].method, "GET");
+  assert.equal(requests[0].url.pathname, `/api/mcp/grids/${grid.id}/nodes/2`);
+  assert.equal(requests[0].authorization, undefined);
+  await authenticatedCall("read_grid_node", { grid_id: grid.id, node_id: "2", revision: 12345 });
+  assert.equal(requests[1].url.searchParams.get("revision"), "12345");
+});
+
+test("learning plans require append permission and forward only the chosen source and passage", async () => {
+  const args = { grid_id: grid.id, node_id: "2", request_id: randomUUID(), selection: "a specific passage", expected_content_hash: "b".repeat(64) };
+  assert.equal((await authenticatedCall("create_learning_plan", args, "", 401)).isError, true);
+  assert.equal(requests.length, 0);
+  upstreamBody = { grid: { ...grid, visibility: "private" }, request_id: args.request_id, status: "queued", node: { id: "3", parent_node_id: "2", class: "learning_plan", content: "" } };
+  const result = await authenticatedCall("create_learning_plan", { ...args, action: "delete", user_id: 123, chat_history: "unrelated private details" });
+  assert.deepEqual(result.structuredContent, upstreamBody);
+  assert.equal(requests[0].url.pathname, `/api/mcp/grids/${grid.id}/actions`);
+  assert.deepEqual(JSON.parse(requests[0].body), { node_id: args.node_id, request_id: args.request_id, selection: args.selection, expected_content_hash: args.expected_content_hash, action: "learning_plan" });
+  assert.doesNotMatch(requests[0].body, /unrelated private details/);
+});
+
+test("thinking tools forward exact selections and explicit synthesis sources", async () => {
+  const args = { grid_id: grid.id, node_id: "2", request_id: randomUUID(), action: "says_who", selection: "a specific claim", expected_content_hash: "c".repeat(64) };
+  upstreamBody = { grid: { ...grid, visibility: "private" }, request_id: args.request_id, status: "queued", node: { id: "3", parent_node_id: "2", class: "says_who", content: "" } };
+  assert.equal((await authenticatedCall("apply_grid_action", args)).isError, undefined);
+  assert.deepEqual(JSON.parse(requests[0].body), { node_id: args.node_id, request_id: args.request_id, action: args.action, selection: args.selection, expected_content_hash: args.expected_content_hash });
+  const synthesis = { grid_id: grid.id, node_id: "2", request_id: randomUUID(), action: "synthesis", context_node_ids: ["5", "8"] };
+  await authenticatedCall("apply_grid_action", synthesis);
+  assert.deepEqual(JSON.parse(requests[1].body), { node_id: "2", request_id: synthesis.request_id, action: "synthesis", context_node_ids: ["5", "8"] });
+  for (const invalid of [
+    { ...args, expected_content_hash: undefined }, { ...args, expected_content_hash: "bad" },
+    { ...args, context_node_ids: ["5"] }, { ...synthesis, context_node_ids: [] },
+    { ...synthesis, context_node_ids: ["2"] }, { ...synthesis, context_node_ids: ["5", "5"] },
+    { ...synthesis, selection: "a claim", expected_content_hash: args.expected_content_hash },
+  ]) assert.equal((await authenticatedCall("apply_grid_action", invalid)).structuredContent.error.code, "invalid_arguments");
+  assert.equal(requests.length, 2);
+});
+
+test("tool discovery is public and focused-action errors retain their stable codes", async () => {
+  upstreamBody = { tools: [{ action: "learning_plan", label: "Plan next directions", description: "Choose useful questions", selection_supported: true, tool: "create_learning_plan" }] };
+  const catalog = await client.callTool({ name: "get_exploration_tools", arguments: {} });
+  assert.deepEqual(catalog.structuredContent, upstreamBody);
+  assert.equal(requests[0].authorization, undefined);
+  assert.equal(requests[0].url.pathname, "/api/mcp/exploration-tools");
+  const args = { grid_id: grid.id, node_id: "2", request_id: randomUUID(), action: "assumptions", selection: "a claim", expected_content_hash: "d".repeat(64) };
+  for (const code of ["source_changed", "invalid_selection", "generation_in_progress"]) {
+    const error = { code, retryable: code === "generation_in_progress", retry_after_seconds: code === "generation_in_progress" ? 3 : null, request_accepted: false, request_id: args.request_id };
+    upstreamStatus = 409;
+    upstreamBody = { ...error, error: "private backend text" };
+    const result = await authenticatedCall("apply_grid_action", args);
+    assert.deepEqual(result.structuredContent, { error });
+    assert.doesNotMatch(JSON.stringify(result), /private backend text/);
+  }
 });
 
 test("health checks do not call Phoenix or return credentials", async () => {

@@ -409,7 +409,7 @@ defmodule DialecticWeb.HomeLive do
           </p>
           <h2 class="text-3xl font-semibold">Turn a chat question into a grid you can build on.</h2>
           <p class="max-w-2xl text-lg">
-            Ask your assistant to explore with RationalGrid. Keep the answer, a challenge, a deeper branch and a synthesis connected, then come back to develop your thinking.
+            Ask your assistant to explore with RationalGrid. Read an idea, examine a passage or follow a learning plan. Keep useful branches connected and come back to develop your thinking.
           </p>
           <.link
             id="home-ai-assistants-link"

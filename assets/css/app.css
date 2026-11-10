@@ -4,6 +4,7 @@
 @import "katex/dist/katex.min.css";
 @import "./ambassadors.css";
 @import "./learning_sidebar.css";
+@import "./mcp.css";
 
 [data-shortcut-label="mac"] {
     display: none;

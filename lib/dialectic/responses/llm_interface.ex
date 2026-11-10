@@ -348,15 +348,64 @@ defmodule Dialectic.Responses.LlmInterface do
     queue_response(to_string(tool_name), instruction, child, graph_id, live_view_topic)
   end
 
-  def queue_grid_action(action, parent, child, graph_id, context, mode) do
-    instruction =
-      build_instruction(Map.fetch!(@thinking_tools, action), context, parent.content, nil)
+  def queue_grid_action(action, parent, child, graph_id, context, mode, opts \\ []) do
+    selection = Keyword.get(opts, :selection)
+    content = selection || parent.content
 
-    queue_prepared_response(action, instruction, child, graph_id, mode)
+    context =
+      if selection,
+        do: join_context(selection_window(parent.content, selection), context),
+        else: context
+
+    {instruction, request_opts} =
+      case action do
+        :learning_plan ->
+          target = Keyword.fetch!(opts, :learning_target)
+
+          {Prompts.guided_learning_plan(context, content, target),
+           [response_contract: "guided_learning_plan", guided_target: target]}
+
+        :synthesis ->
+          others = Keyword.fetch!(opts, :context_nodes)
+          other_text = Enum.map_join(others, "\n\n", &("Node #{&1.id}:\n" <> &1.content))
+          {Prompts.synthesis(context, "", parent.content, other_text), []}
+
+        :explain ->
+          {if(selection,
+             do: Prompts.selection(context, selection),
+             else: Prompts.explain(context, content)
+           ), []}
+
+        key when key in [:related_ideas, :thesis, :antithesis] ->
+          metadata = %{
+            prompt_fn: key,
+            selection_prompt_fn:
+              Map.fetch!(
+                %{
+                  related_ideas: :related_ideas_selection,
+                  thesis: :thesis_selection,
+                  antithesis: :antithesis_selection
+                },
+                key
+              )
+          }
+
+          {build_instruction(metadata, context, content, selection), []}
+
+        _ ->
+          {build_instruction(Map.fetch!(@thinking_tools, action), context, content, selection),
+           []}
+      end
+
+    queue_prepared_response(action, instruction, child, graph_id, mode, request_opts)
   end
 
   def queue_grid_answer(question, answer, graph_id, context, mode) do
-    instruction = Prompts.explain(context, question.content)
+    instruction =
+      if question.source_text,
+        do: Prompts.selection_question(context, question.source_text, question.content),
+        else: Prompts.explain(context, question.content)
+
     queue_prepared_response("explain", instruction, answer, graph_id, mode)
   end
 
@@ -376,10 +425,11 @@ defmodule Dialectic.Responses.LlmInterface do
 
     request_context = {"graph_update:#{graph_id}", Keyword.get(opts, :actor_id)}
 
-    RequestQueue.add(instruction, system_prompt, child, graph_id, request_context,
-      mode: mode,
-      notify_rejection: Keyword.get(opts, :notify_rejection, false)
-    )
+    request_opts =
+      Keyword.take(opts, [:response_contract, :guided_target])
+      |> Keyword.merge(mode: mode, notify_rejection: Keyword.get(opts, :notify_rejection, false))
+
+    RequestQueue.add(instruction, system_prompt, child, graph_id, request_context, request_opts)
   end
 
   # Build the instruction for a thinking tool based on whether we have a content override

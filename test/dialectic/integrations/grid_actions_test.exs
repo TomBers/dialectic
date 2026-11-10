@@ -310,7 +310,7 @@ defmodule Dialectic.Integrations.GridActionsTest do
     assert Repo.one!(Oban.Job).args["instruction"] =~ "A related idea"
   end
 
-  test "authored retries survive concurrent calls and restart, comparing original text not edited nodes",
+  test "authored retries retain the receipt across concurrent calls, restart and later edits",
        %{user: user, graph: graph, params: action} do
     params = %{
       "request_id" => Ecto.UUID.generate(),
@@ -333,8 +333,10 @@ defmodule Dialectic.Integrations.GridActionsTest do
     assert {:ok, %{node: %{id: "3"}}} = GridActions.add_idea(user, graph.slug, params)
     GraphManager.set_node_content(graph.title, "3", "Later edit in the app")
 
-    assert {:ok, %{node: %{content: "Later edit in the app"}}} =
+    assert {:ok, %{node: %{content: "My idea"}}} =
              GridActions.add_idea(user, graph.slug, params)
+
+    assert GraphManager.find_node_by_id(graph.title, "3").content == "Later edit in the app"
 
     for changed <- [
           %{"content" => "Different"},

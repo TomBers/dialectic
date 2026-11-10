@@ -70,6 +70,19 @@ defmodule DialecticWeb.McpReliabilityTest do
     assert GraphManager.find_node_by_id(saved.title, "2").content == "User's later revision"
     assert Repo.reload!(receipt).completed_revision == receipt.completed_revision
 
+    refute Dialectic.Integrations.ContentReceipts.generation_persisted?(
+             saved.title,
+             "2",
+             job.id + 1
+           )
+
+    assert :not_mcp =
+             Dialectic.Integrations.ContentReceipts.persist_generation(
+               saved.title,
+               "2",
+               job.id + 1
+             )
+
     assert api |> get(~p"/api/mcp/operations/#{params["request_id"]}") |> json_response(200) ==
              status
   end
@@ -78,12 +91,17 @@ defmodule DialecticWeb.McpReliabilityTest do
        %{user: user, api: api, conn: conn} do
     {:ok, grid} = ChatGrids.create(user, grid_draft())
 
-    {:ok, _} =
-      GridActions.add_idea(user, grid.slug, %{
-        "request_id" => Ecto.UUID.generate(),
-        "parent_node_id" => "2",
-        "content" => "Original snapshot"
-      })
+    append_params = %{
+      "request_id" => Ecto.UUID.generate(),
+      "parent_node_id" => "2",
+      "content" => "Original snapshot"
+    }
+
+    {:ok, added} = GridActions.add_idea(user, grid.slug, append_params)
+    GraphManager.set_node_content(grid.title, added.node.id, "A later user edit")
+    {:ok, replay} = GridActions.add_idea(user, grid.slug, append_params)
+    assert replay.node.content == "Original snapshot"
+    assert replay.snapshot_revision == added.snapshot_revision
 
     path = ~p"/api/mcp/grids/#{grid.slug}"
     first = api |> get(path, limit: 1) |> json_response(200)

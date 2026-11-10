@@ -16,10 +16,17 @@ defmodule Dialectic.Integrations.McpCapabilities do
       notifications_supported: false,
       stage_recovery_supported: false,
       revision_bound_reads_supported: true,
+      adaptive_exploration_supported: true,
+      node_reads_supported: true,
+      text_selection_supported: true,
+      learning_plans_supported: true,
+      synthesis_supported: true,
       content_limits: %{
         question_characters: 4000,
         title_characters: 140,
         idea_characters: 4000,
+        selection_characters: 4000,
+        synthesis_nodes: 5,
         read_page_nodes: 50,
         search_results: 20
       }

@@ -11,6 +11,11 @@ defmodule Dialectic.Integrations.ApiError do
         :locked -> {"editing_disabled", false, nil, false}
         :stale -> {"stale_revision", false, nil, false}
         :stale_snapshot -> {"stale_snapshot", false, nil, false}
+        :source_changed -> {"source_changed", false, nil, false}
+        :invalid_selection -> {"invalid_selection", false, nil, false}
+        :selection_not_found -> {"invalid_selection", false, nil, false}
+        :invalid_context -> {"invalid_context", false, nil, false}
+        :generation_in_progress -> {"generation_in_progress", true, 3, false}
         :invalid_token -> {"invalid_token", false, nil, false}
         :insufficient_scope -> {"insufficient_scope", false, nil, false}
         _ -> {"invalid_arguments", false, nil, false}

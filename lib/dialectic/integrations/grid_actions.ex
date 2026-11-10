@@ -8,14 +8,14 @@ defmodule Dialectic.Integrations.GridActions do
   alias Dialectic.Repo
   alias Dialectic.Responses.{LlmInterface, PromptsStructured}
 
-  @actions Map.new(
-             ~w(clarify assumptions counterexample implications blind_spots says_who who_disagrees steel_man what_if)a,
-             &{Atom.to_string(&1), &1}
-           )
+  @actions Dialectic.Integrations.ExplorationTools.actions()
 
   def apply(user, slug, params) do
     if Map.has_key?(@actions, params["action"]) do
-      submit(user, slug, Map.take(params, ~w(request_id node_id action)))
+      with {:ok, focus} <- prepare_focus(params) do
+        attrs = params |> Map.take(~w(request_id node_id action)) |> Map.merge(focus)
+        submit(user, slug, attrs)
+      end
     else
       {:error, :invalid_action}
     end
@@ -42,11 +42,28 @@ defmodule Dialectic.Integrations.GridActions do
            ),
          {:ok, node} <- visible_node(graph, request.node_id),
          {:ok, answer} <- visible_node(graph, request.answer_node_id) do
-      result = response(request, fresh, node, answer) |> persisted_result(request, fresh)
+      result = response(request, fresh, node, answer, graph) |> persisted_result(request, fresh)
       {:ok, Dialectic.Integrations.Explorations.progress(result, request, graph)}
     else
       nil -> {:error, :not_found}
       error -> error
+    end
+  end
+
+  def read_content_in_graph({graph_struct, graph}, user) do
+    case accessible_graph(user, graph_struct.title) do
+      nil ->
+        {:error, :not_found}
+
+      fresh ->
+        persisted = GridContent.serialize(fresh.data, fresh.title, fresh.data_revision)
+
+        if fresh.data_revision > graph_struct.data_revision do
+          {:ok, persisted, fresh.data_revision}
+        else
+          live = GridContent.serialize(Serialise.graph_to_json(graph), fresh.title)
+          {:ok, live, if(live == persisted, do: fresh.data_revision, else: nil)}
+        end
     end
   end
 
@@ -89,14 +106,76 @@ defmodule Dialectic.Integrations.GridActions do
         {:error, :invalid_content}
 
       true ->
-        submit(user, slug, %{
-          "request_id" => params["request_id"],
-          "node_id" => params["parent_node_id"],
-          "action" => if(kind == "question", do: "ask_question", else: "add_idea"),
-          "content" => content,
-          "content_hash" => :crypto.hash(:sha256, content)
-        })
+        with {:ok, focus} <- prepare_focus(Map.delete(params, "action")) do
+          attrs =
+            Map.merge(focus, %{
+              "request_id" => params["request_id"],
+              "node_id" => params["parent_node_id"],
+              "action" => if(kind == "question", do: "ask_question", else: "add_idea"),
+              "content" => content,
+              "content_hash" => request_hash(content, focus)
+            })
+
+          submit(user, slug, attrs)
+        end
     end
+  end
+
+  defp prepare_focus(params) do
+    selection = params["selection"]
+    expected = params["expected_content_hash"]
+    context_ids = Map.get(params, "context_node_ids", [])
+
+    valid_hash? =
+      is_nil(expected) or (is_binary(expected) and Regex.match?(~r/\A[0-9a-f]{64}\z/, expected))
+
+    valid_selection? =
+      is_nil(selection) or
+        (is_binary(selection) and String.trim(selection) != "" and
+           String.length(selection) <= 4000 and not is_nil(expected))
+
+    valid_context? =
+      is_list(context_ids) and length(context_ids) <= 4 and
+        Enum.all?(context_ids, &(is_binary(&1) and byte_size(&1) in 1..255)) and
+        Enum.uniq(context_ids) == context_ids
+
+    cond do
+      not valid_hash? or not valid_selection? ->
+        {:error, :invalid_selection}
+
+      not valid_context? ->
+        {:error, :invalid_context}
+
+      params["action"] == "synthesis" and
+          (selection != nil or context_ids == [] or params["node_id"] in context_ids) ->
+        {:error, :invalid_context}
+
+      params["action"] != "synthesis" and context_ids != [] ->
+        {:error, :invalid_context}
+
+      true ->
+        focus = %{
+          "selection" => selection,
+          "expected_content_hash" => expected,
+          "context_node_ids" => context_ids
+        }
+
+        {:ok, Map.put(focus, "content_hash", request_hash(nil, focus))}
+    end
+  end
+
+  defp request_hash(content, focus) do
+    if is_nil(focus["selection"]) and is_nil(focus["expected_content_hash"]) and
+         focus["context_node_ids"] == [],
+       do: if(is_binary(content), do: :crypto.hash(:sha256, content)),
+       else:
+         :crypto.hash(
+           :sha256,
+           :erlang.term_to_binary(
+             {content, focus["selection"], focus["expected_content_hash"],
+              focus["context_node_ids"]}
+           )
+         )
   end
 
   def continue_exploration(user, slug, %{"action" => action} = params)
@@ -154,7 +233,9 @@ defmodule Dialectic.Integrations.GridActions do
               {:error, :stale}
 
             true ->
-              append(fresh, candidate, user, params, graph_struct.data_revision)
+              with :ok <- validate_focus(candidate, params, fresh.title) do
+                append(fresh, candidate, user, params, graph_struct.data_revision)
+              end
           end
         end)
 
@@ -164,14 +245,11 @@ defmodule Dialectic.Integrations.GridActions do
             if :digraph.vertex(graph, node.id) == false do
               {_, child} = :digraph.vertex(candidate, node.id)
               :digraph.add_vertex(graph, child.id, child)
-              :digraph.add_edge(graph, node.parent_node_id, child.id)
-            end
-          end
 
-          for source <- Map.get(params, "context_node_ids", []),
-              target = response.node.id,
-              source not in :digraph.in_neighbours(graph, target) do
-            :digraph.add_edge(graph, source, target)
+              for parent_id <- :digraph.in_neighbours(candidate, child.id) do
+                :digraph.add_edge(graph, parent_id, child.id)
+              end
+            end
           end
 
           Phoenix.PubSub.broadcast(
@@ -190,6 +268,89 @@ defmodule Dialectic.Integrations.GridActions do
     end
   end
 
+  defp validate_focus(graph, params, title) do
+    case :digraph.vertex(graph, params["node_id"]) do
+      {_, %Vertex{deleted: false, compound: false, content: content} = source}
+      when is_binary(content) and content != "" ->
+        cond do
+          params["expected_content_hash"] &&
+              GridContent.content_hash(content) != params["expected_content_hash"] ->
+            {:error, :source_changed}
+
+          params["selection"] && not String.contains?(content, params["selection"]) ->
+            {:error, :selection_not_found}
+
+          not Enum.all?(Map.get(params, "context_node_ids", []), &usable_node?(graph, &1)) ->
+            {:error, :invalid_context}
+
+          params["action"] != "add_idea" and not learning_target_current?(source, graph) ->
+            {:error, :source_changed}
+
+          params["action"] != "add_idea" and generation_pending?(title, params) ->
+            {:error, :generation_in_progress}
+
+          true ->
+            :ok
+        end
+
+      _ ->
+        {:error, :invalid_node}
+    end
+  end
+
+  defp learning_target_current?(%Vertex{class: "learning_plan", guided_plan: plan}, graph) do
+    case Dialectic.Responses.GuidedLearningPlan.normalize(plan) do
+      {:ok, plan} ->
+        Enum.all?(plan.actions, fn action ->
+          case Map.get(action, :target) do
+            nil ->
+              true
+
+            target ->
+              match?(
+                {:ok, _},
+                Dialectic.Responses.GuidedLearningTarget.resolve(target, fn id ->
+                  case :digraph.vertex(graph, id) do
+                    {_, node} -> node
+                    _ -> nil
+                  end
+                end)
+              )
+          end
+        end)
+
+      _ ->
+        true
+    end
+  end
+
+  defp learning_target_current?(_source, _graph), do: true
+
+  defp usable_node?(graph, id) do
+    case :digraph.vertex(graph, id) do
+      {_, %Vertex{deleted: false, compound: false, content: content}} ->
+        is_binary(content) and String.trim(content) != ""
+
+      _ ->
+        false
+    end
+  end
+
+  defp generation_pending?(title, params) do
+    ids = [params["node_id"] | Map.get(params, "context_node_ids", [])]
+    pending = Dialectic.Responses.RequestQueue.pending_node_ids(title)
+
+    Enum.any?(ids, &MapSet.member?(pending, &1)) or
+      Repo.exists?(
+        from operation in GridAction,
+          where:
+            (is_nil(operation.answer_node_id) and operation.node_id in ^ids) or
+              operation.answer_node_id in ^ids,
+          where: operation.status in ["queued", "generating"],
+          where: operation.graph_title == ^title
+      )
+  end
+
   defp existing_result(request, fresh, graph, params, graph_struct) do
     cond do
       request.graph_title != fresh.title or request.parent_node_id != params["node_id"] or
@@ -199,7 +360,10 @@ defmodule Dialectic.Integrations.GridActions do
       true ->
         with {:ok, node} <- visible_node(graph, request.node_id),
              {:ok, answer} <- visible_node(graph, request.answer_node_id) do
-          {:ok, {response(request, fresh, node, answer), graph_struct}}
+          result =
+            response(request, fresh, node, answer, graph) |> persisted_result(request, fresh)
+
+          {:ok, {result, graph_struct}}
         end
     end
   end
@@ -219,6 +383,7 @@ defmodule Dialectic.Integrations.GridActions do
             cond do
               question? -> "question"
               authored? -> "user"
+              params["action"] == "related_ideas" -> "ideas"
               params["action"] == "exploration_synthesizing" -> "synthesis"
               String.starts_with?(params["action"], "exploration_") -> "answer"
               true -> params["action"]
@@ -230,6 +395,14 @@ defmodule Dialectic.Integrations.GridActions do
               true -> params["action"]
             end,
           user: user.email,
+          source_text: params["selection"],
+          source_reference:
+            if(params["selection"],
+              do: %{
+                "node_id" => parent.id,
+                "content_hash" => GridContent.content_hash(parent.content)
+              }
+            ),
           parent: parent.parent,
           response_level:
             if(authored?, do: nil, else: PromptsStructured.response_profile(mode).key)
@@ -266,7 +439,7 @@ defmodule Dialectic.Integrations.GridActions do
                  content_hash: params["content_hash"]
                }) do
           {:ok,
-           {response(request, fresh, child, answer),
+           {response(request, fresh, child, answer, graph),
             %{fresh | data: data, data_revision: next_revision}}}
         else
           false -> {:error, :grid_too_large}
@@ -327,13 +500,41 @@ defmodule Dialectic.Integrations.GridActions do
             child,
             fresh.title,
             context,
-            mode
+            mode,
+            selection: params["selection"],
+            context_nodes:
+              Enum.map(Map.get(params, "context_node_ids", []), fn id ->
+                {_, node} = :digraph.vertex(graph, id)
+                node
+              end),
+            learning_target:
+              if(action == "learning_plan",
+                do: learning_target(parent, graph, params["selection"])
+              )
           )
       end
 
     with {:ok, job} <- result do
       {:ok, job.id}
     end
+  end
+
+  defp learning_target(parent, graph, nil) do
+    Dialectic.Responses.GuidedLearningTarget.select(Vertex.add_relatives(parent, graph), fn id ->
+      case :digraph.vertex(graph, id) do
+        {_, node} -> Vertex.add_relatives(node, graph)
+        _ -> nil
+      end
+    end)
+  end
+
+  defp learning_target(parent, _graph, selection) do
+    %{
+      node_id: parent.id,
+      title: "Selected passage",
+      content: selection,
+      source_hash: GridContent.content_hash(parent.content)
+    }
   end
 
   defp add_answer(graph, question, mode) do
@@ -360,7 +561,7 @@ defmodule Dialectic.Integrations.GridActions do
     end
   end
 
-  defp response(request, graph, node, answer) do
+  defp response(request, graph, node, answer, digraph) do
     result = %{
       graph: graph,
       request_id: request.request_id,
@@ -368,18 +569,31 @@ defmodule Dialectic.Integrations.GridActions do
       node:
         node_result(
           node,
-          if(request.action == "start_exploration", do: nil, else: request.parent_node_id),
+          Enum.sort(:digraph.in_neighbours(digraph, node.id)),
           if(answer, do: nil, else: request.status)
         )
     }
 
+    result =
+      if request.completed_revision,
+        do: Map.put(result, :snapshot_revision, request.completed_revision),
+        else: result
+
     if answer,
-      do: Map.put(result, :answer_node, node_result(answer, node.id, request.status)),
+      do:
+        Map.put(
+          result,
+          :answer_node,
+          node_result(
+            answer,
+            Enum.sort(:digraph.in_neighbours(digraph, answer.id)),
+            request.status
+          )
+        ),
       else: result
   end
 
-  defp node_result(node, parent_id, status),
-    do: GridContent.node(node, if(parent_id, do: [parent_id], else: []), status)
+  defp node_result(node, parents, status), do: GridContent.node(node, parents, status)
 
   defp copy_graph(graph) do
     copy = :digraph.new()

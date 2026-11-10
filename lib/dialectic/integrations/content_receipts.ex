@@ -6,21 +6,25 @@ defmodule Dialectic.Integrations.ContentReceipts do
   alias Dialectic.Repo
   require Logger
 
-  def generation_persisted?(title, node_id) do
+  def generation_persisted?(title, node_id, job_id) do
     Repo.exists?(
       from operation in GridAction,
-        where: operation.graph_title == ^title and not is_nil(operation.completed_revision),
+        where:
+          operation.graph_title == ^title and operation.job_id == ^job_id and
+            not is_nil(operation.completed_revision),
         where:
           operation.answer_node_id == ^node_id or
             (is_nil(operation.answer_node_id) and operation.node_id == ^node_id)
     )
   end
 
-  def persist_generation(title, node_id) do
+  def persist_generation(title, node_id, job_id) do
     operation =
       Repo.one(
         from operation in GridAction,
-          where: operation.graph_title == ^title and operation.action != "add_idea",
+          where:
+            operation.graph_title == ^title and operation.job_id == ^job_id and
+              operation.action != "add_idea",
           where:
             operation.answer_node_id == ^node_id or
               (is_nil(operation.answer_node_id) and operation.node_id == ^node_id),
@@ -33,6 +37,10 @@ defmodule Dialectic.Integrations.ContentReceipts do
       %{id: id} -> GraphManager.persist_mcp_content(title, {:operation, id})
       nil -> :not_mcp
     end
+  rescue
+    _error -> {:error, :persistence_failed}
+  catch
+    :exit, _reason -> {:error, :persistence_failed}
   end
 
   def persist_in_graph({graph_struct, graph} = state, receipt) do

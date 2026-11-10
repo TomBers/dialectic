@@ -10,9 +10,16 @@ defmodule Dialectic.Integrations.GridContent do
     statuses =
       Map.new(operations, fn operation ->
         status =
-          if operation.completed_revision && revision && operation.completed_revision <= revision,
-            do: "completed",
-            else: operation.status
+          cond do
+            operation.completed_revision && revision && operation.completed_revision <= revision ->
+              "completed"
+
+            operation.completed_revision && revision ->
+              "queued"
+
+            true ->
+              operation.status
+          end
 
         {operation.answer_node_id || operation.node_id, status}
       end)
@@ -58,6 +65,7 @@ defmodule Dialectic.Integrations.GridContent do
     base = %{
       id: raw["id"],
       content: content,
+      content_hash: content_hash(content),
       class: raw["class"] || "",
       parent_node_id: List.first(parents),
       parent_node_ids: Enum.sort(parents),
@@ -66,9 +74,28 @@ defmodule Dialectic.Integrations.GridContent do
       content_status: content_status(content, status)
     }
 
+    base =
+      case Dialectic.Responses.GuidedLearningPlan.normalize(raw["guided_plan"]) do
+        {:ok, plan} -> Map.put(base, :learning_plan, plan)
+        _ -> base
+      end
+
+    base =
+      if is_map(raw["source_reference"]),
+        do:
+          Map.put(
+            base,
+            :source_reference,
+            Map.put(raw["source_reference"], "text", raw["source_text"])
+          ),
+        else: base
+
     base = if raw["parent"] in [nil, ""], do: base, else: Map.put(base, :parent, raw["parent"])
     if raw["compound"], do: Map.put(base, :compound, true), else: base
   end
+
+  def content_hash(content),
+    do: :crypto.hash(:sha256, content || "") |> Base.encode16(case: :lower)
 
   def at_revision(graph, nil), do: {:ok, graph.data, graph.data_revision}
 
