@@ -1,11 +1,22 @@
 defmodule DialecticWeb.McpGridController do
   use DialecticWeb, :controller
 
-  alias Dialectic.Graph.Extractor
   alias Dialectic.DbActions.Sharing
-  alias Dialectic.Integrations.{ChatGrids, GridActions, OAuth}
+  alias Dialectic.Integrations.{ApiError, ChatGrids, GridActions, GridContent, OAuth}
 
-  plug :authenticate
+  plug :authenticate when action not in [:capabilities, :exploration_tools]
+
+  def exploration_tools(conn, _params) do
+    conn
+    |> put_resp_header("cache-control", "no-store")
+    |> json(%{tools: Dialectic.Integrations.ExplorationTools.catalog()})
+  end
+
+  def capabilities(conn, _params) do
+    conn
+    |> put_resp_header("cache-control", "no-store")
+    |> json(Dialectic.Integrations.McpCapabilities.get())
+  end
 
   def guided_exploration(conn, params) do
     conn.assigns.mcp_user
@@ -40,7 +51,8 @@ defmodule DialecticWeb.McpGridController do
 
       json(conn, %{grids: Enum.map(result.grids, &metadata/1), next_cursor: result.next_cursor})
     else
-      _ -> conn |> put_status(:bad_request) |> json(%{error: "Invalid grid listing parameters"})
+      _ ->
+        error_response(conn, :bad_request, :invalid_arguments, "Invalid grid listing parameters")
     end
   end
 
@@ -63,7 +75,7 @@ defmodule DialecticWeb.McpGridController do
 
       {:error, reason} ->
         {status, message} = action_error(reason)
-        conn |> put_status(status) |> json(%{error: message})
+        error_response(conn, status, reason, message)
     end
   end
 
@@ -93,8 +105,29 @@ defmodule DialecticWeb.McpGridController do
   defp action_error(:stale),
     do: {:conflict, "The live grid is behind its saved version; reopen it before retrying"}
 
-  defp action_error(reason) when reason in [:rate_limited, :too_many_active_requests],
-    do: {:too_many_requests, "Please wait for existing AI requests to finish before retrying"}
+  defp action_error(:source_changed),
+    do:
+      {:conflict,
+       "The source content changed. Read the node again before choosing a passage or action."}
+
+  defp action_error(reason) when reason in [:invalid_selection, :selection_not_found],
+    do:
+      {:unprocessable_entity,
+       "Choose an exact passage of 1–4000 characters from the source node and supply its expected_content_hash."}
+
+  defp action_error(:invalid_context),
+    do:
+      {:unprocessable_entity,
+       "Synthesis requires two to five distinct, readable, nonempty nodes from this grid. Other actions do not accept extra context nodes."}
+
+  defp action_error(:generation_in_progress),
+    do:
+      {:conflict,
+       "Wait until the source nodes have finished generating before branching from them."}
+
+  defp action_error(reason)
+       when reason in [:rate_limited, :too_many_active_requests, :too_many_active_operations],
+       do: {:too_many_requests, "Please wait for existing AI requests to finish before retrying"}
 
   defp action_error(_),
     do:
@@ -107,28 +140,36 @@ defmodule DialecticWeb.McpGridController do
         json(conn, %{grid: metadata(graph), node_count: length(graph.data["nodes"])})
 
       {:error, :request_conflict} ->
-        conn
-        |> put_status(:conflict)
-        |> json(%{error: "This request_id was already used for different content"})
+        error_response(
+          conn,
+          :conflict,
+          :request_conflict,
+          "This request_id was already used for different content"
+        )
 
       {:error, :unavailable} ->
-        conn
-        |> put_status(:gone)
-        |> json(%{error: "The previously created grid is no longer available"})
+        error_response(
+          conn,
+          :gone,
+          :unavailable,
+          "The previously created grid is no longer available"
+        )
 
       {:error, reason} when is_binary(reason) ->
-        conn |> put_status(:unprocessable_entity) |> json(%{error: reason})
+        error_response(conn, :unprocessable_entity, :invalid_arguments, reason)
 
       {:error, _} ->
-        conn |> put_status(:unprocessable_entity) |> json(%{error: "Grid could not be saved"})
+        error_response(conn, :unprocessable_entity, :invalid_arguments, "Grid could not be saved")
     end
   end
 
   def show(conn, %{"slug" => slug} = params) do
     with {:ok, limit} <- integer_param(params, "limit", 20, 1, 50),
-         {:ok, offset} <- integer_param(params, "offset", 0, 0, 1_000_000),
-         graph when not is_nil(graph) <- Sharing.get_accessible_graph(conn.assigns.mcp_user, slug) do
-      {:ok, data} = Extractor.extract_for_image_generation(graph)
+         {:ok, offset, revision} <- pagination(params, slug),
+         graph when not is_nil(graph) <- Sharing.get_accessible_graph(conn.assigns.mcp_user, slug),
+         :ok <- revision_access(graph, revision, conn.assigns.mcp_user),
+         {:ok, data, revision} <- GridContent.at_revision(graph, revision) do
+      data = GridContent.serialize(data, graph.title, revision)
       nodes = Enum.slice(data.nodes, offset, limit)
       node_ids = MapSet.new(nodes, & &1.id)
 
@@ -145,19 +186,140 @@ defmodule DialecticWeb.McpGridController do
         nodes: nodes,
         edges: edges,
         total_nodes: total_nodes,
-        next_offset: if(offset + limit < total_nodes, do: offset + limit, else: nil)
+        snapshot_revision: revision,
+        next_offset: if(offset + limit < total_nodes, do: offset + limit, else: nil),
+        next_cursor:
+          if(offset + limit < total_nodes,
+            do:
+              Phoenix.Token.sign(
+                DialecticWeb.Endpoint,
+                "mcp-grid-page",
+                {slug, revision, offset + limit}
+              ),
+            else: nil
+          )
       })
     else
       nil ->
         if conn.assigns.mcp_user do
-          conn |> put_status(:not_found) |> json(%{error: "Grid not found"})
+          error_response(conn, :not_found, :not_found, "Grid not found")
         else
-          conn |> put_status(:unauthorized) |> json(%{error: "invalid_token"})
+          error_response(conn, :unauthorized, :invalid_token, "invalid_token")
         end
 
       :error ->
-        conn |> put_status(:bad_request) |> json(%{error: "Invalid pagination"})
+        error_response(conn, :bad_request, :invalid_arguments, "Invalid pagination")
+
+      {:error, :stale_snapshot} ->
+        error_response(
+          conn,
+          :conflict,
+          :stale_snapshot,
+          "This revision is no longer available. Start a new read from the first page."
+        )
     end
+  end
+
+  def node(conn, %{"slug" => slug, "node_id" => node_id} = params) do
+    with {:ok, revision} <- revision_param(params),
+         graph when not is_nil(graph) <- Sharing.get_accessible_graph(conn.assigns.mcp_user, slug),
+         :ok <- revision_access(graph, revision, conn.assigns.mcp_user),
+         {:ok, content, revision} <- node_content(graph, revision, conn.assigns.mcp_user),
+         node when not is_nil(node) <- Enum.find(content.nodes, &(&1.id == node_id)) do
+      parent_ids = node.parent_node_ids
+      child_ids = for edge <- content.edges, edge.from == node.id, do: edge.to
+
+      related = fn ids ->
+        content.nodes
+        |> Enum.filter(&(&1.id in ids))
+        |> Enum.take(20)
+        |> Enum.map(fn node ->
+          node
+          |> Map.take([:id, :class, :content_hash, :content_status])
+          |> Map.put(:preview, String.slice(node.content, 0, 240))
+        end)
+      end
+
+      json(conn, %{
+        grid: metadata(graph),
+        node: node,
+        parents: related.(parent_ids),
+        children: related.(child_ids),
+        total_parents: length(parent_ids),
+        total_children: length(child_ids),
+        child_node_ids: child_ids,
+        snapshot_revision: revision,
+        editing_enabled: graph.is_locked != true
+      })
+    else
+      nil ->
+        if conn.assigns.mcp_user,
+          do: error_response(conn, :not_found, :not_found, "Grid or node not found"),
+          else: error_response(conn, :unauthorized, :invalid_token, "invalid_token")
+
+      :error ->
+        error_response(conn, :bad_request, :invalid_arguments, "Invalid revision")
+
+      {:error, :not_found} ->
+        error_response(conn, :not_found, :not_found, "Grid or node not found")
+
+      {:error, :stale_snapshot} ->
+        error_response(
+          conn,
+          :conflict,
+          :stale_snapshot,
+          "This revision is no longer available. Read the current node again."
+        )
+    end
+  end
+
+  defp node_content(graph, nil, user), do: GraphManager.read_mcp_content(graph.title, user)
+
+  defp node_content(graph, revision, _user) do
+    with {:ok, data, revision} <- GridContent.at_revision(graph, revision) do
+      {:ok, GridContent.serialize(data, graph.title, revision), revision}
+    end
+  end
+
+  defp revision_access(_graph, nil, _user), do: :ok
+  defp revision_access(%{data_revision: revision}, revision, _user), do: :ok
+  defp revision_access(%{user_id: id}, _revision, %{id: id}), do: :ok
+  defp revision_access(_graph, _revision, _user), do: {:error, :stale_snapshot}
+
+  defp pagination(%{"cursor" => cursor}, slug)
+       when is_binary(cursor) and byte_size(cursor) <= 2048 do
+    case Phoenix.Token.verify(DialecticWeb.Endpoint, "mcp-grid-page", cursor, max_age: 604_800) do
+      {:ok, {^slug, revision, offset}} when is_integer(revision) and is_integer(offset) ->
+        {:ok, offset, revision}
+
+      _ ->
+        :error
+    end
+  end
+
+  defp pagination(%{"cursor" => _}, _slug), do: :error
+
+  defp pagination(params, _slug) do
+    with {:ok, offset} <- integer_param(params, "offset", 0, 0, 1_000_000),
+         {:ok, revision} <- revision_param(params) do
+      {:ok, offset, revision}
+    end
+  end
+
+  defp revision_param(%{"revision" => _} = params),
+    do: integer_param(params, "revision", 0, 0, 9_007_199_254_740_991)
+
+  defp revision_param(_), do: {:ok, nil}
+
+  defp error_response(conn, status, reason, message) do
+    data = ApiError.data(reason, conn.params["request_id"])
+
+    conn =
+      if data.retry_after_seconds,
+        do: put_resp_header(conn, "retry-after", to_string(data.retry_after_seconds)),
+        else: conn
+
+    conn |> put_status(status) |> json(Map.put(data, :error, message))
   end
 
   defp integer_param(params, key, default, minimum, maximum) do
@@ -184,6 +346,7 @@ defmodule DialecticWeb.McpGridController do
         :apply_action -> "grids:append"
         :add_idea -> "grids:append"
         :show -> "grids:read"
+        :node -> "grids:read"
       end
 
     token =
@@ -195,7 +358,7 @@ defmodule DialecticWeb.McpGridController do
     conn = put_resp_header(conn, "cache-control", "no-store")
 
     authentication =
-      if action_name(conn) == :show and get_req_header(conn, "authorization") == [],
+      if action_name(conn) in [:show, :node] and get_req_header(conn, "authorization") == [],
         do: {:ok, nil},
         else: OAuth.authenticate(token, scope)
 
@@ -204,15 +367,15 @@ defmodule DialecticWeb.McpGridController do
         conn
         |> assign(:mcp_user, user)
         |> assign(:current_user, user)
-        |> DialecticWeb.Plugs.RateLimiter.call(type: :api)
+        |> DialecticWeb.Plugs.RateLimiter.call(type: :api, mcp_errors: true)
 
       {:error, reason} ->
         status = if reason == :insufficient_scope, do: :forbidden, else: :unauthorized
-        conn = DialecticWeb.Plugs.RateLimiter.call(conn, type: :auth)
+        conn = DialecticWeb.Plugs.RateLimiter.call(conn, type: :auth, mcp_errors: true)
 
         if conn.halted,
           do: conn,
-          else: conn |> put_status(status) |> json(%{error: reason}) |> halt()
+          else: conn |> error_response(status, reason, reason) |> halt()
     end
   end
 

@@ -399,6 +399,28 @@ defmodule DialecticWeb.HomeLive do
         </div>
       </section>
 
+      <section
+        id="home-ai-assistants"
+        class="border-b border-stone-300 bg-white px-6 py-12 text-slate-950"
+      >
+        <div class="mx-auto max-w-5xl space-y-4">
+          <p class="text-sm font-semibold uppercase tracking-widest text-teal-700">
+            Connect your AI assistant
+          </p>
+          <h2 class="text-3xl font-semibold">Turn a chat question into a grid you can build on.</h2>
+          <p class="max-w-2xl text-lg">
+            Ask your assistant to explore with RationalGrid. Read an idea, examine a passage or follow a learning plan. Keep useful branches connected and come back to develop your thinking.
+          </p>
+          <.link
+            id="home-ai-assistants-link"
+            href={~p"/features/ai-assistants"}
+            class="link font-semibold"
+          >
+            Connect with MCP <.icon name="hero-arrow-right" class="h-4 w-4" />
+          </.link>
+        </div>
+      </section>
+
       <section id="home-final-cta" class="border-b border-stone-300 bg-[#f4f1e9] text-slate-950">
         <div class="mx-auto flex w-full max-w-5xl flex-col gap-6 px-5 py-12 sm:px-8 sm:py-14 lg:flex-row lg:items-center lg:justify-between">
           <div>

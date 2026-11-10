@@ -56,6 +56,15 @@ defmodule DialecticWeb.SiteNavigation do
           active={@active_path == "/community"}
         />
 
+        <.nav_link
+          id="ai-assistants-nav-link"
+          href={~p"/features/ai-assistants"}
+          label="AI assistants"
+          icon="hero-sparkles"
+          compact
+          active={@active_path == "/features/ai-assistants"}
+        />
+
         <.link
           :if={@current_user}
           id="desktop-new-grid-nav-link"
@@ -130,6 +139,13 @@ defmodule DialecticWeb.SiteNavigation do
               label="Settings"
               icon="hero-cog-6-tooth"
               active={@active_path == "/users/settings"}
+            />
+            <.account_link
+              id="account-connections-link"
+              href={~p"/users/connections"}
+              label="My connected apps"
+              icon="hero-link"
+              active={@active_path == "/users/connections"}
             />
             <div class="my-1 border-t border-slate-100"></div>
             <.account_link

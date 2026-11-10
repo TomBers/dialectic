@@ -160,59 +160,64 @@ defmodule Dialectic.Workers.LLMWorker do
     existing_node = GraphManager.find_node_by_id(graph, to_node)
     existing_content = existing_node && Map.get(existing_node, :content, "")
 
-    if skip_existing_response?(attempt, existing_content) do
-      Logger.warning(fn ->
-        "[LLMWorker] SKIPPING job_id=#{job_id} - node #{to_node} already has content (#{byte_size(existing_content)} bytes). Another job likely completed first."
-      end)
+    cond do
+      Dialectic.Integrations.ContentReceipts.generation_persisted?(graph, to_node, job_id) ->
+        {:ok, :skipped}
 
-      {:ok, :skipped}
-    else
-      if attempt == 1 do
-        GraphManager.update_vertex_fields(graph, to_node, %{
-          content: "",
-          guided_plan: nil,
-          grounding_metadata: nil
-        })
-      end
+      skip_existing_response?(attempt, existing_content) ->
+        Logger.warning(fn ->
+          "[LLMWorker] SKIPPING job_id=#{job_id} - node #{to_node} already has content (#{byte_size(existing_content)} bytes). Another job likely completed first."
+        end)
 
-      result =
-        run_llm_request(
-          job_id,
-          job_started_at,
-          attempt,
-          args,
-          graph,
-          to_node,
-          live_view_topic,
-          provider_mod
-        )
+        {persist_completed_content(graph, to_node, job_id), :skipped}
 
-      cond do
-        attempt >= max_attempts and match?({:error, _reason}, result) ->
-          persist_stream_error(
+      true ->
+        if attempt == 1 do
+          GraphManager.update_vertex_fields(graph, to_node, %{
+            content: "",
+            guided_plan: nil,
+            grounding_metadata: nil
+          })
+        end
+
+        result =
+          run_llm_request(
+            job_id,
+            job_started_at,
+            attempt,
+            args,
             graph,
             to_node,
             live_view_topic,
-            terminal_error_message(provider_mod, result)
+            provider_mod
           )
 
-        match?({:error, _reason}, result) ->
-          persist_retry_status(
-            graph,
-            to_node,
-            live_view_topic,
-            retry_message(result, job_id, attempt, max_attempts)
-          )
+        cond do
+          attempt >= max_attempts and match?({:error, _reason}, result) ->
+            persist_stream_error(
+              graph,
+              to_node,
+              live_view_topic,
+              terminal_error_message(provider_mod, result)
+            )
 
-        true ->
-          :ok
-      end
+          match?({:error, _reason}, result) ->
+            persist_retry_status(
+              graph,
+              to_node,
+              live_view_topic,
+              retry_message(result, job_id, attempt, max_attempts)
+            )
 
-      if terminal_failure?(result, attempt, max_attempts) do
-        cleanup_terminal_guided_submission(args, graph, to_node)
-      end
+          true ->
+            :ok
+        end
 
-      {result, outcome_for_result(result)}
+        if terminal_failure?(result, attempt, max_attempts) do
+          cleanup_terminal_guided_submission(args, graph, to_node)
+        end
+
+        {result, outcome_for_result(result)}
     end
   end
 
@@ -498,8 +503,7 @@ defmodule Dialectic.Workers.LLMWorker do
                 "[LLMWorker] job_id=#{job_id} completed without required follow-ups; appended fallback follow-up questions total=#{total_ms}ms bytes=#{byte_size(final_full_text)} updates=#{stream_updates} finish_reason=#{inspect(finish_reason)}"
               )
 
-              finalize(graph, to_node, live_view_topic)
-              :ok
+              finalize(graph, to_node, live_view_topic, job_id)
 
             true ->
               total_ms =
@@ -511,8 +515,7 @@ defmodule Dialectic.Workers.LLMWorker do
                 "[LLMWorker] job_id=#{job_id} completed total=#{total_ms}ms bytes=#{byte_size(final_full_text)} updates=#{stream_updates} finish_reason=#{inspect(finish_reason)}"
               )
 
-              finalize(graph, to_node, live_view_topic)
-              :ok
+              finalize(graph, to_node, live_view_topic, job_id)
           end
 
         {:error, err} ->
@@ -561,8 +564,7 @@ defmodule Dialectic.Workers.LLMWorker do
           "[LLMWorker] job_id=#{job_id} completed validated guided learning plan total=#{total_ms}ms bytes=#{byte_size(canonical_content)} finish_reason=#{inspect(finish_reason)}"
         )
 
-        finalize(graph, to_node, live_view_topic)
-        :ok
+        finalize(graph, to_node, live_view_topic, job_id)
 
       {:reject, errors} ->
         Logger.error(
@@ -925,15 +927,31 @@ defmodule Dialectic.Workers.LLMWorker do
     )
   end
 
-  defp finalize(graph, to_node, live_view_topic) do
+  defp finalize(graph, to_node, live_view_topic, job_id) do
     GraphManager.finalize_node_content(graph, to_node)
-    GraphManager.save_graph(graph)
+    result = persist_completed_content(graph, to_node, job_id)
 
     Phoenix.PubSub.broadcast(
       Dialectic.PubSub,
       live_view_topic,
       {:llm_request_complete, to_node}
     )
+
+    result
+  end
+
+  defp persist_completed_content(graph, node, job_id) do
+    case Dialectic.Integrations.ContentReceipts.persist_generation(graph, node, job_id) do
+      :not_mcp ->
+        GraphManager.save_graph(graph)
+        :ok
+
+      {:ok, _revision} ->
+        :ok
+
+      {:error, reason} ->
+        {:discard, {:content_persistence_failed, reason}}
+    end
   end
 
   defp provider_label(_mod), do: "Google"

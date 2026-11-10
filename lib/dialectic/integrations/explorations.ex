@@ -1,12 +1,36 @@
 defmodule Dialectic.Integrations.Explorations do
   import Ecto.Query
   alias Dialectic.Accounts.{Graph, User}
-  alias Dialectic.Graph.Vertex
-  alias Dialectic.Integrations.{Exploration, GridAction, GridActions}
+  alias Dialectic.Integrations.{Exploration, GridAction, GridActions, GridContent}
   alias Dialectic.Repo
   alias Dialectic.Workers.ExplorationWorker
 
   @stages ~w(opening testing deepening synthesizing)
+
+  def admit(user_id) do
+    Repo.query!("SELECT pg_advisory_xact_lock(hashtextextended($1, 0))", [
+      "mcp-explorations:#{user_id}"
+    ])
+
+    cutoff = DateTime.add(DateTime.utc_now(), -1200, :second)
+
+    count =
+      Repo.aggregate(
+        from(exploration in Exploration,
+          join: job in Oban.Job,
+          on: job.id == exploration.coordinator_job_id,
+          where:
+            exploration.user_id == ^user_id and exploration.stage not in ["completed", "failed"],
+          where: exploration.inserted_at > ^cutoff,
+          where: job.state in ["available", "scheduled", "executing", "retryable"]
+        ),
+        :count
+      )
+
+    if count < Dialectic.Integrations.McpCapabilities.max_active_explorations(),
+      do: :ok,
+      else: {:error, :too_many_active_operations}
+  end
 
   def enqueue(user, request_id, graph) do
     with {:ok, exploration} <-
@@ -47,24 +71,19 @@ defmodule Dialectic.Integrations.Explorations do
               end
             end)
 
-        nodes =
-          Enum.flat_map(ids, fn id ->
-            case :digraph.vertex(graph, id) do
-              {_, %Vertex{deleted: false} = node} ->
-                [
-                  %{
-                    id: id,
-                    content: node.content,
-                    class: node.class,
-                    sources: Dialectic.LLM.Grounding.sources(node.grounding_metadata),
-                    parent_node_id: List.first(:digraph.in_neighbours(graph, id))
-                  }
-                ]
+        {data, revision} =
+          if exploration.completed_revision do
+            {:ok, data, revision} =
+              GridContent.at_revision(result.graph, exploration.completed_revision)
 
-              _ ->
-                []
-            end
-          end)
+            {data, revision}
+          else
+            {Dialectic.Graph.Serialise.graph_to_json(graph), nil}
+          end
+
+        nodes =
+          GridContent.serialize(data, request.graph_title, revision).nodes
+          |> Enum.filter(&(&1.id in ids))
 
         completed_steps =
           if exploration.stage == "completed" do
@@ -88,11 +107,30 @@ defmodule Dialectic.Integrations.Explorations do
         result
         |> Map.put(:status, status)
         |> Map.put(:nodes, nodes)
+        |> Map.put(:node, Enum.find(nodes, &(&1.id == request.node_id)))
+        |> Map.put(:answer_node, Enum.find(nodes, &(&1.id == request.answer_node_id)))
+        |> Map.put(:snapshot_revision, revision)
         |> Map.put(:exploration, %{
           stage: exploration.stage,
           completed_steps: completed_steps,
           total_steps: 4,
-          error: exploration.error
+          error: exploration.error,
+          stages:
+            Enum.map(@stages, fn stage ->
+              id =
+                if stage == "opening",
+                  do: request.answer_node_id,
+                  else: get_in(exploration.steps, [stage, "node_id"])
+
+              node = Enum.find(nodes, &(&1.id == id))
+
+              %{
+                stage: stage,
+                node_id: id,
+                status: if(node, do: node.generation_status, else: "not_started"),
+                content_status: if(node, do: node.content_status, else: "not_started")
+              }
+            end)
         })
     end
   end
@@ -121,7 +159,8 @@ defmodule Dialectic.Integrations.Explorations do
       graph.user_id != user.id or graph.is_deleted == true ->
         fail(exploration, "unavailable")
 
-      graph.is_locked == true or graph.is_public == true ->
+      (graph.is_locked == true or graph.is_public == true) and
+          not synthesis_finished?(exploration) ->
         fail(exploration, "editing_stopped")
 
       true ->
@@ -174,9 +213,12 @@ defmodule Dialectic.Integrations.Explorations do
     end
   end
 
-  defp next_stage(%{stage: "synthesizing"} = exploration, _user, _graph, _operation) do
-    save_progress(exploration, %{stage: "completed"})
-    :ok
+  defp next_stage(%{stage: "synthesizing"} = exploration, _user, graph, _operation) do
+    case GraphManager.persist_mcp_content(graph.title, {:exploration, exploration.id}) do
+      {:ok, _revision} -> :ok
+      {:error, :persistence_failed} -> {:snooze, 5}
+      {:error, _} -> fail(exploration, "content_not_persisted")
+    end
   end
 
   defp next_stage(exploration, user, graph, _operation) do
@@ -213,6 +255,18 @@ defmodule Dialectic.Integrations.Explorations do
         fail(exploration, "generation_stopped")
     end
   end
+
+  defp synthesis_finished?(%{stage: "synthesizing"} = exploration) do
+    match?(
+      %{status: "completed"},
+      Repo.get_by(GridAction,
+        user_id: exploration.user_id,
+        request_id: step_id(exploration, "synthesizing")
+      )
+    )
+  end
+
+  defp synthesis_finished?(_), do: false
 
   defp step_id(exploration, stage) do
     <<a::48, _::4, b::12, _::2, c::62, _::binary>> =

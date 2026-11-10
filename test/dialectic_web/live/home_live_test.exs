@@ -346,7 +346,7 @@ defmodule DialecticWeb.HomeLiveTest do
 
     assert has_element?(
              view,
-             "#home-video-hero + #home-social-proof + #popular-grids + #home-before-you-start + #home-ai-limits-faq + #home-final-cta + footer"
+             "#home-video-hero + #home-social-proof + #popular-grids + #home-before-you-start + #home-ai-limits-faq + #home-ai-assistants + #home-final-cta + footer"
            )
 
     for location <- ["hero", "final"] do
@@ -466,7 +466,12 @@ defmodule DialecticWeb.HomeLiveTest do
            |> LazyHTML.attribute("href") == ["/users/settings"]
 
     assert document |> LazyHTML.query("#site-navigation-links > a") |> LazyHTML.attribute("id") ==
-             ["my-learning-nav-link", "community-nav-link", "desktop-new-grid-nav-link"]
+             [
+               "my-learning-nav-link",
+               "community-nav-link",
+               "ai-assistants-nav-link",
+               "desktop-new-grid-nav-link"
+             ]
 
     assert document |> LazyHTML.query("#account-curate-link") |> LazyHTML.attribute("href") == []
   end

@@ -221,7 +221,7 @@ defmodule DialecticWeb.McpControllerTest do
     result = api |> post(path, params) |> json_response(200)
     assert result["status"] == "completed"
 
-    assert result["node"] == %{
+    assert Map.take(result["node"], ~w(id parent_node_id class content)) == %{
              "id" => "3",
              "parent_node_id" => "2",
              "class" => "user",

@@ -4,6 +4,7 @@ defmodule Dialectic.Workers.LocalWorker do
   # Tests and dev flows continue to rely on the "question" arg for echo behavior.
 
   def perform(%Oban.Job{
+        id: job_id,
         args: %{
           "question" => question,
           "to_node" => node,
@@ -28,5 +29,11 @@ defmodule Dialectic.Workers.LocalWorker do
       live_view_topic,
       {:llm_request_complete, node}
     )
+
+    case Dialectic.Integrations.ContentReceipts.persist_generation(graph, node, job_id) do
+      :not_mcp -> :ok
+      {:ok, _revision} -> :ok
+      {:error, reason} -> {:discard, {:content_persistence_failed, reason}}
+    end
   end
 end

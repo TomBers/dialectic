@@ -123,6 +123,7 @@ defmodule DialecticWeb.SitemapController do
       url_entry(base_url <> "/about", nil, "monthly", "0.6"),
       url_entry(base_url <> "/intro/how", nil, "monthly", "0.5"),
       url_entry(base_url <> "/intro/ai", nil, "monthly", "0.5"),
+      url_entry(base_url <> ~p"/features/ai-assistants", nil, "monthly", "0.6"),
       url_entry(base_url <> "/compare", nil, "monthly", "0.6"),
       url_entry(base_url <> "/community", nil, "daily", "0.7"),
       url_entry(base_url <> "/community?category=curated", nil, "daily", "0.7"),

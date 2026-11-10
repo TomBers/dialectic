@@ -43,14 +43,25 @@ defmodule DialecticWeb.Plugs.RateLimiter do
           conn
 
         {:deny, _retry_after} ->
-          conn
-          |> put_status(:too_many_requests)
-          |> put_resp_header("retry-after", "#{div(scale_ms, 1000)}")
-          |> json(%{
+          payload = %{
             error: "Rate limit exceeded",
             message: "Too many requests. Please try again later.",
             retry_after_seconds: div(scale_ms, 1000)
-          })
+          }
+
+          payload =
+            if Keyword.get(opts, :mcp_errors, false),
+              do:
+                Map.merge(
+                  Dialectic.Integrations.ApiError.data(:rate_limited, conn.params["request_id"]),
+                  payload
+                ),
+              else: payload
+
+          conn
+          |> put_status(:too_many_requests)
+          |> put_resp_header("retry-after", "#{div(scale_ms, 1000)}")
+          |> json(payload)
           |> halt()
       end
     end

@@ -36,7 +36,15 @@ defmodule Dialectic.Integrations.GridActionsTest do
     assert {:ok, result} = GridActions.apply(user, graph.slug, params)
     assert result.status == "queued"
     assert result.graph.is_public
-    assert result.node == %{id: "3", parent_node_id: "2", class: "clarify", content: ""}
+
+    assert %{
+             id: "3",
+             parent_node_id: "2",
+             class: "clarify",
+             content: "",
+             content_status: "placeholder"
+           } = result.node
+
     assert_receive {:other_user_change, _pid}
     assert {_stored, ^original_digraph} = GraphManager.get_graph(graph.title)
     saved = Repo.get!(Graph, graph.title)
@@ -82,7 +90,15 @@ defmodule Dialectic.Integrations.GridActionsTest do
 
     assert {:ok, result} = GridActions.add_idea(user, graph.slug, params)
     assert result.status == "completed"
-    assert result.node == %{id: "3", parent_node_id: "2", class: "user", content: content}
+
+    assert %{
+             id: "3",
+             parent_node_id: "2",
+             class: "user",
+             content: ^content,
+             content_status: "complete"
+           } = result.node
+
     assert result.graph.is_public
     node = GraphManager.find_node_by_id(graph.title, "3")
     assert node.user == user.email
@@ -115,14 +131,23 @@ defmodule Dialectic.Integrations.GridActionsTest do
     assert {:ok, result} = GridActions.add_idea(user, graph.slug, params)
     assert result.status == "queued"
 
-    assert result.node == %{
+    assert %{
              id: "3",
              parent_node_id: "2",
              class: "question",
-             content: params["content"]
-           }
+             content_status: "complete"
+           } = result.node
 
-    assert result.answer_node == %{id: "4", parent_node_id: "3", class: "answer", content: ""}
+    assert result.node.content == params["content"]
+
+    assert %{
+             id: "4",
+             parent_node_id: "3",
+             class: "answer",
+             content: "",
+             content_status: "placeholder"
+           } = result.answer_node
+
     question = GraphManager.find_node_by_id(graph.title, "3")
     answer = GraphManager.find_node_by_id(graph.title, "4")
     assert question.prompt_kind == "question"
@@ -285,7 +310,7 @@ defmodule Dialectic.Integrations.GridActionsTest do
     assert Repo.one!(Oban.Job).args["instruction"] =~ "A related idea"
   end
 
-  test "authored retries survive concurrent calls and restart, comparing original text not edited nodes",
+  test "authored retries retain the receipt across concurrent calls, restart and later edits",
        %{user: user, graph: graph, params: action} do
     params = %{
       "request_id" => Ecto.UUID.generate(),
@@ -308,8 +333,10 @@ defmodule Dialectic.Integrations.GridActionsTest do
     assert {:ok, %{node: %{id: "3"}}} = GridActions.add_idea(user, graph.slug, params)
     GraphManager.set_node_content(graph.title, "3", "Later edit in the app")
 
-    assert {:ok, %{node: %{content: "Later edit in the app"}}} =
+    assert {:ok, %{node: %{content: "My idea"}}} =
              GridActions.add_idea(user, graph.slug, params)
+
+    assert GraphManager.find_node_by_id(graph.title, "3").content == "Later edit in the app"
 
     for changed <- [
           %{"content" => "Different"},

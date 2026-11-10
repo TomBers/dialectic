@@ -91,6 +91,8 @@ defmodule DialecticWeb.McpOAuthController do
       Enum.map(OAuth.list_connections(conn.assigns.current_user), fn grant ->
         %{
           id: grant.id,
+          connected_at: Calendar.strftime(grant.inserted_at, "%d %b %Y at %H:%M UTC"),
+          scopes: String.split(grant.scope),
           name:
             case OAuth.client(grant.client_id) do
               %{name: name} -> name
@@ -104,6 +106,15 @@ defmodule DialecticWeb.McpOAuthController do
       mcp_testing?: Application.get_env(:dialectic, :dev_routes, false),
       mcp_resource: OAuth.resource(),
       mcp_scopes: Enum.join(OAuth.scopes(), " ")
+    )
+  end
+
+  def feature(conn, _params) do
+    render(conn, :feature,
+      page_title: "Connect your AI assistant",
+      page_description:
+        "Turn a question in your AI assistant into a RationalGrid exploration with connected answers, challenges and a synthesis.",
+      mcp_resource: OAuth.resource()
     )
   end
 
