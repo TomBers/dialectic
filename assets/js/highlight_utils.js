@@ -110,8 +110,16 @@ const HighlightUtils = {
     const next = new Map(highlights.map(h => [String(h.id), h]));
     for (const [id, spans] of existing) {
       const highlight = next.get(id);
-      const previous = JSON.parse(spans[0].dataset.highlightSignature);
-      if (!highlight || previous.start !== highlight.selection_start || previous.end !== highlight.selection_end) {
+      const sameRange = highlight && spans.every(span => {
+        try {
+          const previous = JSON.parse(span.dataset.highlightSignature);
+          return previous?.start === highlight.selection_start &&
+            previous?.end === highlight.selection_end && Array.isArray(previous?.links);
+        } catch {
+          return false;
+        }
+      });
+      if (!sameRange) {
         this.removeHighlight(container, id, spans);
         existing.delete(id);
       } else if (spans[0].dataset.highlightSignature !== this.highlightSignature(highlight)) {

@@ -3,6 +3,29 @@ import HighlightUtils from "./highlight_utils.js";
 const graphs = new Map();
 const empty = Object.freeze([]);
 
+function graphCache(graphId) {
+  if (graphs.size === 0) window.addEventListener("phx:highlights_loaded", receiveHighlights);
+  if (!graphs.has(graphId)) {
+    graphs.set(graphId, { nodes: new Map(), byId: new Map(), signatures: new Map(), subscribers: new Map(), owners: new Set() });
+  }
+  return graphs.get(graphId);
+}
+
+function releaseUnusedGraph(graphId, graph) {
+  if (graph.owners.size === 0 && graph.subscribers.size === 0) graphs.delete(graphId);
+  if (graphs.size === 0) window.removeEventListener("phx:highlights_loaded", receiveHighlights);
+}
+
+export function retainHighlights(graphId) {
+  const graph = graphCache(graphId);
+  const owner = {};
+  graph.owners.add(owner);
+  return () => {
+    if (!graph.owners.delete(owner)) return;
+    releaseUnusedGraph(graphId, graph);
+  };
+}
+
 export function nodeHighlights(graphId, nodeId) {
   return graphs.get(graphId)?.nodes.get(String(nodeId)) || empty;
 }
@@ -36,17 +59,17 @@ function receiveHighlights({ detail: { graph_id: graphId, highlights = [] } }) {
 }
 
 export function subscribeHighlights(graphId, nodeId, callback) {
-  if (graphs.size === 0) window.addEventListener("phx:highlights_loaded", receiveHighlights);
-  if (!graphs.has(graphId)) graphs.set(graphId, { nodes: new Map(), byId: new Map(), signatures: new Map(), subscribers: new Map() });
-  const graph = graphs.get(graphId);
+  const graph = graphCache(graphId);
   const id = String(nodeId);
   if (!graph.subscribers.has(id)) graph.subscribers.set(id, new Set());
   const callbacks = graph.subscribers.get(id);
   callbacks.add(callback);
+  let subscribed = true;
   return () => {
+    if (!subscribed) return;
+    subscribed = false;
     callbacks.delete(callback);
     if (callbacks.size === 0) graph.subscribers.delete(id);
-    if (graph.subscribers.size === 0) graphs.delete(graphId);
-    if (graphs.size === 0) window.removeEventListener("phx:highlights_loaded", receiveHighlights);
+    releaseUnusedGraph(graphId, graph);
   };
 }

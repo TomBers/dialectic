@@ -12,6 +12,42 @@ function passage() {
 const mark = (root, id) => root.querySelector(`[data-highlight-id="${id}"]`);
 
 describe("incremental saved highlights", () => {
+  it.each([undefined, "invalid JSON", "null", "[]", '{}', '{"start":0,"end":5}'])(
+    "removes stale marks with signature %s without losing text or formatting", (signature) => {
+      const root = passage();
+      const stale = document.createElement("mark");
+      stale.className = "highlight-span";
+      if (signature !== undefined) {
+        stale.dataset.highlightId = "1";
+        stale.dataset.highlightSignature = signature;
+      }
+      const strong = root.querySelector("strong");
+      strong.replaceWith(stale);
+      stale.append(strong);
+      const original = root.textContent;
+      expect(() => HighlightUtils.renderHighlights(root, [])).not.toThrow();
+      expect(root.querySelector(".highlight-span")).toBeNull();
+      expect(root.textContent).toBe(original);
+      expect(root.querySelector("strong")).toBe(strong);
+    },
+  );
+
+  it.each([undefined, "invalid JSON", "null", "[]", '{}', '{"start":0,"end":5}'])(
+    "rebuilds saved highlights with signature %s and keeps their links", (signature) => {
+      const root = passage();
+      const saved = highlight(1, 0, 5, [{node_id: "42", link_type: "explain"}]);
+      HighlightUtils.renderHighlights(root, [saved]);
+      const stale = mark(root, 1);
+      if (signature === undefined) delete stale.dataset.highlightSignature;
+      else stale.dataset.highlightSignature = signature;
+      expect(() => HighlightUtils.renderHighlights(root, [saved])).not.toThrow();
+      expect(mark(root, 1)).not.toBe(stale);
+      expect(mark(root, 1).textContent).toBe("Alpha");
+      expect(root.querySelectorAll(".highlight-link-icon")).toHaveLength(1);
+      expect(root.querySelector(".highlight-link-icon").getAttribute("phx-value-node_id")).toBe("42");
+    },
+  );
+
   it("preserves other marks and formatting when adding, moving and removing a highlight", () => {
     const root = passage();
     const original = root.textContent;
