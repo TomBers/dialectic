@@ -1461,7 +1461,7 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
 
     assert has_element?(
              view,
-             "#selection-actions button[data-selection-action='highlight_only']"
+             "#selection-input-form-selection-actions-primary-actions button[data-selection-action='highlight_only']"
            )
 
     assert has_element?(
@@ -1470,7 +1470,11 @@ defmodule DialecticWeb.OutlineGraphLiveTest do
              "Copy text"
            )
 
-    assert has_element?(view, "#selection-actions button[data-selection-action='explain']")
+    assert has_element?(
+             view,
+             "#selection-input-form-selection-actions-primary-actions button[data-selection-action='explain']"
+           )
+
     assert has_element?(view, "#selection-input-form-selection-actions-ask")
     assert has_element?(view, "#selection-input-form-selection-actions-comment")
 

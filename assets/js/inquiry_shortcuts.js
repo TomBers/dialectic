@@ -15,7 +15,7 @@ export function syncInquiryShortcutLabels(root) {
 
 export function handleInquiryShortcut(event, root) {
   const target = event.target;
-  if (!root?.contains(target) || event.defaultPrevented || event.isComposing ||
+  if (!(target instanceof Element) || !root?.contains(target) || event.defaultPrevented || event.isComposing ||
       event.repeat ||
       target.matches("input, textarea, select") || target.isContentEditable) return false;
 

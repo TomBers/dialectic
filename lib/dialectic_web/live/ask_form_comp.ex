@@ -51,6 +51,7 @@ defmodule DialecticWeb.AskFormComp do
       |> assign_new(:tools_menu_id, fn -> nil end)
       |> assign_new(:inner_block, fn -> [] end)
       |> assign_new(:quick_actions, fn -> [] end)
+      |> assign_new(:primary_actions, fn -> [] end)
       |> assign_new(:query_origin, fn -> nil end)
       |> assign_new(:disabled, fn -> false end)
       |> then(fn s ->
@@ -126,8 +127,22 @@ defmodule DialecticWeb.AskFormComp do
               )
             }
           />
-          <div class="mt-2 flex flex-wrap items-stretch gap-2 border-t border-stone-300 pt-3">
-            <div class="contents">
+          <div
+            id={"#{@id}-response-actions"}
+            class={[
+              "mt-2 gap-2 border-t border-stone-300 pt-3",
+              if(@context == :selection,
+                do: "grid grid-cols-1 items-start sm:grid-cols-2",
+                else: "flex flex-wrap items-stretch"
+              )
+            ]}
+          >
+            <div class={[
+              if(@context == :selection,
+                do: "flex min-w-0 flex-wrap items-stretch gap-1.5",
+                else: "contents"
+              )
+            ]}>
               <button
                 id={"#{@id}-ask"}
                 data-shortcut-action="ask"
@@ -139,7 +154,10 @@ defmodule DialecticWeb.AskFormComp do
                 phx-disable-with="Asking AI…"
                 type="submit"
                 disabled={@disabled}
-                class="inline-flex min-h-11 min-w-28 items-center justify-center gap-2 rounded-lg bg-teal-800 px-5 text-sm font-semibold text-white hover:bg-teal-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-800 disabled:cursor-not-allowed disabled:opacity-50"
+                class={[
+                  "inline-flex min-h-11 min-w-28 items-center justify-center gap-2 rounded-lg bg-teal-800 px-5 text-sm font-semibold text-white hover:bg-teal-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-800 disabled:cursor-not-allowed disabled:opacity-50",
+                  @context == :selection && "flex-1"
+                ]}
                 title={
                   if(@disabled,
                     do: "Choose an existing response to continue",
@@ -172,6 +190,21 @@ defmodule DialecticWeb.AskFormComp do
             >
               <span>Post thought</span><.shortcut_keycap shift />
             </button>
+          </div>
+          <div
+            :if={@context == :selection}
+            id={"#{@id}-passage-actions"}
+            role="group"
+            aria-labelledby={"#{@id}-passage-actions-label"}
+            class="mt-3 grid grid-cols-2 gap-2 border-t border-stone-200 pt-3 [&_button]:w-full [&_kbd]:hidden sm:[&_kbd]:inline-flex"
+          >
+            <p
+              id={"#{@id}-passage-actions-label"}
+              class="col-span-2 text-xs font-medium text-slate-500"
+            >
+              Use selected passage
+            </p>
+            {render_slot(@primary_actions)}
           </div>
 
           <p

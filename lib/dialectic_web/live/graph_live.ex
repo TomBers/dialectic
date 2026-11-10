@@ -2951,6 +2951,7 @@ defmodule DialecticWeb.GraphLive do
       |> GridChat.init_streams(graph_id)
       |> assign(highlights: highlights)
       |> push_event("highlights_loaded", %{
+        graph_id: graph_id,
         highlights: serialize_highlights(highlights)
       })
     else

@@ -6,17 +6,19 @@ vi.mock("../toast.js", () => ({
 }));
 
 import AskFormShortcuts from "../ask_form_shortcuts.js";
+import { subscribeHighlights } from "../highlight_cache.js";
 import SelectionActionsHook from "../selection_actions_hook.js";
 import { copyToClipboard, showToast } from "../toast.js";
 
 let hook;
+let unsubscribeHighlights;
 
 function mountHook(context = "selection", presentation = "modal") {
   vi.spyOn(navigator, "platform", "get").mockReturnValue("MacIntel");
   document.body.innerHTML = `
     <button id="answer-trigger">Respond</button>
     <div id="selection-actions-hook">
-      <div id="selection-actions" data-can-edit="true" data-action-context="${context}" data-presentation="${presentation}" data-node-id="2" data-answer-title="Practice" data-bookmarked="false" data-trigger-id="answer-trigger" data-draft-key="test-selection-drafts">
+      <div id="selection-actions" data-graph-id="test-graph" data-can-edit="true" data-action-context="${context}" data-presentation="${presentation}" data-node-id="2" data-answer-title="Practice" data-bookmarked="false" data-trigger-id="answer-trigger" data-draft-key="test-selection-drafts">
         <div id="selection-actions-modal-selection-actions" class="hidden" aria-hidden="true">
           <div data-selection-dialog tabindex="-1" class="max-w-[620px]"></div>
           <div data-selection-text></div>
@@ -85,7 +87,8 @@ function showSelection(detail = {}) {
 afterEach(() => {
   hook?.destroyed();
   hook = null;
-  window.__highlightsCache = [];
+  unsubscribeHighlights?.();
+  unsubscribeHighlights = null;
   sessionStorage.clear();
   vi.clearAllMocks();
   vi.restoreAllMocks();
@@ -349,7 +352,8 @@ describe("SelectionActionsHook", () => {
   });
 
   it("disables highlighting when the exact selection is already cached", () => {
-    window.__highlightsCache = [
+    unsubscribeHighlights = subscribeHighlights("test-graph", "2", () => {});
+    const highlights = [
       {
         id: 7,
         node_id: "2",
@@ -358,6 +362,7 @@ describe("SelectionActionsHook", () => {
         links: [],
       },
     ];
+    window.dispatchEvent(new CustomEvent("phx:highlights_loaded", {detail: {graph_id: "test-graph", highlights}}));
     const instance = mountHook();
 
     showSelection();
@@ -713,4 +718,11 @@ it("keeps the drawer mounted during submission so confirmation can clear the dra
   instance.destroyed();
   const remounted = mountHook("answer", "drawer");
   expect(remounted.el.querySelector("textarea").value).toBe("");
+});
+
+it("ignores window-targeted keyboard events while passage actions are open", () => {
+  const instance = mountHook();
+  showSelection();
+  expect(() => instance.handleKeydown({target: window, key: "Escape"})).not.toThrow();
+  expect(instance.modalEl.classList.contains("hidden")).toBe(false);
 });

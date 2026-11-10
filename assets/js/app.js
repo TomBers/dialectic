@@ -23,7 +23,7 @@ import { initAuthReturn } from "./auth_return.js";
 import NewGridDraft from "./new_grid_draft_hook.js";
 import textSelectionHook from "./text_selection_hook.js";
 import SelectionActionsHook from "./selection_actions_hook.js";
-import graphHook from "./graph_hook.js";
+import graphHook from "./lazy_graph_hook.js";
 import highlightNodeHook from "./highlight_node_hook.js";
 import storyReadabilityHook from "./story_readability_hook.js";
 import listDetectionHook from "./list_detection_hook.js";

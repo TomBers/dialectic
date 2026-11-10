@@ -60,6 +60,7 @@ defmodule DialecticWeb.GraphStreaming do
         {:noreply,
          Phoenix.Component.assign(socket, highlights: highlights)
          |> Phoenix.LiveView.push_event("highlights_loaded", %{
+           graph_id: socket.assigns.graph_id,
            highlights: serialize_highlights(highlights)
          })}
       end
@@ -82,6 +83,7 @@ defmodule DialecticWeb.GraphStreaming do
         {:noreply,
          Phoenix.Component.assign(socket, highlights: highlights)
          |> Phoenix.LiveView.push_event("highlights_loaded", %{
+           graph_id: socket.assigns.graph_id,
            highlights: serialize_highlights(highlights)
          })}
       end
@@ -93,6 +95,7 @@ defmodule DialecticWeb.GraphStreaming do
         {:noreply,
          Phoenix.Component.assign(socket, highlights: highlights)
          |> Phoenix.LiveView.push_event("highlights_loaded", %{
+           graph_id: socket.assigns.graph_id,
            highlights: serialize_highlights(highlights)
          })}
       end

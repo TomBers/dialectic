@@ -2,8 +2,10 @@ export default {
   mounted() {
     this.trigger = this.el.querySelector('[popovertarget]');
     this.panel = this.el.querySelector('[popover]');
+    this.nativePositioning = globalThis.CSS?.supports?.("position-area: block-end") &&
+      CSS.supports("position-try-fallbacks: flip-block");
     this.position = () => {
-      if (!this.panel.matches(':popover-open')) return;
+      if (this.nativePositioning || !this.panel.matches(':popover-open')) return;
       const rect = this.trigger.getBoundingClientRect();
       const viewport = window.visualViewport;
       const leftEdge = viewport?.offsetLeft || 0;
@@ -54,9 +56,18 @@ export default {
     this.panel.addEventListener('toggle', this.toggle);
     this.panel.addEventListener('click', this.click);
     this.panel.addEventListener('keydown', this.keydown);
-    window.addEventListener('resize', this.position);
-    window.visualViewport?.addEventListener('resize', this.position);
-    document.addEventListener('scroll', this.position, true);
+    if (!this.nativePositioning) {
+      this.schedulePosition = () => {
+        if (this.positionFrame != null || !this.panel.matches(":popover-open")) return;
+        this.positionFrame = requestAnimationFrame(() => {
+          this.positionFrame = null;
+          this.position();
+        });
+      };
+      window.addEventListener('resize', this.schedulePosition);
+      window.visualViewport?.addEventListener('resize', this.schedulePosition);
+      document.addEventListener('scroll', this.schedulePosition, true);
+    }
   },
   updated() {
     this.trigger.setAttribute('aria-expanded', String(this.panel.matches(':popover-open')));
@@ -66,8 +77,11 @@ export default {
     this.panel.removeEventListener('toggle', this.toggle);
     this.panel.removeEventListener('click', this.click);
     this.panel.removeEventListener('keydown', this.keydown);
-    window.removeEventListener('resize', this.position);
-    window.visualViewport?.removeEventListener('resize', this.position);
-    document.removeEventListener('scroll', this.position, true);
+    cancelAnimationFrame(this.positionFrame);
+    if (this.schedulePosition) {
+      window.removeEventListener('resize', this.schedulePosition);
+      window.visualViewport?.removeEventListener('resize', this.schedulePosition);
+      document.removeEventListener('scroll', this.schedulePosition, true);
+    }
   },
 };

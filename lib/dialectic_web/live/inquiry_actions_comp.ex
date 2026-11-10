@@ -152,10 +152,21 @@ defmodule DialecticWeb.InquiryActionsComp do
             query_origin={if(@context == :node, do: "node_action_bar")}
             disabled={!@can_edit}
           >
-            <:quick_actions>
-              <%= if @context in [:selection, :answer] do %>
+            <:primary_actions>
+              <%= if @context == :selection do %>
                 <.tool_button
-                  :if={@context == :selection}
+                  id={"selection-action-explain-#{@owner_id}"}
+                  icon="hero-question-mark-circle"
+                  label="Explain"
+                  tone="explain"
+                  shortcut="e"
+                  selection_action="explain"
+                  disable_if_links="explain"
+                  disabled={!@can_edit}
+                  rest={%{"title" => "Explain the selected passage"}}
+                  compact
+                />
+                <.tool_button
                   id={"selection-action-highlight-#{@owner_id}"}
                   icon="hero-bookmark"
                   label="Highlight"
@@ -164,9 +175,15 @@ defmodule DialecticWeb.InquiryActionsComp do
                   selection_action="highlight_only"
                   disable_if_highlight="true"
                   disabled={!@can_edit}
+                  rest={%{"title" => "Save the selected passage"}}
                   compact
                 />
+              <% end %>
+            </:primary_actions>
+            <:quick_actions>
+              <%= if @context in [:selection, :answer] do %>
                 <.tool_button
+                  :if={@context == :answer}
                   id={"selection-action-explain-#{@owner_id}"}
                   icon="hero-question-mark-circle"
                   label="Explain"
