@@ -25,6 +25,7 @@ let endpoint: URL;
 let requests: { url: URL; method: string; authorization?: string; cookie?: string; body: string }[];
 let upstreamStatus: number;
 let upstreamBody: unknown;
+let disconnectUpstream: boolean;
 
 function origin(server: Server) {
   const address = server.address();
@@ -36,11 +37,13 @@ beforeEach(async () => {
   requests = [];
   upstreamStatus = 200;
   upstreamBody = undefined;
+  disconnectUpstream = false;
   upstream = createHttpServer(async (request, response) => {
     const url = new URL(request.url!, "http://localhost");
     let body = "";
     for await (const chunk of request) body += chunk;
     requests.push({ url, method: request.method!, authorization: request.headers.authorization, cookie: request.headers.cookie, body });
+    if (disconnectUpstream) { response.destroy(); return; }
     if (url.pathname === "/.well-known/oauth-authorization-server") {
       response.writeHead(200, { "content-type": "application/json" });
       response.end(JSON.stringify({
@@ -79,9 +82,9 @@ afterEach(async () => {
   }
 });
 
-test("discovers exactly eight focused tools with public or scoped access", async () => {
+test("discovers focused tools and capacity discovery with public or scoped access", async () => {
   const { tools } = await client.listTools();
-  assert.deepEqual(tools.map(tool => tool.name).sort(), ["explore_question", "search_public_grids", "list_my_grids", "read_grid", "create_grid", "add_grid_idea", "apply_grid_action", "get_operation"].sort());
+  assert.deepEqual(tools.map(tool => tool.name).sort(), ["explore_question", "search_public_grids", "list_my_grids", "read_grid", "create_grid", "add_grid_idea", "apply_grid_action", "get_operation", "get_server_capabilities"].sort());
   assert.equal(tools.filter(tool => tool.name.endsWith("_method")).length, 0);
   for (const tool of tools) {
     assert.equal(tool.annotations?.readOnlyHint, !["explore_question", "create_grid", "apply_grid_action", "add_grid_idea"].includes(tool.name));
@@ -215,7 +218,7 @@ test("grid actions require append permission and forward only the selected actio
     upstreamBody = { grid: { ...grid, visibility: "public" }, request_id: action.request_id, status, node: { id: "4", parent_node_id: "2", class: "clarify", content: status === "completed" ? "Clarified terms" : "" } };
     const result = await authenticatedCall("apply_grid_action", { ...action, user_id: 123, content: "ignored", chat_history: "ignored" });
     assert.deepEqual(result.structuredContent, upstreamBody);
-    assert.deepEqual(result.content, [{ type: "text", text: JSON.stringify(upstreamBody, null, 2) }]);
+    assert.deepEqual(JSON.parse((result.content as { text: string }[])[0].text), upstreamBody);
   }
   assert.equal(requests.length, 5);
   for (const request of requests) {
@@ -364,7 +367,7 @@ test("authored ideas require append permission and forward exact text, not gener
   for (const _attempt of [1, 2]) {
     const result = await authenticatedCall("add_grid_idea", { ...idea, user_id: 123, action: "clarify", is_public: true, chat_history: "ignored" });
     assert.deepEqual(result.structuredContent, upstreamBody);
-    assert.deepEqual(result.content, [{ type: "text", text: JSON.stringify(upstreamBody, null, 2) }]);
+    assert.deepEqual(JSON.parse((result.content as { text: string }[])[0].text), upstreamBody);
   }
   assert.equal(requests.length, 2);
   for (const request of requests) {
@@ -385,7 +388,7 @@ test("question mode preserves user text and exposes a separate asynchronous AI a
     };
     const result = await authenticatedCall("add_grid_idea", question);
     assert.deepEqual(result.structuredContent, upstreamBody);
-    assert.deepEqual(result.content, [{ type: "text", text: JSON.stringify(upstreamBody, null, 2) }]);
+    assert.deepEqual(JSON.parse((result.content as { text: string }[])[0].text), upstreamBody);
   }
   assert.equal(requests.length, 4);
   for (const request of requests) {
@@ -409,7 +412,7 @@ test("invalid authored ideas never reach Phoenix and errors do not claim a save"
     upstreamBody = { error: "private backend detail" };
     const result = await authenticatedCall("add_grid_idea", idea, "test-token", [401, 403].includes(status) ? status : 200);
     assert.equal(result.isError, true);
-    assert.equal(result.structuredContent, undefined);
+    assert.ok(result.structuredContent?.error);
     assert.doesNotMatch(JSON.stringify(result), /private backend detail/);
     if ([401, 403].includes(status)) assert.match(JSON.stringify(result._meta), /grids:append/);
   }
@@ -559,7 +562,7 @@ test("upstream failures become tool errors without exposing backend details", as
     upstreamBody = { error: "secret backend details" };
     const result = await client.callTool({ name: "read_grid", arguments: { grid_id: grid.id } });
     assert.equal(result.isError, true);
-    assert.equal(result.structuredContent, undefined);
+    assert.ok(result.structuredContent?.error);
     assert.doesNotMatch(JSON.stringify(result.content), /secret backend details/);
   }
   upstreamStatus = 200;
@@ -567,6 +570,64 @@ test("upstream failures become tool errors without exposing backend details", as
   const malformed = await client.callTool({ name: "search_public_grids", arguments: { query: "evidence" } });
   assert.equal(malformed.isError, true);
   assert.doesNotMatch(JSON.stringify(malformed.content), /secret backend details/);
+});
+
+test("capacity discovery includes supported protocol versions without authorization", async () => {
+  upstreamBody = {
+    max_active_explorations: 3, max_active_generations: 3, generation_burst_limit: 10,
+    generation_burst_window_seconds: 60, suggested_poll_interval_seconds: 3, api_requests_per_minute: 120,
+    publication_supported: false, batch_supported: false, notifications_supported: false,
+    stage_recovery_supported: false, revision_bound_reads_supported: true,
+    content_limits: { question_characters: 4000, title_characters: 140, idea_characters: 4000, read_page_nodes: 50, search_results: 20 },
+  };
+  const result = await client.callTool({ name: "get_server_capabilities", arguments: {} });
+  assert.equal(result.isError, undefined);
+  assert.equal(result.structuredContent?.max_active_explorations, 3);
+  assert.equal(result.structuredContent?.publication_supported, false);
+  assert.ok((result.structuredContent?.supported_protocol_versions as string[]).length > 0);
+  assert.equal(requests[0].url.pathname, "/api/mcp/capabilities");
+  assert.equal(requests[0].authorization, undefined);
+});
+
+test("typed admission errors preserve stable fields and original request UUID", async () => {
+  const args = { request_id: randomUUID(), question: "What makes good evidence?" };
+  upstreamStatus = 429;
+  const error = { code: "too_many_active_operations", retryable: true, retry_after_seconds: 20, request_accepted: false, request_id: args.request_id };
+  upstreamBody = { ...error, error: "secret backend detail" };
+  const result = await authenticatedCall("explore_question", args);
+  assert.equal(result.isError, true);
+  assert.deepEqual(result.structuredContent, { error });
+  assert.doesNotMatch(JSON.stringify(result), /secret backend detail/);
+  const invalid = await authenticatedCall("explore_question", { ...args, question: "" });
+  assert.equal(invalid.structuredContent.error.code, "invalid_arguments");
+  assert.equal(invalid.structuredContent.error.request_accepted, false);
+  assert.equal(invalid.structuredContent.error.request_id, args.request_id);
+  assert.equal(requests.length, 1);
+});
+
+test("lost write responses report an uncertain outcome and keep identical retry arguments", async () => {
+  const args = { request_id: randomUUID(), question: "How could we test this idea?" };
+  disconnectUpstream = true;
+  for (const _attempt of [1, 2]) {
+    const result = await authenticatedCall("explore_question", args);
+    assert.equal(result.isError, true);
+    assert.equal(result.structuredContent.error.code, "upstream_unavailable");
+    assert.equal(result.structuredContent.error.request_accepted, null);
+    assert.equal(result.structuredContent.error.request_id, args.request_id);
+    assert.equal(result.structuredContent.error.retryable, true);
+  }
+  assert.equal(requests.length, 2);
+  assert.equal(requests[0].body, requests[1].body);
+  assert.equal(JSON.parse(requests[0].body).request_id, args.request_id);
+});
+
+test("revision pagination forwards the cursor and keeps canonical content metadata", async () => {
+  upstreamBody = { ...readResult, snapshot_revision: 12345, next_cursor: "signed-cursor",
+    nodes: [{ ...readResult.nodes[0], parent_node_id: "1", parent_node_ids: ["1"], sources: [], generation_status: "completed", content_status: "complete" }] };
+  const result = await client.callTool({ name: "read_grid", arguments: { grid_id: grid.id, cursor: "previous-cursor", revision: 12345 } });
+  assert.deepEqual(result.structuredContent, upstreamBody);
+  assert.equal(requests[0].url.searchParams.get("cursor"), "previous-cursor");
+  assert.equal(requests[0].url.searchParams.get("revision"), "12345");
 });
 
 test("simultaneous calls use independent stateless transports", async () => {

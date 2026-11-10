@@ -4,7 +4,7 @@ defmodule Dialectic.Integrations.GridActions do
   alias Dialectic.Accounts.Graph
   alias Dialectic.DbActions.{Graphs, Sharing}
   alias Dialectic.Graph.{Serialise, Vertex}
-  alias Dialectic.Integrations.GridAction
+  alias Dialectic.Integrations.{GridAction, GridContent}
   alias Dialectic.Repo
   alias Dialectic.Responses.{LlmInterface, PromptsStructured}
 
@@ -42,11 +42,32 @@ defmodule Dialectic.Integrations.GridActions do
            ),
          {:ok, node} <- visible_node(graph, request.node_id),
          {:ok, answer} <- visible_node(graph, request.answer_node_id) do
-      result = response(request, fresh, node, answer)
+      result = response(request, fresh, node, answer) |> persisted_result(request, fresh)
       {:ok, Dialectic.Integrations.Explorations.progress(result, request, graph)}
     else
       nil -> {:error, :not_found}
       error -> error
+    end
+  end
+
+  defp persisted_result(result, %{completed_revision: nil}, _graph), do: result
+
+  defp persisted_result(result, request, graph) do
+    case GridContent.at_revision(graph, request.completed_revision) do
+      {:ok, data, revision} ->
+        nodes = GridContent.serialize(data, graph.title, revision).nodes
+
+        result =
+          result
+          |> Map.put(:snapshot_revision, revision)
+          |> Map.put(:node, Enum.find(nodes, &(&1.id == request.node_id)))
+
+        if request.answer_node_id,
+          do: Map.put(result, :answer_node, Enum.find(nodes, &(&1.id == request.answer_node_id))),
+          else: result
+
+      _ ->
+        Map.put(result, :status, "unknown")
     end
   end
 
@@ -229,6 +250,7 @@ defmodule Dialectic.Integrations.GridActions do
              {:ok, job_id} <-
                queue_action(params, source, answer || child, fresh, graph, mode),
              {:ok, :updated} <- Graphs.save_graph_if_newer(fresh.title, data, next_revision),
+             :ok <- snapshot_authored(fresh.title, data, next_revision, job_id),
              {:ok, request} <-
                Repo.insert(%GridAction{
                  user_id: user.id,
@@ -240,6 +262,7 @@ defmodule Dialectic.Integrations.GridActions do
                  answer_node_id: if(answer, do: answer.id),
                  job_id: job_id,
                  status: if(is_nil(job_id), do: "completed", else: "queued"),
+                 completed_revision: if(is_nil(job_id), do: next_revision),
                  content_hash: params["content_hash"]
                }) do
           {:ok,
@@ -254,6 +277,18 @@ defmodule Dialectic.Integrations.GridActions do
         {:error, :invalid_node}
     end
   end
+
+  defp snapshot_authored(title, data, revision, nil) do
+    Repo.insert!(%Dialectic.Integrations.GridSnapshot{
+      graph_title: title,
+      data: data,
+      revision: revision
+    })
+
+    :ok
+  end
+
+  defp snapshot_authored(_title, _data, _revision, _job), do: :ok
 
   defp queue_action(%{"action" => "add_idea"}, _parent, _child, _fresh, _graph, _mode),
     do: {:ok, nil}
@@ -333,15 +368,18 @@ defmodule Dialectic.Integrations.GridActions do
       node:
         node_result(
           node,
-          if(request.action == "start_exploration", do: nil, else: request.parent_node_id)
+          if(request.action == "start_exploration", do: nil, else: request.parent_node_id),
+          if(answer, do: nil, else: request.status)
         )
     }
 
-    if answer, do: Map.put(result, :answer_node, node_result(answer, node.id)), else: result
+    if answer,
+      do: Map.put(result, :answer_node, node_result(answer, node.id, request.status)),
+      else: result
   end
 
-  defp node_result(node, parent_id),
-    do: %{id: node.id, parent_node_id: parent_id, class: node.class, content: node.content}
+  defp node_result(node, parent_id, status),
+    do: GridContent.node(node, if(parent_id, do: [parent_id], else: []), status)
 
   defp copy_graph(graph) do
     copy = :digraph.new()

@@ -36,6 +36,11 @@ defmodule GraphManager do
     GenServer.call(via_tuple(path), {:get_mcp_operation, user, request_id})
   end
 
+  def persist_mcp_content(path, receipt) do
+    ensure_started(path)
+    GenServer.call(via_tuple(path), {:persist_mcp_content, receipt}, 30_000)
+  end
+
   defp ensure_started(path) do
     unless exists?(path) do
       start_graph_process(path)
@@ -162,6 +167,11 @@ defmodule GraphManager do
   def handle_call({:get_mcp_operation, user, request_id}, _from, state) do
     {:reply, Dialectic.Integrations.GridActions.get_operation_in_graph(state, user, request_id),
      state}
+  end
+
+  def handle_call({:persist_mcp_content, receipt}, _from, state) do
+    {reply, state} = Dialectic.Integrations.ContentReceipts.persist_in_graph(state, receipt)
+    {:reply, reply, state}
   end
 
   def handle_call(

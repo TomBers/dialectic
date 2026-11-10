@@ -36,7 +36,15 @@ defmodule Dialectic.Integrations.GridActionsTest do
     assert {:ok, result} = GridActions.apply(user, graph.slug, params)
     assert result.status == "queued"
     assert result.graph.is_public
-    assert result.node == %{id: "3", parent_node_id: "2", class: "clarify", content: ""}
+
+    assert %{
+             id: "3",
+             parent_node_id: "2",
+             class: "clarify",
+             content: "",
+             content_status: "placeholder"
+           } = result.node
+
     assert_receive {:other_user_change, _pid}
     assert {_stored, ^original_digraph} = GraphManager.get_graph(graph.title)
     saved = Repo.get!(Graph, graph.title)
@@ -82,7 +90,15 @@ defmodule Dialectic.Integrations.GridActionsTest do
 
     assert {:ok, result} = GridActions.add_idea(user, graph.slug, params)
     assert result.status == "completed"
-    assert result.node == %{id: "3", parent_node_id: "2", class: "user", content: content}
+
+    assert %{
+             id: "3",
+             parent_node_id: "2",
+             class: "user",
+             content: ^content,
+             content_status: "complete"
+           } = result.node
+
     assert result.graph.is_public
     node = GraphManager.find_node_by_id(graph.title, "3")
     assert node.user == user.email
@@ -115,14 +131,23 @@ defmodule Dialectic.Integrations.GridActionsTest do
     assert {:ok, result} = GridActions.add_idea(user, graph.slug, params)
     assert result.status == "queued"
 
-    assert result.node == %{
+    assert %{
              id: "3",
              parent_node_id: "2",
              class: "question",
-             content: params["content"]
-           }
+             content_status: "complete"
+           } = result.node
 
-    assert result.answer_node == %{id: "4", parent_node_id: "3", class: "answer", content: ""}
+    assert result.node.content == params["content"]
+
+    assert %{
+             id: "4",
+             parent_node_id: "3",
+             class: "answer",
+             content: "",
+             content_status: "placeholder"
+           } = result.answer_node
+
     question = GraphManager.find_node_by_id(graph.title, "3")
     answer = GraphManager.find_node_by_id(graph.title, "4")
     assert question.prompt_kind == "question"

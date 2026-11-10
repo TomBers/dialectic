@@ -28,5 +28,11 @@ defmodule Dialectic.Workers.LocalWorker do
       live_view_topic,
       {:llm_request_complete, node}
     )
+
+    case Dialectic.Integrations.ContentReceipts.persist_generation(graph, node) do
+      :not_mcp -> :ok
+      {:ok, _revision} -> :ok
+      {:error, reason} -> {:discard, {:content_persistence_failed, reason}}
+    end
   end
 end

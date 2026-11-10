@@ -9,6 +9,7 @@ defmodule Dialectic.Integrations.Exploration do
     field :steps, :map, default: %{}
     field :coordinator_job_id, :integer
     field :error, :string
+    field :completed_revision, :integer
     timestamps(type: :utc_datetime)
   end
 end

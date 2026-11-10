@@ -19,6 +19,14 @@ defmodule Dialectic.Responses.RequestQueue do
   @default_max_requests_per_minute 10
   @rate_window_ms :timer.minutes(1)
 
+  def limits do
+    %{
+      max_active_generations: max_active_per_actor(),
+      generation_burst_limit: max_requests_per_minute(),
+      generation_burst_window_seconds: div(@rate_window_ms, 1000)
+    }
+  end
+
   def add(instruction, system_prompt, to_node, graph, live_view_topic) do
     add(instruction, system_prompt, to_node, graph, live_view_topic, [])
   end

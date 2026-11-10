@@ -20,7 +20,7 @@ defmodule DialecticWeb.McpPublicExplorationTest do
     api = put_req_header(conn, "authorization", "Bearer " <> issue_token(user))
     result = api |> post(path, params) |> json_response(200)
 
-    assert result["exploration"] == %{
+    assert Map.take(result["exploration"], ~w(stage completed_steps total_steps error)) == %{
              "stage" => "opening",
              "completed_steps" => 0,
              "total_steps" => 4,

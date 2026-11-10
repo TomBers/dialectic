@@ -36,7 +36,11 @@ defmodule DialecticWeb.McpOAuthHTML do
   def connections(assigns) do
     ~H"""
     <section id="mcp-connections" class="mx-auto max-w-lg p-8 space-y-6">
-      <h1 class="text-2xl font-semibold">Connected apps</h1>
+      <h1 class="text-2xl font-semibold">Your connected apps</h1>
+      <p id="mcp-account-notice">
+        Connections for <strong>{@current_user.email}</strong> only. Disconnecting an app here
+        removes its access to your account. It does not affect anyone else's connections or delete your grids.
+      </p>
       <section id="mcp-connect" class="space-y-4 rounded-xl border border-slate-200 p-4">
         <h2 class="text-lg font-semibold">Explore a question from your AI assistant</h2>
         <p>
@@ -56,6 +60,9 @@ defmodule DialecticWeb.McpOAuthHTML do
           an opening answer, two useful branches and a synthesis. You can return to the grid and
           continue from any idea.
         </p>
+        <.link id="mcp-usage-guide" href={~p"/features/ai-assistants"} class="link">
+          Setup guide and example prompts <.icon name="hero-arrow-right" class="h-4 w-4" />
+        </.link>
       </section>
       <section
         :if={@mcp_testing?}
@@ -103,17 +110,145 @@ defmodule DialecticWeb.McpOAuthHTML do
           Approve only the fresh RationalGrid consent page it opens.
         </p>
       </section>
-      <p :if={@connections == []}>No active connections.</p>
+      <h2 id="mcp-active-connections" class="text-lg font-semibold">
+        Apps with access to your account
+      </h2>
+      <p :if={@connections == []} id="mcp-no-connections">You have no active connections.</p>
       <div
         :for={connection <- @connections}
         id={"connection-#{connection.id}"}
-        class="flex justify-between items-center"
+        class="flex justify-between items-center gap-4 border-b border-slate-200 pb-4"
       >
-        <span>{connection.name}</span>
-        <.link href={~p"/users/connections/#{connection.id}"} method="delete" class="btn">Disconnect</.link>
+        <div class="space-y-1">
+          <p class="font-semibold">{connection.name}</p>
+          <p class="text-sm">Connected {connection.connected_at} · Connection #{connection.id}</p>
+          <p class="text-sm">Permissions: {Enum.join(connection.scopes, ", ")}</p>
+        </div>
+        <.link
+          id={"disconnect-connection-#{connection.id}"}
+          href={~p"/users/connections/#{connection.id}"}
+          method="delete"
+          aria-label={"Disconnect #{connection.name}, connection #{connection.id}, from your account"}
+          class="btn"
+        >Disconnect</.link>
       </div>
       <.link href={~p"/users/settings"} class="link">Back to settings</.link>
     </section>
+    """
+  end
+
+  def feature(assigns) do
+    ~H"""
+    <article id="ai-assistants-feature" class="mx-auto max-w-4xl space-y-12 px-6 py-12 sm:py-16">
+      <header class="max-w-2xl space-y-6">
+        <p class="text-sm font-semibold uppercase tracking-widest text-teal-700">
+          RationalGrid for AI assistants
+        </p>
+        <h1 class="text-4xl font-semibold tracking-tight sm:text-5xl">
+          One question. More directions to think.
+        </h1>
+        <p class="text-lg leading-relaxed">
+          Start in your AI assistant and build an exploration you can return to. RationalGrid
+          connects an opening answer, a challenge, a deeper investigation and a synthesis in a private grid.
+        </p>
+        <.link
+          id="ai-assistants-connect"
+          href={
+            if @current_user,
+              do: ~p"/users/connections",
+              else: ~p"/users/register?#{%{return_to: ~p"/users/connections"}}"
+          }
+          class="btn btn-primary"
+        >{if @current_user, do: "Connect your assistant", else: "Create a free account to connect"}</.link>
+      </header>
+
+      <section id="ai-assistants-how-it-works" class="space-y-4">
+        <h2 class="text-2xl font-semibold">Keep the thinking connected</h2>
+        <ol class="grid gap-4 sm:grid-cols-2">
+          <li class="rounded-xl border border-slate-200 p-5">
+            <h3 class="font-semibold">1. Get an opening answer</h3><p>
+              Give your assistant a question worth exploring.
+            </p>
+          </li>
+          <li class="rounded-xl border border-slate-200 p-5">
+            <h3 class="font-semibold">2. Test the idea</h3><p>
+              Examine an assumption or consider a counterargument.
+            </p>
+          </li>
+          <li class="rounded-xl border border-slate-200 p-5">
+            <h3 class="font-semibold">3. Go deeper</h3><p>
+              Follow a useful branch beyond the first response.
+            </p>
+          </li>
+          <li class="rounded-xl border border-slate-200 p-5">
+            <h3 class="font-semibold">4. Bring it together</h3><p>
+              Read a synthesis, then open the grid to check claims, add your ideas and keep exploring.
+            </p>
+          </li>
+        </ol>
+      </section>
+
+      <section id="ai-assistants-setup" class="space-y-5">
+        <h2 class="text-2xl font-semibold">Connect in three steps</h2>
+        <p>
+          You need a free RationalGrid account and an assistant that supports remote MCP servers with OAuth sign-in. Availability depends on your assistant and its plan.
+        </p>
+        <ol class="list-decimal space-y-4 pl-6">
+          <li>
+            In your assistant's connections or integrations settings, add a custom remote MCP server.
+          </li>
+          <li>
+            <.input
+              id="feature-mcp-server-url"
+              type="text"
+              name="mcp_server_url"
+              label="Server URL"
+              value={@mcp_resource}
+              readonly
+            />
+            <p class="mt-2 text-sm">
+              If asked for a transport, choose Streamable HTTP. Use OAuth sign-in; you do not need a RationalGrid API key.
+            </p>
+          </li>
+          <li>
+            Follow the sign-in prompt to RationalGrid. Check the app name and permissions, then choose Connect. Return to your assistant to start.
+          </li>
+        </ol>
+      </section>
+
+      <section id="ai-assistants-prompts" class="space-y-4">
+        <h2 class="text-2xl font-semibold">Try a question that opens up</h2>
+        <blockquote class="rounded-xl bg-slate-100 p-5">
+          Use RationalGrid to explore: should cities prioritise cycling over car parking? Test an assumption, go deeper and give me the grid link when it is ready.
+        </blockquote>
+        <blockquote class="rounded-xl bg-slate-100 p-5">
+          Use RationalGrid to explore how AI could change education. Start a private grid and bring together the strongest arguments and open questions.
+        </blockquote>
+        <p>
+          Generation can take a few minutes. Your assistant can check progress and return the grid link. You can also ask it to find your existing grids, read an idea or add a connected follow-up.
+        </p>
+      </section>
+
+      <section
+        id="ai-assistants-permissions"
+        class="space-y-4 rounded-xl border border-teal-200 bg-teal-50 p-6"
+      >
+        <h2 class="text-2xl font-semibold">You choose the access</h2>
+        <p>
+          New grids start private. You approve which permissions an app receives: creating grids, reading grids you can access, or adding connected ideas where editing is enabled. Additions to a public grid are public.
+        </p>
+        <p>
+          A connection cannot overwrite existing ideas, delete grids or publish them. AI answers still need your judgement and source checking.
+        </p>
+        <p>
+          You can disconnect an app at any time from <.link
+            id="feature-manage-connections"
+            href={~p"/users/connections"}
+            class="link"
+          >your connected apps</.link>. That page shows only your account's connections.
+        </p>
+      </section>
+    </article>
     """
   end
 end

@@ -65,7 +65,12 @@ defmodule Dialectic.Integrations.GuidedExplorationsTest do
                exploration.steps["deepening"]["node_id"]
              ])
 
-    complete_current(user, params, result.graph.title, "A qualified synthesis")
+    complete_current(user, params, result.graph.title, "A qualified synthesis", false)
+
+    Repo.get!(Graph, result.graph.title)
+    |> Ecto.Changeset.change(is_public: true)
+    |> Repo.update!()
+
     assert :ok = Explorations.advance(user.id, params["request_id"])
     assert :ok = Explorations.advance(user.id, params["request_id"])
     assert {:ok, final} = GridActions.get_operation(user, params["request_id"])
@@ -73,6 +78,17 @@ defmodule Dialectic.Integrations.GuidedExplorationsTest do
     assert final.exploration.completed_steps == 4
     assert length(final.nodes) == 5
     assert List.last(final.nodes).content == "A qualified synthesis"
+    assert final.snapshot_revision == Repo.get!(Graph, result.graph.title).data_revision
+    assert final.graph.is_public
+
+    assert Enum.any?(
+             Repo.get!(Graph, result.graph.title).data["nodes"],
+             &(&1["content"] == "A qualified synthesis")
+           )
+
+    GraphManager.set_node_content(result.graph.title, synthesis.node_id, "Later edits")
+    assert {:ok, frozen} = GridActions.get_operation(user, params["request_id"])
+    assert frozen.nodes == final.nodes
     assert Repo.aggregate(GridAction, :count) == 4
     assert {:error, :request_conflict} = ChatGrids.start_exploration(user, params)
     assert {:error, :not_found} = GridActions.get_operation(user_fixture(), params["request_id"])
@@ -154,7 +170,7 @@ defmodule Dialectic.Integrations.GuidedExplorationsTest do
     assert Repo.aggregate(GridAction, :count) == 2
   end
 
-  defp complete_current(user, params, title, content) do
+  defp complete_current(user, params, title, content, persist? \\ true) do
     exploration = Repo.one!(Exploration)
 
     operation =
@@ -166,9 +182,11 @@ defmodule Dialectic.Integrations.GuidedExplorationsTest do
     GraphManager.set_node_content(title, operation.answer_node_id || operation.node_id, content)
     {_, graph} = GraphManager.get_graph(title)
 
-    Repo.get!(Graph, title)
-    |> Ecto.Changeset.change(data: Dialectic.Graph.Serialise.graph_to_json(graph))
-    |> Repo.update!()
+    if persist? do
+      Repo.get!(Graph, title)
+      |> Ecto.Changeset.change(data: Dialectic.Graph.Serialise.graph_to_json(graph))
+      |> Repo.update!()
+    end
 
     Repo.get!(Oban.Job, operation.job_id)
     |> Ecto.Changeset.change(state: "completed")

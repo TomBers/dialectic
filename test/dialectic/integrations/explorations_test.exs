@@ -36,14 +36,21 @@ defmodule Dialectic.Integrations.ExplorationsTest do
     refute result.graph.is_public
     assert result.graph.prompt_mode == "expert"
 
-    assert result.node == %{
+    assert Map.take(result.node, [:id, :parent_node_id, :content, :class]) == %{
              id: "1",
              parent_node_id: nil,
              content: "## " <> params["question"],
              class: "origin"
            }
 
-    assert result.answer_node == %{id: "2", parent_node_id: "1", content: "", class: "answer"}
+    assert %{
+             id: "2",
+             parent_node_id: "1",
+             content: "",
+             class: "answer",
+             content_status: "placeholder"
+           } = result.answer_node
+
     answer = GraphManager.find_node_by_id(result.graph.title, "2")
     assert answer.prompt_kind == "initial_explainer"
     assert answer.response_level == "expert"

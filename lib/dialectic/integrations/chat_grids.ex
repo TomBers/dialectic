@@ -102,7 +102,13 @@ defmodule Dialectic.Integrations.ChatGrids do
           end
 
         inserted_request.id != nil ->
-          create_and_link(user, draft, stored_request, after_insert)
+          with :ok <-
+                 if(Map.get(draft, :guided, false),
+                   do: Dialectic.Integrations.Explorations.admit(user.id),
+                   else: :ok
+                 ) do
+            create_and_link(user, draft, stored_request, after_insert)
+          end
 
         true ->
           {:error, :unavailable}

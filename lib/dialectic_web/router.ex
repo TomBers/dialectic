@@ -63,6 +63,7 @@ defmodule DialecticWeb.Router do
     get "/.well-known/oauth-protected-resource/mcp", McpGatewayController, :forward
 
     post "/api/mcp/grids", McpGridController, :create, log: false
+    get "/api/mcp/capabilities", McpGridController, :capabilities
     post "/api/mcp/explorations", McpGridController, :start_exploration, log: false
     post "/api/mcp/explorations/guided", McpGridController, :guided_exploration, log: false
     get "/api/mcp/grids", McpGridController, :index
@@ -112,6 +113,7 @@ defmodule DialecticWeb.Router do
   scope "/", DialecticWeb do
     pipe_through :browser
     live "/", HomeLive
+    get "/features/ai-assistants", McpOAuthController, :feature
     live "/ambassadors", AmbassadorLive
     get "/my/ideas", PageController, :my_graphs
     get "/view_all/graphs", PageController, :view_all
