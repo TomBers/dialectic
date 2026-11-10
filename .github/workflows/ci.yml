@@ -89,5 +89,5 @@ jobs:
         run: npm test && npm run build
         working-directory: mcp
 
-      - name: Build MCP production image
-        run: docker build -f Dockerfile.mcp -t rationalgrid-mcp:ci .
+      - name: Build production image
+        run: docker build -t rationalgrid:ci .

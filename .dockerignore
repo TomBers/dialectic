@@ -37,6 +37,9 @@
 /.ssh/
 /.codex/
 /.agents/
+/.expert/
+/media/
+/reach_report/
 
 # Mix artifacts
 /_build/

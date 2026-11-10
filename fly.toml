@@ -17,7 +17,7 @@ kill_signal = 'SIGTERM'
   PORT = '8080'
   ECTO_IPV6 = 'true'
   POOL_SIZE = '10'
-  MCP_PUBLIC_URL = 'https://rationalgrid-mcp.fly.dev/mcp'
+  MCP_PUBLIC_URL = 'https://rationalgrid.ai/mcp'
 
 [http_service]
   internal_port = 8080

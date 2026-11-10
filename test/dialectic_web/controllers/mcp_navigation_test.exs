@@ -43,7 +43,7 @@ defmodule DialecticWeb.McpNavigationTest do
     settings = page |> LazyHTML.query("#mcp-testing-settings") |> LazyHTML.text()
     assert settings =~ "http://127.0.0.1:4001/mcp"
     assert settings =~ "grids:create grids:read grids:append"
-    assert settings =~ "rationalgrid-chatgpt"
+    assert settings =~ "rationalgrid-mcp"
     assert Repo.aggregate(Authorization, :count) == 0
   end
 

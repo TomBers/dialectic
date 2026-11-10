@@ -20,6 +20,10 @@ if System.get_env("PHX_SERVER") do
   config :dialectic, DialecticWeb.Endpoint, server: true
 end
 
+config :dialectic,
+       :mcp_gateway_enabled,
+       config_env() == :prod and System.get_env("PHX_SERVER") not in [nil, ""]
+
 mcp_resource = System.get_env("MCP_PUBLIC_URL") || "http://127.0.0.1:4001/mcp"
 
 if config_env() != :prod or System.get_env("MCP_PUBLIC_URL") do
@@ -44,7 +48,7 @@ if config_env() != :prod or System.get_env("MCP_PUBLIC_URL") do
     end
 
   config :dialectic, :mcp_oauth_clients, %{
-    "rationalgrid-chatgpt" => %{name: "RationalGrid for ChatGPT", redirect_uris: mcp_redirects}
+    "rationalgrid-mcp" => %{name: "RationalGrid for ChatGPT", redirect_uris: mcp_redirects}
   }
 end
 

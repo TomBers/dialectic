@@ -19,5 +19,16 @@ const listener = app.listen(port, host, () => {
 });
 
 for (const signal of ["SIGINT", "SIGTERM"] as const) {
-  process.once(signal, () => { listener.close(); });
+  process.once(signal, () => {
+    listener.close(() => process.exit(0));
+    setTimeout(() => process.exit(0), 2000).unref();
+  });
+}
+
+if (process.env.MCP_SUPERVISED === "1") {
+  process.stdin.resume();
+  process.stdin.on("end", () => {
+    listener.close(() => process.exit(0));
+    setTimeout(() => process.exit(0), 2000).unref();
+  });
 }

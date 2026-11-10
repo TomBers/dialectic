@@ -58,6 +58,10 @@ defmodule DialecticWeb.Router do
   scope "/", DialecticWeb do
     pipe_through :mcp_api
 
+    match :*, "/mcp", McpGatewayController, :forward, log: false
+    get "/.well-known/oauth-protected-resource", McpGatewayController, :forward
+    get "/.well-known/oauth-protected-resource/mcp", McpGatewayController, :forward
+
     post "/api/mcp/grids", McpGridController, :create, log: false
     post "/api/mcp/explorations", McpGridController, :start_exploration, log: false
     post "/api/mcp/explorations/guided", McpGridController, :guided_exploration, log: false

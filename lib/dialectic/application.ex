@@ -47,6 +47,11 @@ defmodule Dialectic.Application do
       DialecticWeb.Endpoint
     ]
 
+    children =
+      if Application.get_env(:dialectic, :mcp_gateway_enabled, false),
+        do: children ++ [Dialectic.Integrations.McpGateway],
+        else: children
+
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: Dialectic.Supervisor]

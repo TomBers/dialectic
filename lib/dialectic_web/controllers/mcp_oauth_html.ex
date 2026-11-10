@@ -85,7 +85,7 @@ defmodule DialecticWeb.McpOAuthHTML do
             <dt class="font-semibold">Server URL</dt><dd><code>{@mcp_resource}</code></dd>
           </div>
           <div>
-            <dt class="font-semibold">OAuth Client ID</dt><dd><code>rationalgrid-chatgpt</code></dd>
+            <dt class="font-semibold">OAuth Client ID</dt><dd><code>rationalgrid-mcp</code></dd>
           </div>
           <div>
             <dt class="font-semibold">Client Secret</dt><dd>Leave blank</dd>
