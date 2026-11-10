@@ -208,6 +208,22 @@ const COMPACT_NODE_LINE_HEIGHT = 1.25;
 const GRAPH_LABEL_FONT_FAMILY =
   'InterVariable, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
 
+const graphTaxiDirection = () => {
+  const direction = localStorage.getItem("graph_direction") || "TB";
+  return direction === "LR" || direction === "RL" ? "horizontal" : "vertical";
+};
+
+const stableTaxiTurn = (edge) => {
+  const edgeId = String(typeof edge.id === "function" ? edge.id() : "");
+  let hash = 0;
+
+  for (const character of edgeId) {
+    hash = (hash * 31 + character.charCodeAt(0)) >>> 0;
+  }
+
+  return `${38 + (hash % 7) * 4}%`;
+};
+
 
 const mixWithWhite = (hexColor, whiteRatio) => {
   const normalized = String(hexColor || "").replace("#", "");
@@ -234,6 +250,8 @@ export function graphStyle(viewMode = "spaced", options = {}) {
     "font-weight": 600,
     color: highContrast ? "#0f172a" : "#334155",
     "text-rotation": "none",
+    "text-wrap": "wrap",
+    "text-max-width": isCompact ? 100 : 140,
     "text-margin-y": isCompact ? -6 : -9,
     "text-background-color": "#ffffff",
     "text-background-opacity": highContrast ? 1 : 0.92,
@@ -332,21 +350,25 @@ export function graphStyle(viewMode = "spaced", options = {}) {
       },
     },
 
-    // Edge styling — quieter by default, stronger on context/hover
+    // Every connection describes its relationship; selection strengthens the context.
     {
       selector: "edge",
       style: {
-        label: "",
+        ...relationshipLabelStyle,
         width: highContrast ? (isCompact ? 1.3 : 1.8) : isCompact ? 1 : 1.4,
         "line-color": highContrast ? "#334155" : "#64748b",
         "line-fill": "solid",
         "line-cap": "round",
-        "curve-style": "bezier",
+        "curve-style": "round-taxi",
+        "taxi-direction": graphTaxiDirection,
+        "taxi-turn": stableTaxiTurn,
+        "taxi-turn-min-distance": isCompact ? 12 : 18,
+        "taxi-radius": isCompact ? 8 : 12,
         "edge-distances": "intersection",
         "target-arrow-shape": "triangle",
         "target-arrow-color": highContrast ? "#334155" : "#64748b",
         "arrow-scale": isCompact ? 0.58 : 0.76,
-        opacity: highContrast ? 0.76 : 0.62,
+        opacity: highContrast ? 0.86 : 0.74,
         "transition-property": "line-color target-arrow-color width opacity",
         "transition-duration": transitionDuration("150ms"),
         "transition-timing-function": "ease-in-out-sine",
@@ -428,6 +450,17 @@ export function graphStyle(viewMode = "spaced", options = {}) {
             : 1.5,
         "border-opacity": 1,
         color: highContrast ? cols[nodeType].text : defaultNodeStyle.text,
+        ...(nodeType === "question" ? {
+          width: (node) => isCompact ? getCompactNodeWidth(node) : 220,
+          "text-max-width": (node) => isCompact ? getCompactNodeWidth(node) - 8 : 200,
+          "font-size": isCompact ? 11 : 14,
+          padding: isCompact ? "6px" : "10px",
+          "corner-radius": isCompact ? 10 : 14,
+          "background-color": highContrast ? "#ffffff" : "#f0f9ff",
+          "border-color": highContrast ? "#0369a1" : "#7dd3fc",
+          "border-style": "dashed",
+          color: highContrast ? "#082f49" : cols.question.text,
+        } : {}),
       },
     });
 
@@ -441,7 +474,7 @@ export function graphStyle(viewMode = "spaced", options = {}) {
         ),
         "border-color": cols[nodeType].hoverBorder || cols[nodeType].border,
         "border-width": isCompact ? 2 : 2.5,
-        "border-style": "solid",
+        "border-style": nodeType === "question" ? "dashed" : "solid",
         color: defaultNodeStyle.text,
       },
     });
@@ -456,7 +489,7 @@ export function graphStyle(viewMode = "spaced", options = {}) {
         ),
         "border-color": cols[nodeType].selectedBorder,
         "border-width": isCompact ? 2.5 : 3,
-        "border-style": "solid",
+        "border-style": nodeType === "question" ? "dashed" : "solid",
         color: defaultNodeStyle.selectedText,
         "underlay-color": cols[nodeType].selectedBorder,
         "underlay-opacity": 0.08,
@@ -469,7 +502,7 @@ export function graphStyle(viewMode = "spaced", options = {}) {
   }
 
   base_style.push({
-    selector: "node.selected-neighbor",
+    selector: "node.selected-neighbor:not(.question)",
     style: {
       "border-width": isCompact ? 2 : 2.75,
       "border-style": "solid",

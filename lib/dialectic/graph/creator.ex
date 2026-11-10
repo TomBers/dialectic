@@ -228,13 +228,6 @@ defmodule Dialectic.Graph.Creator do
         )
 
         error
-
-      other ->
-        Logger.error(
-          "[Creator] Unexpected result queueing streaming LLM request for graph=#{title} node=#{answer_node.id}: #{inspect(other)}"
-        )
-
-        other
     end
   end
 end

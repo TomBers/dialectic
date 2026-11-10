@@ -23,6 +23,10 @@ defmodule DialecticWeb.AnswerActions do
     node = if is_binary(node_id), do: GraphActions.find_node(socket.assigns.graph_id, node_id)
 
     cond do
+      is_nil(socket.assigns.current_user) ->
+        {:error,
+         "Sign in or create an account to contribute to this grid. Your draft will stay here."}
+
       !socket.assigns.can_edit && action != :bookmark ->
         {:error, "This graph is locked"}
 

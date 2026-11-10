@@ -278,14 +278,18 @@ defmodule Dialectic.DbActions.GraphsTest do
 
   describe "list_popular_tags/1" do
     test "normalizes case and spaces, skips blanks, and counts each grid once" do
+      user = user_fixture()
       first = Dialectic.GraphFixtures.insert_graph(%{title: unique_title("normalized-tags-1")})
       second = Dialectic.GraphFixtures.insert_graph(%{title: unique_title("normalized-tags-2")})
 
       first
-      |> Ecto.Changeset.change(tags: ["Sociology", "sociology", " Sociology ", "", " "])
+      |> Ecto.Changeset.change(
+        user_id: user.id,
+        tags: ["Sociology", "sociology", " Sociology ", "", " "]
+      )
       |> Repo.update!()
 
-      second |> Ecto.Changeset.change(tags: [" sociology "]) |> Repo.update!()
+      second |> Ecto.Changeset.change(user_id: user.id, tags: [" sociology "]) |> Repo.update!()
 
       assert [{label, 2}] = Graphs.list_all_tags()
       assert Graphs.normalize_tag(label) == "sociology"
@@ -296,17 +300,18 @@ defmodule Dialectic.DbActions.GraphsTest do
     end
 
     test "returns aggregated tag counts" do
+      user = user_fixture()
       title1 = unique_title("tags-1")
       title2 = unique_title("tags-2")
       title3 = unique_title("tags-3")
 
-      {:ok, g1} = Graphs.create_new_graph(title1)
+      {:ok, g1} = Graphs.create_new_graph(title1, user)
       {:ok, _} = Graphs.update_tags(g1, ["elixir", "phoenix"])
 
-      {:ok, g2} = Graphs.create_new_graph(title2)
+      {:ok, g2} = Graphs.create_new_graph(title2, user)
       {:ok, _} = Graphs.update_tags(g2, ["phoenix", "liveview"])
 
-      {:ok, g3} = Graphs.create_new_graph(title3)
+      {:ok, g3} = Graphs.create_new_graph(title3, user)
       {:ok, _} = Graphs.update_tags(g3, ["phoenix"])
 
       results = Graphs.list_popular_tags()

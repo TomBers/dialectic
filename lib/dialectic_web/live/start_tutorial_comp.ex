@@ -46,7 +46,7 @@ defmodule DialecticWeb.StartTutorialComp do
           </li>
           <li>
             <span class="font-semibold">
-              Test both sides · Connect another idea · Find related ideas
+              Pro | Con · Connect another idea · Find related ideas
             </span>
             — compare arguments, create a synthesis, or open nearby directions.
           </li>

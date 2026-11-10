@@ -16,7 +16,7 @@ defmodule Dialectic.DbActions.DbWorker do
     unique: [
       period: 2,
       keys: [:id],
-      states: [:available, :scheduled, :retryable]
+      states: :scheduled
     ]
 
   require Logger
@@ -38,7 +38,6 @@ defmodule Dialectic.DbActions.DbWorker do
     case Dialectic.DbActions.Graphs.save_graph_if_newer(id, data, 1) do
       {:ok, :updated} -> :ok
       {:error, :stale} -> :ok
-      {:error, reason} -> {:error, reason}
     end
   end
 
@@ -67,7 +66,7 @@ defmodule Dialectic.DbActions.DbWorker do
 
   defp create_job(args) do
     args
-    |> new()
+    |> new(schedule_in: 2)
     |> Oban.insert()
   end
 

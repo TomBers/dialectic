@@ -8,6 +8,12 @@ defmodule DialecticWeb.CommunityLiveTest do
   alias Dialectic.DbActions.Graphs
   alias Dialectic.Repo
 
+  defp insert_owned_graph(attrs) do
+    Dialectic.GraphFixtures.insert_graph(attrs)
+    |> Ecto.Changeset.change(user_id: user_fixture().id)
+    |> Repo.update!()
+  end
+
   defp make_admin(user) do
     user
     |> Ecto.Changeset.change(%{is_admin: true})
@@ -21,7 +27,7 @@ defmodule DialecticWeb.CommunityLiveTest do
       graphs =
         for position <- 0..3 do
           graph =
-            Dialectic.GraphFixtures.insert_graph(%{
+            insert_owned_graph(%{
               title: "Community Partner Grid #{unique} #{position}",
               slug: "community-partner-grid-#{unique}-#{position}"
             })
@@ -37,7 +43,7 @@ defmodule DialecticWeb.CommunityLiveTest do
         end
 
       curated_graph =
-        Dialectic.GraphFixtures.insert_graph(%{
+        insert_owned_graph(%{
           title: "Community Curated Grid #{unique}",
           slug: "community-curated-grid-#{unique}"
         })
@@ -62,7 +68,7 @@ defmodule DialecticWeb.CommunityLiveTest do
 
     test "partner results show a title link without date metadata", %{conn: conn} do
       graph =
-        Dialectic.GraphFixtures.insert_graph(%{
+        insert_owned_graph(%{
           title: "Dated partner grid #{System.unique_integer([:positive])}",
           slug: "dated-partner-grid-#{System.unique_integer([:positive])}"
         })
@@ -109,7 +115,7 @@ defmodule DialecticWeb.CommunityLiveTest do
 
     test "lets admins generate missing tags and updates the row when they arrive", %{conn: conn} do
       graph =
-        Dialectic.GraphFixtures.insert_graph(%{
+        insert_owned_graph(%{
           title: "Untagged community grid #{System.unique_integer([:positive])}",
           tags: []
         })
@@ -146,7 +152,7 @@ defmodule DialecticWeb.CommunityLiveTest do
 
     test "does not expose tag generation to public visitors", %{conn: conn} do
       graph =
-        Dialectic.GraphFixtures.insert_graph(%{
+        insert_owned_graph(%{
           title: "Public untagged grid #{System.unique_integer([:positive])}",
           tags: []
         })
@@ -158,7 +164,7 @@ defmodule DialecticWeb.CommunityLiveTest do
 
     test "capitalizes the first character of displayed grid titles", %{conn: conn} do
       graph =
-        Dialectic.GraphFixtures.insert_graph(%{
+        insert_owned_graph(%{
           title: "tell me about gorillas #{System.unique_integer([:positive])}",
           slug: "lowercase-community-title-#{System.unique_integer([:positive])}"
         })
@@ -170,7 +176,7 @@ defmodule DialecticWeb.CommunityLiveTest do
 
     test "keeps grid metadata minimal", %{conn: conn} do
       graph =
-        Dialectic.GraphFixtures.insert_graph(%{
+        insert_owned_graph(%{
           title: "Creation dated grid #{System.unique_integer([:positive])}",
           slug: "creation-dated-grid-#{System.unique_integer([:positive])}"
         })
@@ -221,6 +227,7 @@ defmodule DialecticWeb.CommunityLiveTest do
           is_deleted: false,
           is_locked: false
         })
+        |> Ecto.Changeset.change(user_id: user_fixture().id)
         |> Repo.insert!()
 
       {:ok, view, _html} = live(conn, ~p"/community?tag=psychology")

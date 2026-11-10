@@ -38,20 +38,23 @@ import { ViewModeHook } from "./view_mode_hook.js";
 import GraphKeyboardNavigation from "./graph_keyboard_navigation.js";
 import AskFormShortcuts from "./ask_form_shortcuts.js";
 import ToolsMenuHook from "./tools_menu_hook.js";
+import WorkspaceDropdown from "./workspace_dropdown.js";
+import AnswerLevelDropdown from "./answer_level_dropdown.js";
 import AutoExpandTextareaHook from "./auto_expand_textarea_hook.js";
 import SearchNav from "./search_nav_hook.js";
 import { containModalFocus } from "./modal_focus.js";
+import { createDrawerNavigation, syncDrawerAccessibility } from "./drawer_navigation.js";
 import PresentationHook, {
   PresentationSetupHook,
 } from "./presentation_hook.js";
 import ShareHook from "./share_hook.js";
 import GridChatFormHook from "./grid_chat_form_hook.js";
+import GridChatHistoryHook from "./grid_chat_history_hook.js";
 import AvatarCropper from "./avatar_cropper_hook.js";
 import BannerCropper from "./banner_cropper_hook.js";
 import YouTubeFacadeHook from "./youtube_facade_hook.js";
 import DismissibleHintHook from "./dismissible_hint_hook.js";
 import GenerationStatusHook from "./generation_status_hook.js";
-import ProofCarouselHook from "./proof_carousel_hook.js";
 import LearningDrag from "./learning_drag_hook.js";
 import LearningSidebar from "./learning_sidebar_hook.js";
 import { syncGraphAppearanceStorage } from "./appearance_preferences.js";
@@ -89,18 +92,20 @@ hooks.ViewMode = ViewModeHook;
 hooks.GraphKeyboardNavigation = GraphKeyboardNavigation;
 hooks.AskFormShortcuts = AskFormShortcuts;
 hooks.ToolsMenu = ToolsMenuHook;
+hooks.WorkspaceDropdown = WorkspaceDropdown;
+hooks.AnswerLevelDropdown = AnswerLevelDropdown;
 hooks.AutoExpandTextarea = AutoExpandTextareaHook;
 hooks.SearchNav = SearchNav;
 hooks.Presentation = PresentationHook;
 hooks.PresentationSetup = PresentationSetupHook;
 hooks.Share = ShareHook;
 hooks.GridChatForm = GridChatFormHook;
+hooks.GridChatHistory = GridChatHistoryHook;
 hooks.AvatarCropper = AvatarCropper;
 hooks.BannerCropper = BannerCropper;
 hooks.YouTubeFacade = YouTubeFacadeHook;
 hooks.DismissibleHint = DismissibleHintHook;
 hooks.GenerationStatus = GenerationStatusHook;
-hooks.ProofCarousel = ProofCarouselHook;
 hooks.LearningDrag = LearningDrag;
 hooks.LearningSidebar = LearningSidebar;
 hooks.GlobalModalLayer = {
@@ -272,6 +277,11 @@ hooks.GraphLayout = {
   mounted() {
     this.activePanelId = null;
     this.activePanelSection = null;
+    this._drawerNavigation = createDrawerNavigation(this.el, (id) => {
+      this.el.dispatchEvent(new CustomEvent("toggle-panel", { detail: { id } }));
+      if (id === "presentation-drawer") this.pushEvent("close_presentation_setup", {});
+      if (id === "combine-drawer") this.pushEvent("close_combine_setup", {});
+    });
     this._reopenSideDrawerAfterPresentation = false;
     this._reopenSideDrawerAfterCombine = false;
     this._mobileOutlineCloseTimer = null;
@@ -279,18 +289,23 @@ hooks.GraphLayout = {
     this._askFocusApplied = false;
     this._handleMobileGraphResize = () => {
       this._redirectMobileGraphToReader();
+      if (window.matchMedia("(min-width: 1024px)").matches) this._applyMobileOutlineState(false);
+      this._syncExploreState();
       this._syncOutlineDetailForPanel(this.activePanelId);
     };
     const graphId = this.el.dataset.graphId;
     syncGraphAppearanceStorage(this.el.dataset);
 
-    this.sideDrawerOpen = true;
+    this.sideDrawerOpen = window.matchMedia("(min-width: 768px)").matches || this.el.dataset.mobileInquiry === "true";
+    this._applySideDrawerState(this.sideDrawerOpen, {dispatchResize: false});
+    this._syncExploreState();
     this._redirectMobileGraphToReader();
     this._closeAllPanels();
     this._syncOutlineDetailForPanel(null);
     window.addEventListener("resize", this._handleMobileGraphResize);
 
     this.el.addEventListener("toggle-panel", (e) => {
+      this._applyMobileOutlineState(false);
       const { id, section = null, open = false } = e.detail;
       const targetPanel = document.getElementById(id);
 
@@ -394,6 +409,9 @@ hooks.GraphLayout = {
 
       this._syncPanelToggles();
 
+      if (isClosed) this._drawerNavigation.open(targetPanel, e.detail.dispatcher, section);
+      else this._drawerNavigation.close();
+
       const shouldRestoreSideDrawer =
         (this._reopenSideDrawerAfterPresentation &&
           ((presWasOpen && id !== "presentation-drawer") ||
@@ -425,7 +443,36 @@ hooks.GraphLayout = {
       if (targetPanel.classList.contains("translate-x-full")) return;
 
       this._closeAllPanels();
+      this._drawerNavigation.close();
       window.dispatchEvent(new Event("resize"));
+    });
+
+    this.handleEvent("open_grid_tool", ({ section }) => {
+      if (!["presentation", "configure", "workspace"].includes(section)) return;
+      if (section === "presentation" && window.matchMedia("(max-width: 767px)").matches) return;
+
+      if (section === "configure") {
+        this.pushEvent("open_prompt_settings", {});
+      } else if (section === "workspace") {
+        this.pushEvent("open_access_settings", {});
+      } else {
+        this.el.dispatchEvent(new CustomEvent("toggle-panel", {detail: {id: "presentation-drawer", open: true}}));
+        this.pushEvent("enter_presentation_setup", {});
+      }
+    });
+
+    this.handleEvent("open_answer_level", () => {
+      this._applySideDrawerState(true);
+      requestAnimationFrame(() => {
+        const toggle = document.getElementById("global-chat-form-answer-level-toggle");
+        if (toggle?.getAttribute("aria-expanded") === "false") toggle.click();
+      });
+    });
+
+    this.handleEvent("open_reader_tools", () => {
+      this.el.dispatchEvent(new CustomEvent("toggle-panel", {
+        detail: { id: "right-panel", section: "reading-style", open: true },
+      }));
     });
 
     this.el.addEventListener("toggle-side-drawer", (e) => {
@@ -443,7 +490,23 @@ hooks.GraphLayout = {
       this._applySideDrawerState(shouldOpen);
     });
 
+    this.el.addEventListener("toggle-explore", () => {
+      if (this.el.id === "graph-layout") {
+        this._applySideDrawerState(!this.sideDrawerOpen);
+      }
+    });
+
+    this.handleEvent("focus_reader_composer", ({id}) => {
+      requestAnimationFrame(() => {
+        const composer = document.getElementById(`reader-answer-drawer-${id}`);
+        composer?.scrollIntoView({block: "center", behavior: "smooth"});
+        composer?.querySelector("textarea, input:not([type=hidden])")?.focus({preventScroll: true});
+      });
+    });
+
     this.el.addEventListener("toggle-mobile-outline", () => {
+      this._closeAllPanels();
+      this._drawerNavigation.close();
       const panel = document.getElementById("outline-mobile-nav-panel");
       if (!panel) return;
 
@@ -453,6 +516,20 @@ hooks.GraphLayout = {
     this.el.addEventListener("close-mobile-outline", () => {
       this._applyMobileOutlineState(false);
     });
+
+    const readingStyles = ["book", "screen", "large_print", "compact"];
+    this.handleEvent("reading_style_applied", ({style}) => {
+      if (this.el.dataset.anonymous !== "true" || !readingStyles.includes(style)) return;
+      try { sessionStorage.setItem("rg:reading-style", style); } catch (_error) {}
+    });
+    if (this.el.dataset.anonymous === "true") {
+      try {
+        const style = sessionStorage.getItem("rg:reading-style");
+        if (readingStyles.includes(style) && style !== this.el.dataset.readingStyle) {
+          this.pushEvent("save_reader_appearance", {style});
+        }
+      } catch (_error) {}
+    }
 
     this.restoreState();
     this._focusAskInputFromUrl();
@@ -522,6 +599,7 @@ hooks.GraphLayout = {
   _panelIds() {
     return [
       "right-panel",
+      "grid-history-panel",
       "highlights-drawer",
       "presentation-drawer",
       "combine-drawer",
@@ -562,25 +640,43 @@ hooks.GraphLayout = {
     this._syncPanelToggles();
   },
   _syncPanelToggles() {
+    this._panelIds().forEach((id) => {
+      const panel = document.getElementById(id);
+      if (panel) syncDrawerAccessibility(panel, id === this.activePanelId);
+    });
     this.el.querySelectorAll("[data-panel-toggle]").forEach((button) => {
       const active =
         button.dataset.panelToggle === this.activePanelId &&
-        (button.dataset.panelSection || null) === this.activePanelSection;
+        (!button.dataset.panelSection || button.dataset.panelSection === this.activePanelSection);
       button.setAttribute("aria-expanded", String(active));
-      for (const className of ["ring-2", "ring-offset-1", "ring-white", "scale-110"]) {
-        button.classList.toggle(className, active);
-      }
+      button.classList.toggle("bg-slate-100", active);
     });
+    this._syncExploreState();
   },
   _syncOutlineDetailForPanel(activePanelId) {
     const outlineDetail = document.getElementById("outline-detail");
     if (!outlineDetail) return;
 
-    const reserveDrawerSpace =
-      activePanelId === "highlights-drawer" &&
-      window.matchMedia("(min-width: 1024px)").matches;
+    const shell = document.getElementById("outline-scroll-shell");
+    if (shell) shell.dataset.readerPanelOpen = String(Boolean(activePanelId));
+    outlineDetail.classList.remove("lg:pr-96");
+  },
+  _syncExploreState() {
+    const grid = this.el.id === "graph-layout";
+    const open = grid ? Boolean(this.sideDrawerOpen) : Boolean(this.mobileOutlineOpen);
+    const controls = grid ? "side-drawer" : "outline-mobile-nav-panel";
 
-    outlineDetail.classList.toggle("lg:pr-96", reserveDrawerSpace);
+    this.el.querySelectorAll("[data-explore-toggle]").forEach((button) => {
+      const action = `${open ? "Hide" : "Show"} ${grid ? "details" : "outline"}`;
+      button.setAttribute("aria-expanded", String(open));
+      button.setAttribute("aria-controls", controls);
+      button.setAttribute("aria-label", action);
+      button.setAttribute("title", open ? `${action} for full width` : action);
+      const label = button.querySelector("[data-explore-label]");
+      if (label) label.textContent = action;
+      button.querySelector("[data-explore-hide-icon]")?.classList.toggle("hidden", !open);
+      button.querySelector("[data-explore-show-icon]")?.classList.toggle("hidden", open);
+    });
   },
   _applySideDrawerState(shouldOpen, { dispatchResize = true } = {}) {
     const drawer = document.getElementById("side-drawer");
@@ -590,9 +686,20 @@ hooks.GraphLayout = {
     if (!drawer) return;
 
     this.sideDrawerOpen = shouldOpen;
+    drawer.inert = !shouldOpen;
+    if (shouldOpen) drawer.removeAttribute("aria-hidden");
+    else {
+      if (drawer.contains(document.activeElement)) {
+        const explore = Array.from(this.el.querySelectorAll("[data-explore-toggle]"))
+          .find((button) => button.getClientRects().length);
+        (explore || toggleBtn)?.focus({ preventScroll: true });
+      }
+      drawer.setAttribute("aria-hidden", "true");
+    }
 
     if (shouldOpen) {
       drawer.classList.remove(
+        "hidden",
         "-translate-x-full",
         "opacity-0",
         "w-0",
@@ -601,6 +708,7 @@ hooks.GraphLayout = {
         "p-0",
       );
       drawer.classList.add(
+        "flex",
         "translate-x-0",
         "opacity-100",
         "w-full",
@@ -663,6 +771,8 @@ hooks.GraphLayout = {
       });
     }
 
+    this._syncExploreState();
+
     if (dispatchResize) {
       window.dispatchEvent(new Event("resize"));
     }
@@ -678,6 +788,7 @@ hooks.GraphLayout = {
     this._focusAskInputFromUrl();
   },
   destroyed() {
+    this._drawerNavigation?.destroy();
     this._mobileOutlineFocus?.destroy();
     if (this._mobileOutlineCloseTimer) {
       clearTimeout(this._mobileOutlineCloseTimer);
@@ -697,11 +808,14 @@ hooks.GraphLayout = {
     const mobileReaderPath = this.el.dataset.mobileReaderPath;
     const isGraphLayout = this.el.id === "graph-layout";
     const isPresenting = this.el.dataset.presenting === "true";
+    const requestedTool = new URL(window.location.href).searchParams.get("tools");
 
     if (
       !isGraphLayout ||
+      this.el.dataset.mobileMapEnabled === "true" ||
       !mobileReaderPath ||
       isPresenting ||
+      ["configure", "workspace"].includes(requestedTool) ||
       this.el.dataset.mobileInquiry === "true"
     ) return;
     if (!window.matchMedia("(max-width: 767px)").matches) return;
@@ -762,10 +876,9 @@ hooks.GraphLayout = {
     }, 120);
   },
   _applyMobileOutlineState(shouldOpen) {
+    this.mobileOutlineOpen = Boolean(shouldOpen);
     const panel = document.getElementById("outline-mobile-nav-panel");
-    const mobileButton = document.getElementById("reader-workspace-bar-outline");
-    const desktopButton = document.getElementById("reader-workspace-bar-outline-desktop");
-    const button = mobileButton?.getClientRects().length ? mobileButton : desktopButton;
+    const button = document.getElementById("reader-workspace-bar-outline");
 
     if (!panel || !button) return;
 
@@ -793,7 +906,12 @@ hooks.GraphLayout = {
       this._mobileOutlineFocus = null;
       panel.inert = true;
       panel.setAttribute("aria-hidden", "true");
-      if (returnFocus) button.focus({preventScroll: true});
+      if (returnFocus) {
+        const focusTarget = button.getClientRects().length ? button :
+          document.querySelector('#outline-tree [aria-current="location"]') ||
+          document.getElementById("reader-header-close-link");
+        focusTarget?.focus({preventScroll: true});
+      }
       panel.classList.remove("opacity-100", "translate-x-0");
       panel.classList.add("opacity-0", "translate-x-8", "pointer-events-none");
 
@@ -803,21 +921,11 @@ hooks.GraphLayout = {
       }, 500);
     }
 
-    button.setAttribute("aria-expanded", String(shouldOpen));
-
-    const label = shouldOpen
-      ? "Hide conversation outline"
-      : "Show conversation outline";
-
-    button.setAttribute("aria-label", label);
-    button.setAttribute("title", label);
-
-    button.classList.toggle("border-slate-300", shouldOpen);
-    button.classList.toggle("bg-slate-100", shouldOpen);
-    button.classList.toggle("text-slate-950", shouldOpen);
+    this._syncExploreState();
   },
   restoreState() {
-    this._applyMobileOutlineState(false);
+    this._syncExploreState();
+    this._applyMobileOutlineState(Boolean(this.mobileOutlineOpen));
 
     const presentationDrawer = document.getElementById("presentation-drawer");
     const combineDrawer = document.getElementById("combine-drawer");
@@ -840,20 +948,12 @@ hooks.GraphLayout = {
     // Restore side drawer state
     const drawer = document.getElementById("side-drawer");
     if (drawer && this.sideDrawerOpen !== undefined) {
-      const isClosed = drawer.classList.contains("-translate-x-full");
-      if (this.sideDrawerOpen && isClosed) {
-        this.el.dispatchEvent(
-          new CustomEvent("toggle-side-drawer", { detail: { force: "open" } }),
-        );
-      } else if (!this.sideDrawerOpen && !isClosed) {
-        this.el.dispatchEvent(
-          new CustomEvent("toggle-side-drawer", { detail: { force: "close" } }),
-        );
-      }
+      this._applySideDrawerState(this.sideDrawerOpen, {dispatchResize: false});
     }
 
     if (!this.activePanelId) {
       this._closeAllPanels();
+      this._drawerNavigation.close();
       return;
     }
 
@@ -889,6 +989,7 @@ hooks.GraphLayout = {
       if (bottomMenu) bottomMenu.classList.add("panel-open");
     }
     this._syncPanelToggles();
+    this._drawerNavigation.refresh();
   },
 };
 
@@ -920,7 +1021,7 @@ let liveSocket = new LiveSocket("/live", Socket, {
     keydown: (e, el) => {
       // console.log(e);
       // console.log(el);
-      const target = e.target;
+      const target = e.target instanceof Element ? e.target : null;
       const tag = (target && target.tagName) || "";
       const isEditable =
         tag === "INPUT" ||

@@ -12,25 +12,27 @@ defmodule DialecticWeb.LearningCreationTest do
   setup :register_and_log_in_user
 
   test "the form creates an owned private grid with the chosen depth", %{conn: conn, user: user} do
-    question = "Private exploration #{System.unique_integer([:positive])}"
+    question =
+      "Private exploration #{System.unique_integer([:positive])}\n\n" <>
+        "“AI-generated content is genius.”\r\n“AI-generated content is garbage.”\tSynthesize."
+
+    title = Graphs.sanitize_title(question)
     {:ok, view, _html} = live(conn, ~p"/my/learning")
 
-    assert has_element?(view, "#learning-new-grid-form-panel label", "Start a private grid")
+    assert has_element?(view, "#learning-new-grid-form-panel h2", "Create a grid")
     refute has_element?(view, "#new-idea-level-step")
+
+    assert has_element?(view, "#new-idea-create-submit", "Create a grid")
+    assert has_element?(view, "#learning-new-grid-form-answer-level-expert[role='option']")
+    assert has_element?(view, "#learning-new-grid-form-privacy", "Only you can access it")
 
     view
     |> form("#learning-new-grid-form", vertex: %{content: question})
-    |> render_submit()
-
-    assert has_element?(view, "#new-idea-level-step")
-    assert has_element?(view, "#new-idea-create-submit", "Create private grid")
-    refute has_element?(view, "#home-public-grid-note")
-    refute Graphs.get_graph_by_title(question)
-    view |> element("#new-idea-mode-expert") |> render_click()
-    view |> form("#learning-new-grid-form", vertex: %{content: question}) |> render_submit()
+    |> render_submit(%{"vertex" => %{"mode" => "expert"}})
 
     {path, _flash} = assert_redirect(view, 2_000)
-    graph = Graphs.get_graph_by_title(question)
+    graph = Graphs.get_graph_by_title(title)
+    refute String.contains?(graph.title, ["\n", "\r", "\t"])
     refute graph.is_public
     assert graph.user_id == user.id
     assert graph.prompt_mode == "expert"
@@ -61,10 +63,6 @@ defmodule DialecticWeb.LearningCreationTest do
 
     view
     |> form("#learning-new-grid-form", vertex: %{content: original.title})
-    |> render_submit()
-
-    view
-    |> form("#learning-new-grid-form", vertex: %{content: original.title})
     |> render_submit(%{"vertex" => %{"is_public" => "true", "user_id" => original.user_id}})
 
     {path, _flash} = assert_redirect(view, 2_000)
@@ -91,13 +89,7 @@ defmodule DialecticWeb.LearningCreationTest do
 
     view
     |> form("#learning-new-grid-form", vertex: %{content: "A question to keep"})
-    |> render_submit()
-
-    view |> element("#new-idea-mode-expert") |> render_click(%{"mode" => "unsupported"})
-
-    view
-    |> form("#learning-new-grid-form", vertex: %{content: "A question to keep"})
-    |> render_submit()
+    |> render_submit(%{"vertex" => %{"mode" => "unsupported"}})
 
     assert has_element?(view, "#new-idea-input", "A question to keep")
     assert has_element?(view, "#flash-error", "choose an answer depth")
@@ -115,10 +107,6 @@ defmodule DialecticWeb.LearningCreationTest do
     {:ok, view, _html} = live(conn, ~p"/my/learning?collection=#{topic.id}")
     view |> element("#learning-new-grid-tab") |> render_click()
     question = "Private topic question #{System.unique_integer([:positive])}"
-
-    view
-    |> form("#learning-new-grid-form", vertex: %{content: question})
-    |> render_submit()
 
     view |> form("#learning-new-grid-form", vertex: %{content: question}) |> render_submit()
 
@@ -180,7 +168,6 @@ defmodule DialecticWeb.LearningCreationTest do
 
     view |> element("#learning-new-grid-tab") |> render_click()
     question = "New collection grid #{System.unique_integer([:positive])}"
-    view |> form("#learning-new-grid-form", vertex: %{content: question}) |> render_submit()
     view |> form("#learning-new-grid-form", vertex: %{content: question}) |> render_submit()
     assert_redirect(view, 2_000)
 

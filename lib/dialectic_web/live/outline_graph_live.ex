@@ -23,8 +23,6 @@ defmodule DialecticWeb.OutlineGraphLive do
 
   require Logger
 
-  @max_outline_indent 4
-
   on_mount {DialecticWeb.UserAuth, :mount_current_user}
   on_mount DialecticWeb.GraphAccess
 
@@ -46,9 +44,11 @@ defmodule DialecticWeb.OutlineGraphLive do
         token_param = Map.get(params, "token")
 
         has_access =
-          Dialectic.DbActions.Sharing.can_access?(socket.assigns[:current_user], graph_db) or
-            (is_binary(token_param) and is_binary(graph_db.share_token) and
-               Plug.Crypto.secure_compare(token_param, graph_db.share_token))
+          Dialectic.DbActions.Sharing.can_access?(
+            socket.assigns[:current_user],
+            graph_db,
+            token_param
+          )
 
         if has_access do
           try do
@@ -138,75 +138,15 @@ defmodule DialecticWeb.OutlineGraphLive do
       |> maybe_scroll_to_highlight(highlight_id)
       |> assign_share_metadata(share_highlight)
 
-    {:noreply, socket}
-  end
-
-  @impl true
-  def handle_event("preview_reader_appearance", %{"user" => params}, socket) do
-    {style, params} = apply_reading_style(params)
-    params = Map.take(params, ["reading_font", "reading_density"])
-    user = struct(User, socket.assigns.appearance_preferences)
-    changeset = Accounts.change_user_appearance(user, params)
-
     socket =
-      assign(socket,
-        reader_style: style,
-        reader_appearance_form: to_form(Map.put(changeset, :action, :validate)),
-        reader_appearance_status: nil
-      )
+      if params["tools"] == "reading-style",
+        do: push_event(socket, "open_reader_tools", %{}),
+        else: socket
 
-    socket =
-      if changeset.valid? do
-        assign(
-          socket,
-          :appearance_preferences,
-          User.appearance_preferences(Ecto.Changeset.apply_changes(changeset))
-        )
-      else
-        socket
-      end
-
-    {:noreply, socket}
-  end
-
-  @impl true
-  def handle_event("save_reader_appearance", %{"style" => style}, socket)
-      when style in ["book", "screen", "large_print", "compact"] do
-    handle_event("save_reader_appearance", %{"user" => %{"reading_style" => style}}, socket)
-  end
-
-  def handle_event("save_reader_appearance", %{"user" => params}, socket) do
-    {style, params} = apply_reading_style(params)
-    params = Map.take(params, ["reading_font", "reading_density"])
-    user = socket.assigns.current_user || struct(User, socket.assigns.appearance_preferences)
-
-    result =
-      if socket.assigns.current_user do
-        Accounts.update_user_appearance(user, params)
-      else
-        user |> Accounts.change_user_appearance(params) |> Ecto.Changeset.apply_action(:update)
-      end
-
-    case result do
-      {:ok, updated} ->
-        socket =
-          if socket.assigns.current_user, do: assign(socket, :current_user, updated), else: socket
-
-        {:noreply,
-         assign(socket,
-           reader_style: style,
-           reader_appearance_form: to_form(Accounts.change_user_appearance(updated)),
-           appearance_preferences: User.appearance_preferences(updated),
-           reader_appearance_status:
-             if(socket.assigns.current_user,
-               do: "Reading style saved for all grids.",
-               else: "Reading style applied for this visit."
-             )
-         )}
-
-      {:error, changeset} ->
-        {:noreply,
-         assign(socket, reader_style: style, reader_appearance_form: to_form(changeset))}
+    if params["ask"] == "true" do
+      handle_event("open_follow_up", %{}, socket)
+    else
+      {:noreply, socket}
     end
   end
 
@@ -345,12 +285,116 @@ defmodule DialecticWeb.OutlineGraphLive do
   def handle_info(_msg, socket), do: {:noreply, socket}
 
   @impl true
+  def handle_event(
+        "reply-and-answer",
+        %{"vertex" => %{"content" => question}, "node_id" => node_id},
+        socket
+      ) do
+    params = %{"action" => "ask_question", "input" => question, "nodeId" => node_id}
+
+    if Enum.any?(socket.assigns.visible_reading_chain, &(&1.id == node_id)) do
+      case DialecticWeb.AnswerActions.perform(socket, params) do
+        {:ok, result} ->
+          {:noreply, socket} = finish_selection_action(socket, result)
+          {:reply, %{}, socket}
+
+        {:error, message} ->
+          {:reply, %{error: message}, put_flash(socket, :error, message)}
+      end
+    else
+      {:reply, %{error: "Choose an existing response to ask about."}, socket}
+    end
+  end
+
+  def handle_event("open_grid_history", _params, socket) do
+    send_update(DialecticWeb.GridHistoryComp, id: "grid-history-comp", refresh: true)
+    {:noreply, socket}
+  end
+
+  def handle_event("preview_reader_appearance", %{"user" => params}, socket) do
+    {style, params} = apply_reading_style(params)
+    params = Map.take(params, ["reading_font", "reading_density"])
+    user = struct(User, socket.assigns.appearance_preferences)
+    changeset = Accounts.change_user_appearance(user, params)
+
+    socket =
+      assign(socket,
+        reader_style: style,
+        reader_appearance_form: to_form(Map.put(changeset, :action, :validate)),
+        reader_appearance_status: nil
+      )
+
+    socket =
+      if changeset.valid? do
+        assign(
+          socket,
+          :appearance_preferences,
+          User.appearance_preferences(Ecto.Changeset.apply_changes(changeset))
+        )
+      else
+        socket
+      end
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("save_reader_appearance", %{"style" => style}, socket)
+      when style in ["book", "screen", "large_print", "compact"] do
+    handle_event("save_reader_appearance", %{"user" => %{"reading_style" => style}}, socket)
+  end
+
+  def handle_event("save_reader_appearance", %{"user" => params}, socket) do
+    {:noreply, DialecticWeb.ReadingStyles.save_appearance(socket, params)}
+  end
+
+  @impl true
   def handle_event("toggle_answer_drawer", %{"id" => node_id}, socket) do
     node = Enum.find(socket.assigns.visible_reading_chain, &(&1.id == node_id))
 
     if socket.assigns.can_edit && node && contribution_target?(node) do
       open_node_id = if socket.assigns.answer_drawer_node_id == node_id, do: nil, else: node_id
       {:noreply, assign(socket, :answer_drawer_node_id, open_node_id)}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  def handle_event("toggle_outline_branch", %{"id" => id}, socket) do
+    socket =
+      if Enum.any?(socket.assigns.outline_nodes, &(&1.id == id)),
+        do: update(socket, :expanded_outline_ids, &toggle_membership(&1, id)),
+        else: socket
+
+    {:noreply, socket}
+  end
+
+  def handle_event("toggle_outline_comments", %{"id" => id}, socket) do
+    socket =
+      if Enum.any?(socket.assigns.outline_nodes, &(&1.id == id)) do
+        socket
+        |> update(:expanded_comment_ids, &toggle_membership(&1, id))
+        |> update(:expanded_outline_ids, &MapSet.put(&1, id))
+      else
+        socket
+      end
+
+    {:noreply, socket}
+  end
+
+  def handle_event("open_follow_up", params, socket) do
+    node =
+      Enum.find(
+        socket.assigns.visible_reading_chain,
+        &(&1.id == params["id"] && contribution_target?(&1))
+      ) ||
+        Enum.find(Enum.reverse(socket.assigns.visible_reading_chain), &contribution_target?/1)
+
+    if socket.assigns.can_edit && node do
+      {:noreply,
+       socket
+       |> assign(:answer_drawer_node_id, node.id)
+       |> push_event("focus_reader_composer", %{id: node.id})}
     else
       {:noreply, socket}
     end
@@ -485,6 +529,22 @@ defmodule DialecticWeb.OutlineGraphLive do
   end
 
   @impl true
+  def handle_event("set_prompt_mode", %{"prompt_mode" => mode}, socket) do
+    {:noreply, DialecticWeb.WorkspaceSettings.set_prompt_mode(socket, mode)}
+  end
+
+  def handle_event("set_graph_visibility", %{"visibility" => visibility}, socket) do
+    {:noreply, DialecticWeb.WorkspaceSettings.set_visibility(socket, visibility)}
+  end
+
+  def handle_event("toggle_lock_graph", _params, socket) do
+    {:noreply, DialecticWeb.WorkspaceSettings.toggle_access(socket, :editing)}
+  end
+
+  def handle_event("toggle_public_graph", _params, socket) do
+    {:noreply, DialecticWeb.WorkspaceSettings.toggle_access(socket, :visibility)}
+  end
+
   def handle_event("show_login_required", _params, socket) do
     {:noreply, assign(socket, show_login_modal: true)}
   end
@@ -651,7 +711,7 @@ defmodule DialecticWeb.OutlineGraphLive do
         "description" => description,
         "url" => canonical,
         "mainEntityOfPage" => %{"@type" => "WebPage", "@id" => canonical},
-        "image" => base_url <> ~p"/images/graph_live.webp",
+        "image" => base_url <> ~p"/images/rationalgrid-social.png",
         "dateModified" => DateTime.to_iso8601(graph_db.updated_at),
         "datePublished" => DateTime.to_iso8601(graph_db.inserted_at),
         "publisher" => %{
@@ -674,9 +734,12 @@ defmodule DialecticWeb.OutlineGraphLive do
     assign(socket,
       graph_id: graph_db.title,
       graph_struct: graph_db,
+      graph_creator: if(graph_db.user_id, do: Dialectic.Repo.get(User, graph_db.user_id)),
       graph_topic: graph_topic,
       live_view_topic: graph_topic,
       answer_drawer_node_id: nil,
+      expanded_outline_ids: MapSet.new(),
+      expanded_comment_ids: MapSet.new(),
       selection_pending_node_ids: RequestQueue.pending_node_ids(graph_db.title),
       pending_refresh_timer: nil,
       user: UserUtils.current_identity(socket.assigns),
@@ -691,7 +754,12 @@ defmodule DialecticWeb.OutlineGraphLive do
       reader_appearance_status: nil,
       token: token_param,
       nav_params: token_params(token_param),
-      can_edit: !graph_db.is_locked,
+      can_edit:
+        Dialectic.DbActions.Sharing.can_edit?(
+          socket.assigns[:current_user],
+          graph_db,
+          token_param
+        ),
       outline_nodes: outline_nodes,
       contributor_names: contributor_names(outline_nodes),
       new_thought_ids: [],
@@ -730,7 +798,7 @@ defmodule DialecticWeb.OutlineGraphLive do
       default_page_description: description,
       canonical_url: canonical,
       og_type: "article",
-      og_image: base_url <> ~p"/images/graph_live.webp",
+      og_image: base_url <> ~p"/images/rationalgrid-social.png",
       json_ld: json_ld,
       noindex: !indexable_graph?(graph_db)
     )
@@ -793,7 +861,7 @@ defmodule DialecticWeb.OutlineGraphLive do
       page_title: HighlightShare.page_title(graph, highlight),
       page_description: HighlightShare.page_description(graph, highlight),
       canonical_url: HighlightShare.share_url(graph, highlight),
-      og_image: HighlightShare.image_url(graph, highlight),
+      og_image: DialecticWeb.Endpoint.url() <> ~p"/images/rationalgrid-social.png",
       noindex: true
     )
   end
@@ -808,7 +876,7 @@ defmodule DialecticWeb.OutlineGraphLive do
       page_title: graph.title,
       page_description: description,
       canonical_url: canonical,
-      og_image: base_url <> ~p"/images/graph_live.webp",
+      og_image: base_url <> ~p"/images/rationalgrid-social.png",
       noindex: !indexable_graph?(graph)
     )
   end
@@ -979,6 +1047,16 @@ defmodule DialecticWeb.OutlineGraphLive do
       |> MapSet.new()
 
     socket
+    |> update(
+      :expanded_outline_ids,
+      &MapSet.union(
+        &1,
+        MapSet.new(Enum.map(selected_path ++ visible_reading_chain, fn node -> node.id end))
+      )
+    )
+    |> update(:expanded_comment_ids, fn ids ->
+      if selected_node.class == "user", do: MapSet.union(ids, selected_path_ids), else: ids
+    end)
     |> assign(
       selected_node_id: selected_node.id,
       node: selected_node,
@@ -998,6 +1076,10 @@ defmodule DialecticWeb.OutlineGraphLive do
       can_choose_path?: can_choose_path?
     )
     |> assign_visible_highlights()
+  end
+
+  defp toggle_membership(set, id) do
+    if MapSet.member?(set, id), do: MapSet.delete(set, id), else: MapSet.put(set, id)
   end
 
   defp can_choose_path?(outline_nodes, focused_outline_nodes, selected_node_id) do
@@ -1164,6 +1246,7 @@ defmodule DialecticWeb.OutlineGraphLive do
     |> GraphManager.path_to_node(selected_node)
     |> Enum.reverse()
     |> Enum.filter(&visible_node?/1)
+    |> Enum.map(&GraphActions.find_node(graph_id, &1.id))
     |> Enum.map(&enrich_node/1)
   end
 
@@ -1554,16 +1637,6 @@ defmodule DialecticWeb.OutlineGraphLive do
   defp response_level_badge_class(_response_level),
     do: "bg-slate-100 text-slate-700 ring-slate-600/10"
 
-  defp outline_indent_style(indent, step \\ 0.45) do
-    visible_indent = min(max(indent, 0), @max_outline_indent)
-    "padding-left: #{0.75 + visible_indent * step}rem;"
-  end
-
-  defp outline_indent_guides(indent) do
-    visible_indent = min(max(indent, 0), @max_outline_indent)
-    List.duplicate(:guide, visible_indent)
-  end
-
   defp sort_key(id) do
     case Integer.parse(to_string(id)) do
       {int, _rest} -> {0, int}
@@ -1585,22 +1658,6 @@ defmodule DialecticWeb.OutlineGraphLive do
       |> String.downcase()
 
     "Respond to this #{label}"
-  end
-
-  defp highlight_excerpt(%{selected_text_snapshot: text}) when is_binary(text) do
-    case String.trim(text) do
-      "" -> "Highlighted passage"
-      trimmed -> trimmed
-    end
-  end
-
-  defp highlight_excerpt(_highlight), do: "Highlighted passage"
-
-  defp highlight_link_title(outline_nodes, node_id) do
-    case Enum.find(outline_nodes, &(&1.id == node_id)) do
-      nil -> "Connected idea"
-      node -> node.full_title || node.title || "Connected idea"
-    end
   end
 
   defp reader_nav_params(nav_params, []), do: nav_params

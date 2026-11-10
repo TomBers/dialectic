@@ -2,6 +2,7 @@ defmodule DialecticWeb.CommunityBrowsingTest do
   use DialecticWeb.ConnCase, async: true
 
   import Dialectic.GraphFixtures
+  import Dialectic.AccountsFixtures
   import Phoenix.LiveViewTest
 
   alias Dialectic.DbActions.Graphs
@@ -42,7 +43,7 @@ defmodule DialecticWeb.CommunityBrowsingTest do
     end
 
     refute has_element?(view, "#community-format-filters > a:nth-child(4)")
-    assert has_element?(view, ~s(#community-size-input option[value="all"][selected]))
+    refute has_element?(view, "#community-size-input")
 
     render_patch(view, ~p"/community?category=curated")
     assert has_element?(view, ~s(#community-format-curated[aria-current="page"]))
@@ -75,10 +76,8 @@ defmodule DialecticWeb.CommunityBrowsingTest do
     assert has_element?(view, ~s(#community-format-all[aria-current="page"]))
     assert has_element?(view, "#community-grid-#{grid.slug}")
 
-    {:ok, search, _} =
-      view |> element("#community-search-content-link") |> render_click() |> follow_redirect(conn)
-
-    assert has_element?(search, "#global-search-input[value='#{grid.title}']")
+    refute has_element?(view, "#community-search-content-link")
+    assert has_element?(view, "#community-search-input[value='#{grid.title}']")
     {:ok, community, _} = live(conn, ~p"/community?#{%{search: grid.title}}")
     assert has_element?(community, "#community-grid-#{grid.slug}")
   end
@@ -99,7 +98,9 @@ defmodule DialecticWeb.CommunityBrowsingTest do
     end
   end
 
-  test "all public grids are browsable across stable pages, including small grids", %{conn: conn} do
+  test "owned public grids are browsable across stable pages, including small grids", %{
+    conn: conn
+  } do
     graphs =
       for index <- 1..14,
           do: graph("Grid #{String.pad_leading(to_string(index), 2, "0")}", ["Sociology"])
@@ -108,13 +109,19 @@ defmodule DialecticWeb.CommunityBrowsingTest do
     draft = graph("Draft grid", ["Sociology"], %{is_published: false})
     deleted = graph("Deleted grid", ["Sociology"], %{is_deleted: true})
 
+    anonymous =
+      insert_graph(%{title: "Anonymous grid"})
+      |> Ecto.Changeset.change(tags: ["Sociology"])
+      |> Repo.update!()
+
     {:ok, view, _} = live(conn, ~p"/community?tag=sociology")
 
     assert has_element?(view, "#community-result-count", "1–12 of 14 grids")
+    assert has_element?(view, ~s(#community-next-page[data-phx-link="patch"]))
     assert has_element?(view, "#community-grid-list > article:nth-of-type(12)")
     refute has_element?(view, "#community-grid-list > article:nth-of-type(13)")
 
-    for hidden <- [private, draft, deleted] do
+    for hidden <- [private, draft, deleted, anonymous] do
       refute has_element?(view, "#community-grid-#{hidden.slug}")
     end
 
@@ -129,16 +136,17 @@ defmodule DialecticWeb.CommunityBrowsingTest do
 
     assert URI.decode_query(URI.parse(next_path).query) == %{"tag" => "sociology", "page" => "2"}
 
-    render_patch(view, next_path)
+    view |> element("#community-next-page") |> render_click()
     assert has_element?(view, "#community-result-count", "13–14 of 14 grids")
     assert has_element?(view, "#community-previous-page")
-    refute has_element?(view, "#community-next-page")
+    assert has_element?(view, "#community-next-page[disabled]")
     assert has_element?(view, "#community-grid-#{List.last(graphs).slug}")
 
     doc = conn |> get(next_path) |> html_response(200) |> LazyHTML.from_document()
 
     assert doc |> LazyHTML.query("link[rel=canonical]") |> LazyHTML.attribute("href") == [
-             DialecticWeb.Endpoint.url() <> next_path
+             DialecticWeb.Endpoint.url() <>
+               (next_path |> URI.parse() |> Map.put(:fragment, nil) |> URI.to_string())
            ]
 
     assert doc |> LazyHTML.query("meta[name=robots]") |> LazyHTML.attribute("content") == []
@@ -161,7 +169,7 @@ defmodule DialecticWeb.CommunityBrowsingTest do
 
     assert has_element?(view, "#community-result-count", "1–12 of 13 grids")
     assert has_element?(view, ~s(#community-format-curated[aria-current="page"]))
-    assert has_element?(view, ~s(#community-size-input option[value="small"][selected]))
+    assert has_element?(view, "#community-clear-size", "Small grids")
 
     for grid <- [wrong_topic, wrong_title, wrong_collection, wrong_size],
         do: refute(has_element?(view, "#community-grid-#{grid.slug}"))
@@ -183,11 +191,12 @@ defmodule DialecticWeb.CommunityBrowsingTest do
              "page" => "2"
            }
 
-    render_patch(view, next_path)
+    view |> element("#community-next-page") |> render_click()
     assert has_element?(view, "#community-result-count", "13–13 of 13 grids")
 
-    view |> form("#community-size-form", %{size: "all"}) |> render_change()
+    render_patch(view, size_clear_path(view))
     assert has_element?(view, "#community-result-count", "1–12 of 14 grids")
+    assert has_element?(view, ~s(#community-next-page[data-phx-link="patch"]))
     assert has_element?(view, ~s(#community-format-curated[aria-current="page"]))
     assert has_element?(view, "#community-clear-topic", "Sociology")
   end
@@ -210,7 +219,10 @@ defmodule DialecticWeb.CommunityBrowsingTest do
     {:ok, view, _} =
       live(conn, ~p"/community?category=curated&tag=sociology&search=Learning&sort=updated")
 
-    view |> form("#community-size-form", %{size: "small"}) |> render_change()
+    render_patch(
+      view,
+      ~p"/community?category=curated&tag=sociology&search=Learning&sort=updated&size=small"
+    )
 
     assert has_element?(view, "#community-grid-#{curated_small.slug}")
     refute has_element?(view, "#community-grid-#{curated_medium.slug}")
@@ -238,16 +250,20 @@ defmodule DialecticWeb.CommunityBrowsingTest do
     refute has_element?(view, "#community-grid-#{partner_large.slug}")
     refute has_element?(view, "#community-grid-#{curated_small.slug}")
 
-    view |> form("#community-size-form", %{size: "large"}) |> render_change()
+    render_patch(
+      view,
+      ~p"/community?category=partners&tag=sociology&search=Learning&sort=updated&size=large"
+    )
+
     assert has_element?(view, "#community-grid-#{partner_large.slug}")
     refute has_element?(view, "#community-grid-#{partner_small.slug}")
 
-    view |> form("#community-size-form", %{size: "all"}) |> render_change()
+    render_patch(view, size_clear_path(view))
     assert has_element?(view, "#community-grid-#{partner_small.slug}")
     assert has_element?(view, "#community-grid-#{partner_large.slug}")
     refute has_element?(view, "#community-grid-#{curated_small.slug}")
     assert has_element?(view, ~s(#community-format-partners[aria-current="page"]))
-    assert has_element?(view, ~s(#community-sort-input option[value="updated"][selected]))
+    refute has_element?(view, "#community-sort-input")
     assert has_element?(view, "#community-clear-topic", "Sociology")
   end
 
@@ -274,7 +290,7 @@ defmodule DialecticWeb.CommunityBrowsingTest do
         ] do
       {:ok, view, _} = live(conn, ~p"/community?category=#{category}")
       assert has_element?(view, ~s(#community-format-all[aria-current="page"]))
-      assert has_element?(view, ~s(#community-size-input option[value="#{size}"][selected]))
+      assert has_element?(view, "#community-clear-size", "#{String.capitalize(size)} grids")
       assert has_element?(view, "#community-grid-#{included.slug}")
       refute has_element?(view, "#community-grid-#{excluded.slug}")
     end
@@ -317,7 +333,7 @@ defmodule DialecticWeb.CommunityBrowsingTest do
 
     {:ok, view, _} = live(conn, ~p"/community?tag=sociology")
 
-    view |> form("#community-sort-form", %{sort: "largest"}) |> render_change()
+    render_patch(view, ~p"/community?tag=sociology&sort=largest")
     assert has_element?(view, "#community-grid-list > #community-grid-#{large.slug}:first-child")
     assert has_element?(view, "#community-clear-topic", "Sociology")
 
@@ -351,9 +367,23 @@ defmodule DialecticWeb.CommunityBrowsingTest do
     assert summary.node_count == 1
   end
 
+  defp size_clear_path(view) do
+    view
+    |> element("#community-clear-size")
+    |> render()
+    |> LazyHTML.from_fragment()
+    |> LazyHTML.query("a")
+    |> LazyHTML.attribute("href")
+    |> hd()
+  end
+
   defp graph(title, tags, attrs \\ %{}) do
     insert_graph(Map.merge(%{title: title}, attrs))
-    |> Ecto.Changeset.change(tags: tags, inserted_at: ~U[2026-01-01 12:00:00Z])
+    |> Ecto.Changeset.change(
+      user_id: user_fixture().id,
+      tags: tags,
+      inserted_at: ~U[2026-01-01 12:00:00Z]
+    )
     |> Repo.update!()
   end
 

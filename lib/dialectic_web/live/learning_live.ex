@@ -10,7 +10,7 @@ defmodule DialecticWeb.LearningLive do
   @page_size 24
 
   @impl true
-  def mount(_params, session, socket) do
+  def mount(params, session, socket) do
     {:ok, _} = Learning.initialize_topics(socket.assigns.current_user)
 
     {:ok,
@@ -23,9 +23,11 @@ defmodule DialecticWeb.LearningLive do
        editing?: false,
        search: "",
        search_form: to_form(%{"q" => ""}),
-       new_grid_form: to_form(new_grid_changeset(), as: :vertex),
+       new_grid_form:
+         to_form(new_grid_changeset(%{"content" => params["initial_prompt"] || ""}), as: :vertex),
        creating_grid?: false,
        new_grid_requested?: false,
+       resume_grid_draft?: params["resume"] == "grid",
        show_new_grid?: false,
        llm_actor_id: session["llm_actor_id"] || "learning:#{socket.id}",
        collection_form: to_form(Learning.change_collection()),
@@ -554,7 +556,7 @@ defmodule DialecticWeb.LearningLive do
     {:noreply,
      socket
      |> assign(:creating_grid?, false)
-     |> put_flash(:error, "Could not finish creating your private grid. Please try again.")}
+     |> put_flash(:error, "Could not finish creating your grid. Please try again.")}
   end
 
   defp file_new_grid(socket, nil, _graph), do: socket
@@ -568,12 +570,12 @@ defmodule DialecticWeb.LearningLive do
         put_flash(
           socket,
           :error,
-          "Your private grid was created, but could not be added to that topic or collection. Find it in My Learning."
+          "Your grid was created, but could not be added to that topic or collection. Find it in My Learning."
         )
     end
   end
 
-  defp new_grid_changeset(params \\ %{}) do
+  defp new_grid_changeset(params) do
     {%{content: "", mode: "high_school"}, %{content: :string, mode: :string}}
     |> Ecto.Changeset.cast(params, [:content, :mode])
     |> Ecto.Changeset.update_change(:content, &String.trim(&1 || ""))
@@ -611,6 +613,14 @@ defmodule DialecticWeb.LearningLive do
   defp collection_id(%{assigns: %{collection: %{id: id}}}), do: id
   defp collection_id(_socket), do: nil
   defp grid_id(grid), do: "learning-grid-" <> Base.url_encode64(grid.title, padding: false)
+
+  defp remaining_grid_tags(grid) do
+    collection_names = MapSet.new(grid.collections, &String.downcase(&1.name))
+
+    Enum.reject(grid.tags || [], fn tag ->
+      MapSet.member?(collection_names, String.downcase(tag_label(tag)))
+    end)
+  end
 
   defp learning_grid_path(grid, return_path, node \\ nil, params \\ []) do
     graph_path(%{slug: grid.slug}, node, Keyword.put(params, :learning, return_path))
@@ -1020,14 +1030,14 @@ defmodule DialecticWeb.LearningLive do
                   patch={new_grid_path(@collection)}
                   aria-current={if(@show_new_grid?, do: "page")}
                   class={[
-                    "inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold",
+                    "inline-flex min-h-11 items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold",
                     if(@show_new_grid?,
                       do: "bg-slate-950 text-white",
-                      else: "text-slate-600 hover:bg-white"
+                      else: "bg-teal-800 text-white hover:bg-teal-900"
                     )
                   ]}
                 >
-                  <.icon name="hero-plus" class="h-4 w-4" /> New grid
+                  <.icon name="hero-plus" class="h-4 w-4" /> Create a grid
                 </.link>
                 <.form
                   :if={!@show_new_grid?}
@@ -1109,20 +1119,18 @@ defmodule DialecticWeb.LearningLive do
                 :if={@show_new_grid?}
                 hidden={@creating_folder? || @editing?}
                 id="learning-create-grid"
-                class="mt-4 max-w-xl"
+                class="mt-5 max-w-2xl rounded-lg border border-stone-300 bg-white p-5 sm:p-7"
               >
                 <.live_component
                   module={DialecticWeb.NewGridForm}
                   id="learning-new-grid-form"
                   form={@new_grid_form}
-                  label="Start a private grid"
+                  current_user={@current_user}
+                  label="Create a grid"
                   context={@collection && "Added to #{group_kind(@collection)}: #{@collection.name}"}
                   busy={@creating_grid?}
                   placeholder="Ask a question or name a topic"
-                  submit_label="Continue"
-                  create_label="Create private grid"
-                  minimal={true}
-                  authenticated={true}
+                  resume_draft={@resume_grid_draft?}
                 />
               </div>
 
@@ -1250,7 +1258,7 @@ defmodule DialecticWeb.LearningLive do
                   <article
                     :for={{id, grid} <- @streams.grids}
                     id={id}
-                    class="px-5 py-6"
+                    class="px-5 py-4"
                   >
                     <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                       <div class="min-w-0 flex-1">
@@ -1273,58 +1281,57 @@ defmodule DialecticWeb.LearningLive do
                           href={learning_grid_path(grid, @learning_return_path)}
                           class="break-words font-serif text-xl font-semibold leading-7 text-slate-950 hover:text-teal-800"
                         >{grid.title}</.link>
-                        <p class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
-                          <span>Updated {Calendar.strftime(grid.updated_at, "%d %b %Y")}</span>
-                          <span>{if(grid.is_public, do: "Public grid", else: "Private grid")}</span>
-                        </p>
-                        <p
-                          :if={grid.tags != [] && grid.tags != nil}
-                          class="mt-2 text-xs text-slate-600"
+                        <span
+                          id={id <> "-access"}
+                          role="img"
+                          aria-label={if(grid.is_public, do: "Public grid", else: "Private grid")}
+                          title={if(grid.is_public, do: "Public grid", else: "Private grid")}
+                          class={[
+                            "ml-1 inline-flex items-center gap-1.5 align-[-0.125em] text-xl leading-none",
+                            if(grid.is_public, do: "text-teal-600", else: "text-amber-600")
+                          ]}
                         >
-                          {Enum.map_join(grid.tags, " · ", &tag_label/1)}
-                        </p>
-                        <div :if={grid.collections != []} class="mt-3 flex flex-wrap gap-2">
+                          <.icon
+                            name={if(grid.is_public, do: "hero-globe-alt", else: "hero-lock-closed")}
+                            class="h-5 w-5"
+                          />
+                          <span class="text-xs font-medium leading-none">
+                            {if(grid.is_public, do: "Public", else: "Private")}
+                          </span>
+                        </span>
+                        <div
+                          :if={grid.collections != [] || grid.tags not in [nil, []]}
+                          id={id <> "-metadata"}
+                          class="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500"
+                        >
                           <.link
                             :for={collection <- grid.collections}
                             id={id <> "-topic-#{collection.id}"}
                             patch={filter_path(collection, @saved_kind)}
                             class="rounded bg-teal-50 px-2 py-1 text-xs font-medium text-teal-800"
                           >{collection.path}</.link>
+                          <span
+                            :for={{tag, index} <- Enum.with_index(remaining_grid_tags(grid))}
+                            data-grid-tag
+                            class="inline-flex items-center gap-2 text-slate-600"
+                          >
+                            <span
+                              :if={index > 0 || grid.collections != []}
+                              aria-hidden="true"
+                              class="text-slate-300"
+                            >·</span>
+                            {tag_label(tag)}
+                          </span>
                         </div>
                       </div>
-                      <div class="flex shrink-0 flex-wrap items-center gap-3">
+                      <div :if={@adding?} class="flex shrink-0 flex-wrap items-center gap-3">
                         <button
-                          id={id <> "-organise"}
+                          id={id <> "-add"}
                           type="button"
-                          phx-click="organise_grid"
+                          phx-click="add_grid"
                           phx-value-title={grid.title}
-                          class="text-sm font-semibold text-teal-800"
-                        >Organise</button>
-                        <%= cond do %>
-                          <% @adding? -> %>
-                            <button
-                              id={id <> "-add"}
-                              type="button"
-                              phx-click="add_grid"
-                              phx-value-title={grid.title}
-                              class="rounded-md border border-teal-800 px-3 py-2 text-sm font-semibold text-teal-800 hover:bg-teal-50"
-                            >Add to {@collection.name}</button>
-                          <% @collection && Enum.any?(grid.collections, &(&1.id == @collection.id)) -> %>
-                            <button
-                              id={id <> "-remove"}
-                              type="button"
-                              phx-click="remove_grid"
-                              phx-value-title={grid.title}
-                              aria-label={"Remove #{grid.title} from #{@collection.name}"}
-                              class="text-sm text-slate-500 hover:text-red-700"
-                            >Remove from {group_kind(@collection)}</button>
-                          <% true -> %>
-                            <.link
-                              id={id <> "-continue"}
-                              href={learning_grid_path(grid, @learning_return_path)}
-                              class="inline-flex items-center gap-2 text-sm font-semibold text-teal-800"
-                            >Continue <.icon name="hero-arrow-right" class="h-4 w-4" /></.link>
-                        <% end %>
+                          class="rounded-md border border-teal-800 px-3 py-2 text-sm font-semibold text-teal-800 hover:bg-teal-50"
+                        >Add to {@collection.name}</button>
                       </div>
                     </div>
 
@@ -1428,7 +1435,6 @@ defmodule DialecticWeb.LearningLive do
                     </details>
 
                     <details
-                      :if={grid.user_id == @current_user.id}
                       id={id <> "-manage"}
                       class="mt-4 border-t border-stone-100 pt-3 text-xs font-semibold"
                     >
@@ -1436,8 +1442,33 @@ defmodule DialecticWeb.LearningLive do
                         Manage grid
                       </summary>
                       <div class="mt-3 flex flex-wrap items-center gap-4">
-                        <.link id={id <> "-edit"} href={graph_editor_path(grid)} class="text-teal-800">Open grid editor</.link>
                         <button
+                          id={id <> "-organise"}
+                          type="button"
+                          phx-click="organise_grid"
+                          phx-value-title={grid.title}
+                          class="py-2 text-teal-800"
+                        >Organise</button>
+                        <button
+                          :if={
+                            !@adding? && @collection &&
+                              Enum.any?(grid.collections, &(&1.id == @collection.id))
+                          }
+                          id={id <> "-remove"}
+                          type="button"
+                          phx-click="remove_grid"
+                          phx-value-title={grid.title}
+                          aria-label={"Remove #{grid.title} from #{@collection.name}"}
+                          class="py-2 text-slate-500 hover:text-red-700"
+                        >Remove from {group_kind(@collection)}</button>
+                        <.link
+                          :if={grid.user_id == @current_user.id}
+                          id={id <> "-edit"}
+                          href={graph_editor_path(grid)}
+                          class="py-2 text-teal-800"
+                        >Open grid editor</.link>
+                        <button
+                          :if={grid.user_id == @current_user.id}
                           id={id <> "-visibility"}
                           type="button"
                           phx-click="toggle_visibility"
@@ -1447,14 +1478,15 @@ defmodule DialecticWeb.LearningLive do
                               do: "Make this grid public? Anyone will be able to view it."
                             )
                           }
-                          class="text-slate-600"
+                          class="py-2 text-slate-600"
                         >{if(grid.is_public, do: "Make private", else: "Make public")}</button>
                         <button
+                          :if={grid.user_id == @current_user.id}
                           id={id <> "-delete"}
                           type="button"
                           phx-click="show_delete_grid"
                           phx-value-title={grid.title}
-                          class="text-red-700"
+                          class="py-2 text-red-700"
                         >Delete grid</button>
                       </div>
                     </details>

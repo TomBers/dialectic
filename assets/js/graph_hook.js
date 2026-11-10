@@ -140,12 +140,6 @@ const layoutGraph = (cy, opts, onDone) => {
         if (cy && cy._ownerHook) {
           cy._ownerHook._layoutRunning = true;
         }
-        // End any active batch after layout starts to avoid flicker during pre-layout updates
-        if (cy && typeof cy.endBatch === "function") {
-          try {
-            cy.endBatch();
-          } catch (_e) {}
-        }
       });
 
       layout.one("layoutstop", () => {
@@ -247,7 +241,7 @@ const ensureVisible = (cy, container, nodeId) => {
       return;
     }
 
-    const n = cy.getElementById(nodeId);
+    const n = cy.getElementById(String(nodeId));
     if (!n || n.length === 0) return;
 
     const rect = container.getBoundingClientRect();
@@ -504,7 +498,7 @@ const graphHook = {
     this._syncReaderPathFocus({ force: true });
     this._centerOnNodeVisible = (id) => {
       try {
-        const n = this.cy.getElementById(id);
+        const n = this.cy.getElementById(String(id));
         if (!n || n.length === 0) return;
 
         // Keep structure stable: only pan if the node is off screen
@@ -839,7 +833,7 @@ const graphHook = {
         if (!id) return;
         const n =
           this.cy && typeof this.cy.getElementById === "function"
-            ? this.cy.getElementById(id)
+            ? this.cy.getElementById(String(id))
             : null;
         if (!n || n.length === 0) return;
 
@@ -863,7 +857,8 @@ const graphHook = {
 
         // Track if we've already reflowed for this node
         if (!this._reflowedNodes) this._reflowedNodes = new Set();
-        const needsReflow = isFirstTitleSet && !this._reflowedNodes.has(id);
+        const needsReflow = n.hasClass("question") ||
+          (isFirstTitleSet && !this._reflowedNodes.has(id));
 
         // Batch updates to prevent multiple redraws
         if (this.cy && typeof this.cy.startBatch === "function") {
@@ -899,7 +894,7 @@ const graphHook = {
       try {
         // Update selected highlighting to reflect the newly selected node
         this.cy.elements().removeClass("selected");
-        const nodeToCenter = this.cy.getElementById(id);
+        const nodeToCenter = this.cy.getElementById(String(id));
         if (nodeToCenter.length > 0) {
           const needsReflow =
             typeof this.cy.ensureNodeVisible === "function"
@@ -907,7 +902,7 @@ const graphHook = {
               : false;
           nodeToCenter.addClass("selected");
           if (typeof this.cy.applySelectionContext === "function") {
-            this.cy.applySelectionContext(nodeToCenter);
+            this.cy.applySelectionContext(id);
           }
 
           // Keep the dataset in sync so other consumers (and hooks) can rely on it
@@ -998,7 +993,7 @@ const graphHook = {
 
         if (!ids || ids.length === 0) return;
 
-        const idSet = new Set(ids);
+        const idSet = new Set(ids.map(String));
         const allNodes = this.cy.nodes();
         let needsReflow = false;
 
@@ -1130,12 +1125,12 @@ const graphHook = {
       if (!this.cy) return;
       try {
         // Remove previous combine markers
-        this.cy.nodes().removeClass("combine-selected");
+        this.cy.elements().removeClass("combine-selected");
 
         if (!ids || ids.length === 0) return;
 
         ids.forEach((id) => {
-          const n = this.cy.getElementById(id);
+          const n = this.cy.getElementById(String(id));
           if (n && n.length > 0) {
             n.addClass("combine-selected");
           }
@@ -1146,7 +1141,7 @@ const graphHook = {
     this.handleEvent("combine_clear_highlights", () => {
       if (!this.cy) return;
       try {
-        this.cy.nodes().removeClass("combine-selected");
+        this.cy.elements().removeClass("combine-selected");
       } catch (_e) {}
     });
 
@@ -1374,7 +1369,7 @@ const graphHook = {
     try {
       this.cy.zoom(stored.zoom);
       const anchorNode = stored.anchor?.nodeId
-        ? this.cy.getElementById(stored.anchor.nodeId)
+        ? this.cy.getElementById(String(stored.anchor.nodeId))
         : null;
 
       if (
@@ -2153,7 +2148,9 @@ const graphHook = {
     this.cy = draw_graph(
       this._container,
       this,
-      JSON.parse(graphStr),
+      this._readPresentationState().mode === "presenting"
+        ? this._buildPresentationElements(this._presentationIds || [], graphStr)
+        : this._parseGraphElements(graphStr),
       currentNode,
       currentViewMode,
       graphId,
@@ -2205,7 +2202,7 @@ const graphHook = {
     // Highlight the selected node
     if (this.cy && currentNode) {
       this.cy.elements().removeClass("selected");
-      this.cy.getElementById(currentNode).addClass("selected");
+      this.cy.getElementById(String(currentNode)).addClass("selected");
       if (typeof this.cy.applySelectionContext === "function") {
         this.cy.applySelectionContext(currentNode);
       }
@@ -2221,6 +2218,8 @@ const graphHook = {
 
     // Simply re-layout with the new direction
     if (this.cy) {
+      // Re-evaluate direction-aware connector routing before repositioning nodes.
+      this.cy.style().update();
       layoutGraph(this.cy, {}, () => {
         // Restore zoom and pan after layout
         try {
@@ -2268,45 +2267,45 @@ const graphHook = {
         } catch (_e) {}
       }
 
-      if (this.cy && typeof this.cy.startBatch === "function")
-        this.cy.startBatch();
-      if (this.cy && typeof this.cy.scratch === "function") {
-        try {
-          this.cy.scratch("_bulkReload", true);
-        } catch (_e) {}
-      }
-      const nextElements =
-        presentationMode === "presenting" && presentationIds.length > 0
-          ? this._buildPresentationElements(presentationIds, graphStr)
-          : this._parseGraphElements(graphStr);
+      this.cy.batch(() => {
+        if (this.cy && typeof this.cy.scratch === "function") {
+          try {
+            this.cy.scratch("_bulkReload", true);
+          } catch (_e) {}
+        }
+        const nextElements =
+          presentationMode === "presenting" && presentationIds.length > 0
+            ? this._buildPresentationElements(presentationIds, graphStr)
+            : this._parseGraphElements(graphStr);
 
-      this.cy.json({ elements: nextElements });
+        this.cy.json({ elements: nextElements });
 
-      if (presentationMode === "presenting" && presentationIds.length > 0) {
-        this._applyPresentationGridPositions(presentationIds);
-      }
+        if (presentationMode === "presenting" && presentationIds.length > 0) {
+          this._applyPresentationGridPositions(presentationIds);
+        }
 
-      if (this.cy && typeof this.cy.scratch === "function") {
-        try {
-          this.cy.scratch("_bulkReload", null);
-        } catch (_e) {}
-      }
+        if (this.cy && typeof this.cy.scratch === "function") {
+          try {
+            this.cy.scratch("_bulkReload", null);
+          } catch (_e) {}
+        }
 
-      if (presentationMode === "presenting" && presentationIds.length > 0) {
-        this._setPresentationHighlights(presentationIds, { renderBadges: false });
-        this._schedulePresentationViewportFit();
-      }
+        if (presentationMode === "presenting" && presentationIds.length > 0) {
+          this._setPresentationHighlights(presentationIds, { renderBadges: false });
+          this._schedulePresentationViewportFit();
+        }
 
-      // Restore depth-collapse state after element reload
-      if (
-        savedDepthState &&
-        Object.keys(savedDepthState).length > 0 &&
-        typeof this.cy.restoreDepthCollapseState === "function"
-      ) {
-        try {
-          this.cy.restoreDepthCollapseState(savedDepthState);
-        } catch (_e) {}
-      }
+        // Restore depth-collapse state after element reload
+        if (
+          savedDepthState &&
+          Object.keys(savedDepthState).length > 0 &&
+          typeof this.cy.restoreDepthCollapseState === "function"
+        ) {
+          try {
+            this.cy.restoreDepthCollapseState(savedDepthState);
+          } catch (_e) {}
+        }
+      });
     }
 
     if (!sameGraph && presentationMode === "presenting") {
@@ -2315,8 +2314,6 @@ const graphHook = {
       this._setDepthToggleOverlayVisible(false);
       this._setPresentationHighlights(presentationIds);
     }
-
-    // Defer endBatch until after layout starts or after the no-layout path below
 
     // Operations that should reflow without animation to reduce flicker
     const noAnimateOperations = new Set([
@@ -2327,7 +2324,6 @@ const graphHook = {
       "answer",
       "combine",
     ]);
-    let layoutScheduled = false;
 
     const presentationActive =
       presentationMode === "presenting" && presentationIds.length > 0;
@@ -2345,7 +2341,6 @@ const graphHook = {
         this._pendingCenterId;
       this._pendingCenterId = nextPendingId;
       this._layoutRunning = true;
-      layoutScheduled = true;
       // Keep animation for start_stream
       layoutGraph(this.cy, {}, () => {
         const targetId =
@@ -2369,7 +2364,6 @@ const graphHook = {
       // Some operations reorder elements; defer ensureVisible until layout finishes
       this._pendingCenterId = this.el.dataset.node || this._pendingCenterId;
       this._layoutRunning = true;
-      layoutScheduled = true;
       // Disable animation for certain operations to avoid flicker
       const opts = noAnimateOperations.has(operation) ? { animate: false } : {};
       layoutGraph(this.cy, opts, () => {
@@ -2392,10 +2386,8 @@ const graphHook = {
       });
     }
 
-    if (!layoutScheduled && this.cy && typeof this.cy.endBatch === "function")
-      this.cy.endBatch();
     this.cy.elements().removeClass("selected");
-    this.cy.getElementById(node).addClass("selected");
+    this.cy.getElementById(String(node)).addClass("selected");
     if (typeof this.cy.applySelectionContext === "function") {
       this.cy.applySelectionContext(node);
     }

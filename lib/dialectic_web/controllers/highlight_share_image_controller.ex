@@ -55,11 +55,7 @@ defmodule DialecticWeb.HighlightShareImageController do
   defp image_orientation(_orientation), do: :landscape
 
   defp has_access?(user, graph, params) do
-    token_param = Map.get(params, "token")
-
-    Dialectic.DbActions.Sharing.can_access?(user, graph) or
-      (is_binary(token_param) and is_binary(graph.share_token) and
-         Plug.Crypto.secure_compare(token_param, graph.share_token))
+    Dialectic.DbActions.Sharing.can_access?(user, graph, Map.get(params, "token"))
   end
 
   defp cache_control(%{is_public: true}), do: "public, max-age=300"

@@ -66,10 +66,10 @@ defmodule DialecticWeb.QuestionLiveTest do
       refute has_element?(view, "details##{id}[open]")
     end
 
-    assert has_element?(view, "#question-related-grids[href='/search?q=AI']")
+    assert has_element?(view, "#question-related-grids[href='/community?category=all&search=AI']")
 
     view |> element("#question-related-grids") |> render_click()
-    assert_redirect(view, "/search?q=AI")
+    assert_redirect(view, "/community?category=all&search=AI")
   end
 
   test "the pilot is discoverable from the sitemap", %{conn: conn} do

@@ -83,6 +83,5 @@ defmodule Dialectic.LLM.Grounding do
     Map.get(map, key) || Map.get(map, Atom.to_string(key))
   end
 
-  defp fetch(map, key) when is_map(map) and is_binary(key), do: Map.get(map, key)
   defp fetch(_value, _key), do: nil
 end

@@ -86,7 +86,8 @@ defmodule DialecticWeb.PresentationComp do
         <%!-- Instructions --%>
         <div class="px-3 py-2 bg-indigo-50 border-b border-indigo-100">
           <p class="text-xs text-indigo-700">
-            Click boxes on the grid to add them as slides. Drag to reorder.
+            <span class="hidden md:inline">Click boxes on the grid to add them as slides. Drag to reorder.</span>
+            <span class="md:hidden">Present your saved slides here. Add slides using Grid on a larger screen.</span>
           </p>
         </div>
 
@@ -98,7 +99,10 @@ defmodule DialecticWeb.PresentationComp do
                 <.icon name="hero-presentation-chart-bar" class="w-5 h-5 text-gray-400" />
               </div>
               <p class="text-sm text-gray-500 font-medium">No slides yet</p>
-              <p class="text-xs text-gray-400 mt-1">Click boxes on the grid to add them</p>
+              <p class="text-xs text-gray-400 mt-1">
+                <span class="hidden md:inline">Click boxes on the grid to add them</span>
+                <span class="md:hidden">Add slides using Grid on a larger screen.</span>
+              </p>
             </div>
           <% else %>
             <ul id="presentation-slide-list" phx-hook="PresentationSetup" class="space-y-1">

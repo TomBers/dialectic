@@ -1,6 +1,20 @@
 const GridChatFormHook = {
   mounted() {
     this.textarea = this.el.querySelector("textarea");
+    this.storageKey = this.el.dataset.storageKey;
+    this.restoreDraft();
+    this.handleInput = () => {
+      try {
+        if (this.textarea.value) {
+          localStorage.setItem(`${this.storageKey}:draft`, this.textarea.value.slice(0, 500));
+        } else {
+          localStorage.removeItem(`${this.storageKey}:draft`);
+        }
+      } catch {
+        window.dispatchEvent(new Event("grid-chat-storage-error"));
+      }
+    };
+    this.textarea?.addEventListener("input", this.handleInput);
 
     this.handleKeyDown = (event) => {
       if (
@@ -44,8 +58,25 @@ const GridChatFormHook = {
     });
   },
 
+  updated() {
+    if (this.storageKey === this.el.dataset.storageKey) return;
+    this.storageKey = this.el.dataset.storageKey;
+    this.restoreDraft();
+  },
+
+  restoreDraft() {
+    if (!this.textarea) return;
+    try {
+      this.textarea.value = (localStorage.getItem(`${this.storageKey}:draft`) || "").slice(0, 500);
+      this.textarea.dispatchEvent(new Event("input", { bubbles: true }));
+    } catch {
+      window.dispatchEvent(new Event("grid-chat-storage-error"));
+    }
+  },
+
   destroyed() {
     this.textarea?.removeEventListener("keydown", this.handleKeyDown, true);
+    this.textarea?.removeEventListener("input", this.handleInput);
   },
 };
 

@@ -47,6 +47,26 @@ defmodule DialecticWeb.SeoControllerTest do
       assert body =~ ~s(<meta property="og:url" content="#{base_url}/g/#{graph.slug}")
       assert body =~ ~s(<meta name="twitter:url" content="#{base_url}/g/#{graph.slug}")
       assert body =~ ~s(<meta property="og:type" content="article")
+      document = LazyHTML.from_document(body)
+
+      assert LazyHTML.query(
+               document,
+               ~s(meta[property="og:image"][content="#{base_url}/images/rationalgrid-social.png"])
+             )
+             |> Enum.count() == 1
+
+      assert LazyHTML.query(
+               document,
+               ~s(meta[name="twitter:image"][content="#{base_url}/images/rationalgrid-social.png"])
+             )
+             |> Enum.count() == 1
+
+      assert LazyHTML.query(document, ~s(meta[property="og:image:width"][content="1200"]))
+             |> Enum.count() == 1
+
+      assert LazyHTML.query(document, ~s(meta[property="og:image:height"][content="630"]))
+             |> Enum.count() == 1
+
       assert body =~ ~s(<script type="application/ld+json">)
       assert body =~ ~s("mainEntityOfPage")
       assert body =~ ~s("inLanguage":"en")
@@ -95,6 +115,12 @@ defmodule DialecticWeb.SeoControllerTest do
       assert body =~ ~s(<meta property="og:url" content="#{base_url}/g/#{graph.slug}")
       assert body =~ ~s(<meta name="twitter:url" content="#{base_url}/g/#{graph.slug}")
       refute body =~ ~s(<meta property="og:url" content="#{base_url}/g/#{graph.slug}/graph")
+
+      assert LazyHTML.from_document(body)
+             |> LazyHTML.query(
+               ~s(meta[property="og:image"][content="#{base_url}/images/rationalgrid-social.png"])
+             )
+             |> Enum.count() == 1
     end
 
     test "reader route stays noindex for unpublished graphs", %{conn: conn} do
@@ -132,7 +158,7 @@ defmodule DialecticWeb.SeoControllerTest do
                ~s(<link rel="canonical" href="#{base_url}/g/#{graph.slug}?node=1&amp;highlight=#{highlight.id}")
 
       assert body =~
-               ~s(<meta property="og:image" content="#{base_url}/g/#{graph.slug}/highlights/#{highlight.id}/share-card.svg?v=)
+               ~s(<meta property="og:image" content="#{base_url}/images/rationalgrid-social.png")
 
       assert body =~ "A good quotation should point beyond itself."
       assert body =~ "Quote SEO Graph"

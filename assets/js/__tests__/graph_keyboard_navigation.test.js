@@ -1,6 +1,22 @@
 import { beforeEach, afterEach, it, expect, vi } from "vitest";
 import GraphKeyboardNavigation from "../graph_keyboard_navigation.js";
 let hook, grid, reader, input;
+
+it("ignores keyboard events from browser windows", () => {
+  expect(() => hook.onKeydown({ target: window, key: "Escape" })).not.toThrow();
+});
+
+it("leaves drawer controls in charge of their keyboard navigation", () => {
+  const drawer = document.createElement("div");
+  drawer.dataset.rightDrawer = "";
+  const button = document.createElement("button");
+  drawer.append(button);
+  hook.el.append(drawer);
+  button.focus();
+  expect(key("Tab", { shiftKey: true }).defaultPrevented).toBe(false);
+  expect(key("Escape").defaultPrevented).toBe(false);
+  expect(document.activeElement).toBe(button);
+});
 beforeEach(() => {
   vi.spyOn(navigator, "platform", "get").mockReturnValue("MacIntel");
   document.body.innerHTML = `<div id="workspace"><div id="cy-inner" tabindex="0"></div><div id="side-drawer-scroll" tabindex="0"><form phx-hook="AskFormShortcuts"><textarea></textarea></form></div></div>`;

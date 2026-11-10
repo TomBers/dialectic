@@ -187,7 +187,7 @@ export const frameReadingGraph = (
   const height = viewport.height - 2 * padding;
   if (width <= 0 || height <= 0) return false;
 
-  const focus = nodes.getElementById(String(focusNodeId)).first();
+  const focus = cy.getElementById(String(focusNodeId)).filter(VISIBLE_GRAPH_NODE_FILTER).first();
   const node = focus.length ? focus : nodes.first();
   const bounds = nodes.boundingBox();
   const nodeBounds = node.boundingBox();
@@ -278,7 +278,8 @@ export function draw_graph(
       // Apply depth-collapse before running the initial layout.
       minZoom: layoutConfig.zoomSettings.min || 0.05,
       maxZoom: layoutConfig.zoomSettings.max || 4.0,
-      webgl: options.webgl !== false,
+      // Rounded orthogonal routing requires Canvas; WebGL only draws straight/Bezier edges.
+      webgl: false,
     },
     (lostCy) => {
       if (context.cy !== lostCy) return;
@@ -463,7 +464,7 @@ export function draw_graph(
       );
 
       const selected =
-        typeof nodeOrId === "string" ? cy.getElementById(nodeOrId) : nodeOrId;
+        typeof nodeOrId === "string" ? cy.getElementById(String(nodeOrId)) : nodeOrId;
 
       if (!selected || selected.length === 0 || selected.isParent()) return;
 
@@ -744,7 +745,7 @@ export function draw_graph(
 
           const finishNavigation = () => {
             applySelectionContext(target);
-            requestAnimationFrame(() => ensureVisible(cy, container, target.id()));
+            context._centerOnNodeVisible?.(target.id());
           };
           const needsReflow =
             typeof cy.ensureNodeVisible === "function"
@@ -923,7 +924,7 @@ export function draw_graph(
     cy.elements().removeClass("selected");
     let initial = null;
     if (node) {
-      initial = cy.getElementById(node);
+      initial = cy.getElementById(String(node));
     }
     if (!initial || (initial.length !== undefined && initial.length === 0)) {
       const candidates = cy.nodes().filter((n) => !n.isParent());
@@ -931,7 +932,7 @@ export function draw_graph(
     }
     if (initial) {
       initial.addClass("selected");
-      applySelectionContext(initial);
+      applySelectionContext(node || initial);
     }
     scheduleViewportClamp();
   });
@@ -954,7 +955,7 @@ export function draw_graph(
   // Depth-collapse events from LiveView
   handleServerEvent("expand_node", ({ id }) => {
     try {
-      const n = cy.getElementById(id);
+      const n = cy.getElementById(String(id));
       if (n && n.length > 0 && !n.isParent()) {
         expandNodeChildren(cy, n);
       }
@@ -963,7 +964,7 @@ export function draw_graph(
 
   handleServerEvent("collapse_node", ({ id }) => {
     try {
-      const n = cy.getElementById(id);
+      const n = cy.getElementById(String(id));
       if (n && n.length > 0 && !n.isParent()) {
         collapseNodeChildren(cy, n);
       }
@@ -1000,7 +1001,7 @@ export function draw_graph(
   cy.focusBranch = (nodeOrId) =>
     focusBranch(
       cy,
-      typeof nodeOrId === "string" ? cy.getElementById(nodeOrId) : nodeOrId,
+      typeof nodeOrId === "string" ? cy.getElementById(String(nodeOrId)) : nodeOrId,
       container,
     );
   cy.focusPath = (ids, onDone, focusOptions) =>
@@ -1009,9 +1010,9 @@ export function draw_graph(
   cy.reflowAfterVisibilityChange = (onDone, reflowOptions) =>
     reflowAfterVisibilityChange(cy, onDone, reflowOptions);
   cy.expandNodeChildren = (n) =>
-    expandNodeChildren(cy, typeof n === "string" ? cy.getElementById(n) : n);
+    expandNodeChildren(cy, typeof n === "string" ? cy.getElementById(String(n)) : n);
   cy.collapseNodeChildren = (n) =>
-    collapseNodeChildren(cy, typeof n === "string" ? cy.getElementById(n) : n);
+    collapseNodeChildren(cy, typeof n === "string" ? cy.getElementById(String(n)) : n);
 
   let viewportClampTimeout = null;
   const queueViewportClamp = () => {
@@ -1277,7 +1278,7 @@ function collapseAllDepth(cy, maxDepth) {
  * along the path from a root to it.
  */
 function ensureDepthVisible(cy, nodeId) {
-  const node = cy.getElementById(nodeId);
+  const node = cy.getElementById(String(nodeId));
   if (!node || node.length === 0 || !node.hasClass("depth-hidden")) return false;
 
   // Collect all ancestors via upward BFS
@@ -1324,7 +1325,10 @@ function clearBranchFocusState(cy) {
 function applyPathFocusState(cy, ids) {
   const requestedIds = [...new Set((ids || []).map((id) => String(id)))];
   const pathNodes = cy.collection(
-    requestedIds.map((id) => cy.getElementById(id)).filter((node) => node.length > 0),
+    requestedIds.flatMap((id) => {
+      const node = cy.getElementById(String(id));
+      return node.length ? [node] : [];
+    }),
   );
   const pathIds = pathNodes.map((node) => node.id());
   if (pathIds.length === 0) return [];
@@ -1410,12 +1414,13 @@ export function focusBranch(cy, node, container = cy.container?.()) {
   applyPathFocusState(cy, pathIds);
 
   if (cy._ownerHook?.pushEvent) {
+    const endpointId = node.id();
     cy._readerPathFocus = true;
-    cy._ownerHook._localReaderPathEndpoint = node.id();
-    cy._ownerHook.pushEvent("set_reader_path", { id: node.id() });
+    cy._ownerHook._localReaderPathEndpoint = endpointId;
+    cy._ownerHook.pushEvent("set_reader_path", { id: endpointId });
 
     const url = new URL(window.location.href);
-    url.searchParams.set("path", node.id());
+    url.searchParams.set("path", endpointId);
     window.history.replaceState(window.history.state, "", url);
   } else {
     cy._readerPathFocus = false;
@@ -1457,7 +1462,7 @@ export function clearBranchFocus(cy, container = cy.container?.()) {
 }
 
 function ensureNodeVisible(cy, nodeId) {
-  const node = cy.getElementById(nodeId);
+  const node = cy.getElementById(String(nodeId));
   const focusChanged =
     node && node.length > 0 && node.hasClass("focus-hidden")
       ? clearBranchFocusState(cy)

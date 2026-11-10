@@ -41,6 +41,7 @@ defmodule DialecticWeb.SelectionActionsComp do
      |> assign(assigns)
      |> assign_new(:highlight_only, fn -> false end)
      |> assign_new(:context, fn -> :selection end)
+     |> assign_new(:prompt_mode, fn -> "university" end)
      |> assign_new(:presentation, fn -> :modal end)
      |> assign_new(:node_id, fn -> nil end)
      |> assign_new(:answer_title, fn -> nil end)
@@ -238,14 +239,13 @@ defmodule DialecticWeb.SelectionActionsComp do
           class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 transition-colors hover:bg-slate-50 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
           aria-label={
             cond do
-              @presentation == :drawer -> "Hide response form"
               @context == :answer -> "Close answer actions"
               true -> "Close selection actions"
             end
           }
         >
           <.icon
-            name={if(@presentation == :drawer, do: "hero-chevron-up", else: "hero-x-mark")}
+            name="hero-x-mark"
             class="h-4 w-4"
           />
         </button>
@@ -324,6 +324,7 @@ defmodule DialecticWeb.SelectionActionsComp do
           id={"selection-inquiry-actions-#{@id}"}
           owner_id={@id}
           context={@context}
+          prompt_mode={@prompt_mode}
           graph_id={@graph_id}
           can_edit={@can_edit}
           current_user={@current_user}

@@ -1,8 +1,6 @@
 defmodule DialecticWeb.RightPanelComp do
   use DialecticWeb, :live_component
-  alias Dialectic.GridActivity
   alias Dialectic.Repo
-  alias DialecticWeb.Utils.NodeTitleHelper
 
   @moduledoc """
   Accordion-style right panel with:
@@ -53,9 +51,13 @@ defmodule DialecticWeb.RightPanelComp do
       |> assign_new(:search_term, fn -> "" end)
       |> assign_new(:search_results, fn -> [] end)
       |> assign_new(:prompt_mode, fn -> "university" end)
+      |> assign_new(:layout_target, fn -> "#graph-layout" end)
+      |> assign_new(:mode, fn -> :graph end)
+      |> assign_new(:reader_style, fn -> "screen" end)
+      |> assign_new(:following_graph?, fn -> false end)
       |> assign_new(:current_user, fn -> nil end)
       |> assign_new(:highlights, fn -> [] end)
-      |> assign_new(:activity_logs, fn -> load_activity_logs(graph_id) end)
+      |> assign_new(:highlights_count, fn -> 0 end)
       |> assign_new(:editing_highlight_id, fn -> nil end)
       |> assign_new(:open_sections, fn -> MapSet.new() end)
       |> maybe_open_section(Map.get(assigns, :open_section))
@@ -63,24 +65,14 @@ defmodule DialecticWeb.RightPanelComp do
     {:ok, socket}
   end
 
-  defp maybe_open_section(socket, section) when section in ["configure", "workspace"] do
-    update(socket, :open_sections, fn sections ->
-      sections
-      |> MapSet.delete("configure")
-      |> MapSet.delete("workspace")
-      |> MapSet.put(section)
-    end)
+  defp maybe_open_section(socket, section)
+       when section in ["workspace", "answer-level", "visibility"] do
+    update(socket, :open_sections, &MapSet.put(&1, section))
   end
 
   defp maybe_open_section(socket, _section), do: socket
 
-  @valid_sections ~w(configure workspace activity export utilities)
-
-  defp load_activity_logs(graph_id) when is_binary(graph_id) and graph_id != "" do
-    GridActivity.list_for_graph(graph_id)
-  end
-
-  defp load_activity_logs(_graph_id), do: []
+  @valid_sections ~w(workspace activity export utilities answer-level visibility)
 
   @impl true
   def handle_event("toggle_section", %{"section" => section}, socket)
@@ -94,7 +86,9 @@ defmodule DialecticWeb.RightPanelComp do
         MapSet.put(open_sections, section)
       end
 
-    {:noreply, assign(socket, :open_sections, new_open_sections)}
+    socket = assign(socket, :open_sections, new_open_sections)
+
+    {:noreply, socket}
   end
 
   def handle_event("toggle_section", _params, socket) do
@@ -142,10 +136,6 @@ defmodule DialecticWeb.RightPanelComp do
     {:noreply, assign(socket, editing_highlight_id: nil)}
   end
 
-  defp owner?(graph_struct, current_user) do
-    current_user && graph_struct && graph_struct.user_id == current_user.id
-  end
-
   defp translate_targets do
     [
       {"English (en)", "en"},
@@ -180,50 +170,6 @@ defmodule DialecticWeb.RightPanelComp do
 
   defp google_translate_url(encoded_text, tl) do
     "https://translate.google.com/?sl=auto&tl=#{tl}&text=#{encoded_text}&op=translate"
-  end
-
-  defp activity_timestamp(nil), do: ""
-
-  defp activity_timestamp(%DateTime{} = inserted_at) do
-    "#{inserted_at.day} #{Calendar.strftime(inserted_at, "%b")} · #{Calendar.strftime(inserted_at, "%H:%M")}"
-  end
-
-  defp activity_timestamp(inserted_at), do: to_string(inserted_at)
-
-  defp activity_datetime(%DateTime{} = inserted_at), do: DateTime.to_iso8601(inserted_at)
-  defp activity_datetime(_inserted_at), do: nil
-
-  defp activity_node_ref(%{node_id: node_id} = log, graph_id)
-       when is_binary(node_id) and node_id != "" do
-    case GraphManager.find_node_by_id(graph_id, node_id) do
-      nil ->
-        activity_node_ref_from_metadata(log)
-
-      node ->
-        %{
-          id: node_id,
-          title: NodeTitleHelper.extract_node_title(node, max_length: 70),
-          deleted: Map.get(node, :deleted, false)
-        }
-    end
-  end
-
-  defp activity_node_ref(_log, _graph_id), do: nil
-
-  defp activity_node_ref_from_metadata(log) do
-    metadata = Map.get(log, :metadata) || %{}
-
-    case Map.get(metadata, "node_title") do
-      title when is_binary(title) and title != "" ->
-        %{
-          id: log.node_id,
-          title: title,
-          deleted: log.action == "node.deleted"
-        }
-
-      _ ->
-        nil
-    end
   end
 
   # Truncates content so that URI.encode_www_form(result) fits within max_encoded_len.
@@ -263,257 +209,121 @@ defmodule DialecticWeb.RightPanelComp do
   def render(assigns) do
     ~H"""
     <div class="space-y-1.5">
-      <%!-- Configure Section --%>
-      <details
-        id="details-configure"
-        class="group rounded-lg border border-gray-200 bg-white shadow-sm hover:shadow transition-shadow"
-        open={MapSet.member?(@open_sections, "configure")}
+      <p class="px-3 pb-2 pt-1 text-xs font-semibold uppercase tracking-wide text-slate-600">
+        Your reading
+      </p>
+      <button
+        id="more-saved-highlights"
+        type="button"
+        phx-click={
+          Phoenix.LiveView.JS.dispatch("toggle-panel",
+            to: @layout_target,
+            detail: %{id: "highlights-drawer", open: true}
+          )
+        }
+        data-panel-toggle="highlights-drawer"
+        aria-controls="highlights-drawer"
+        aria-expanded="false"
+        class="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-stone-100"
       >
-        <summary
-          class="list-none cursor-pointer select-none px-3 py-2.5 rounded-lg hover:bg-gray-50/50 transition-colors"
-          phx-click="toggle_section"
-          phx-value-section="configure"
-          phx-target={@myself}
+        <.icon name="hero-bookmark" class="h-4 w-4 text-slate-600" /> Saved highlights
+        <span class="ml-auto text-xs text-slate-600">{@highlights_count}</span>
+      </button>
+      <section
+        id="reading-style-options"
+        aria-labelledby="reading-style-heading"
+        class="rounded-lg border border-stone-300 bg-white"
+      >
+        <h3
+          id="reading-style-heading"
+          tabindex="-1"
+          class="px-3 py-2.5 text-xs font-semibold text-gray-800"
         >
-          <div class="flex items-center justify-between gap-3">
-            <div class="flex items-center gap-2.5">
-              <div class="flex items-center justify-center w-7 h-7 rounded-md bg-indigo-50 text-indigo-600">
-                <.icon name="hero-adjustments-horizontal" class="w-4 h-4" />
-              </div>
-              <div>
-                <div class="text-xs font-semibold text-gray-800">Answer level</div>
-                <p class="text-[10px] text-gray-500 leading-tight">
-                  Simple to In-depth
-                </p>
-              </div>
-            </div>
-            <.icon
-              name="hero-chevron-down"
-              class="w-4 h-4 text-gray-400 transition-transform duration-200 group-open:rotate-180"
-            />
-          </div>
-        </summary>
-        <div class="border-t border-stone-200 bg-[#f4f1e9] px-3 py-3">
-          <div class="space-y-2.5">
-            <div class="text-[11px] font-semibold uppercase tracking-[0.14em] text-teal-800">
-              Explanation level
-            </div>
-            <div class="grid grid-cols-3 border border-stone-300 bg-white p-0.5 shadow-inner">
-              <%= for {mode, label, description} <- [
-                {"high_school", "Simple", "Plain language, examples, and key ideas."},
-                {"university", "Expanded", "Defined terminology, context, and sourced evidence."},
-                {"expert", "In-depth", "Rigorous analysis, primary sources, and competing interpretations."}
-              ] do %>
-                <button
-                  type="button"
-                  id={"answer-level-#{mode}"}
-                  phx-click={
-                    Phoenix.LiveView.JS.push("set_prompt_mode")
-                    |> Phoenix.LiveView.JS.dispatch("toggle-panel",
-                      to: "#graph-layout",
-                      detail: %{id: "right-panel"}
-                    )
-                  }
-                  phx-value-prompt_mode={mode}
-                  aria-pressed={if(@prompt_mode == mode, do: "true", else: "false")}
-                  class={[
-                    "group flex min-h-16 flex-col items-start px-3 py-2 text-left transition-colors duration-150",
-                    if @prompt_mode == mode do
-                      "border border-slate-900 bg-slate-900 text-white shadow-sm"
-                    else
-                      "border border-transparent text-slate-600 hover:bg-stone-50 hover:text-slate-900"
-                    end
-                  ]}
-                >
-                  <span class="inline-flex items-center gap-1 text-xs font-semibold">
-                    {label}
-                    <.icon
-                      :if={is_nil(@current_user) && mode in ["university", "expert"]}
-                      name="hero-lock-closed"
-                      class="h-3 w-3"
-                    />
-                  </span>
-                  <span class={[
-                    "mt-0.5 text-[10px] leading-4",
-                    if(@prompt_mode == mode, do: "text-slate-300", else: "text-slate-500")
-                  ]}>
-                    {description}
-                  </span>
-                </button>
-              <% end %>
-            </div>
-            <p class="text-[10px] leading-4 text-slate-600">
-              Sets the language and depth of new AI answers.
-            </p>
-          </div>
+          Reading options
+        </h3>
+        <div class="grid grid-cols-2 gap-1.5 border-t border-stone-300 p-2">
+          <button
+            :for={
+              {label, description, style} <- [
+                {"Book", "Serif · comfortable", "book"},
+                {"Screen", "Sans · comfortable", "screen"},
+                {"Large print", "Sans · larger text", "large_print"},
+                {"Compact", "Sans · tighter spacing", "compact"}
+              ]
+            }
+            id={"reader-style-#{style}"}
+            type="button"
+            phx-click="save_reader_appearance"
+            phx-value-style={style}
+            aria-pressed={to_string(@reader_style == style)}
+            class="min-h-11 rounded-lg border border-stone-300 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-stone-100 aria-pressed:border-teal-700 aria-pressed:bg-teal-800 aria-pressed:text-white"
+          >
+            <span class="block">{label}</span>
+            <span class="mt-0.5 block text-[11px] font-normal">{description}</span>
+          </button>
         </div>
-      </details>
+      </section>
 
-      <%!-- Workspace Section --%>
-      <details
-        :if={owner?(@graph_struct, @current_user)}
-        id="details-workspace"
-        class="group rounded-lg border border-gray-200 bg-white shadow-sm hover:shadow transition-shadow"
-        open={MapSet.member?(@open_sections, "workspace")}
+      <p class="px-3 pb-1 pt-5 text-xs font-semibold uppercase tracking-wide text-slate-600">
+        This grid
+      </p>
+      <button
+        :if={@current_user}
+        id="reader-tools-follow"
+        type="button"
+        phx-click={if(@following_graph?, do: "unfollow_graph", else: "follow_graph")}
+        aria-pressed={to_string(@following_graph?)}
+        class="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-stone-100"
       >
-        <summary
-          class="list-none cursor-pointer select-none px-3 py-2.5 rounded-lg hover:bg-gray-50/50 transition-colors"
-          phx-click="toggle_section"
-          phx-value-section="workspace"
-          phx-target={@myself}
-        >
-          <div class="flex items-center justify-between gap-3">
-            <div class="flex items-center gap-2.5">
-              <div class="flex items-center justify-center w-7 h-7 rounded-md bg-emerald-50 text-emerald-600">
-                <.icon name="hero-folder" class="w-4 h-4" />
-              </div>
-              <div>
-                <div class="text-xs font-semibold text-gray-800">Access & collaboration</div>
-                <p class="text-[10px] text-gray-500 leading-tight">
-                  Editing and visibility
-                </p>
-              </div>
-            </div>
-            <.icon
-              name="hero-chevron-down"
-              class="w-4 h-4 text-gray-400 transition-transform duration-200 group-open:rotate-180"
-            />
-          </div>
-        </summary>
-        <div class="border-t border-gray-100 px-3 py-2.5 space-y-3">
-          <%!-- Access subsection (owner only) --%>
-          <%= if owner?(@graph_struct, @current_user) do %>
-            <div class="pt-2 border-t border-gray-100 space-y-2">
-              <div class="text-[11px] font-medium text-gray-600 uppercase tracking-wide">
-                Access
-              </div>
-              <DialecticWeb.LockComp.render id="lock-graph" graph_struct={@graph_struct} />
-              <button
-                phx-click={
-                  Phoenix.LiveView.JS.dispatch("toggle-panel",
-                    to: "#graph-layout",
-                    detail: %{id: "right-panel"}
-                  )
-                  |> Phoenix.LiveView.JS.push("open_share_modal")
-                }
-                class="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors"
-              >
-                <%= if @graph_struct.is_public do %>
-                  <.icon name="hero-share" class="w-3.5 h-3.5" />
-                  <span>Share Grid</span>
-                <% else %>
-                  <.icon name="hero-user-plus" class="w-3.5 h-3.5" />
-                  <span>Manage Collaborators</span>
-                <% end %>
-              </button>
-            </div>
-          <% end %>
-        </div>
-      </details>
-
-      <%!-- Activity Section --%>
-      <details
-        id="details-activity"
-        class="group rounded-lg border border-gray-200 bg-white shadow-sm hover:shadow transition-shadow"
-        open={MapSet.member?(@open_sections, "activity")}
+        <.icon name="hero-bell" class="h-4 w-4 text-slate-600" />
+        {if(@following_graph?, do: "Following this grid", else: "Follow this grid")}
+      </button>
+      <.link
+        :if={!@current_user}
+        id="reader-tools-follow-login"
+        navigate={~p"/users/log_in"}
+        class="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-stone-100"
       >
-        <summary
-          class="list-none cursor-pointer select-none px-3 py-2.5 rounded-lg hover:bg-gray-50/50 transition-colors"
-          phx-click="toggle_section"
-          phx-value-section="activity"
-          phx-target={@myself}
-        >
-          <div class="flex items-center justify-between gap-3">
-            <div class="flex items-center gap-2.5">
-              <div class="flex items-center justify-center w-7 h-7 rounded-md bg-amber-50 text-amber-600">
-                <.icon name="hero-clock" class="w-4 h-4" />
-              </div>
-              <div>
-                <div class="text-xs font-semibold text-gray-800">Activity</div>
-                <p class="text-[10px] text-gray-500 leading-tight">
-                  Questions, additions, and edits
-                </p>
-              </div>
-            </div>
-            <.icon
-              name="hero-chevron-down"
-              class="w-4 h-4 text-gray-400 transition-transform duration-200 group-open:rotate-180"
-            />
-          </div>
-        </summary>
-        <div class="border-t border-stone-200 bg-[#f4f1e9] px-3 py-3">
-          <%= if @activity_logs && length(@activity_logs) > 0 do %>
-            <ol
-              id="grid-activity-log"
-              class="max-h-72 divide-y divide-stone-200 overflow-y-auto border-y border-stone-200 bg-white px-3"
-            >
-              <li
-                :for={log <- @activity_logs}
-                id={"grid-activity-log-#{log.id}"}
-                class="grid grid-cols-[0.75rem_minmax(0,1fr)] gap-2.5 py-3"
-              >
-                <% node_ref = activity_node_ref(log, @graph_id) %>
-                <span class="mt-1.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-amber-500 ring-1 ring-amber-200"></span>
-                <div class="min-w-0">
-                  <p class="text-xs leading-5 text-slate-700">
-                    <span id={"grid-activity-actor-#{log.id}"} class="font-semibold text-slate-950">
-                      {GridActivity.actor_name(log.actor_name)}
-                    </span>
-                    <span>{GridActivity.action_label(log)}</span>
-                  </p>
-                  <time
-                    id={"grid-activity-time-#{log.id}"}
-                    datetime={activity_datetime(log.inserted_at)}
-                    class="block text-[10px] font-medium uppercase tracking-[0.08em] text-slate-500"
-                  >
-                    {activity_timestamp(log.inserted_at)}
-                  </time>
-                  <%= if node_ref && node_ref.deleted do %>
-                    <span
-                      id={"grid-activity-node-#{log.id}"}
-                      class="mt-2 flex max-w-full items-start gap-2 border border-stone-200 bg-stone-50 px-2.5 py-2 text-[11px] font-medium leading-4 text-slate-500"
-                      title={node_ref.title}
-                    >
-                      <.icon name="hero-trash" class="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                      <span class="line-clamp-2">{node_ref.title}</span>
-                    </span>
-                  <% else %>
-                    <%= if node_ref do %>
-                      <button
-                        type="button"
-                        id={"grid-activity-node-#{log.id}"}
-                        phx-click="navigate_to_node"
-                        phx-value-node_id={node_ref.id}
-                        class="mt-2 flex w-full items-start gap-2 border border-stone-200 bg-stone-50 px-2.5 py-2 text-left text-[11px] font-medium leading-4 text-slate-700 transition-colors hover:border-teal-600 hover:bg-white hover:text-slate-950"
-                        title={node_ref.title}
-                      >
-                        <.icon
-                          name="hero-arrow-top-right-on-square"
-                          class="mt-0.5 h-3.5 w-3.5 shrink-0 text-teal-700"
-                        />
-                        <span class="line-clamp-2">{node_ref.title}</span>
-                      </button>
-                    <% end %>
-                  <% end %>
-                </div>
-              </li>
-            </ol>
-          <% else %>
-            <p id="grid-activity-log-empty" class="text-[11px] text-gray-400 text-center py-2">
-              No activity yet
-            </p>
-          <% end %>
-        </div>
-      </details>
+        <.icon name="hero-bell" class="h-4 w-4 text-slate-600" /> Sign in to follow this grid
+      </.link>
+      <button
+        :if={@mode == :graph}
+        id="grid-tools-presentation"
+        type="button"
+        phx-click={
+          Phoenix.LiveView.JS.dispatch("toggle-side-drawer",
+            to: @layout_target,
+            detail: %{force: "close", persist: false}
+          )
+          |> Phoenix.LiveView.JS.dispatch("toggle-panel",
+            to: @layout_target,
+            detail: %{id: "presentation-drawer", open: true}
+          )
+          |> Phoenix.LiveView.JS.push("enter_presentation_setup")
+        }
+        disabled={is_nil(@graph_id)}
+        data-panel-toggle="presentation-drawer"
+        class="hidden w-full items-center gap-2.5 rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-left shadow-sm transition hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-45 md:flex"
+        aria-label="Start presentation setup"
+      >
+        <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-violet-50 text-violet-600">
+          <.icon name="hero-presentation-chart-bar" class="h-4 w-4" />
+        </span>
+        <span class="flex-1">
+          <span class="block text-xs font-semibold text-gray-800">Presentation</span>
+          <span class="block text-[11px] leading-tight text-gray-500">Build and present a slide deck</span>
+        </span>
+        <.icon name="hero-chevron-right" class="h-4 w-4 text-slate-600" />
+      </button>
 
       <%!-- Export Section --%>
       <details
         id="details-export"
-        class="group rounded-lg border border-gray-200 bg-white shadow-sm hover:shadow transition-shadow"
+        class="group rounded-lg border border-stone-300 bg-white shadow-sm hover:shadow transition-shadow"
         open={MapSet.member?(@open_sections, "export")}
       >
         <summary
-          class="list-none cursor-pointer select-none px-3 py-2.5 rounded-lg hover:bg-gray-50/50 transition-colors"
+          class="list-none cursor-pointer select-none px-3 py-2.5 rounded-lg hover:bg-stone-100/50 transition-colors"
           phx-click="toggle_section"
           phx-value-section="export"
           phx-target={@myself}
@@ -524,30 +334,31 @@ defmodule DialecticWeb.RightPanelComp do
                 <.icon name="hero-arrow-down-tray" class="w-4 h-4" />
               </div>
               <div>
-                <div class="text-xs font-semibold text-gray-800">Export</div>
-                <p class="text-[10px] text-gray-500 leading-tight">
+                <div class="text-xs font-semibold text-gray-800">Download</div>
+                <p class="text-[11px] text-gray-500 leading-tight">
                   Download your grid
                 </p>
               </div>
             </div>
             <.icon
               name="hero-chevron-down"
-              class="w-4 h-4 text-gray-400 transition-transform duration-200 group-open:rotate-180"
+              class="w-4 h-4 text-slate-600 transition-transform duration-200 group-open:rotate-180"
             />
           </div>
         </summary>
-        <div class="border-t border-gray-100 px-3 py-2.5">
+        <div class="border-t border-stone-300 px-3 py-2.5">
           <div class="grid grid-cols-1 gap-2">
             <button
+              :if={@mode == :graph}
               type="button"
-              class="download-png flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100 hover:border-gray-300 transition-colors"
+              class="download-png flex items-center gap-2 px-3 py-2 rounded-lg border border-stone-300 bg-gray-50 hover:bg-gray-100 hover:border-gray-300 transition-colors"
               aria-label="Download PNG"
               title="Download PNG (Alt-click to capture full graph)"
             >
               <.icon name="hero-photo" class="w-4 h-4 text-emerald-600" />
               <div class="flex-1 text-left">
                 <div class="text-xs font-medium text-gray-800">Download PNG</div>
-                <div class="text-[10px] text-gray-500">Image snapshot of graph</div>
+                <div class="text-[11px] text-gray-500">Image snapshot of graph</div>
               </div>
             </button>
             <.link
@@ -566,13 +377,13 @@ defmodule DialecticWeb.RightPanelComp do
                   do: "#{@graph_struct.slug}.md",
                   else: "#{@graph_id}.md"
               }
-              class="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100 hover:border-gray-300 transition-colors"
+              class="flex items-center gap-2 px-3 py-2 rounded-lg border border-stone-300 bg-gray-50 hover:bg-gray-100 hover:border-gray-300 transition-colors"
               title="Download Markdown"
             >
               <.icon name="hero-document-text" class="w-4 h-4 text-purple-600" />
               <div class="flex-1 text-left">
                 <div class="text-xs font-medium text-gray-800">Download Markdown</div>
-                <div class="text-[10px] text-gray-500">Plain text with formatting</div>
+                <div class="text-[11px] text-gray-500">Plain text with formatting</div>
               </div>
             </.link>
 
@@ -592,13 +403,13 @@ defmodule DialecticWeb.RightPanelComp do
                   do: "#{@graph_struct.slug}.json",
                   else: "#{@graph_id}.json"
               }
-              class="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100 hover:border-gray-300 transition-colors"
+              class="flex items-center gap-2 px-3 py-2 rounded-lg border border-stone-300 bg-gray-50 hover:bg-gray-100 hover:border-gray-300 transition-colors"
               title="Download JSON (for image generation)"
             >
               <.icon name="hero-code-bracket" class="w-4 h-4 text-blue-600" />
               <div class="flex-1 text-left">
                 <div class="text-xs font-medium text-gray-800">Download JSON</div>
-                <div class="text-[10px] text-gray-500">Minimal data for visualization</div>
+                <div class="text-[11px] text-gray-500">Minimal data for visualization</div>
               </div>
             </.link>
           </div>
@@ -608,11 +419,11 @@ defmodule DialecticWeb.RightPanelComp do
       <%!-- Utilities Section --%>
       <details
         id="details-utilities"
-        class="group rounded-lg border border-gray-200 bg-white shadow-sm hover:shadow transition-shadow"
+        class="group rounded-lg border border-stone-300 bg-white shadow-sm hover:shadow transition-shadow"
         open={MapSet.member?(@open_sections, "utilities")}
       >
         <summary
-          class="list-none cursor-pointer select-none px-3 py-2.5 rounded-lg hover:bg-gray-50/50 transition-colors"
+          class="list-none cursor-pointer select-none px-3 py-2.5 rounded-lg hover:bg-stone-100/50 transition-colors"
           phx-click="toggle_section"
           phx-value-section="utilities"
           phx-target={@myself}
@@ -623,19 +434,19 @@ defmodule DialecticWeb.RightPanelComp do
                 <.icon name="hero-language" class="w-4 h-4" />
               </div>
               <div>
-                <div class="text-xs font-semibold text-gray-800">Translate</div>
-                <p class="text-[10px] text-gray-500 leading-tight">
-                  Read this node in other languages
+                <div class="text-xs font-semibold text-gray-800">Translate this idea</div>
+                <p class="text-[11px] text-gray-500 leading-tight">
+                  Read the selected idea in another language
                 </p>
               </div>
             </div>
             <.icon
               name="hero-chevron-down"
-              class="w-4 h-4 text-gray-400 transition-transform duration-200 group-open:rotate-180"
+              class="w-4 h-4 text-slate-600 transition-transform duration-200 group-open:rotate-180"
             />
           </div>
         </summary>
-        <div class="border-t border-gray-100 px-3 py-2.5">
+        <div class="border-t border-stone-300 px-3 py-2.5">
           <% encoded_text = encoded_node_text(@node) %>
           <div class="flex flex-wrap gap-1.5">
             <%= for {label, code} <- translate_targets() do %>
@@ -643,17 +454,27 @@ defmodule DialecticWeb.RightPanelComp do
                 href={google_translate_url(encoded_text, code)}
                 target="_blank"
                 rel="noopener noreferrer"
-                class="inline-flex items-center px-2.5 py-1.5 rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-900 transition-colors shadow-sm"
+                class="inline-flex items-center px-2.5 py-1.5 rounded-lg border border-stone-300 bg-white text-xs font-medium text-gray-700 hover:bg-stone-100 hover:border-gray-300 hover:text-gray-900 transition-colors shadow-sm"
               >
                 {label}
               </a>
             <% end %>
           </div>
-          <p class="mt-2 text-[10px] text-gray-400">
-            Opens Google Translate with the current node's content.
+          <p class="mt-2 text-[11px] text-slate-600">
+            Opens Google Translate with the selected idea’s content.
           </p>
         </div>
       </details>
+      <button
+        :if={@mode == :graph}
+        id="graph-help-button"
+        type="button"
+        phx-click="open_help_modal"
+        class="flex min-h-11 w-full items-center gap-2.5 rounded-lg border border-stone-300 px-3 py-2.5 text-xs font-semibold text-gray-800 hover:bg-stone-100"
+        aria-label="Open how-to guide for this page"
+      >
+        <.icon name="hero-question-mark-circle" class="h-4 w-4 text-gray-500" /> How to use
+      </button>
     </div>
     """
   end

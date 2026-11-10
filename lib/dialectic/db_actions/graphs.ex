@@ -45,6 +45,7 @@ defmodule Dialectic.DbActions.Graphs do
   def sanitize_title(title) do
     sanitized =
       title
+      |> String.replace(~r/[\s\x00-\x1F\x7F]+/u, " ")
       |> String.slice(0, 140)
       |> String.trim()
       |> String.replace("/", "-")
@@ -290,6 +291,8 @@ defmodule Dialectic.DbActions.Graphs do
   defp public_tag_rows_query do
     tags_query =
       from g in Graph,
+        join: author in Dialectic.Accounts.User,
+        on: author.id == g.user_id,
         where: g.is_published == true,
         where: g.is_public == true,
         where: g.is_deleted == false or is_nil(g.is_deleted),
@@ -322,6 +325,7 @@ defmodule Dialectic.DbActions.Graphs do
           inserted_at: g.inserted_at,
           updated_at: g.updated_at,
           author_name: author.username,
+          author_avatar_url: author.avatar_path,
           node_count:
             fragment(
               "(SELECT count(*) FROM jsonb_array_elements(CASE WHEN jsonb_typeof(?->'nodes') = 'array' THEN ?->'nodes' ELSE '[]'::jsonb END) AS node WHERE COALESCE(node->>'compound', 'false') != 'true')",
@@ -329,6 +333,13 @@ defmodule Dialectic.DbActions.Graphs do
               g.data
             )
         }
+
+    summaries =
+      if Keyword.get(opts, :category) == "all" do
+        from [_g, author] in summaries, where: not is_nil(author.id)
+      else
+        summaries
+      end
 
     query = from(g in subquery(summaries))
     search = opts |> Keyword.get(:search, "") |> String.trim()
@@ -338,16 +349,8 @@ defmodule Dialectic.DbActions.Graphs do
       if search == "" do
         query
       else
-        pattern = "%" <> String.replace(search, ~r/[\\%_]/, fn char -> "\\" <> char end) <> "%"
-
-        from g in query,
-          where:
-            ilike(g.title, ^pattern) or
-              fragment(
-                "EXISTS (SELECT 1 FROM unnest(?) AS tag WHERE tag ILIKE ?)",
-                g.tags,
-                ^pattern
-              )
+        matching_titles = Dialectic.Search.matching_graph_titles(search)
+        from g in query, where: g.title in subquery(matching_titles)
       end
 
     query =
@@ -410,8 +413,21 @@ defmodule Dialectic.DbActions.Graphs do
       |> offset(^((page - 1) * page_size))
       |> Repo.all()
       |> Enum.map(fn row ->
-        %{id: row.title, graph: Map.delete(row, :author_name), author_name: row.author_name}
+        %{
+          id: row.title,
+          graph: Map.drop(row, [:author_name, :author_avatar_url]),
+          author_name: row.author_name,
+          author_avatar_url: row.author_avatar_url
+        }
       end)
+
+    entries =
+      if search == "" do
+        entries
+      else
+        matches = Dialectic.Search.public_matches(search, Enum.map(entries, & &1.graph.title))
+        Enum.map(entries, &Map.put(&1, :matches, Map.get(matches, &1.graph.title, [])))
+      end
 
     %{
       entries: entries,
@@ -421,6 +437,45 @@ defmodule Dialectic.DbActions.Graphs do
       page_size: page_size
     }
   end
+
+  def list_public_creators(tag, opts \\ [])
+
+  def list_public_creators(tag, opts) when is_binary(tag) and tag != "" do
+    normalized_tag = normalize_tag(tag)
+
+    query =
+      from g in Graph,
+        join: user in Dialectic.Accounts.User,
+        on: user.id == g.user_id,
+        where: g.is_public == true and g.is_published == true,
+        where: g.is_deleted == false or is_nil(g.is_deleted),
+        where: not is_nil(user.username) and user.username != "",
+        where:
+          fragment(
+            "EXISTS (SELECT 1 FROM unnest(?) AS tag WHERE lower(btrim(tag)) = ?)",
+            g.tags,
+            ^normalized_tag
+          ),
+        group_by: [user.id, user.username, user.avatar_path],
+        order_by: [desc: count(g.title), desc: max(g.updated_at), asc: user.id],
+        limit: 6,
+        select: %{
+          id: user.id,
+          username: user.username,
+          avatar_url: user.avatar_path,
+          grid_count: count(g.title)
+        }
+
+    query =
+      case Keyword.get(opts, :exclude_user_id) do
+        nil -> query
+        user_id -> from [_g, user] in query, where: user.id != ^user_id
+      end
+
+    Repo.all(query)
+  end
+
+  def list_public_creators(_tag, _opts), do: []
 
   @doc """
   Returns every topic used by a public, published grid with its frequency.
@@ -595,13 +650,19 @@ defmodule Dialectic.DbActions.Graphs do
     update_access_setting(graph, user, :is_public)
   end
 
-  defp update_access_setting(graph, user, field) do
+  def set_graph_public(graph, user, public?) when is_boolean(public?) do
+    update_access_setting(graph, user, :is_public, public?)
+  end
+
+  defp update_access_setting(graph, user, field, value \\ :toggle) do
     graph = Repo.get(Graph, graph.title)
 
     if Dialectic.DbActions.Sharing.can_manage?(user, graph) do
+      value = if value == :toggle, do: !Map.fetch!(graph, field), else: value
+
       with {:ok, graph} <- Dialectic.DbActions.Sharing.ensure_share_token(graph),
            {:ok, updated_graph} <-
-             graph |> Graph.changeset(%{field => !Map.fetch!(graph, field)}) |> Repo.update() do
+             graph |> Graph.changeset(%{field => value}) |> Repo.update() do
         Phoenix.PubSub.broadcast(
           Dialectic.PubSub,
           "graph_update:#{graph.title}",

@@ -12,6 +12,7 @@ const stableElementSort = (elementA, elementB) => {
 const dagreRenderingOptions = {
   nodeDimensionsIncludeLabels: true,
   sort: stableElementSort,
+  minLen: 1,
 };
 
 export const layoutConfig = {
@@ -20,9 +21,9 @@ export const layoutConfig = {
     name: "dagre",
     rankDir: "TB",
     // Spacing adjustments for better proportions
-    nodeSep: 52, // Keep sibling branches distinct across the canvas
-    edgeSep: 40, // Leave room to distinguish parallel relationship tracks
-    rankSep: 80, // Bring related ideas closer without shrinking their text
+    nodeSep: 64, // Keep sibling branches distinct across the canvas
+    edgeSep: 46, // Leave room to distinguish parallel relationship tracks
+    rankSep: 104, // Give each level more vertical breathing room
     // Visual enhancement settings
     spacingFactor: 1.04, // Slight vertical bias without spreading the whole graph
     padding: 30, // Minimum padding around the graph

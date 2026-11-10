@@ -2,7 +2,6 @@ defmodule DialecticWeb.CommunityLive do
   use DialecticWeb, :live_view
 
   alias Dialectic.DbActions.Graphs
-  import DialecticWeb.GridCardComp
 
   on_mount {DialecticWeb.UserAuth, :mount_current_user}
 
@@ -31,8 +30,6 @@ defmodule DialecticWeb.CommunityLive do
         browse_params: %{},
         topic_filter: "",
         topic_form: to_form(%{"topic_filter" => ""}),
-        sort_form: to_form(%{"sort" => "newest"}),
-        size_form: to_form(%{"size" => "all"}),
         generating_tags: MapSet.new(),
         tag_generation_jobs: %{},
         search_form: to_form(%{"search" => ""})
@@ -45,13 +42,14 @@ defmodule DialecticWeb.CommunityLive do
         dom_id: fn item -> graph_dom_id(item.graph, "community-grid") end
       )
       |> stream(:graphs, [])
+      |> stream(:creators, [])
 
     {:ok, socket, layout: false}
   end
 
   @impl true
   def handle_params(params, _url, socket) do
-    search = trimmed_string(params["search"])
+    search = Dialectic.Search.normalize_query(params["search"] || "")
     tag = resolve_tag(params["tag"])
 
     category_param =
@@ -87,9 +85,7 @@ defmodule DialecticWeb.CommunityLive do
        sort: sort,
        page: parse_page(params["page"]),
        browse_params: browse_params,
-       search_form: to_form(%{"search" => search}),
-       sort_form: to_form(%{"sort" => sort}),
-       size_form: to_form(%{"size" => size})
+       search_form: to_form(%{"search" => search})
      )
      |> load_results()
      |> stream_topics()}
@@ -99,15 +95,11 @@ defmodule DialecticWeb.CommunityLive do
   def handle_event("search", %{"search" => term}, socket) do
     {:noreply,
      push_patch(socket,
-       to: browse_path(socket.assigns.browse_params, %{"search" => trimmed_string(term)})
+       to:
+         browse_path(socket.assigns.browse_params, %{
+           "search" => Dialectic.Search.normalize_query(term)
+         })
      )}
-  end
-
-  def handle_event("sort", %{"sort" => sort}, socket) do
-    sort = if sort in ["updated", "largest"], do: sort
-
-    {:noreply,
-     push_patch(socket, to: browse_path(socket.assigns.browse_params, %{"sort" => sort}))}
   end
 
   def handle_event("filter_topics", %{"topic_filter" => term}, socket) do
@@ -125,13 +117,6 @@ defmodule DialecticWeb.CommunityLive do
     else
       {:noreply, socket}
     end
-  end
-
-  def handle_event("filter_size", %{"size" => size}, socket) do
-    {:noreply,
-     push_patch(socket,
-       to: browse_path(socket.assigns.browse_params, %{"size" => normalize_size(size)})
-     )}
   end
 
   def handle_event("generate_tags", %{"identifier" => identifier}, socket) do
@@ -215,74 +200,31 @@ defmodule DialecticWeb.CommunityLive do
     <Layouts.app flash={@flash}>
       <div class="min-h-screen bg-[#f4f1e9] text-slate-950">
         <div class="mx-auto w-full max-w-7xl px-4 py-7 sm:px-6 lg:px-8">
-          <header id="community-page-header" class="border-b border-stone-300 pb-6">
-            <div class="flex items-start justify-between gap-5">
+          <header id="community-page-header" class="border-b border-stone-300 pb-5">
+            <div class="flex flex-wrap items-center justify-between gap-4">
               <div>
                 <h1
                   id="community-page-title"
-                  class="text-xs font-semibold uppercase tracking-[0.18em] text-teal-800"
+                  class="font-serif text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl"
                 >
                   {if @active_tag, do: "#{tag_label(@active_tag)} grids", else: "Community grids"}
                 </h1>
                 <p
                   :if={@active_tag}
                   id="community-topic-description"
-                  class="mt-2 max-w-2xl text-sm leading-6 text-slate-600"
+                  class="sr-only"
                 >
                   {@page_description}
                 </p>
                 <p
                   :if={!@active_tag}
                   id="community-introduction"
-                  class="mt-2 max-w-2xl text-sm leading-6 text-slate-600"
+                  class="sr-only"
                 >
                   See what others are exploring in the AI workshop. Share a grid and build on each other’s ideas.
                 </p>
               </div>
-              <.link
-                id="community-create-grid"
-                navigate={~p"/?focus=grid#start-here"}
-                class="inline-flex shrink-0 min-h-11 items-center justify-center gap-2 rounded-md bg-teal-800 px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-800"
-              >
-                <span>Create public grid</span><.icon
-                  name="hero-arrow-right"
-                  class="h-4 w-4"
-                />
-              </.link>
             </div>
-            <.form
-              for={@search_form}
-              id="community-search-form"
-              phx-change="search"
-              phx-submit="search"
-              class="relative mt-5 max-w-3xl"
-            >
-              <.input
-                id="community-search-input"
-                field={@search_form[:search]}
-                type="search"
-                aria-label="Search community grids"
-                phx-debounce="300"
-                placeholder={
-                  if @active_tag,
-                    do: "Search within #{tag_label(@active_tag)}…",
-                    else: "Search questions or topics…"
-                }
-                class="h-12 w-full rounded-md border border-stone-300 bg-white px-4 pr-11 text-base text-slate-950 shadow-sm placeholder:text-slate-400 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-100"
-                autocomplete="off"
-              />
-              <.icon
-                name="hero-magnifying-glass"
-                class="pointer-events-none absolute right-4 top-3.5 h-5 w-5 text-teal-800"
-              />
-            </.form>
-            <.link
-              id="community-search-content-link"
-              navigate={~p"/search?#{if(@search_term == "", do: %{}, else: %{q: @search_term})}"}
-              class="mt-3 inline-flex min-h-9 items-center gap-2 text-sm font-semibold text-teal-800 underline underline-offset-4"
-            >
-              <.icon name="hero-magnifying-glass" class="h-4 w-4" /> Search answers and sources
-            </.link>
           </header>
 
           <div
@@ -323,7 +265,7 @@ defmodule DialecticWeb.CommunityLive do
                   </.form>
                   <.link
                     id="community-all-topics"
-                    href={browse_path(@browse_params, %{"tag" => nil})}
+                    patch={browse_path(@browse_params, %{"tag" => nil})}
                     aria-current={if is_nil(@active_tag), do: "page"}
                     class={[
                       "mt-2 flex items-center justify-between rounded-md px-3 py-2 text-sm font-semibold",
@@ -341,7 +283,7 @@ defmodule DialecticWeb.CommunityLive do
                     <%= for {id, topic} <- @streams.topics do %>
                       <.link
                         id={id}
-                        href={browse_path(@browse_params, %{"tag" => topic.id})}
+                        patch={browse_path(@browse_params, %{"tag" => topic.id})}
                         aria-current={if @active_tag == topic.tag, do: "page"}
                         class={[
                           "flex min-w-0 items-center justify-between gap-2 rounded-md px-3 py-2 text-sm",
@@ -373,67 +315,108 @@ defmodule DialecticWeb.CommunityLive do
                   </p>
                 </div>
               </details>
+              <section
+                id="community-people"
+                aria-labelledby="community-people-heading"
+                class="mt-5 rounded-lg border border-stone-300 bg-white p-4"
+              >
+                <h2 id="community-people-heading" class="text-sm font-semibold">
+                  People to explore with
+                </h2>
+                <p class="mt-1 text-xs leading-5 text-slate-500">
+                  <%= if @active_tag do %>
+                    Creators sharing public grids about {tag_label(@active_tag)}. Visit a profile to follow or connect through their links.
+                  <% else %>
+                    Choose a topic to find people exploring the same interests.
+                  <% end %>
+                </p>
+                <div id="community-creators" phx-update="stream" class="mt-3 space-y-3">
+                  <div id="community-creators-empty" class="hidden only:block text-xs text-slate-500">
+                    <span :if={@active_tag}>No other creators with public profiles in this topic yet.</span>
+                  </div>
+                  <.link
+                    :for={{id, creator} <- @streams.creators}
+                    id={id}
+                    navigate={~p"/u/#{creator.username}"}
+                    class="flex items-center gap-2 text-sm text-slate-700 hover:text-teal-800"
+                  >
+                    <img
+                      :if={creator.avatar_url && creator.avatar_url != ""}
+                      src={creator.avatar_url}
+                      alt=""
+                      class="h-8 w-8 shrink-0 rounded-full object-cover"
+                    />
+                    <.icon
+                      :if={!creator.avatar_url || creator.avatar_url == ""}
+                      name="hero-user-circle"
+                      class="h-8 w-8 shrink-0 text-slate-400"
+                    />
+                    <span class="min-w-0">
+                      <span class="block truncate font-semibold">{creator.username}</span>
+                      <span class="block text-xs text-slate-500">{creator.grid_count} public {if creator.grid_count ==
+                                                                                                   1,
+                                                                                                 do:
+                                                                                                   "grid",
+                                                                                                 else:
+                                                                                                   "grids"}</span>
+                    </span>
+                  </.link>
+                </div>
+              </section>
             </aside>
 
             <section id="community-search" aria-label="Community grid results" class="min-w-0">
               <nav
                 id="community-format-filters"
                 aria-label="Browse grid collections"
-                class="flex gap-1 overflow-x-auto border-b border-stone-300 pb-3"
+                class="mb-4 flex flex-wrap items-center gap-2 border-b border-stone-300 pb-3"
               >
                 <%= for {category, label} <- [{"curated", "Curated grids"}, {"all", "All grids"}, {"partners", "Partner grids"}] do %>
                   <.link
                     id={"community-format-#{category}"}
-                    href={browse_path(@browse_params, %{"category" => category})}
+                    patch={browse_path(@browse_params, %{"category" => category})}
                     aria-current={if @active_category == category, do: "page"}
                     class={category_class(@active_category == category)}
                   >{label}</.link>
                 <% end %>
-              </nav>
-              <div class="flex flex-wrap items-end justify-between gap-3 py-4">
-                <div aria-live="polite">
-                  <h2 id="community-results-heading" class="text-lg font-semibold">
-                    {results_heading(@search_term, @active_tag, @active_category, @active_size)}
-                  </h2>
-                  <p id="community-result-count" class="mt-1 text-xs text-slate-500">
-                    {result_count_label(@total_count, @page, @page_size)}
-                  </p>
-                </div>
-                <div class="flex flex-wrap items-end gap-3">
+                <div
+                  id="community-search-controls"
+                  class="w-full min-w-0 sm:ml-auto sm:w-64"
+                >
                   <.form
-                    for={@size_form}
-                    id="community-size-form"
-                    phx-change="filter_size"
-                    class="w-56"
+                    for={@search_form}
+                    id="community-search-form"
+                    role="search"
+                    aria-label="Search community grids"
+                    phx-change="search"
+                    phx-submit="search"
+                    class="relative"
                   >
                     <.input
-                      id="community-size-input"
-                      field={@size_form[:size]}
-                      type="select"
-                      label="Grid size"
-                      options={[
-                        {"All sizes", "all"},
-                        {"Large grids · 21+ ideas", "large"},
-                        {"Medium grids · 5–20 ideas", "medium"},
-                        {"Small grids · 0–4 ideas", "small"}
-                      ]}
-                      class="h-10 w-full rounded-md border border-stone-300 bg-white px-3 text-sm text-slate-700 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-100"
+                      id="community-search-input"
+                      field={@search_form[:search]}
+                      type="search"
+                      aria-label="Search community grids"
+                      phx-debounce="300"
+                      placeholder={
+                        if @active_tag,
+                          do: "Search within #{tag_label(@active_tag)}…",
+                          else: "Search"
+                      }
+                      class="block h-9 w-full rounded-md border border-stone-300 bg-white px-3 text-sm text-slate-950 shadow-sm placeholder:text-slate-500 focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
+                      autocomplete="off"
                     />
                   </.form>
-                  <.form for={@sort_form} id="community-sort-form" phx-change="sort" class="w-44">
-                    <.input
-                      id="community-sort-input"
-                      field={@sort_form[:sort]}
-                      type="select"
-                      label="Sort grids"
-                      options={[
-                        {"Newest first", "newest"},
-                        {"Recently updated", "updated"},
-                        {"Most ideas", "largest"}
-                      ]}
-                      class="h-10 w-full rounded-md border border-stone-300 bg-white px-3 text-sm text-slate-700 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-100"
-                    />
-                  </.form>
+                </div>
+              </nav>
+              <div id="community-results-heading" class="scroll-mt-14">
+                <div aria-live="polite" class="sr-only">
+                  <h2>
+                    {results_heading(@search_term, @active_tag, @active_category, @active_size)}
+                  </h2>
+                  <p id="community-result-count">
+                    {result_count_label(@total_count, @page, @page_size)}
+                  </p>
                 </div>
               </div>
               <div
@@ -447,70 +430,66 @@ defmodule DialecticWeb.CommunityLive do
                 <.link
                   :if={@active_tag}
                   id="community-clear-topic"
-                  href={browse_path(@browse_params, %{"tag" => nil})}
+                  patch={browse_path(@browse_params, %{"tag" => nil})}
                   class="inline-flex items-center gap-1 rounded-full bg-teal-100 px-3 py-1.5 font-medium text-teal-900"
                 >{tag_label(@active_tag)}<.icon name="hero-x-mark" class="h-3.5 w-3.5" /><span class="sr-only">Remove topic filter</span></.link>
                 <.link
+                  :if={@active_size != "all"}
+                  id="community-clear-size"
+                  patch={browse_path(@browse_params, %{"size" => nil})}
+                  class="inline-flex items-center gap-1 rounded-full bg-teal-100 px-3 py-1.5 font-medium text-teal-900"
+                >{String.capitalize(@active_size)} grids<.icon name="hero-x-mark" class="h-3.5 w-3.5" /><span class="sr-only">Remove size filter</span></.link>
+                <.link
                   id="community-clear-filters"
-                  href={~p"/community"}
+                  patch={~p"/community"}
                   class="px-1 py-1.5 font-medium text-slate-600 underline underline-offset-2 hover:text-teal-800"
                 >Clear filters</.link>
               </div>
               <div
+                :if={@total_count == 0}
+                id="community-empty-results"
+                class="rounded-lg border border-stone-300 bg-white px-6 py-12 text-center"
+              >
+                <.icon name="hero-magnifying-glass" class="mx-auto h-7 w-7 text-stone-400" />
+                <p class="mt-3 font-semibold text-slate-800">No grids match these filters.</p>
+                <p class="mt-1 text-sm text-slate-500">
+                  Try another question or browse all community grids.
+                </p>
+                <.link
+                  id="community-empty-reset"
+                  patch={~p"/community?category=all"}
+                  class="mt-4 inline-flex text-sm font-semibold text-teal-800 underline underline-offset-4"
+                >Browse all grids</.link>
+              </div>
+              <div
                 id="community-grid-list"
                 phx-update="stream"
-                class="divide-y divide-stone-200 overflow-hidden rounded-lg border border-stone-300 bg-white"
+                class={[
+                  "divide-y divide-stone-200 overflow-hidden rounded-lg border border-stone-300 bg-white",
+                  @total_count == 0 && "hidden"
+                ]}
               >
-                <div
-                  :if={@total_count == 0}
-                  id="community-empty-results"
-                  class="px-6 py-12 text-center"
-                >
-                  <.icon name="hero-magnifying-glass" class="mx-auto h-7 w-7 text-stone-400" />
-                  <p class="mt-3 font-semibold text-slate-800">No grids match these filters.</p>
-                  <p class="mt-1 text-sm text-slate-500">
-                    Try another question or browse all community grids.
-                  </p>
-                  <.link
-                    id="community-empty-reset"
-                    href={~p"/community?category=all"}
-                    class="mt-4 inline-flex text-sm font-semibold text-teal-800 underline underline-offset-4"
-                  >Browse all grids</.link>
-                </div>
                 <%= for {id, item} <- @streams.graphs do %>
                   <.community_grid_row
                     id={id}
                     graph={item.graph}
+                    author_name={item.author_name}
+                    author_avatar_url={item.author_avatar_url}
+                    matches={Map.get(item, :matches, [])}
                     selected_tag={@active_tag}
                     can_generate_tags={admin?(@current_user)}
                     generating_tags={@generating_tags}
                   />
                 <% end %>
               </div>
-              <nav
+              <.result_pagination
                 :if={@page_count > 1}
-                id="community-pagination"
-                aria-label="Grid result pages"
-                class="mt-5 flex items-center justify-between gap-3"
-              >
-                <.link
-                  :if={@page > 1}
-                  id="community-previous-page"
-                  href={browse_path(@browse_params, %{"page" => @page - 1})}
-                  rel="prev"
-                  class="inline-flex items-center gap-1.5 rounded-md border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:border-teal-600"
-                ><.icon name="hero-arrow-left" class="h-4 w-4" />Previous</.link>
-                <span :if={@page == 1}></span>
-                <span id="community-page-number" class="text-sm tabular-nums text-slate-500">Page {@page} of {@page_count}</span>
-                <.link
-                  :if={@page < @page_count}
-                  id="community-next-page"
-                  href={browse_path(@browse_params, %{"page" => @page + 1})}
-                  rel="next"
-                  class="inline-flex items-center gap-1.5 rounded-md border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:border-teal-600"
-                >Next<.icon name="hero-arrow-right" class="h-4 w-4" /></.link>
-                <span :if={@page == @page_count}></span>
-              </nav>
+                id="community"
+                page={@page}
+                page_count={@page_count}
+                params={@browse_params}
+                class="mt-5"
+              />
               <div
                 id="community-contribute"
                 class="mt-8 border-t border-stone-300 px-4 py-8 text-center"
@@ -520,7 +499,7 @@ defmodule DialecticWeb.CommunityLive do
                 </h2>
                 <.link
                   id="community-contribute-create-grid"
-                  navigate={~p"/?focus=grid#start-here"}
+                  navigate={~p"/my/learning?new=true"}
                   class="mt-4 inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-teal-800 px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-800"
                 >Create a grid<.icon name="hero-arrow-right" class="h-4 w-4" /></.link>
               </div>
@@ -533,7 +512,155 @@ defmodule DialecticWeb.CommunityLive do
   end
 
   attr :id, :string, required: true
+  attr :page, :integer, required: true
+  attr :page_count, :integer, required: true
+  attr :params, :map, required: true
+  attr :class, :string, default: nil
+
+  defp result_pagination(assigns) do
+    assigns =
+      assign(assigns,
+        desktop_pages: pagination_pages(assigns.page, assigns.page_count, 10),
+        mobile_pages: pagination_pages(assigns.page, assigns.page_count, 5)
+      )
+
+    ~H"""
+    <nav
+      id={@id <> "-pagination"}
+      aria-label="Grid result pages"
+      class={@class}
+    >
+      <div class="overflow-x-auto py-1">
+        <div class="flex w-max min-w-full items-center justify-between gap-2 px-1">
+          <div class="shrink-0">
+            <button
+              :if={@page == 1}
+              id={@id <> "-previous-page"}
+              type="button"
+              disabled
+              aria-label="Previous page"
+              class="inline-flex min-h-11 cursor-default items-center gap-1.5 rounded-md border border-stone-200 bg-stone-50 px-3 text-sm font-medium text-stone-400"
+            ><.icon name="hero-arrow-left" class="h-4 w-4" />Previous</button>
+            <.link
+              :if={@page > 1}
+              id={@id <> "-previous-page"}
+              patch={result_page_path(@params, @page - 1)}
+              rel="prev"
+              aria-label="Previous page"
+              class="inline-flex min-h-11 items-center gap-1.5 rounded-md border border-stone-300 bg-white px-3 text-sm font-medium text-slate-700 hover:border-teal-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"
+            ><.icon name="hero-arrow-left" class="h-4 w-4" />Previous</.link>
+          </div>
+          <.pagination_numbers
+            id={@id}
+            pages={@desktop_pages}
+            page={@page}
+            params={@params}
+            class="hidden sm:flex"
+          />
+          <.pagination_numbers
+            id={@id <> "-mobile"}
+            pages={@mobile_pages}
+            page={@page}
+            params={@params}
+            class="flex sm:hidden"
+          />
+          <div class="shrink-0">
+            <button
+              :if={@page == @page_count}
+              id={@id <> "-next-page"}
+              type="button"
+              disabled
+              aria-label="Next page"
+              class="inline-flex min-h-11 cursor-default items-center gap-1.5 rounded-md border border-stone-200 bg-stone-50 px-3 text-sm font-medium text-stone-400"
+            >Next<.icon name="hero-arrow-right" class="h-4 w-4" /></button>
+            <.link
+              :if={@page < @page_count}
+              id={@id <> "-next-page"}
+              patch={result_page_path(@params, @page + 1)}
+              rel="next"
+              aria-label="Next page"
+              class="inline-flex min-h-11 items-center gap-1.5 rounded-md border border-stone-300 bg-white px-3 text-sm font-medium text-slate-700 hover:border-teal-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"
+            >Next<.icon name="hero-arrow-right" class="h-4 w-4" /></.link>
+          </div>
+        </div>
+      </div>
+      <span
+        id={@id <> "-page-number"}
+        class="mt-1 block text-center text-xs tabular-nums text-slate-500"
+      >
+        Page {@page} of {@page_count}
+      </span>
+    </nav>
+    """
+  end
+
+  attr :id, :string, required: true
+  attr :pages, :list, required: true
+  attr :page, :integer, required: true
+  attr :params, :map, required: true
+  attr :class, :string, required: true
+
+  defp pagination_numbers(assigns) do
+    ~H"""
+    <div class={[
+      "grow shrink-0 flex-nowrap items-center gap-1",
+      if(length(@pages) <= 5, do: "justify-center", else: "justify-between"),
+      @class
+    ]}>
+      <%= for {item, index} <- Enum.with_index(@pages) do %>
+        <%= if item == :ellipsis do %>
+          <span
+            id={@id <> "-gap-#{index}"}
+            aria-hidden="true"
+            class="w-4 shrink-0 text-center text-stone-400"
+          >…</span>
+        <% else %>
+          <.link
+            id={@id <> "-page-#{item}"}
+            patch={result_page_path(@params, item)}
+            aria-label={"Page #{item}"}
+            aria-current={if(item == @page, do: "page")}
+            class={[
+              "inline-flex min-h-11 min-w-10 items-center justify-center rounded-md px-2 text-sm tabular-nums transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700",
+              if(item == @page,
+                do: "bg-teal-800 font-semibold text-white shadow-sm",
+                else: "font-medium text-slate-700 hover:bg-teal-50 hover:text-teal-900"
+              )
+            ]}
+          >{item}</.link>
+        <% end %>
+      <% end %>
+    </div>
+    """
+  end
+
+  defp result_page_path(params, page) do
+    browse_path(params, %{"page" => page}) <> "#community-results-heading"
+  end
+
+  defp pagination_pages(page, page_count, window_size) do
+    first = max(1, min(page - div(window_size - 1, 2), page_count - window_size + 1))
+    nearby = first..min(first + window_size - 1, page_count)
+
+    [1, page_count | Enum.to_list(nearby)]
+    |> Enum.uniq()
+    |> Enum.sort()
+    |> Enum.chunk_every(2, 1, :discard)
+    |> Enum.flat_map(fn [left, right] ->
+      cond do
+        right - left == 1 -> [left]
+        right - left == 2 -> [left, left + 1]
+        true -> [left, :ellipsis]
+      end
+    end)
+    |> Kernel.++([page_count])
+  end
+
+  attr :id, :string, required: true
   attr :graph, :map, required: true
+  attr :author_name, :string, default: nil
+  attr :author_avatar_url, :string, default: nil
+  attr :matches, :list, default: []
   attr :selected_tag, :string, default: nil
   attr :can_generate_tags, :boolean, default: false
   attr :generating_tags, :any, required: true
@@ -564,13 +691,37 @@ defmodule DialecticWeb.CommunityLive do
         </.link>
       </h3>
 
+      <div class="mt-2 text-xs text-slate-500">
+        <%= if @author_name && @author_name != "" do %>
+          <.link
+            id={@id <> "-creator"}
+            navigate={~p"/u/#{@author_name}"}
+            class="inline-flex items-center gap-1.5 font-medium text-teal-800 hover:underline"
+          >
+            <img
+              :if={@author_avatar_url && @author_avatar_url != ""}
+              src={@author_avatar_url}
+              alt=""
+              class="h-5 w-5 rounded-full object-cover"
+            />
+            <.icon
+              :if={!@author_avatar_url || @author_avatar_url == ""}
+              name="hero-user-circle"
+              class="h-4 w-4"
+            /> By {@author_name}
+          </.link>
+        <% else %>
+          <span id={@id <> "-creator-anonymous"}>Anonymous creator</span>
+        <% end %>
+      </div>
+
       <div
         data-role="community-grid-meta"
         class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500"
       >
         <.link
           :for={tag <- @tags}
-          href={~p"/community?tag=#{Graphs.normalize_tag(tag)}"}
+          patch={~p"/community?tag=#{Graphs.normalize_tag(tag)}"}
           class="transition hover:text-teal-800 hover:underline focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"
         >
           {tag_label(tag)}
@@ -593,9 +744,39 @@ defmodule DialecticWeb.CommunityLive do
           {if(@generating_tags?, do: "Generating...", else: "Generate tags")}
         </button>
       </div>
+      <div :if={@matches != []} class="mt-4 space-y-2">
+        <.link
+          :for={match <- @matches}
+          id={@id <> "-node-#{Map.get(match, :id) || Map.get(match, "id")}"}
+          navigate={graph_path(@graph, Map.get(match, :id) || Map.get(match, "id"))}
+          class="group block rounded-r-md border-l-2 border-stone-300 bg-stone-50 px-3 py-2.5 transition hover:border-teal-700 hover:bg-teal-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"
+        >
+          <div class="flex items-start justify-between gap-3">
+            <span class="text-sm font-semibold leading-5 text-slate-800 group-hover:text-teal-900">
+              {Map.get(match, :title)}
+            </span>
+            <span class="shrink-0 text-xs font-medium text-slate-500">
+              {passage_label(Map.get(match, :search_preview_label))}
+            </span>
+          </div>
+          <p
+            :if={
+              Map.get(match, :search_preview) &&
+                Map.get(match, :search_preview) != Map.get(match, :full_title)
+            }
+            class="mt-1 line-clamp-2 text-sm leading-5 text-slate-600"
+          >
+            {Map.get(match, :search_preview)}
+          </p>
+        </.link>
+      </div>
     </article>
     """
   end
+
+  defp passage_label("Source"), do: "Source"
+  defp passage_label("Title"), do: "Heading"
+  defp passage_label(_), do: "Passage"
 
   defp mark_tags_generating(socket, title, pid) do
     monitor_ref = if is_pid(pid), do: Process.monitor(pid)
@@ -716,6 +897,13 @@ defmodule DialecticWeb.CommunityLive do
       noindex: noindex
     )
     |> stream(:graphs, entries, reset: true)
+    |> stream(
+      :creators,
+      Graphs.list_public_creators(socket.assigns.active_tag,
+        exclude_user_id: socket.assigns.current_user && socket.assigns.current_user.id
+      ),
+      reset: true
+    )
   end
 
   defp stream_topics(socket, opts \\ []) do

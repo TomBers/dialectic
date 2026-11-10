@@ -53,8 +53,8 @@ defmodule DialecticWeb.PromotionMaterialControllerTest do
 
   test "lists all public promotion grids", %{conn: conn} do
     public_graph = promotion_graph("Promotion Index Public Grid")
-    _private_graph = promotion_graph("Promotion Index Private Grid", is_public: false)
-    _deleted_graph = promotion_graph("Promotion Index Deleted Grid", is_deleted: true)
+    private_graph = promotion_graph("Promotion Index Private Grid", is_public: false)
+    deleted_graph = promotion_graph("Promotion Index Deleted Grid", is_deleted: true)
 
     conn = conn |> authed() |> get(~p"/api/promotion/grids")
     response = json_response(conn, 200)
@@ -68,8 +68,8 @@ defmodule DialecticWeb.PromotionMaterialControllerTest do
     assert grid["api_url"] =~ "/api/promotion/grids/#{public_graph.slug}"
 
     slugs = Enum.map(response["grids"], & &1["slug"])
-    refute Enum.any?(slugs, &(&1 == _private_graph.slug))
-    refute Enum.any?(slugs, &(&1 == _deleted_graph.slug))
+    refute Enum.any?(slugs, &(&1 == private_graph.slug))
+    refute Enum.any?(slugs, &(&1 == deleted_graph.slug))
   end
 
   test "returns graph metadata, raw graph data, and highlights", %{conn: conn} do

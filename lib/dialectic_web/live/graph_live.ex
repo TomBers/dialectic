@@ -135,6 +135,13 @@ defmodule DialecticWeb.GraphLive do
   end
 
   def handle_params(params, _uri, socket) do
+    socket =
+      if params["tools"] in ["presentation", "configure", "workspace"] do
+        push_event(socket, "open_grid_tool", %{section: params["tools"]})
+      else
+        socket
+      end
+
     {:noreply,
      socket
      |> DialecticWeb.LearningNavigation.assign_return(params)
@@ -170,9 +177,9 @@ defmodule DialecticWeb.GraphLive do
         socket =
           socket
           |> assign_defaults()
+          |> assign(token: params["token"])
           |> subscribe_to_topics(graph_title)
           |> assign_graph_data(graph_db, graph_struct, node, graph_title, user)
-          |> assign(token: params["token"])
           |> handle_initial_highlight(initial_highlight_id)
 
         {:ok, assign(socket, mobile_inquiry?: params["focus"] == "ask"), layout: false}
@@ -200,63 +207,61 @@ defmodule DialecticWeb.GraphLive do
     {:noreply, GridChat.open(socket)}
   end
 
-  def handle_event("open_prompt_settings", _params, socket) do
-    send_update(
-      DialecticWeb.RightPanelComp,
-      id: "right-panel-comp",
-      open_section: "configure"
-    )
+  def handle_event("restore_grid_chat", %{"messages" => messages}, socket) do
+    {:noreply, GridChat.restore_history(socket, messages)}
+  end
 
+  def handle_event("sync_grid_chat_history", %{"messages" => messages}, socket) do
+    {:noreply, GridChat.sync_history(socket, messages)}
+  end
+
+  def handle_event("clear_grid_chat_history", _params, socket) do
+    {:noreply, GridChat.clear_history(socket)}
+  end
+
+  def handle_event("save_reader_appearance", %{"style" => style}, socket)
+      when style in ["book", "screen", "large_print", "compact"] do
+    {:noreply, DialecticWeb.ReadingStyles.save_appearance(socket, %{"reading_style" => style})}
+  end
+
+  def handle_event("open_prompt_settings", _params, socket) do
+    target =
+      if GraphHelpers.origin_branching_disabled?(socket.assigns.node) do
+        socket.assigns.graph_id
+        |> GraphManager.vertices()
+        |> Enum.map(&GraphManager.vertex_label(socket.assigns.graph_id, &1))
+        |> Enum.find(fn
+          %{class: "answer"} = node -> !Map.get(node, :deleted, false)
+          _ -> false
+        end)
+      else
+        socket.assigns.node
+      end
+
+    if target do
+      {:noreply, socket} = handle_event("node_clicked", %{"id" => target.id}, socket)
+      {:noreply, push_event(socket, "open_answer_level", %{})}
+    else
+      {:noreply,
+       put_flash(socket, :info, "Open an answer to choose the level of your next question.")}
+    end
+  end
+
+  def handle_event("open_grid_history", _params, socket) do
+    send_update(DialecticWeb.GridHistoryComp, id: "grid-history-comp", refresh: true)
     {:noreply, socket}
   end
 
   def handle_event("open_access_settings", _params, socket) do
-    send_update(DialecticWeb.RightPanelComp,
-      id: "right-panel-comp",
-      open_section: "workspace"
-    )
-
-    {:noreply, socket}
+    {:noreply, assign(socket, :show_share_modal, true)}
   end
 
   def handle_event("set_prompt_mode", %{"prompt_mode" => mode}, socket) do
-    graph_id = socket.assigns.graph_id
+    {:noreply, DialecticWeb.WorkspaceSettings.set_prompt_mode(socket, mode)}
+  end
 
-    normalized =
-      case String.downcase(to_string(mode)) do
-        "expert" -> :expert
-        "high_school" -> :high_school
-        "simple" -> :high_school
-        _ -> :university
-      end
-
-    mode_str = Atom.to_string(normalized)
-
-    if normalized in [:university, :expert] and is_nil(socket.assigns[:current_user]) do
-      {:noreply, assign(socket, show_login_modal: true)}
-    else
-      if is_binary(graph_id) do
-        _ = Dialectic.Responses.ModeServer.set_mode(graph_id, normalized)
-
-        case Dialectic.DbActions.Graphs.get_graph_by_title(graph_id) do
-          nil ->
-            :noop
-
-          graph ->
-            graph
-            |> Dialectic.Accounts.Graph.changeset(%{prompt_mode: mode_str})
-            |> Dialectic.Repo.update()
-        end
-      end
-
-      send_update(
-        DialecticWeb.RightPanelComp,
-        id: "right-panel-comp",
-        prompt_mode: mode_str
-      )
-
-      {:noreply, assign(socket, prompt_mode: mode_str)}
-    end
+  def handle_event("set_graph_visibility", %{"visibility" => visibility}, socket) do
+    {:noreply, DialecticWeb.WorkspaceSettings.set_visibility(socket, visibility)}
   end
 
   def handle_event("set_reader_path", %{"id" => path_endpoint}, socket) do
@@ -408,7 +413,12 @@ defmodule DialecticWeb.GraphLive do
            socket.assigns.current_user
          ) do
       {:ok, graph_struct} ->
-        can_edit = !graph_struct.is_locked
+        can_edit =
+          Dialectic.DbActions.Sharing.can_edit?(
+            socket.assigns[:current_user],
+            graph_struct,
+            socket.assigns[:token]
+          )
 
         {:noreply,
          socket
@@ -2797,9 +2807,7 @@ defmodule DialecticWeb.GraphLive do
         token_param = Map.get(params, "token")
 
         has_access =
-          Dialectic.DbActions.Sharing.can_access?(user, graph_db) or
-            (is_binary(token_param) and is_binary(graph_db.share_token) and
-               Plug.Crypto.secure_compare(token_param, graph_db.share_token))
+          Dialectic.DbActions.Sharing.can_access?(user, graph_db, token_param)
 
         if has_access do
           try do
@@ -2973,7 +2981,14 @@ defmodule DialecticWeb.GraphLive do
 
   defp assign_graph_data(socket, graph_db, graph_struct, node, graph_id, user) do
     changeset = GraphActions.create_new_node(user) |> Vertex.changeset()
-    can_edit = !graph_struct.is_locked
+
+    can_edit =
+      Dialectic.DbActions.Sharing.can_edit?(
+        socket.assigns[:current_user],
+        graph_struct,
+        socket.assigns[:token]
+      )
+
     {nav_up, nav_down, nav_left, nav_right} = compute_nav_flags(graph_id, node)
 
     base_url = DialecticWeb.Endpoint.url()
@@ -2991,7 +3006,7 @@ defmodule DialecticWeb.GraphLive do
         "headline" => graph_struct.title,
         "description" => description,
         "url" => canonical,
-        "image" => base_url <> ~p"/images/graph_live.webp",
+        "image" => base_url <> ~p"/images/rationalgrid-social.png",
         "dateModified" => DateTime.to_iso8601(graph_struct.updated_at),
         "datePublished" => DateTime.to_iso8601(graph_struct.inserted_at),
         "publisher" => %{
@@ -3003,23 +3018,14 @@ defmodule DialecticWeb.GraphLive do
         "isAccessibleForFree" => true
       })
 
-    # Resolve the graph owner's display name for presentation credits
-    owner_name =
-      case graph_db.user_id do
-        nil ->
-          nil
-
-        uid ->
-          case Repo.get(User, uid) do
-            nil -> nil
-            user -> User.display_name(user)
-          end
-      end
+    creator = if(graph_db.user_id, do: Repo.get(User, graph_db.user_id))
+    owner_name = if(creator, do: User.display_name(creator))
 
     assign(socket,
       page_title: graph_struct.title,
       graph_owner_name: owner_name,
-      og_image: base_url <> ~p"/images/graph_live.webp",
+      graph_creator: creator,
+      og_image: base_url <> ~p"/images/rationalgrid-social.png",
       page_description: description,
       canonical_url: canonical,
       og_type: "article",
@@ -3030,6 +3036,8 @@ defmodule DialecticWeb.GraphLive do
       graph_struct: graph_struct,
       graph_id: graph_id,
       appearance_preferences: User.appearance_preferences(socket.assigns[:current_user]),
+      reader_style: DialecticWeb.ReadingStyles.reading_style(socket.assigns[:current_user]),
+      reader_appearance_status: nil,
       following_graph?: following_graph?(socket.assigns[:current_user], graph_struct),
       f_graph: GraphManager.format_graph_json(graph_id),
       node: node,

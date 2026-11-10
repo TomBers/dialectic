@@ -60,7 +60,7 @@ defmodule DialecticWeb.ActionToolbarComp do
         ask_question={@ask_question}
       />
 
-      <div class="mt-1 flex items-center justify-end px-1">
+      <div :if={@current_user} class="mt-1 flex items-center justify-end px-1">
         <button
           id={"delete-node-#{@graph_id}-#{@node.id}"}
           type="button"
