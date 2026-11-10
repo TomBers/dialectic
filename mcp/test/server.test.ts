@@ -79,17 +79,17 @@ afterEach(async () => {
   }
 });
 
-test("discovers exactly seven focused tools with public or scoped access", async () => {
+test("discovers exactly eight focused tools with public or scoped access", async () => {
   const { tools } = await client.listTools();
-  assert.deepEqual(tools.map(tool => tool.name).sort(), ["search_public_grids", "list_my_grids", "read_grid", "create_grid", "add_grid_idea", "apply_grid_action", "get_operation"].sort());
+  assert.deepEqual(tools.map(tool => tool.name).sort(), ["explore_question", "search_public_grids", "list_my_grids", "read_grid", "create_grid", "add_grid_idea", "apply_grid_action", "get_operation"].sort());
   assert.equal(tools.filter(tool => tool.name.endsWith("_method")).length, 0);
   for (const tool of tools) {
-    assert.equal(tool.annotations?.readOnlyHint, !["create_grid", "apply_grid_action", "add_grid_idea"].includes(tool.name));
+    assert.equal(tool.annotations?.readOnlyHint, !["explore_question", "create_grid", "apply_grid_action", "add_grid_idea"].includes(tool.name));
     assert.equal(tool.annotations?.destructiveHint, false);
     assert.ok(tool.inputSchema);
     assert.ok(tool.outputSchema);
-    const scope = tool.name === "create_grid" ? "grids:create" : ["read_grid", "list_my_grids", "get_operation"].includes(tool.name) ? "grids:read" : ["apply_grid_action", "add_grid_idea"].includes(tool.name) ? "grids:append" : undefined;
-    const securitySchemes = tool.name === "read_grid" ? [{ type: "noauth" }, { type: "oauth2", scopes: ["grids:read"] }] : scope ? [{ type: "oauth2", scopes: [scope] }] : [{ type: "noauth" }];
+    const scope = ["create_grid", "explore_question"].includes(tool.name) ? "grids:create" : ["read_grid", "list_my_grids", "get_operation"].includes(tool.name) ? "grids:read" : ["apply_grid_action", "add_grid_idea"].includes(tool.name) ? "grids:append" : undefined;
+    const securitySchemes = tool.name === "explore_question" ? [{ type: "oauth2", scopes: ["grids:create", "grids:read"] }] : tool.name === "read_grid" ? [{ type: "noauth" }, { type: "oauth2", scopes: ["grids:read"] }] : scope ? [{ type: "oauth2", scopes: [scope] }] : [{ type: "noauth" }];
     assert.deepEqual(tool._meta?.securitySchemes, securitySchemes);
   }
   assert.equal(requests.length, 0);
@@ -243,6 +243,34 @@ test("native exploration uses create scope, forwards the question and reports th
   assert.equal(requests[0].url.pathname, "/api/mcp/explorations");
   assert.deepEqual(JSON.parse(requests[0].body), { ...exploration, response_level: "university" });
   assert.equal(requests[0].cookie, undefined);
+});
+
+test("guided exploration uses create permission and reports the whole workflow without client orchestration", async () => {
+  const exploration = { request_id: randomUUID(), question: "Why do cities become expensive?" };
+  assert.equal((await authenticatedCall("explore_question", exploration, "", 401)).isError, true);
+  assert.equal(requests.length, 0);
+  upstreamBody = {
+    grid: { ...grid, visibility: "private" }, request_id: exploration.request_id, status: "generating",
+    node: { id: "1", parent_node_id: null, class: "origin", content: exploration.question },
+    answer_node: { id: "2", parent_node_id: "1", class: "answer", content: "An opening answer" },
+    exploration: { stage: "testing", completed_steps: 1, total_steps: 4, error: null },
+    nodes: [{ id: "3", parent_node_id: "2", class: "answer", content: "A partial examination" }],
+  };
+  const result = await authenticatedCall("explore_question", { ...exploration, user_id: 42, is_public: true });
+  assert.deepEqual(result.structuredContent, upstreamBody);
+  assert.equal(requests[0].url.pathname, "/api/mcp/explorations/guided");
+  assert.deepEqual(JSON.parse(requests[0].body), { ...exploration, response_level: "university" });
+  const progress = await authenticatedCall("get_operation", { request_id: exploration.request_id });
+  assert.deepEqual(progress.structuredContent, upstreamBody);
+  assert.equal(requests[1].method, "GET");
+  assert.equal(requests.filter(request => request.method === "POST").length, 1);
+});
+
+test("health checks do not call Phoenix or return credentials", async () => {
+  const response = await fetch(new URL("/health", endpoint));
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { status: "ok" });
+  assert.equal(requests.length, 0);
 });
 
 test("owned discovery uses read scope and forwards a literal query and cursor", async () => {

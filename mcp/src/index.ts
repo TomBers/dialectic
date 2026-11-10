@@ -1,6 +1,10 @@
 import { createApp } from "./server.js";
 
 const port = Number(process.env.MCP_PORT || 4001);
+const host = process.env.MCP_HOST || "127.0.0.1";
+if (process.env.NODE_ENV === "production" && (!process.env.MCP_PUBLIC_URL || !process.env.PHOENIX_BASE_URL)) {
+  throw new Error("Production requires MCP_PUBLIC_URL and PHOENIX_BASE_URL.");
+}
 if (!Number.isInteger(port) || port < 1 || port > 65535) {
   throw new Error("MCP_PORT must be an integer between 1 and 65535.");
 }
@@ -10,8 +14,8 @@ const app = createApp(process.env.PHOENIX_BASE_URL || "http://localhost:4000", {
   authorizationServerUrl: process.env.OAUTH_ISSUER_URL,
   uiDemo: process.env.MCP_UI_DEMO === "1",
 });
-const listener = app.listen(port, "127.0.0.1", () => {
-  console.log(`RationalGrid MCP listening at http://127.0.0.1:${port}/mcp`);
+const listener = app.listen(port, host, () => {
+  console.log(`RationalGrid MCP listening on ${host}:${port}`);
 });
 
 for (const signal of ["SIGINT", "SIGTERM"] as const) {

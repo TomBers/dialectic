@@ -7,6 +7,12 @@ defmodule DialecticWeb.McpGridController do
 
   plug :authenticate
 
+  def guided_exploration(conn, params) do
+    conn.assigns.mcp_user
+    |> ChatGrids.start_guided_exploration(params)
+    |> action_response(conn)
+  end
+
   def start_exploration(conn, params) do
     conn.assigns.mcp_user
     |> ChatGrids.start_exploration(params)
@@ -172,6 +178,7 @@ defmodule DialecticWeb.McpGridController do
       case action_name(conn) do
         :create -> "grids:create"
         :start_exploration -> "grids:create"
+        :guided_exploration -> "grids:create grids:read"
         :index -> "grids:read"
         :operation -> "grids:read"
         :apply_action -> "grids:append"
@@ -194,11 +201,18 @@ defmodule DialecticWeb.McpGridController do
 
     case authentication do
       {:ok, user} ->
-        assign(conn, :mcp_user, user)
+        conn
+        |> assign(:mcp_user, user)
+        |> assign(:current_user, user)
+        |> DialecticWeb.Plugs.RateLimiter.call(type: :api)
 
       {:error, reason} ->
         status = if reason == :insufficient_scope, do: :forbidden, else: :unauthorized
-        conn |> put_status(status) |> json(%{error: reason}) |> halt()
+        conn = DialecticWeb.Plugs.RateLimiter.call(conn, type: :auth)
+
+        if conn.halted,
+          do: conn,
+          else: conn |> put_status(status) |> json(%{error: reason}) |> halt()
     end
   end
 

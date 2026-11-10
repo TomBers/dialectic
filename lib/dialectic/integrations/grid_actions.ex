@@ -42,7 +42,8 @@ defmodule Dialectic.Integrations.GridActions do
            ),
          {:ok, node} <- visible_node(graph, request.node_id),
          {:ok, answer} <- visible_node(graph, request.answer_node_id) do
-      {:ok, response(request, fresh, node, answer)}
+      result = response(request, fresh, node, answer)
+      {:ok, Dialectic.Integrations.Explorations.progress(result, request, graph)}
     else
       nil -> {:error, :not_found}
       error -> error
@@ -77,6 +78,11 @@ defmodule Dialectic.Integrations.GridActions do
     end
   end
 
+  def continue_exploration(user, slug, %{"action" => action} = params)
+      when action in ["exploration_testing", "exploration_deepening", "exploration_synthesizing"] do
+    submit(user, slug, params)
+  end
+
   defp submit(user, slug, params) do
     with {:ok, request_id} <- Ecto.UUID.cast(params["request_id"]),
          true <- is_binary(params["node_id"]) and byte_size(params["node_id"]) in 1..255,
@@ -107,12 +113,27 @@ defmodule Dialectic.Integrations.GridActions do
           request = Repo.get_by(GridAction, user_id: user.id, request_id: params["request_id"])
 
           cond do
-            is_nil(fresh) -> {:error, :not_found}
-            not Sharing.can_access?(user, fresh) -> {:error, :not_found}
-            request != nil -> existing_result(request, fresh, candidate, params, graph_struct)
-            fresh.is_locked == true or graph_struct.is_locked == true -> {:error, :locked}
-            fresh.data_revision > graph_struct.data_revision -> {:error, :stale}
-            true -> append(fresh, candidate, user, params, graph_struct.data_revision)
+            is_nil(fresh) ->
+              {:error, :not_found}
+
+            not Sharing.can_access?(user, fresh) ->
+              {:error, :not_found}
+
+            params["private_owner_only"] == true and
+                (fresh.user_id != user.id or fresh.is_public == true) ->
+              {:error, :not_found}
+
+            request != nil ->
+              existing_result(request, fresh, candidate, params, graph_struct)
+
+            fresh.is_locked == true or graph_struct.is_locked == true ->
+              {:error, :locked}
+
+            fresh.data_revision > graph_struct.data_revision ->
+              {:error, :stale}
+
+            true ->
+              append(fresh, candidate, user, params, graph_struct.data_revision)
           end
         end)
 
@@ -124,6 +145,12 @@ defmodule Dialectic.Integrations.GridActions do
               :digraph.add_vertex(graph, child.id, child)
               :digraph.add_edge(graph, node.parent_node_id, child.id)
             end
+          end
+
+          for source <- Map.get(params, "context_node_ids", []),
+              target = response.node.id,
+              source not in :digraph.in_neighbours(graph, target) do
+            :digraph.add_edge(graph, source, target)
           end
 
           Phoenix.PubSub.broadcast(
@@ -171,6 +198,8 @@ defmodule Dialectic.Integrations.GridActions do
             cond do
               question? -> "question"
               authored? -> "user"
+              params["action"] == "exploration_synthesizing" -> "synthesis"
+              String.starts_with?(params["action"], "exploration_") -> "answer"
               true -> params["action"]
             end,
           prompt_kind:
@@ -187,6 +216,10 @@ defmodule Dialectic.Integrations.GridActions do
 
         :digraph.add_vertex(graph, child.id, child)
         :digraph.add_edge(graph, parent.id, child.id)
+
+        for id <- Map.get(params, "context_node_ids", []),
+            do: :digraph.add_edge(graph, id, child.id)
+
         answer = if question?, do: add_answer(graph, child, mode)
         source = if question?, do: child, else: parent
         data = Serialise.graph_to_json(graph)
@@ -194,7 +227,7 @@ defmodule Dialectic.Integrations.GridActions do
 
         with true <- byte_size(Jason.encode!(data)) <= 10_000_000,
              {:ok, job_id} <-
-               queue_action(params["action"], source, answer || child, fresh, graph, mode),
+               queue_action(params, source, answer || child, fresh, graph, mode),
              {:ok, :updated} <- Graphs.save_graph_if_newer(fresh.title, data, next_revision),
              {:ok, request} <-
                Repo.insert(%GridAction{
@@ -222,23 +255,45 @@ defmodule Dialectic.Integrations.GridActions do
     end
   end
 
-  defp queue_action("add_idea", _parent, _child, _fresh, _graph, _mode), do: {:ok, nil}
+  defp queue_action(%{"action" => "add_idea"}, _parent, _child, _fresh, _graph, _mode),
+    do: {:ok, nil}
 
-  defp queue_action(action, parent, child, fresh, graph, mode) do
-    context = Vertex.build_context(parent, graph, 5000)
+  defp queue_action(%{"action" => action} = params, parent, child, fresh, graph, mode) do
+    context =
+      if String.starts_with?(action, "exploration_") do
+        [parent.id | Map.get(params, "context_node_ids", [])]
+        |> Enum.map(fn id ->
+          {_, node} = :digraph.vertex(graph, id)
+          sources = Dialectic.LLM.Grounding.sources(node.grounding_metadata)
+
+          Vertex.build_context(node, graph, 16000) <>
+            "\n" <>
+            node.content <>
+            "\nProvider-reported sources for this node (not independent corroboration): " <>
+            Jason.encode!(sources)
+        end)
+        |> Enum.join("\n\n")
+      else
+        Vertex.build_context(parent, graph, 5000)
+      end
 
     result =
-      if action == "ask_question" do
-        LlmInterface.queue_grid_answer(parent, child, fresh.title, context, mode)
-      else
-        LlmInterface.queue_grid_action(
-          Map.fetch!(@actions, action),
-          parent,
-          child,
-          fresh.title,
-          context,
-          mode
-        )
+      cond do
+        String.starts_with?(action, "exploration_") ->
+          LlmInterface.queue_exploration_step(action, child, fresh.title, context, mode)
+
+        action == "ask_question" ->
+          LlmInterface.queue_grid_answer(parent, child, fresh.title, context, mode)
+
+        true ->
+          LlmInterface.queue_grid_action(
+            Map.fetch!(@actions, action),
+            parent,
+            child,
+            fresh.title,
+            context,
+            mode
+          )
       end
 
     with {:ok, job} <- result do

@@ -360,6 +360,11 @@ defmodule Dialectic.Responses.LlmInterface do
     queue_prepared_response("explain", instruction, answer, graph_id, mode)
   end
 
+  def queue_exploration_step(stage, child, graph_id, context, mode) do
+    instruction = Prompts.exploration_step(stage, context)
+    queue_prepared_response(stage, instruction, child, graph_id, mode)
+  end
+
   def queue_initial_answer(question, answer, graph_id, context, mode, opts \\ []) do
     instruction = Prompts.initial_explainer(context, question.content, mode)
     queue_prepared_response("initial_explainer", instruction, answer, graph_id, mode, opts)

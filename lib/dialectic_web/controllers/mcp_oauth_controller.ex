@@ -10,9 +10,10 @@ defmodule DialecticWeb.McpOAuthController do
       issuer: DialecticWeb.Endpoint.url(),
       authorization_endpoint: url(~p"/oauth/authorize"),
       token_endpoint: url(~p"/oauth/token"),
+      registration_endpoint: url(~p"/oauth/register"),
       revocation_endpoint: url(~p"/oauth/revoke"),
       response_types_supported: ["code"],
-      grant_types_supported: ["authorization_code"],
+      grant_types_supported: ["authorization_code", "refresh_token"],
       token_endpoint_auth_methods_supported: ["none"],
       code_challenge_methods_supported: ["S256"],
       authorization_response_iss_parameter_supported: true,
@@ -73,6 +74,13 @@ defmodule DialecticWeb.McpOAuthController do
     end
   end
 
+  def register(conn, params) do
+    case OAuth.register_client(params) do
+      {:ok, client} -> conn |> put_status(:created) |> json(client)
+      {:error, error} -> oauth_error(conn, error)
+    end
+  end
+
   def revoke(conn, params) do
     OAuth.revoke_token(params["token"], params["client_id"])
     send_resp(conn, :ok, "")
@@ -83,7 +91,11 @@ defmodule DialecticWeb.McpOAuthController do
       Enum.map(OAuth.list_connections(conn.assigns.current_user), fn grant ->
         %{
           id: grant.id,
-          name: get_in(OAuth.clients(), [grant.client_id, :name]) || "Connected app"
+          name:
+            case OAuth.client(grant.client_id) do
+              %{name: name} -> name
+              _ -> "Connected app"
+            end
         }
       end)
 

@@ -7,7 +7,9 @@ defmodule DialecticWeb.McpOAuthHTML do
       <h1 class="text-2xl font-semibold">Connect {@client_name} to RationalGrid</h1>
       <p>Signed in as {@current_user.email}.</p>
       <ul class="list-disc pl-5 space-y-2">
-        <li :if={"grids:create" in @scopes}>Create private grids when you ask to save your ideas.</li>
+        <li :if={"grids:create" in @scopes}>
+          Create private grids when you ask, including an automatic exploration with an opening answer, two branches and a synthesis.
+        </li>
         <li :if={"grids:read" in @scopes}>
           Read grids you can access, including public and shared grids.
         </li>
@@ -17,7 +19,7 @@ defmodule DialecticWeb.McpOAuthHTML do
         </li>
       </ul>
       <p>
-        This connection cannot overwrite existing nodes, delete grids, or change their visibility. Access lasts one hour. You can disconnect it at any time.
+        This connection cannot overwrite existing nodes, delete grids, or change their visibility. The app can renew access for up to 30 days. You can disconnect it at any time.
       </p>
       <.form for={@form} id="mcp-consent-form" action={~p"/oauth/authorize"}>
         <input type="hidden" name={@form[:consent].name} value={@form[:consent].value} />
@@ -35,6 +37,26 @@ defmodule DialecticWeb.McpOAuthHTML do
     ~H"""
     <section id="mcp-connections" class="mx-auto max-w-lg p-8 space-y-6">
       <h1 class="text-2xl font-semibold">Connected apps</h1>
+      <section id="mcp-connect" class="space-y-4 rounded-xl border border-slate-200 p-4">
+        <h2 class="text-lg font-semibold">Explore a question from your AI assistant</h2>
+        <p>
+          Add this URL as a remote MCP server in an assistant that supports OAuth connections.
+          Sign in with your RationalGrid account and approve the connection.
+        </p>
+        <.input
+          id="mcp-server-url"
+          type="text"
+          name="mcp_server_url"
+          label="MCP server URL"
+          value={@mcp_resource}
+          readonly
+        />
+        <p>
+          Then ask it to explore a question with RationalGrid. You will get a private grid with
+          an opening answer, two useful branches and a synthesis. You can return to the grid and
+          continue from any idea.
+        </p>
+      </section>
       <section
         :if={@mcp_testing?}
         id="mcp-testing"
@@ -72,7 +94,7 @@ defmodule DialecticWeb.McpOAuthHTML do
             <dt class="font-semibold">Scopes</dt><dd><code>{@mcp_scopes}</code></dd>
           </div>
           <div>
-            <dt class="font-semibold">Request refresh token</dt><dd>Turn off</dd>
+            <dt class="font-semibold">Request refresh token</dt><dd>Supported</dd>
           </div>
         </dl>
         <p class="text-sm">

@@ -22,8 +22,17 @@ defmodule Dialectic.Integrations.ChatGrids do
   end
 
   def start_exploration(%User{} = user, params) do
+    start_exploration(user, params, false)
+  end
+
+  def start_guided_exploration(%User{} = user, params) do
+    start_exploration(user, params, true)
+  end
+
+  defp start_exploration(user, params, guided?) do
     with {:ok, request_id} <- Ecto.UUID.cast(params["request_id"]),
          {:ok, draft} <- prepare_exploration(user, params),
+         draft <- if(guided?, do: Map.put(draft, :guided, true), else: draft),
          {:ok, _graph} <-
            save(user, request_id, draft, &queue_exploration(user, request_id, draft, &1)) do
       GridActions.get_operation(user, request_id)
@@ -171,7 +180,9 @@ defmodule Dialectic.Integrations.ChatGrids do
                action: "start_exploration",
                job_id: job.id
              }) do
-        {:ok, graph}
+        if Map.get(draft, :guided),
+          do: Dialectic.Integrations.Explorations.enqueue(user, request_id, graph),
+          else: {:ok, graph}
       end
     end
   end

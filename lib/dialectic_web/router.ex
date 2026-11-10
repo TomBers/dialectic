@@ -32,6 +32,10 @@ defmodule DialecticWeb.Router do
     plug DialecticWeb.Plugs.RateLimiter, type: :api
   end
 
+  pipeline :mcp_api do
+    plug :accepts, ["json"]
+  end
+
   pipeline :browser_api do
     plug :accepts, ["json"]
     plug :fetch_session
@@ -49,8 +53,14 @@ defmodule DialecticWeb.Router do
     get "/.well-known/oauth-authorization-server", McpOAuthController, :metadata
     post "/oauth/token", McpOAuthController, :token, log: false
     post "/oauth/revoke", McpOAuthController, :revoke, log: false
+  end
+
+  scope "/", DialecticWeb do
+    pipe_through :mcp_api
+
     post "/api/mcp/grids", McpGridController, :create, log: false
     post "/api/mcp/explorations", McpGridController, :start_exploration, log: false
+    post "/api/mcp/explorations/guided", McpGridController, :guided_exploration, log: false
     get "/api/mcp/grids", McpGridController, :index
     get "/api/mcp/operations/:request_id", McpGridController, :operation
     post "/api/mcp/grids/:slug/actions", McpGridController, :apply_action, log: false
@@ -65,6 +75,11 @@ defmodule DialecticWeb.Router do
     post "/oauth/authorize", McpOAuthController, :decide, log: false
     get "/users/connections", McpOAuthController, :connections
     delete "/users/connections/:id", McpOAuthController, :disconnect
+  end
+
+  scope "/", DialecticWeb do
+    pipe_through [:api, :auth]
+    post "/oauth/register", McpOAuthController, :register, log: false
   end
 
   # Health check endpoints (no rate limiting)

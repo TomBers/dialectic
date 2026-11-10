@@ -57,6 +57,11 @@ defmodule DialecticWeb.McpNavigationTest do
     page = conn |> get(~p"/users/connections") |> html_response(200) |> LazyHTML.from_document()
     assert page |> LazyHTML.query("#mcp-testing") |> Enum.count() == 0
     assert page |> LazyHTML.query("#mcp-connections") |> Enum.count() == 1
+    assert page |> LazyHTML.query("#mcp-connect") |> Enum.count() == 1
+
+    assert page |> LazyHTML.query("#mcp-server-url") |> LazyHTML.attribute("value") == [
+             "http://127.0.0.1:4001/mcp"
+           ]
   end
 
   test "signed-out users cannot open connection management", %{conn: conn} do

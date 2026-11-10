@@ -21,6 +21,25 @@ defmodule Dialectic.Responses.Prompts do
 
   alias Dialectic.Responses.{GuidedLearningPlan, PromptsStructured}
 
+  def exploration_step(stage, context) do
+    task =
+      case stage do
+        "exploration_testing" ->
+          "Choose and examine the most consequential claim, assumption, or limitation in the opening answer. Name that specific target and explain why testing it matters to the original question. Use a concrete counterexample, evidential check, conceptual distinction, or value tradeoff as appropriate. Correct a false premise before extending it. Do not manufacture controversy or an opposing case for established facts. End with what this examination changes or leaves intact."
+
+        "exploration_deepening" ->
+          "Choose one specific, worthwhile direction suggested by the opening answer that develops the original question beyond its initial explanation. Prefer a concrete application, causal mechanism, or consequential implication. Explain why this direction matters and work it through with a specific example. Do not repeat a survey of the opening answer or add unrelated novelty. End with the new insight and its limits."
+
+        "exploration_synthesizing" ->
+          "Bring together the original question, opening answer, examination and deeper branch. Give a concise, qualified answer to the original question that reflects what the branches actually established. Distinguish what holds up, what needs revising, and what remains unresolved. Name one useful next question. Do not treat generated agreement as independent corroboration, invent sources, or merely concatenate summaries."
+      end
+
+    join_blocks([
+      frame_context(context),
+      "You are developing a bounded RationalGrid exploration. " <> task
+    ])
+  end
+
   # Maximum character length for context in minimal context prompts.
   # Longer contexts are truncated to this length to keep prompts focused
   # while still providing grounding from the immediate parent node.
