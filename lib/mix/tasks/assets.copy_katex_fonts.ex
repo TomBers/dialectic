@@ -16,6 +16,11 @@ defmodule Mix.Tasks.Assets.CopyKatexFonts do
       """)
     end
 
+    File.cp!(
+      Path.join(Path.dirname(source_dir), "katex.min.css"),
+      Path.join(Path.dirname(target_dir), "katex.css")
+    )
+
     File.rm_rf!(target_dir)
     File.mkdir_p!(target_dir)
 

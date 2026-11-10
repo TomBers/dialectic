@@ -19,13 +19,14 @@
 
 import { marked } from "marked";
 import DOMPurify from "dompurify";
+import { loadMathStyles } from "./math_styles.js";
 import { extractTitle, hashTitle as hashString } from "./title_utils.js";
 let renderToString;
 let mathRenderer;
 
 function loadMathRenderer() {
   if (!mathRenderer) {
-    mathRenderer = import("katex").then(module => {
+    mathRenderer = Promise.all([import("katex"), loadMathStyles()]).then(([module]) => {
       renderToString = module.renderToString;
     }).catch(error => {
       mathRenderer = null;

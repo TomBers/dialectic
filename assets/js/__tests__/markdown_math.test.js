@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("../math_styles.js", () => ({loadMathStyles: () => Promise.resolve()}));
+
 let Markdown;
 beforeEach(async () => {
   vi.resetModules();

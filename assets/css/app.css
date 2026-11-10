@@ -1,7 +1,6 @@
 @import "tailwindcss/base";
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
-@import "katex/dist/katex.min.css";
 @import "./ambassadors.css";
 @import "./learning_sidebar.css";
 @import "./mcp.css";
