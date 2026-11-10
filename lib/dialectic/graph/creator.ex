@@ -11,7 +11,7 @@ defmodule Dialectic.Graph.Creator do
   alias Dialectic.DbActions.Graphs
   alias Dialectic.Graph.Vertex
   alias Dialectic.Repo
-  alias Dialectic.Responses.{ModeServer, Prompts, PromptsStructured, RequestQueue}
+  alias Dialectic.Responses.{LlmInterface, ModeServer}
   alias GraphManager
 
   @response_poll_interval_ms 100
@@ -200,22 +200,20 @@ defmodule Dialectic.Graph.Creator do
   """
   def queue_streaming_response(title, origin_node, answer_node, mode, actor_id \\ nil) do
     context = GraphManager.build_context(title, origin_node)
-    instruction = Prompts.initial_explainer(context, origin_node.content, mode)
-    system_prompt = PromptsStructured.system_preamble(mode)
 
     # Use the shared graph topic so all viewers (including the user who just created
     # the graph) will receive stream chunks when they mount the graph page.
     # This matches the graph_topic pattern in GraphLive: "graph_update:#{graph_id}"
-    live_view_topic = "graph_update:#{title}"
 
     # Queue the streaming request via the existing worker infrastructure
-    case RequestQueue.add(
-           instruction,
-           system_prompt,
+    case LlmInterface.queue_initial_answer(
+           origin_node,
            answer_node,
            title,
-           {live_view_topic, actor_id},
-           mode: mode
+           context,
+           mode,
+           actor_id: actor_id,
+           notify_rejection: true
          ) do
       {:ok, job} ->
         Logger.debug(

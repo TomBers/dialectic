@@ -47,7 +47,9 @@ jobs:
         with:
           node-version: 24.15.0
           cache: npm
-          cache-dependency-path: assets/package-lock.json
+          cache-dependency-path: |
+            assets/package-lock.json
+            mcp/package-lock.json
 
       - name: Cache dependencies and build artifacts
         uses: actions/cache@v4
@@ -78,3 +80,14 @@ jobs:
 
       - name: Run tests
         run: mix test
+
+      - name: Install MCP dependencies
+        run: npm ci
+        working-directory: mcp
+
+      - name: Test and build MCP server
+        run: npm test && npm run build
+        working-directory: mcp
+
+      - name: Build production image
+        run: docker build -t rationalgrid:ci .

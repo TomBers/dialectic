@@ -10,8 +10,14 @@ defmodule DialecticWeb.HealthController do
   Returns 200 OK with status information.
   """
   def check(conn, _params) do
+    healthy? =
+      not Application.get_env(:dialectic, :mcp_gateway_enabled, false) or
+        Dialectic.Integrations.McpGateway.ready?()
+
+    conn = put_status(conn, if(healthy?, do: :ok, else: :service_unavailable))
+
     json(conn, %{
-      status: "ok",
+      status: if(healthy?, do: "ok", else: "error"),
       timestamp: DateTime.utc_now() |> DateTime.to_iso8601()
     })
   end

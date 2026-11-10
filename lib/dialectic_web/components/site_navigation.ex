@@ -5,6 +5,8 @@ defmodule DialecticWeb.SiteNavigation do
   attr :active_path, :string, required: true
 
   def nav(assigns) do
+    assigns = assign(assigns, :mcp_testing?, Application.get_env(:dialectic, :dev_routes, false))
+
     ~H"""
     <nav
       id="site-navigation"
@@ -67,6 +69,16 @@ defmodule DialecticWeb.SiteNavigation do
         >
           <.icon name="hero-plus" class="h-4 w-4" /> Grid
         </.link>
+
+        <.nav_link
+          :if={@current_user && @mcp_testing?}
+          id="mcp-testing-nav-link"
+          href={~p"/users/connections#mcp-testing"}
+          label="MCP testing"
+          icon="hero-command-line"
+          compact
+          active={@active_path == "/users/connections"}
+        />
 
         <%= if @current_user do %>
           <button

@@ -1,0 +1,28 @@
+{
+  "name": "rationalgrid-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "npm run build:ui && tsx src/index.ts",
+    "build:ui": "node build-ui.mjs",
+    "build": "tsc && tsc -p tsconfig.ui.json && npm run build:ui",
+    "start": "node dist/index.js",
+    "test": "npm run build:ui && tsx --test test/*.test.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/ext-apps": "^2.0.3",
+    "@modelcontextprotocol/sdk": "^1.31.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.3",
+    "esbuild": "^0.28.2",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  }
+}

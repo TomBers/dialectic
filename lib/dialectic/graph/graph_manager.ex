@@ -26,6 +26,16 @@ defmodule GraphManager do
     end
   end
 
+  def apply_mcp_action(path, user, params) do
+    ensure_started(path)
+    GenServer.call(via_tuple(path), {:apply_mcp_action, user, params}, 30_000)
+  end
+
+  def get_mcp_operation(path, user, request_id) do
+    ensure_started(path)
+    GenServer.call(via_tuple(path), {:get_mcp_operation, user, request_id})
+  end
+
   defp ensure_started(path) do
     unless exists?(path) do
       start_graph_process(path)
@@ -142,6 +152,16 @@ defmodule GraphManager do
 
   def handle_call(:get_graph, _from, {graph_struct, graph}) do
     {:reply, {graph_struct, graph}, {graph_struct, graph}}
+  end
+
+  def handle_call({:apply_mcp_action, user, params}, _from, state) do
+    {reply, state} = Dialectic.Integrations.GridActions.apply_in_graph(state, user, params)
+    {:reply, reply, state}
+  end
+
+  def handle_call({:get_mcp_operation, user, request_id}, _from, state) do
+    {:reply, Dialectic.Integrations.GridActions.get_operation_in_graph(state, user, request_id),
+     state}
   end
 
   def handle_call(

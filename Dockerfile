@@ -59,6 +59,13 @@ COPY assets/package.json assets/package-lock.json assets/
 RUN npm ci --omit=dev --prefix assets
 COPY assets assets
 
+COPY mcp/package.json mcp/package-lock.json mcp/
+RUN npm ci --prefix mcp
+COPY mcp/src mcp/src
+COPY mcp/ui mcp/ui
+COPY mcp/tsconfig.json mcp/tsconfig.ui.json mcp/build-ui.mjs mcp/
+RUN npm run build --prefix mcp && npm prune --omit=dev --prefix mcp
+
 # compile assets
 RUN mix assets.deploy
 
@@ -94,6 +101,10 @@ ENV MIX_ENV="prod"
 
 # Only copy the final release from the build stage
 COPY --from=builder --chown=nobody:root /app/_build/${MIX_ENV}/rel/dialectic ./
+COPY --from=node /usr/local/bin/node /usr/local/bin/node
+COPY --from=builder --chown=nobody:root /app/mcp/dist ./mcp/dist
+COPY --from=builder --chown=nobody:root /app/mcp/node_modules ./mcp/node_modules
+COPY --from=builder --chown=nobody:root /app/mcp/package.json ./mcp/package.json
 
 USER nobody
 
