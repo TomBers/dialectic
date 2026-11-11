@@ -1126,6 +1126,7 @@ defmodule DialecticWeb.OutlineGraphLive do
 
   defp push_highlights(socket) do
     push_event(socket, "highlights_loaded", %{
+      graph_id: socket.assigns.graph_id,
       highlights: serialize_highlights(socket.assigns.visible_highlights || [])
     })
   end

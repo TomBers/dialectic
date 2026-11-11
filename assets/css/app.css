@@ -1,7 +1,6 @@
 @import "tailwindcss/base";
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
-@import "katex/dist/katex.min.css";
 @import "./ambassadors.css";
 @import "./learning_sidebar.css";
 @import "./mcp.css";
@@ -541,6 +540,16 @@
         background: #fff;
         box-shadow: 0 16px 40px -12px rgb(15 23 42 / 18%),
             0 3px 8px rgb(15 23 42 / 5%);
+    }
+
+    @supports (position-area: block-end) and (position-try-fallbacks: flip-block) {
+        .workspace-dropdown-panel {
+            position-area: block-end span-inline-start;
+            position-try-fallbacks: flip-block, flip-inline, flip-block flip-inline;
+            max-height: min(32rem, calc(100dvh - 2rem));
+            margin-block: 0.5rem;
+            margin-inline: 0.5rem;
+        }
     }
 
     .tools-drawer-content {
@@ -2936,6 +2945,7 @@ button[type="submit"]:active {
 
 /* Highlight Styles */
 .highlight-span {
+    color: inherit;
     background-color: rgba(255, 235, 59, 0.4);
     border-radius: 2px;
     cursor: pointer;

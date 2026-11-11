@@ -1,3 +1,4 @@
+import { nodeHighlights } from "./highlight_cache.js";
 import { ToolsMenuController } from "./tools_menu_hook.js";
 import { handleInquiryShortcut, syncInquiryShortcutLabels } from "./inquiry_shortcuts.js";
 
@@ -132,7 +133,7 @@ const SelectionActionsHook = {
 
     const { nodeId, offsets } = this.selectionData;
 
-    return (window.__highlightsCache || []).find(
+    return nodeHighlights(this.componentEl.dataset.graphId, nodeId).find(
       (highlight) =>
         highlight.node_id?.toString() === nodeId.toString() &&
         highlight.selection_start === offsets.start &&
@@ -463,7 +464,7 @@ const SelectionActionsHook = {
   },
 
   handleKeydown(event) {
-    if (!this.modalEl || this.modalEl.classList.contains("hidden") || event.isComposing || event.repeat) return;
+    if (!(event.target instanceof Element) || !this.modalEl || this.modalEl.classList.contains("hidden") || event.isComposing || event.repeat) return;
     if (this.drawerContext() && !this.modalEl.contains(event.target)) return;
     if (event.defaultPrevented) return;
     if (handleInquiryShortcut(event, this.modalEl)) return;

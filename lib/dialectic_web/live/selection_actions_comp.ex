@@ -141,6 +141,7 @@ defmodule DialecticWeb.SelectionActionsComp do
     ~H"""
     <div
       id={@id}
+      data-graph-id={@graph_id}
       data-can-edit={to_string(@can_edit)}
       data-action-context={@context}
       data-presentation={@presentation}

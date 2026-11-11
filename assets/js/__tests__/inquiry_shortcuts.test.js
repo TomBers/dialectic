@@ -118,3 +118,7 @@ it.each([["MacIntel", "Alt+Shift+A", "Option+Shift+A"], ["Win32", "Alt+Shift+A",
   expect(button.getAttribute("aria-keyshortcuts")).toBe(aria);
   expect(button.title).toContain(title);
 });
+
+it("ignores keyboard events forwarded from a window instead of an element", () => {
+  expect(handleInquiryShortcut({target: window, key: "t"}, root)).toBe(false);
+});

@@ -101,49 +101,40 @@ const HighlightUtils = {
   renderHighlights(container, highlights) {
     if (!container || !highlights) return;
 
-    // Get existing highlight signatures so link/offset changes trigger a re-render.
-    const existingSpans = container.querySelectorAll(".highlight-span");
-    const existingSignatures = new Map();
-
-    Array.from(existingSpans).forEach((span) => {
+    const existing = new Map();
+    for (const span of container.querySelectorAll(".highlight-span")) {
       const id = span.dataset.highlightId;
-      if (id && !existingSignatures.has(id)) {
-        existingSignatures.set(id, span.dataset.highlightSignature || "");
-      }
-    });
-
-    // Get new highlight signatures
-    const newSignatures = new Map(
-      highlights.map((h) => [h.id.toString(), this.highlightSignature(h)]),
-    );
-
-    // Only proceed if there are actual changes
-    const hasChanges =
-      existingSignatures.size !== newSignatures.size ||
-      Array.from(existingSignatures.keys()).some(
-        (id) => !newSignatures.has(id),
-      ) ||
-      Array.from(newSignatures).some(
-        ([id, signature]) => existingSignatures.get(id) !== signature,
-      );
-
-    if (!hasChanges) {
-      // No changes needed - highlights are already up to date
-      return;
+      if (!existing.has(id)) existing.set(id, []);
+      existing.get(id).push(span);
     }
-
-    // 1. Remove existing highlights
-    this.removeHighlights(container);
-
-    // 2. Sort highlights by start position
-    const sortedHighlights = [...highlights].sort(
-      (a, b) => a.selection_start - b.selection_start,
-    );
-
-    // 3. Apply highlights
-    sortedHighlights.forEach((highlight) => {
-      this.applySingleHighlight(container, highlight);
-    });
+    const next = new Map(highlights.map(h => [String(h.id), h]));
+    for (const [id, spans] of existing) {
+      const highlight = next.get(id);
+      const sameRange = highlight && spans.every(span => {
+        try {
+          const previous = JSON.parse(span.dataset.highlightSignature);
+          return previous?.start === highlight.selection_start &&
+            previous?.end === highlight.selection_end && Array.isArray(previous?.links);
+        } catch {
+          return false;
+        }
+      });
+      if (!sameRange) {
+        this.removeHighlight(container, id, spans);
+        existing.delete(id);
+      } else if (spans[0].dataset.highlightSignature !== this.highlightSignature(highlight)) {
+        this.updateHighlightLinks(container, highlight, spans);
+      }
+    }
+    const additions = highlights.filter(h => !existing.has(String(h.id)))
+      .sort((a, b) => b.selection_start - a.selection_start);
+    if (additions.length === 0) return;
+    let index = this.textIndex(container);
+    for (let i = 0; i < additions.length; i++) {
+      const highlight = additions[i];
+      if (i > 0 && highlight.selection_end > additions[i - 1].selection_start) index = this.textIndex(container);
+      this.applySingleHighlight(container, highlight, index);
+    }
   },
 
   highlightSignature(highlight) {
@@ -159,139 +150,95 @@ const HighlightUtils = {
     });
   },
 
-  /**
-   * Applies a single highlight by wrapping text nodes in spans.
-   * Handles ranges that cross element boundaries by creating multiple spans.
-   */
-  applySingleHighlight(container, highlight) {
-    const start = highlight.selection_start;
-    const end = highlight.selection_end;
-
-    let currentOffset = 0;
-    const walker = document.createTreeWalker(
-      container,
-      NodeFilter.SHOW_TEXT,
-      null,
-      false,
-    );
-
+  textIndex(container) {
+    const index = [];
+    const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
+    let offset = 0;
     let node;
-    const nodesToWrap = [];
-
-    // Traverse all text nodes to find intersections with the highlight range
     while ((node = walker.nextNode())) {
-      const nodeContent = node.textContent;
-      const nodeLength = nodeContent.length;
-      const nodeStart = currentOffset;
-      const nodeEnd = currentOffset + nodeLength;
-
-      // Check intersection
-      if (nodeEnd > start && nodeStart < end) {
-        // Calculate relative start/end for this text node
-        const wrapStart = Math.max(0, start - nodeStart);
-        const wrapEnd = Math.min(nodeLength, end - nodeStart);
-
-        nodesToWrap.push({ node, wrapStart, wrapEnd });
-      }
-
-      currentOffset += nodeLength;
-      // Optimization: stop if we passed the end of the highlight
-      if (currentOffset >= end) break;
+      if (node.parentElement.closest(".highlight-links-container")) continue;
+      const end = offset + node.length;
+      index.push({ node, start: offset, end });
+      offset = end;
     }
-
-    // Wrap the identified segments
-    // We reverse to avoid invalidating offsets of earlier nodes if DOM changes (though splitting shouldn't affect previous nodes in this logic)
-    // Actually, splitting a node affects its own future processing, but we are done traversing.
-    // Track the first item in reversed array (which is the last span chronologically)
-    let lastSpanChronologically = null;
-    const reversedNodes = nodesToWrap.reverse();
-    reversedNodes.forEach(({ node, wrapStart, wrapEnd }, index) => {
-      if (wrapStart === wrapEnd) return; // Empty range
-
-      const range = document.createRange();
-      range.setStart(node, wrapStart);
-      range.setEnd(node, wrapEnd);
-
-      const span = document.createElement("span");
-      span.className = "highlight-span";
-      span.dataset.highlightId = highlight.id;
-      span.dataset.highlightSignature = this.highlightSignature(highlight);
-
-      // Add styling and a default navigation target for highlights with links.
-      // Individual link icons still navigate to their specific linked nodes.
-      if (highlight.links && highlight.links.length > 0) {
-        const firstLink = highlight.links[0];
-        span.classList.add("has-linked-node");
-        span.dataset.linkedNodeId = firstLink.node_id;
-        span.dataset.linkType = firstLink.link_type;
-        span.title =
-          highlight.links.length === 1
-            ? `Linked to ${this.getLinkLabel(firstLink.link_type)}`
-            : `${highlight.links.length} linked nodes`;
-      }
-
-      try {
-        range.surroundContents(span);
-        // The first span we create in the reversed loop is the last one chronologically
-        if (index === 0) {
-          lastSpanChronologically = span;
-        }
-      } catch (e) {
-        console.warn("HighlightUtils: Failed to wrap node", e);
-      }
-    });
-
-    // Add link icons only once, after the last span of the highlight
-    if (
-      lastSpanChronologically &&
-      highlight.links &&
-      highlight.links.length > 0
-    ) {
-      const iconContainer = document.createElement("span");
-      iconContainer.className = "highlight-links-container";
-      iconContainer.style.cssText =
-        "display: inline-flex; align-items: center; gap: 2px; margin-left: 2px;";
-
-      highlight.links.forEach((link) => {
-        const icon = this.createLinkIcon(link);
-        iconContainer.appendChild(icon);
-      });
-
-      // Insert icons right after the last highlight span
-      if (lastSpanChronologically.nextSibling) {
-        lastSpanChronologically.parentNode.insertBefore(
-          iconContainer,
-          lastSpanChronologically.nextSibling,
-        );
-      } else {
-        lastSpanChronologically.parentNode.appendChild(iconContainer);
-      }
-    }
+    return index;
   },
 
-  /**
-   * Removes all highlight spans from the container, merging text nodes back together.
-   */
-  removeHighlights(container) {
-    // Remove link icon containers
-    const iconContainers = container.querySelectorAll(
-      ".highlight-links-container",
-    );
-    iconContainers.forEach((container) => {
-      container.remove();
-    });
+  applySingleHighlight(container, highlight, index = this.textIndex(container)) {
+    const start = highlight.selection_start;
+    const end = highlight.selection_end;
+    let low = 0;
+    let high = index.length;
+    while (low < high) {
+      const middle = (low + high) >>> 1;
+      if (index[middle].end <= start) low = middle + 1;
+      else high = middle;
+    }
+    const segments = [];
+    for (let i = low; i < index.length && index[i].start < end; i++) {
+      const entry = index[i];
+      const from = Math.max(0, start - entry.start);
+      const to = Math.min(entry.node.length, end - entry.start);
+      if (from < to) segments.push({ node: entry.node, from, to });
+    }
+    const spans = [];
+    for (const { node, from, to } of segments.reverse()) {
+      const range = document.createRange();
+      range.setStart(node, from);
+      range.setEnd(node, to);
+      const span = document.createElement("mark");
+      span.className = "highlight-span";
+      span.dataset.highlightId = highlight.id;
+      range.surroundContents(span);
+      spans.unshift(span);
+    }
+    this.updateHighlightLinks(container, highlight, spans);
+  },
 
-    // Remove highlight spans
-    const spans = container.querySelectorAll(".highlight-span");
-    spans.forEach((span) => {
-      const parent = span.parentNode;
-      while (span.firstChild) {
-        parent.insertBefore(span.firstChild, span);
+  updateHighlightLinks(container, highlight, spans) {
+    const links = highlight.links || [];
+    const signature = this.highlightSignature(highlight);
+    for (const span of spans) {
+      span.dataset.highlightSignature = signature;
+      span.classList.toggle("has-linked-node", links.length > 0);
+      if (links.length > 0) {
+        span.dataset.linkedNodeId = links[0].node_id;
+        span.dataset.linkType = links[0].link_type;
+        span.title = links.length === 1
+          ? `Linked to ${this.getLinkLabel(links[0].link_type)}`
+          : `${links.length} linked nodes`;
+      } else {
+        delete span.dataset.linkedNodeId;
+        delete span.dataset.linkType;
+        span.removeAttribute("title");
       }
-      parent.removeChild(span);
-    });
-    // Merge adjacent text nodes to restore clean DOM
-    container.normalize();
+    }
+    for (const icons of container.querySelectorAll(".highlight-links-container")) {
+      if (icons.dataset.highlightId === String(highlight.id)) icons.remove();
+    }
+    if (links.length === 0 || spans.length === 0) return;
+    const icons = document.createElement("span");
+    icons.className = "highlight-links-container";
+    icons.dataset.highlightId = highlight.id;
+    icons.style.cssText = "display: inline-flex; align-items: center; gap: 2px; margin-left: 2px;";
+    for (const link of links) icons.appendChild(this.createLinkIcon(link));
+    spans[spans.length - 1].after(icons);
+  },
+
+  removeHighlight(container, id, spans) {
+    for (const icons of container.querySelectorAll(".highlight-links-container")) {
+      if (icons.dataset.highlightId === id) icons.remove();
+    }
+    const parents = new Set();
+    for (const span of spans) {
+      parents.add(span.parentNode);
+      span.replaceWith(...span.childNodes);
+    }
+    for (const parent of parents) parent.normalize();
+  },
+
+  removeHighlights(container) {
+    this.renderHighlights(container, []);
   },
 };
 

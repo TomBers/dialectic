@@ -1,4 +1,5 @@
 import HighlightUtils from "./highlight_utils.js";
+import { cachedHighlight, nodeHighlights, subscribeHighlights } from "./highlight_cache.js";
 
 const textSelectionHook = {
   mounted() {
@@ -24,12 +25,6 @@ const textSelectionHook = {
     // Store element ID to prevent duplicate events
     this.elId = this.el.id;
 
-    // Cache of all highlights pushed from server (shared across hook instances
-    // via the window object so every node card sees the same data).
-    if (!window.__highlightsCache) {
-      window.__highlightsCache = [];
-    }
-
     // Add event listeners for this specific container
     this.el.addEventListener("click", this.handleHighlightClick);
     this.el.addEventListener(
@@ -47,12 +42,8 @@ const textSelectionHook = {
     // When the Markdown hook finishes rendering, re-apply highlights from cache
     this.el.addEventListener("markdown:rendered", this.renderHighlightsForNode);
 
-    // Server pushes all highlights for the graph in one event.
-    // Every hook instance listens, updates the shared cache, and renders
-    // only the highlights relevant to its own node.
-    this.handleEvent(
-      "highlights_loaded",
-      this.handleHighlightsLoaded.bind(this),
+    this.unsubscribeHighlights = subscribeHighlights(
+      this.mudgId, this.nodeId, this.renderHighlightsForNode,
     );
 
     this.handleEvent("scroll_to_highlight", this.scrollToHighlight.bind(this));
@@ -71,6 +62,7 @@ const textSelectionHook = {
   },
 
   destroyed() {
+    this.unsubscribeHighlights?.();
     if (this.highlightScrollRetryTimer) {
       clearTimeout(this.highlightScrollRetryTimer);
       this.highlightScrollRetryTimer = null;
@@ -96,12 +88,6 @@ const textSelectionHook = {
 
   // ── Highlights from server ──────────────────────────────────────────
 
-  handleHighlightsLoaded({ highlights }) {
-    window.__highlightsCache = highlights || [];
-    this.renderHighlightsForNode();
-    this.retryPendingHighlightScroll();
-  },
-
   renderHighlightsForNode() {
     if (this.el.dataset.streaming === "true") return;
     if (!this.nodeId) return;
@@ -111,11 +97,7 @@ const textSelectionHook = {
     );
     if (!mdContainer) return;
 
-    const nodeHighlights = (window.__highlightsCache || []).filter(
-      (h) => h.node_id === this.nodeId,
-    );
-
-    HighlightUtils.renderHighlights(mdContainer, nodeHighlights);
+    HighlightUtils.renderHighlights(mdContainer, nodeHighlights(this.mudgId, this.nodeId));
     this.retryPendingHighlightScroll();
   },
 
@@ -168,16 +150,8 @@ const textSelectionHook = {
     if (!id) return;
 
     const highlightId = id.toString();
-    const cachedHighlight = (window.__highlightsCache || []).find(
-      (highlight) => highlight.id?.toString() === highlightId,
-    );
-
-    if (
-      cachedHighlight?.node_id &&
-      this.nodeId &&
-      cachedHighlight.node_id !== this.nodeId
-    )
-      return;
+    const highlight = cachedHighlight(this.mudgId, highlightId);
+    if (highlight && String(highlight.node_id) !== String(this.nodeId)) return;
 
     window.__pendingHighlightScrollRequest = {
       id: highlightId,
@@ -456,34 +430,7 @@ const textSelectionHook = {
       container = container.parentNode;
     }
 
-    // Find all potential selection containers that contain this selection
-    const allContainers = document.querySelectorAll(
-      '[phx-hook="TextSelectionHook"]',
-    );
-    let closestContainer = null;
-    let minDepth = Infinity;
-
-    // For each potential container, check if it contains the selection
-    // and calculate its depth in the DOM
-    allContainers.forEach((el) => {
-      if (el.contains(container)) {
-        // Calculate DOM depth (fewer is closer)
-        let depth = 0;
-        let parent = container;
-        while (parent && parent !== el) {
-          depth++;
-          parent = parent.parentNode;
-        }
-
-        if (depth < minDepth) {
-          minDepth = depth;
-          closestContainer = el;
-        }
-      }
-    });
-
-    // Return true if this hook's element is the closest container
-    return closestContainer === this.el;
+    return container.closest('[phx-hook="TextSelectionHook"]') === this.el;
   },
 
   // ── Highlight creation (still uses the API for writes) ──────────────
@@ -565,7 +512,7 @@ const textSelectionHook = {
 
             if (isDuplicateError) {
               // Find the overlapping highlight from the local cache
-              const overlapping = (window.__highlightsCache || []).find(
+              const overlapping = nodeHighlights(this.mudgId, this.nodeId).find(
                 (h) =>
                   h.node_id === this.nodeId &&
                   h.selection_start < offsets.end &&

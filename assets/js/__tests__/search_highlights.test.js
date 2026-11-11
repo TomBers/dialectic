@@ -2,6 +2,7 @@ import {afterEach, describe, expect, it, vi} from "vitest";
 import SearchHighlights, {searchMatchRanges} from "../search_highlights.js";
 
 afterEach(() => {
+  vi.restoreAllMocks();
   vi.unstubAllGlobals();
   document.body.innerHTML = "";
 });
@@ -78,4 +79,40 @@ describe("temporary search matches", () => {
     expect(document.querySelector("[data-reader-prompt-opening]").contains(ranges[0].startContainer)).toBe(true);
   });
 
+});
+
+describe("search index lifecycle", () => {
+  it("reuses text across term changes, ignores other answers, and refreshes changed content", async () => {
+    vi.stubGlobal("CSS", {highlights: new Map()});
+    vi.stubGlobal("Highlight", Set);
+    vi.stubGlobal("requestAnimationFrame", callback => {callback(); return 1;});
+    vi.stubGlobal("cancelAnimationFrame", () => {});
+    document.body.innerHTML = `<section id="flow" data-search-node-id="1" data-search-terms='["alpha"]'>
+      <article id="reading-node-1"><h2 class="reader-heading">Alpha beta</h2></article>
+      <article id="reading-node-2"><h2 class="reader-heading">Other answer</h2></article>
+    </section>`;
+    const hook = {...SearchHighlights, el: document.getElementById("flow")};
+    const walker = vi.spyOn(document, "createTreeWalker");
+    hook.mounted();
+    try {
+      expect([...CSS.highlights.get("reader-search-matches")][0].toString()).toBe("Alpha");
+      const heading = document.querySelector("#reading-node-1 h2");
+      const walks = () => walker.mock.calls.filter(([root]) => root === heading).length;
+      const initialWalks = walks();
+      hook.el.dataset.searchTerms = '["beta"]';
+      hook.updated();
+      expect([...CSS.highlights.get("reader-search-matches")][0].toString()).toBe("beta");
+      expect(walks()).toBe(initialWalks);
+      document.querySelector("#reading-node-2 h2").textContent = "Unrelated update";
+      await Promise.resolve();
+      expect(walks()).toBe(initialWalks);
+      document.querySelector("#reading-node-1 h2").textContent = "A new beta";
+      await Promise.resolve();
+      expect([...CSS.highlights.get("reader-search-matches")][0].toString()).toBe("beta");
+      expect(walks()).toBeGreaterThan(initialWalks);
+      document.querySelector("#reading-node-1 h2").firstChild.data = "Beta edited again";
+      hook.updated();
+      expect([...CSS.highlights.get("reader-search-matches")][0].toString()).toBe("Beta");
+    } finally { hook.destroyed(); }
+  });
 });

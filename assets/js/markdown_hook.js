@@ -19,8 +19,29 @@
 
 import { marked } from "marked";
 import DOMPurify from "dompurify";
-import { renderToString } from "katex";
+import { loadMathStyles } from "./math_styles.js";
 import { extractTitle, hashTitle as hashString } from "./title_utils.js";
+let renderToString;
+let mathRenderer;
+
+function loadMathRenderer() {
+  if (!mathRenderer) {
+    mathRenderer = Promise.all([import("katex"), loadMathStyles()]).then(([module]) => {
+      renderToString = module.renderToString;
+    }).catch(error => {
+      mathRenderer = null;
+      throw error;
+    });
+  }
+  return mathRenderer;
+}
+
+function renderMath(token) {
+  if (renderToString) {
+    return renderToString(token.text, {displayMode: token.displayMode, throwOnError: false});
+  }
+  return token.raw.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
 
 const katexPlugin = {
   extensions: [
@@ -43,10 +64,7 @@ const katexPlugin = {
         }
       },
       renderer(token) {
-        return renderToString(token.text, {
-          displayMode: true,
-          throwOnError: false,
-        });
+        return renderMath(token);
       },
     },
     {
@@ -68,10 +86,7 @@ const katexPlugin = {
         }
       },
       renderer(token) {
-        return renderToString(token.text, {
-          displayMode: false,
-          throwOnError: false,
-        });
+        return renderMath(token);
       },
     },
   ],
@@ -888,6 +903,15 @@ function renderMdInto(el, askQuestion) {
     md = md.slice(0, truncate) + "…";
   }
 
+  const hasMath = /\$\$[\s\S]+?\$\$|\$[^$\n]+?\$/.test(md);
+  if (hasMath && !renderToString && !el.__mathPending) {
+    el.__mathPending = loadMathRenderer().then(() => {
+      if (el.isConnected && !el.__markdownDestroyed) renderMdInto(el, askQuestion);
+    }).catch(error => {
+      console.warn("Math rendering is unavailable; leaving readable source text", error);
+    }).finally(() => { el.__mathPending = null; });
+  }
+
   // Use a per-element cache to avoid unnecessary DOM churn
   const existingFollowUpQuestions =
     el.getAttribute("data-existing-follow-up-questions") || "[]";
@@ -900,6 +924,7 @@ function renderMdInto(el, askQuestion) {
       existingFollowUpQuestions +
       "|GROUNDING|" +
       groundingSource +
+      (hasMath && renderToString ? "|MATH_READY|" : "") +
       "|ENHANCE_FOLLOW_UPS|" +
       enhanceFollowUpQuestionsEnabled,
   );
@@ -943,6 +968,7 @@ function renderMdInto(el, askQuestion) {
 
 const Markdown = {
   mounted() {
+    this.el.__markdownDestroyed = false;
     renderMdInto(this.el, (question) => {
       return new Promise((resolve) => {
         const params = { vertex: { content: question } };
@@ -959,6 +985,9 @@ const Markdown = {
         this.pushEvent("reply-and-answer", params, resolve);
       });
     });
+  },
+  destroyed() {
+    this.el.__markdownDestroyed = true;
   },
 };
 

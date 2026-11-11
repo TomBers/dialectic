@@ -80,7 +80,19 @@ defmodule DialecticWeb.SharedComposerTest do
              "#selection-input-form-selection-actions #selection-tools-popover-selection-actions[hidden]"
            )
 
-    for action <- ~w(highlight explain pros-cons related) do
+    for action <- ~w(highlight explain) do
+      assert has_element?(
+               view,
+               "#selection-input-form-selection-actions-primary-actions #selection-action-#{action}-selection-actions[type='button']"
+             )
+
+      refute has_element?(
+               view,
+               "#selection-tools-popover-selection-actions #selection-action-#{action}-selection-actions"
+             )
+    end
+
+    for action <- ~w(pros-cons related) do
       assert has_element?(
                view,
                "#selection-input-form-selection-actions-tools-toolbar #selection-action-#{action}-selection-actions"
@@ -267,10 +279,15 @@ defmodule DialecticWeb.SharedComposerTest do
                "#selection-input-form-selection-actions #selection-tools-popover-selection-actions[role='group'][hidden]:not([popover])"
              )
 
-      for action <- ~w(highlight explain pros-cons related) do
+      for {action, area} <- [
+            {"highlight", "primary-actions"},
+            {"explain", "primary-actions"},
+            {"pros-cons", "tools-toolbar"},
+            {"related", "tools-toolbar"}
+          ] do
         assert has_element?(
                  view,
-                 "#selection-input-form-selection-actions-tools-toolbar #selection-action-#{action}-selection-actions"
+                 "#selection-input-form-selection-actions-#{area} #selection-action-#{action}-selection-actions"
                )
       end
     end

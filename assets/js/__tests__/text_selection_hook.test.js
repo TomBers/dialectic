@@ -51,3 +51,16 @@ describe("TextSelectionHook highlight scrolling", () => {
     });
   });
 });
+
+describe("nested text selection containers", () => {
+  it("routes a selection to its nearest container", () => {
+    document.body.innerHTML = '<div id="outer" phx-hook="TextSelectionHook"><div id="inner" phx-hook="TextSelectionHook"><strong>Selected passage</strong></div></div>';
+    const range = document.createRange();
+    range.selectNodeContents(document.querySelector("#inner strong"));
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    expect(TextSelectionHook.isClosestSelectionContainer.call({el: document.getElementById("inner")})).toBe(true);
+    expect(TextSelectionHook.isClosestSelectionContainer.call({el: document.getElementById("outer")})).toBe(false);
+    window.getSelection().removeAllRanges();
+  });
+});

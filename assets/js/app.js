@@ -23,8 +23,9 @@ import { initAuthReturn } from "./auth_return.js";
 import NewGridDraft from "./new_grid_draft_hook.js";
 import textSelectionHook from "./text_selection_hook.js";
 import SelectionActionsHook from "./selection_actions_hook.js";
-import graphHook from "./graph_hook.js";
+import graphHook from "./lazy_graph_hook.js";
 import highlightNodeHook from "./highlight_node_hook.js";
+import { retainHighlights } from "./highlight_cache.js";
 import storyReadabilityHook from "./story_readability_hook.js";
 import listDetectionHook from "./list_detection_hook.js";
 import ScrollResetHook from "./scroll_reset_hook.js";
@@ -275,6 +276,7 @@ hooks.PasswordToggle = {
 
 hooks.GraphLayout = {
   mounted() {
+    this._releaseHighlights = retainHighlights(this.el.dataset.graphId);
     this.activePanelId = null;
     this.activePanelSection = null;
     this._drawerNavigation = createDrawerNavigation(this.el, (id) => {
@@ -788,6 +790,7 @@ hooks.GraphLayout = {
     this._focusAskInputFromUrl();
   },
   destroyed() {
+    this._releaseHighlights?.();
     this._drawerNavigation?.destroy();
     this._mobileOutlineFocus?.destroy();
     if (this._mobileOutlineCloseTimer) {
