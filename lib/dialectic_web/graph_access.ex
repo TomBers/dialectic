@@ -49,7 +49,7 @@ defmodule DialecticWeb.GraphAccess do
          end
 
        _message, socket ->
-         {:cont, socket}
+         refresh(socket)
      end)}
   end
 

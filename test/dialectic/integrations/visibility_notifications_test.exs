@@ -7,7 +7,13 @@ defmodule Dialectic.Integrations.VisibilityNotificationsTest do
 
   setup do
     user = user_fixture()
-    {:ok, graph} = ChatGrids.create(user, grid_draft())
+
+    {:ok, graph} =
+      ChatGrids.create(
+        user,
+        Map.put(grid_draft(), "title", "Visibility #{System.unique_integer([:positive])}")
+      )
+
     Phoenix.PubSub.subscribe(Dialectic.PubSub, "graph_update:#{graph.title}")
     %{user: user, graph: graph}
   end
@@ -41,7 +47,7 @@ defmodule Dialectic.Integrations.VisibilityNotificationsTest do
   } do
     assert {:error, :aborted} =
              Repo.transact(fn ->
-               assert {:ok, _} = GridVisibility.change(graph, user, true)
+               assert {:ok, _} = GridVisibility.change(graph, user, false)
                assert length(notification_jobs()) == 1
                refute_received {:graph_access_updated, _}
                Repo.rollback(:aborted)

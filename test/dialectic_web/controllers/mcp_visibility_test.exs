@@ -11,7 +11,12 @@ defmodule DialecticWeb.McpVisibilityTest do
 
   setup %{conn: conn} do
     user = user_fixture()
-    {:ok, grid} = ChatGrids.create(user, grid_draft())
+
+    {:ok, grid} =
+      ChatGrids.create(
+        user,
+        Map.put(grid_draft(), "title", "Visibility #{System.unique_integer([:positive])}")
+      )
 
     api =
       put_req_header(
@@ -212,7 +217,20 @@ defmodule DialecticWeb.McpVisibilityTest do
     })
 
     path = ~p"/api/mcp/grids/#{grid.slug}/export"
+
+    operation =
+      Repo.insert!(%GridAction{
+        user_id: grid.user_id,
+        graph_title: grid.title,
+        request_id: Ecto.UUID.generate(),
+        node_id: "52",
+        parent_node_id: "1",
+        action: "clarify",
+        status: "queued"
+      })
+
     first = api |> get(path, revision: 1) |> json_response(200)
+    operation |> Ecto.Changeset.change(status: "failed") |> Repo.update!()
     assert length(first["nodes"]) == 50
     assert first["final_content_hash"] == nil
 
@@ -226,5 +244,81 @@ defmodule DialecticWeb.McpVisibilityTest do
     assert second["next_cursor"] == nil
     assert Enum.find(second["nodes"], &(&1["id"] == "52"))["parent_node_ids"] == ["1", "2"]
     assert api |> get(path, revision: 2, cursor: first["next_cursor"]) |> json_response(409)
+  end
+
+  test "publication rejects unsaved live edits and deferred saves until the reviewed revision is current",
+       %{user: user, grid: grid} do
+    alias Dialectic.Integrations.GridVisibility
+    GraphManager.get_graph(grid.title)
+    GraphManager.set_node_content(grid.title, "1", "A newer private edit")
+
+    params = %{
+      "request_id" => Ecto.UUID.generate(),
+      "visibility" => "public",
+      "expected_revision" => grid.data_revision
+    }
+
+    assert {:error, :stale} = GridVisibility.set(user, grid.slug, params)
+    assert {:error, :stale} = Graphs.set_graph_public(grid, user, true)
+    refute Repo.reload!(grid).is_public
+    refute Repo.get_by(GridAction, request_id: params["request_id"])
+
+    {:ok, job} = GraphManager.save_graph(grid.title)
+    assert {:error, :stale} = GridVisibility.set(user, grid.slug, params)
+    assert :ok = Dialectic.DbActions.DbWorker.perform(job)
+    saved = Repo.reload!(grid)
+    assert saved.data_revision > grid.data_revision
+    assert {:error, :stale} = GridVisibility.set(user, grid.slug, params)
+    params = %{params | "expected_revision" => saved.data_revision}
+    assert {:ok, receipt} = GridVisibility.set(user, grid.slug, params)
+    assert receipt.result_revision == saved.data_revision
+  end
+
+  test "inactive or pruned coordinators do not block publication", %{user: user, grid: grid} do
+    alias Dialectic.Integrations.{Exploration, GridVisibility}
+
+    for terminal <- ["cancelled", "discarded", "completed", "pruned"] do
+      {:ok, _} = GridVisibility.change(grid, user, false)
+      job = %{} |> Oban.Job.new(worker: Dialectic.Workers.ExplorationWorker) |> Repo.insert!()
+
+      exploration =
+        Repo.insert!(%Exploration{
+          user_id: user.id,
+          graph_title: grid.title,
+          request_id: Ecto.UUID.generate(),
+          coordinator_job_id: job.id,
+          stage: "testing"
+        })
+
+      params = %{
+        "request_id" => Ecto.UUID.generate(),
+        "visibility" => "public",
+        "expected_revision" => grid.data_revision
+      }
+
+      assert {:error, :generation_in_progress} = GridVisibility.set(user, grid.slug, params)
+
+      if terminal == "pruned",
+        do: Repo.delete!(job),
+        else: job |> Ecto.Changeset.change(state: terminal) |> Repo.update!()
+
+      assert {:ok, _} = GridVisibility.set(user, grid.slug, params)
+      Repo.delete!(exploration)
+    end
+  end
+
+  test "owned listing reports the persisted visibility version", %{api: api, grid: grid} do
+    for _ <- 1..2 do
+      api
+      |> post(
+        ~p"/api/mcp/grids/#{grid.slug}/visibility",
+        %{request_id: Ecto.UUID.generate(), visibility: "private"}
+      )
+      |> json_response(200)
+    end
+
+    result = api |> get(~p"/api/mcp/grids") |> json_response(200)
+    listed = Enum.find(result["grids"], &(&1["id"] == grid.slug))
+    assert listed["visibility_version"] == 2
   end
 end

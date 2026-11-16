@@ -59,7 +59,7 @@ defmodule Dialectic.Integrations.ChatGrids do
         where: not is_nil(graph.slug),
         order_by: [asc: graph.slug],
         limit: ^(limit + 1),
-        select: struct(graph, [:title, :slug, :tags, :is_public])
+        select: struct(graph, [:title, :slug, :tags, :is_public, :visibility_version])
 
     query = if cursor, do: where(query, [graph], graph.slug > ^cursor), else: query
 

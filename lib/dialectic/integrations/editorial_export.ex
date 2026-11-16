@@ -8,7 +8,13 @@ defmodule Dialectic.Integrations.EditorialExport do
          true <- graph.user_id == user.id or graph.data_revision == revision,
          {:ok, raw, ^revision} <- GridContent.at_revision(graph, revision) do
       content = GridContent.serialize(raw, graph.title, revision)
-      hash = GridContent.content_hash(Jason.encode!(content))
+
+      stable_content = %{
+        content
+        | nodes: Enum.map(content.nodes, &Map.drop(&1, [:generation_status, :content_status]))
+      }
+
+      hash = GridContent.content_hash(Jason.encode!(stable_content))
       nodes = Enum.slice(content.nodes, offset, 50)
       ids = MapSet.new(nodes, & &1.id)
       more? = offset + 50 < length(content.nodes)

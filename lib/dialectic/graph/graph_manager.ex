@@ -31,6 +31,16 @@ defmodule GraphManager do
     GenServer.call(via_tuple(path), {:apply_mcp_action, user, params}, 30_000)
   end
 
+  def set_mcp_visibility(path, user, params) do
+    ensure_started(path)
+    GenServer.call(via_tuple(path), {:set_mcp_visibility, user, params}, 30_000)
+  end
+
+  def change_visibility(path, user, target) do
+    ensure_started(path)
+    GenServer.call(via_tuple(path), {:set_graph_public, user, target}, 30_000)
+  end
+
   def get_mcp_operation(path, user, request_id) do
     ensure_started(path)
     GenServer.call(via_tuple(path), {:get_mcp_operation, user, request_id})
@@ -166,6 +176,11 @@ defmodule GraphManager do
 
   def handle_call({:apply_mcp_action, user, params}, _from, state) do
     {reply, state} = Dialectic.Integrations.GridActions.apply_in_graph(state, user, params)
+    {:reply, reply, state}
+  end
+
+  def handle_call({:set_mcp_visibility, user, params}, _from, state) do
+    {reply, state} = Dialectic.Integrations.GridVisibility.set_in_graph(state, user, params)
     {:reply, reply, state}
   end
 
@@ -441,22 +456,59 @@ defmodule GraphManager do
 
   def handle_call({:toggle_graph_locked, user}, _from, {graph_struct, graph}) do
     case Dialectic.DbActions.Graphs.toggle_graph_locked(graph_struct, user) do
-      {:ok, updated} -> {:reply, {:ok, updated}, {updated, graph}}
-      error -> {:reply, error, {graph_struct, graph}}
+      {:ok, updated} ->
+        {:reply, {:ok, updated},
+         {%{
+            graph_struct
+            | is_public: updated.is_public,
+              visibility_version: updated.visibility_version,
+              is_locked: updated.is_locked
+          }, graph}}
+
+      error ->
+        {:reply, error, {graph_struct, graph}}
     end
   end
 
   def handle_call({:set_graph_public, user, public?}, _from, {graph_struct, graph}) do
-    case Dialectic.DbActions.Graphs.set_graph_public(graph_struct, user, public?) do
-      {:ok, updated} -> {:reply, {:ok, updated}, {updated, graph}}
-      error -> {:reply, error, {graph_struct, graph}}
+    case Dialectic.Integrations.GridVisibility.change_in_graph(
+           {graph_struct, graph},
+           graph_struct,
+           user,
+           public?
+         ) do
+      {:ok, updated} ->
+        {:reply, {:ok, updated},
+         {%{
+            graph_struct
+            | is_public: updated.is_public,
+              visibility_version: updated.visibility_version,
+              is_locked: updated.is_locked
+          }, graph}}
+
+      error ->
+        {:reply, error, {graph_struct, graph}}
     end
   end
 
   def handle_call({:toggle_graph_public, user}, _from, {graph_struct, graph}) do
-    case Dialectic.DbActions.Graphs.toggle_graph_public(graph_struct, user) do
-      {:ok, updated} -> {:reply, {:ok, updated}, {updated, graph}}
-      error -> {:reply, error, {graph_struct, graph}}
+    case Dialectic.Integrations.GridVisibility.change_in_graph(
+           {graph_struct, graph},
+           graph_struct,
+           user,
+           :toggle
+         ) do
+      {:ok, updated} ->
+        {:reply, {:ok, updated},
+         {%{
+            graph_struct
+            | is_public: updated.is_public,
+              visibility_version: updated.visibility_version,
+              is_locked: updated.is_locked
+          }, graph}}
+
+      error ->
+        {:reply, error, {graph_struct, graph}}
     end
   end
 

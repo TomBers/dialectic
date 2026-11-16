@@ -400,4 +400,23 @@ defmodule DialecticWeb.GraphAccessTest do
     assert_redirect(reader, "/")
     assert has_element?(token_reader, "#outline-layout")
   end
+
+  test "private content updates revoke anonymous sessions while notifications are queued",
+       %{conn: conn, owner: owner, graph: graph} do
+    for {path, message} <- [
+          {~p"/g/#{graph.slug}", {:other_user_change, self()}},
+          {~p"/g/#{graph.slug}/graph",
+           {:stream_chunk, %Dialectic.Graph.Vertex{id: "1", content: "private stream"}, :node_id,
+            "1"}},
+          {~p"/g/#{graph.slug}",
+           {:stream_chunk_broadcast, %Dialectic.Graph.Vertex{id: "1", content: "private stream"},
+            :node_id, "1", self()}}
+        ] do
+      {:ok, _} = Graphs.set_graph_public(graph, owner, true)
+      {:ok, reader, _} = live(conn, path)
+      {:ok, _} = Graphs.set_graph_public(graph, owner, false)
+      send(reader.pid, message)
+      assert_redirect(reader, "/")
+    end
+  end
 end

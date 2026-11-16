@@ -7,7 +7,12 @@ defmodule Dialectic.Integrations.VisibilityVerificationTest do
 
   setup do
     user = user_fixture()
-    {:ok, graph} = ChatGrids.create(user, grid_draft())
+
+    {:ok, graph} =
+      ChatGrids.create(
+        user,
+        Map.put(grid_draft(), "title", "Visibility #{System.unique_integer([:positive])}")
+      )
 
     params = %{
       "request_id" => Ecto.UUID.generate(),
