@@ -82,6 +82,8 @@ defmodule DialecticWeb do
 
   defp html_helpers do
     quote do
+      alias DialecticWeb.ThinkingTools
+      import DialecticWeb.ThinkingTools, only: [tool_link: 1]
       import DialecticWeb.Utils.TagHelpers, only: [tag_label: 1]
       alias DialecticWeb.Layouts
       # Translation

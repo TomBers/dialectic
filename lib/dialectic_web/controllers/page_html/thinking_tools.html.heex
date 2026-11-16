@@ -1,0 +1,155 @@
+<article id="thinking-tools-guide" class="mcp-page">
+  <header class="border-b border-stone-300 bg-white">
+    <div class="mcp-shell py-10 sm:py-12">
+      <p class="mcp-eyebrow">A guide to thinking with RationalGrid</p>
+      <h1 class="mcp-title mt-5 max-w-3xl">What would help you understand?</h1>
+      <p class="mt-4 max-w-2xl text-lg leading-8 text-slate-600">
+        Choose what you need below. Each direction offers one tool to start with, an example to try and other options when you need them.
+      </p>
+      <p class="mt-4 text-sm leading-7 text-slate-600">
+        Not sure where to start?
+        <.tool_link id="thinking-tools-start" tool="explain" class="font-semibold text-teal-800">
+          Try explaining the idea in your own words.
+        </.tool_link>
+      </p>
+    </div>
+  </header>
+  <div class="mcp-shell max-w-4xl py-8 sm:py-10">
+    <div id="thinking-goals" role="group" class="space-y-3" aria-label="Choose a thinking goal">
+      <details
+        :for={group <- @tool_groups}
+        id={group.id}
+        name="thinking-goal"
+        data-thinking-goal
+        class="thinking-guide-group"
+      >
+        <summary id={"thinking-goals-#{group.id}"} class="thinking-guide-summary">
+          <h2 class="flex min-w-0 flex-1 items-center gap-4">
+            <span class="mcp-icon-tile" aria-hidden="true">
+              <.icon name={group.icon} class="h-5 w-5" />
+            </span>
+            <span class="min-w-0 flex-1">
+              <span class="font-serif text-xl font-semibold sm:text-2xl">{group.title}</span>
+              <span class="mt-1 block text-sm font-normal leading-6 text-slate-600">
+                {group.question}
+              </span>
+            </span>
+            <.icon
+              name="hero-chevron-down"
+              class="thinking-guide-chevron h-5 w-5 shrink-0 text-teal-800"
+            />
+          </h2>
+        </summary>
+        <div class="border-t border-stone-200 px-5 pb-5 sm:px-6 sm:pb-6">
+          <p class="py-4 text-sm leading-7 text-slate-600">{group.description}</p>
+          <%= for {tool, index} <- Enum.with_index(group.tools) do %>
+            <p
+              :if={index == 1}
+              class="mb-2 mt-6 text-xs font-semibold uppercase tracking-wider text-slate-500"
+            >
+              Other ways to explore this question
+            </p>
+            <article
+              id={tool.key}
+              data-thinking-tool
+              tabindex="-1"
+              class={[
+                "thinking-guide-tool",
+                if(index == 0,
+                  do: "border border-teal-800/20 bg-[#edf3ef] px-4 sm:px-5",
+                  else: "border-b border-stone-200"
+                )
+              ]}
+            >
+              <details
+                id={"thinking-example-#{tool.key}"}
+                name={"thinking-tools-#{group.id}"}
+                open={index == 0}
+                class="thinking-guide-tool-disclosure"
+              >
+                <summary class="thinking-guide-summary px-0 py-4 sm:px-0">
+                  <h3 class="flex min-w-0 flex-1 items-center gap-4 font-semibold">
+                    <span class="min-w-0 flex-1">
+                      <span
+                        :if={index == 0}
+                        class="mb-1 block text-xs uppercase tracking-wider text-teal-800"
+                      >
+                        A place to start
+                      </span>
+                      {tool.label}
+                    </span>
+                    <.icon
+                      name="hero-chevron-down"
+                      class="thinking-guide-chevron h-4 w-4 shrink-0 text-teal-800"
+                    />
+                  </h3>
+                </summary>
+                <div class="space-y-4 pb-5 text-sm leading-7 text-slate-600">
+                  <p>{tool.help}</p>
+                  <div class="border-l-2 border-teal-700 pl-4">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-teal-800">
+                      Try asking
+                    </p>
+                    <blockquote class="mt-2 font-serif text-lg leading-7 text-slate-950">
+                      {tool.example}
+                    </blockquote>
+                  </div>
+                  <div>
+                    <p class="font-semibold text-slate-800">What to look for in the result</p>
+                    <p class="mt-1">{tool.insight}</p>
+                  </div>
+                  <p :if={Map.get(tool, :availability)} class="text-xs leading-6">
+                    {tool.availability}
+                  </p>
+                </div>
+              </details>
+            </article>
+          <% end %>
+        </div>
+      </details>
+    </div>
+    <section class="mt-8 border-t border-stone-300 pt-6">
+      <h2 class="font-serif text-xl font-semibold">One useful step can be enough.</h2>
+      <p class="mt-2 max-w-2xl text-sm leading-7 text-slate-600">
+        Read the result before choosing another tool. What is clearer? What still needs checking? Stop when you have something useful.
+      </p>
+      <details id="using-thinking-tools" class="mcp-disclosure mt-4">
+        <summary class="min-h-11 cursor-pointer py-3 text-sm font-semibold text-teal-800">
+          How to use these tools in the app or with an AI assistant
+        </summary>
+        <div class="grid gap-6 pb-4 pt-2 sm:grid-cols-2">
+          <div>
+            <h3 class="font-semibold">In a RationalGrid grid</h3>
+            <p class="mt-2 text-sm leading-7 text-slate-600">
+              Open <strong>Show thinking tools</strong>
+              beneath the response form, or select a passage to work on that exact point. Available tools depend on your selection and editing access.
+            </p>
+            <.link
+              id="thinking-tools-app-guide"
+              href={~p"/intro/how#guide-critical-thinking-tools"}
+              class="mcp-text-link mt-2"
+            >
+              Read the app guide
+            </.link>
+          </div>
+          <div>
+            <h3 class="font-semibold">With your AI assistant</h3>
+            <p class="mt-2 text-sm leading-7 text-slate-600">
+              Name the idea or passage and ask in ordinary language. Your connected assistant can use a tool and read its result before choosing another step.
+            </p>
+            <.link
+              id="thinking-tools-assistants"
+              href={~p"/features/ai-assistants"}
+              class="mcp-text-link mt-2"
+            >
+              Connect an AI assistant
+            </.link>
+          </div>
+        </div>
+      </details>
+      <p class="mt-4 max-w-2xl text-xs leading-6 text-slate-600">
+        AI-generated arguments and source suggestions need your judgement. Check important claims against their sources, and distinguish facts, interpretations and hypothetical cases.
+      </p>
+    </section>
+  </div>
+</article>

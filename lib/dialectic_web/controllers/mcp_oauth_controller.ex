@@ -111,9 +111,11 @@ defmodule DialecticWeb.McpOAuthController do
 
   def feature(conn, _params) do
     render(conn, :feature,
-      page_title: "Connect your AI assistant",
+      page_title: "RationalGrid MCP — Explore ideas with your AI assistant",
+      page_title_suffix: "",
+      og_image: DialecticWeb.Endpoint.url() <> ~p"/images/rationalgrid-social.png",
       page_description:
-        "Turn a question in your AI assistant into a RationalGrid exploration with connected answers, challenges and a synthesis.",
+        "Connect your AI assistant to RationalGrid. Explore questions, examine claims, save connected ideas, and share a finished grid with your permission.",
       mcp_resource: OAuth.resource()
     )
   end

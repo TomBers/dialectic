@@ -301,7 +301,8 @@
           <.icon name="hero-academic-cap" class="h-5 w-5 text-teal-800" /> Guide my thinking
         </h3>
         <p class="mt-2 text-sm leading-6 text-slate-600">
-          Want help deciding what to ask next? Select <strong>Add a learning plan</strong>
+          Want help deciding what to ask next? Select
+          <.tool_link tool="learning_plan">Add a learning plan</.tool_link>
           before asking AI. It suggests key questions to examine the idea and develop your understanding, much like a critical-thinking teacher. Suggested follow-up questions appear as buttons in both Read and Grid.
         </p>
       </div>
@@ -320,7 +321,7 @@
           id="guide-examine-heading"
           class="mt-2 font-serif text-4xl font-semibold tracking-tight"
         >
-          Use the critical-thinking tools.
+          Use the <.tool_link>critical-thinking tools</.tool_link>.
         </h2>
         <p class="mt-3 leading-7 text-slate-300">
           Below the response form, select <strong>Show thinking tools</strong>. The tools expand inline: choose a way to examine the idea or a selected passage. Start with your own question whenever you already know what you want to ask.
@@ -350,21 +351,21 @@
       </div>
 
       <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <%= for {icon, title, question, copy} <- [
-          {"hero-light-bulb", "Clarify terms", "What do we mean?", "Spot words that could mean different things."},
-          {"hero-cube-transparent", "Assumptions", "What has to be true?", "Find what the idea takes for granted."},
-          {"hero-user", "Source check", "Says who?", "Check the source, evidence, methods, funding, and uncertainty."},
-          {"hero-star", "Steel man", "What is the strongest version?", "Build the fairest case for the idea."},
-          {"hero-x-mark", "Test", "Is that always true?", "Look for examples that do not fit."},
-          {"hero-users", "Other perspectives", "Who disagrees?", "Find views the current source, community, or AI answer may leave out."},
-          {"hero-arrow-trending-up", "Implications", "If true, then what?", "See what might happen if it is true."},
-          {"hero-eye-slash", "Blind spots", "What are we missing?", "Find facts or limits that were missed."},
-          {"hero-question-mark-circle", "What if", "What could change?", "Try the idea in a different situation."}
+        <%= for {key, icon, title, question, copy} <- [
+          {"clarify", "hero-light-bulb", "Clarify terms", "What do we mean?", "Spot words that could mean different things."},
+          {"assumptions", "hero-cube-transparent", "Assumptions", "What has to be true?", "Find what the idea takes for granted."},
+          {"says_who", "hero-user", "Source check", "Says who?", "Check the source, evidence, methods, funding, and uncertainty."},
+          {"steel_man", "hero-star", "Steel man", "What is the strongest version?", "Build the fairest case for the idea."},
+          {"counterexample", "hero-x-mark", "Test", "Is that always true?", "Look for examples that do not fit."},
+          {"who_disagrees", "hero-users", "Other perspectives", "Who disagrees?", "Find views the current source, community, or AI answer may leave out."},
+          {"implications", "hero-arrow-trending-up", "Implications", "If true, then what?", "See what might happen if it is true."},
+          {"blind_spots", "hero-eye-slash", "Blind spots", "What are we missing?", "Find facts or limits that were missed."},
+          {"what_if", "hero-question-mark-circle", "What if", "What could change?", "Try the idea in a different situation."}
         ] do %>
           <article class="border-l-2 border-teal-300 bg-white/[0.06] p-4">
             <div class="flex items-center gap-2">
               <.icon name={icon} class="h-5 w-5 shrink-0 text-teal-300" />
-              <h3 class="text-sm font-semibold">{title}</h3>
+              <h3 class="text-sm font-semibold"><.tool_link tool={key}>{title}</.tool_link></h3>
             </div>
             <p class="mt-0.5 text-xs font-medium text-teal-200">{question}</p>
             <p class="mt-1 text-xs leading-5 text-slate-300">{copy}</p>
@@ -396,7 +397,7 @@
         <div>
           <h3 class="font-serif text-xl font-semibold">Bring two ideas together.</h3>
           <p class="mt-1 max-w-3xl text-sm leading-6 text-slate-300">
-            Choose <strong class="text-white">Synthesis</strong>
+            Choose <.tool_link tool="synthesis" class="text-white">Synthesis</.tool_link>
             from the thinking tools, then select a second idea. RationalGrid creates a synthesis while keeping both original paths attached.
           </p>
         </div>

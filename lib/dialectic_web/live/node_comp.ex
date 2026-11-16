@@ -368,10 +368,16 @@ defmodule DialecticWeb.NodeComp do
                           if(origin_meta?, do: "text-teal-200", else: "text-teal-900")
                         ]}
                       >
-                        {if(origin_meta?,
-                          do: "Starting question",
-                          else: DialecticWeb.ColUtils.node_type_label(@node.class)
-                        )}
+                        <%= if !origin_meta? && ThinkingTools.key(@node.class) do %>
+                          <.tool_link tool={@node.class} new_tab>{DialecticWeb.ColUtils.node_type_label(
+                            @node.class
+                          )}</.tool_link>
+                        <% else %>
+                          {if(origin_meta?,
+                            do: "Starting question",
+                            else: DialecticWeb.ColUtils.node_type_label(@node.class)
+                          )}
+                        <% end %>
                       </p>
                       <DialecticWeb.NodeReadingTools.node_actions
                         prefix="graph"

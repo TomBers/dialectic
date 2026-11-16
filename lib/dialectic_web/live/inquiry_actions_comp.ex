@@ -4,78 +4,6 @@ defmodule DialecticWeb.InquiryActionsComp do
 
   alias DialecticWeb.ColUtils
 
-  @critical_tool_sections [
-    %{
-      title: "Understand",
-      tools: [
-        %{
-          key: "clarify",
-          icon: ColUtils.advanced_tool_icon("clarify"),
-          label: "Clarify Terms",
-          blurb: ColUtils.advanced_tool_description("clarify")
-        },
-        %{
-          key: "assumptions",
-          icon: ColUtils.advanced_tool_icon("assumptions"),
-          label: "Assumptions",
-          blurb: ColUtils.advanced_tool_description("assumptions")
-        },
-        %{
-          key: "says_who",
-          icon: ColUtils.advanced_tool_icon("says_who"),
-          label: "Source Check",
-          blurb: ColUtils.advanced_tool_description("says_who")
-        },
-        %{
-          key: "steel_man",
-          icon: ColUtils.advanced_tool_icon("steel_man"),
-          label: "Steel Man",
-          blurb: ColUtils.advanced_tool_description("steel_man")
-        }
-      ]
-    },
-    %{
-      title: "Challenge",
-      tools: [
-        %{
-          key: "counterexample",
-          icon: ColUtils.advanced_tool_icon("counterexample"),
-          label: "Test",
-          blurb: ColUtils.advanced_tool_description("counterexample")
-        },
-        %{
-          key: "who_disagrees",
-          icon: ColUtils.advanced_tool_icon("who_disagrees"),
-          label: "Other Perspectives",
-          blurb: ColUtils.advanced_tool_description("who_disagrees")
-        }
-      ]
-    },
-    %{
-      title: "Expand",
-      tools: [
-        %{
-          key: "implications",
-          icon: ColUtils.advanced_tool_icon("implications"),
-          label: "Implications",
-          blurb: ColUtils.advanced_tool_description("implications")
-        },
-        %{
-          key: "blind_spots",
-          icon: ColUtils.advanced_tool_icon("blind_spots"),
-          label: "Blind Spots",
-          blurb: ColUtils.advanced_tool_description("blind_spots")
-        },
-        %{
-          key: "what_if",
-          icon: ColUtils.advanced_tool_icon("what_if"),
-          label: "What If",
-          blurb: ColUtils.advanced_tool_description("what_if")
-        }
-      ]
-    }
-  ]
-
   @impl true
   def update(assigns, socket) do
     {:ok,
@@ -105,7 +33,7 @@ defmodule DialecticWeb.InquiryActionsComp do
 
   @impl true
   def render(assigns) do
-    assigns = assign(assigns, :critical_tool_sections, @critical_tool_sections)
+    assigns = assign(assigns, :critical_tool_sections, ThinkingTools.action_sections())
 
     ~H"""
     <div id={"#{@id}-content"} class="min-w-0">
@@ -347,52 +275,65 @@ defmodule DialecticWeb.InquiryActionsComp do
       |> assign_new(:compact, fn -> false end)
       |> assign_new(:pressed, fn -> nil end)
       |> assign_new(:rest, fn -> %{} end)
+      |> assign(:guide_key, ThinkingTools.key(assigns.tone))
 
     ~H"""
-    <button
-      id={@id}
-      type="button"
-      phx-click={@event}
-      phx-value-id={@node_id}
-      aria-pressed={if(is_boolean(@pressed), do: to_string(@pressed))}
-      aria-keyshortcuts={@shortcut && "Alt+Shift+#{String.upcase(@shortcut)}"}
-      data-selection-action={@selection_action}
-      data-reader-shortcut={@shortcut}
-      data-disable-if-links={@disable_if_links}
-      data-disable-if-highlight={@disable_if_highlight}
-      disabled={@disabled}
-      {@rest}
-      class={[
-        "group/tool flex min-h-11 min-w-0 rounded-lg border bg-white text-left text-slate-950 transition duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 disabled:cursor-not-allowed disabled:opacity-50",
-        if(@compact,
-          do:
-            "inquiry-tool-compact aria-pressed:border-amber-800 aria-pressed:bg-amber-100 items-center gap-2 border-stone-300 py-1.5 pl-1.5 pr-3 hover:border-teal-700 hover:bg-stone-50",
-          else:
-            "w-full items-start gap-3 border-stone-300 p-2.5 hover:border-teal-700 hover:bg-stone-50"
-        )
-      ]}
-    >
-      <span class={[
-        "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg",
-        ColUtils.tool_color_class(@tone)
-      ]}>
-        <.icon name={@icon} class="h-4 w-4" />
-      </span>
-      <span class={[
-        "min-w-0 flex-1",
-        @compact && !@description && "flex items-center justify-between gap-2"
-      ]}>
-        <span data-tool-label class="block min-w-0 text-[13px] font-medium leading-5">{@label}</span>
-        <.shortcut_keycap
-          :if={@compact && @shortcut}
-          key={@shortcut}
-          modifier="alt"
-          shift
-        />
-        <span :if={@description} class="mt-0.5 block text-xs leading-4 text-slate-700">{@description}</span>
-      </span>
-      <.shortcut_keycap :if={!@compact && @shortcut} key={@shortcut} modifier="alt" shift quiet />
-    </button>
+    <div class="flex min-w-0 items-stretch gap-1">
+      <button
+        id={@id}
+        type="button"
+        phx-click={@event}
+        phx-value-id={@node_id}
+        aria-pressed={if(is_boolean(@pressed), do: to_string(@pressed))}
+        aria-keyshortcuts={@shortcut && "Alt+Shift+#{String.upcase(@shortcut)}"}
+        data-selection-action={@selection_action}
+        data-reader-shortcut={@shortcut}
+        data-disable-if-links={@disable_if_links}
+        data-disable-if-highlight={@disable_if_highlight}
+        disabled={@disabled}
+        {@rest}
+        class={[
+          "group/tool flex flex-1 min-h-11 min-w-0 rounded-lg border bg-white text-left text-slate-950 transition duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 disabled:cursor-not-allowed disabled:opacity-50",
+          if(@compact,
+            do:
+              "inquiry-tool-compact aria-pressed:border-amber-800 aria-pressed:bg-amber-100 items-center gap-2 border-stone-300 py-1.5 pl-1.5 pr-3 hover:border-teal-700 hover:bg-stone-50",
+            else:
+              "w-full items-start gap-3 border-stone-300 p-2.5 hover:border-teal-700 hover:bg-stone-50"
+          )
+        ]}
+      >
+        <span class={[
+          "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg",
+          ColUtils.tool_color_class(@tone)
+        ]}>
+          <.icon name={@icon} class="h-4 w-4" />
+        </span>
+        <span class={[
+          "min-w-0 flex-1",
+          @compact && !@description && "flex items-center justify-between gap-2"
+        ]}>
+          <span data-tool-label class="block min-w-0 text-[13px] font-medium leading-5">{@label}</span>
+          <.shortcut_keycap
+            :if={@compact && @shortcut}
+            key={@shortcut}
+            modifier="alt"
+            shift
+          />
+          <span :if={@description} class="mt-0.5 block text-xs leading-4 text-slate-700">{@description}</span>
+        </span>
+        <.shortcut_keycap :if={!@compact && @shortcut} key={@shortcut} modifier="alt" shift quiet />
+      </button>
+      <.tool_link
+        :if={@guide_key}
+        id={"thinking-guide-#{@id}"}
+        tool={@guide_key}
+        new_tab
+        class="inline-flex min-h-11 w-8 shrink-0 items-center justify-center text-slate-500 hover:text-teal-800"
+      >
+        <span aria-hidden="true"><.icon name="hero-question-mark-circle" class="h-4 w-4" /></span>
+        <span class="sr-only">About {@label}</span>
+      </.tool_link>
+    </div>
     """
   end
 

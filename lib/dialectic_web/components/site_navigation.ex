@@ -156,6 +156,13 @@ defmodule DialecticWeb.SiteNavigation do
               active={@active_path == "/intro/how"}
             />
             <.account_link
+              id="account-thinking-tools-link"
+              href={~p"/features/thinking-tools"}
+              label="Thinking tools"
+              icon="hero-light-bulb"
+              active={@active_path == "/features/thinking-tools"}
+            />
+            <.account_link
               id="account-about-link"
               href={~p"/about"}
               label="About"

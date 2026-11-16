@@ -384,6 +384,11 @@ defmodule DialecticWeb.HomeLive do
               </summary>
               <p class="mt-3 w-full text-sm leading-6 text-slate-300">
                 {faq.answer}
+                <.tool_link
+                  :if={faq.id == "thinking-tools"}
+                  id="home-thinking-tools-guide"
+                  class="ml-1 font-semibold text-teal-200"
+                >Explore the tools by learning goal.</.tool_link>
                 <%= if Map.get(faq, :notion_obsidian_link?, false) do %>
                   <.link
                     id="home-faq-notion-obsidian-link"
@@ -409,7 +414,7 @@ defmodule DialecticWeb.HomeLive do
           </p>
           <h2 class="text-3xl font-semibold">Turn a chat question into a grid you can build on.</h2>
           <p class="max-w-2xl text-lg">
-            Ask your assistant to explore with RationalGrid. Read an idea, examine a passage or follow a learning plan. Keep useful branches connected and come back to develop your thinking.
+            Ask your assistant to explore with RationalGrid. Read an idea, examine a passage or follow a <.tool_link tool="learning_plan">learning plan</.tool_link>. Keep useful branches connected and come back to develop your thinking.
           </p>
           <.link
             id="home-ai-assistants-link"

@@ -191,7 +191,11 @@
                 <td class="bg-teal-50 px-5 py-4 align-top font-medium text-slate-800">
                   <span class="flex gap-2.5">
                     <.icon name="hero-check-circle" class="mt-0.5 h-5 w-5 shrink-0 text-teal-700" />
-                    <span>{grid}</span>
+                    <span><%= if feature == "Get unstuck" do %>
+                      Ask from the exact sticking point, use a <.tool_link>critical-thinking tool</.tool_link>, or branch without losing context.
+                    <% else %>
+                      {grid}
+                    <% end %></span>
                   </span>
                 </td>
               </tr>
