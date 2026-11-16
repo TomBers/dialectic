@@ -30,6 +30,18 @@ defmodule DialecticWeb.McpGridController do
     |> action_response(conn)
   end
 
+  def export(conn, %{"slug" => slug} = params) do
+    conn.assigns.mcp_user
+    |> Dialectic.Integrations.EditorialExport.read(slug, params)
+    |> action_response(conn)
+  end
+
+  def visibility(conn, %{"slug" => slug} = params) do
+    conn.assigns.mcp_user
+    |> Dialectic.Integrations.GridVisibility.set(slug, params)
+    |> action_response(conn)
+  end
+
   def operation(conn, %{"request_id" => request_id}) do
     conn.assigns.mcp_user
     |> GridActions.get_operation(request_id)
@@ -73,6 +85,9 @@ defmodule DialecticWeb.McpGridController do
       {:ok, %{graph: graph} = result} ->
         json(conn, result |> Map.delete(:graph) |> Map.put(:grid, metadata(graph)))
 
+      {:ok, result} ->
+        json(conn, result)
+
       {:error, reason} ->
         {status, message} = action_error(reason)
         error_response(conn, status, reason, message)
@@ -101,6 +116,9 @@ defmodule DialecticWeb.McpGridController do
     do:
       {:unprocessable_entity,
        "Choose comment to save text only, or question to generate an AI answer"}
+
+  defp action_error(:stale_snapshot),
+    do: {:conflict, "This snapshot is unavailable or the cursor belongs to a different revision."}
 
   defp action_error(:stale),
     do: {:conflict, "The live grid is behind its saved version; reopen it before retrying"}
@@ -338,6 +356,8 @@ defmodule DialecticWeb.McpGridController do
   defp authenticate(conn, _opts) do
     scope =
       case action_name(conn) do
+        :export -> "grids:read"
+        :visibility -> "grids:visibility"
         :create -> "grids:create"
         :start_exploration -> "grids:create"
         :guided_exploration -> "grids:create grids:read"
@@ -385,6 +405,7 @@ defmodule DialecticWeb.McpGridController do
       title: graph.title,
       url: url(~p"/g/#{graph.slug}"),
       tags: graph.tags || [],
+      visibility_version: graph.visibility_version,
       visibility: if(graph.is_public, do: "public", else: "private")
     }
 end

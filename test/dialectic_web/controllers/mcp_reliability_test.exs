@@ -195,7 +195,9 @@ defmodule DialecticWeb.McpReliabilityTest do
     assert caps["max_active_generations"] == 3
     assert caps["generation_burst_limit"] == 10
     assert caps["suggested_poll_interval_seconds"] == 3
-    refute caps["publication_supported"]
+    assert caps["publication_supported"]
+    refute caps["deferred_publication_supported"]
+    assert caps["editorial_export_supported"]
     assert caps["revision_bound_reads_supported"]
     assert GridContent.content_status("", "queued") == "placeholder"
     assert GridContent.content_status("", "completed") == "completed_empty"

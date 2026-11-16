@@ -69,9 +69,11 @@ defmodule DialecticWeb.Router do
     post "/api/mcp/explorations/guided", McpGridController, :guided_exploration, log: false
     get "/api/mcp/grids", McpGridController, :index
     get "/api/mcp/operations/:request_id", McpGridController, :operation
+    post "/api/mcp/grids/:slug/visibility", McpGridController, :visibility, log: false
     post "/api/mcp/grids/:slug/actions", McpGridController, :apply_action, log: false
     post "/api/mcp/grids/:slug/nodes", McpGridController, :add_idea, log: false
     get "/api/mcp/grids/:slug/nodes/:node_id", McpGridController, :node
+    get "/api/mcp/grids/:slug/export", McpGridController, :export
     get "/api/mcp/grids/:slug", McpGridController, :show
   end
 

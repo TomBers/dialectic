@@ -43,11 +43,25 @@ defmodule DialecticWeb.McpOAuthHTML do
                 </p>
               </div>
             </li>
+            <li
+              :if={"grids:visibility" in @scopes}
+              id="mcp-visibility-permission"
+              class="flex gap-4 py-5"
+            >
+              <span class="mcp-icon-tile"><.icon name="hero-globe-alt" class="h-5 w-5" /></span>
+              <div class="min-w-0">
+                <h2 class="font-semibold">Change visibility of your grids</h2>
+                <p class="mt-1 text-sm leading-6 text-slate-600">
+                  Make grids you own public or private when you request publication automation.
+                  Public content can be read and copied by anyone. Making it private cannot recall copies.
+                </p>
+              </div>
+            </li>
           </ul>
           <div class="mt-1 flex gap-3 border border-teal-100 bg-teal-50/70 p-4 text-sm leading-6 text-teal-950">
             <.icon name="hero-shield-check" class="mt-0.5 h-5 w-5 shrink-0 text-teal-800" />
             <p>
-              This connection cannot overwrite existing nodes, delete grids, or change their visibility. The app can renew access for up to 30 days. You can disconnect it at any time.
+              This connection cannot overwrite existing nodes or delete grids. Visibility changes require the separate permission listed above. The app can renew access for up to 30 days. You can disconnect it at any time.
             </p>
           </div>
           <.form for={@form} id="mcp-consent-form" action={~p"/oauth/authorize"}>

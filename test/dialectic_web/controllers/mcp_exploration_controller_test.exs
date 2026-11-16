@@ -101,7 +101,11 @@ defmodule DialecticWeb.McpExplorationControllerTest do
     results = first["grids"] ++ second["grids"]
     assert Enum.map(results, & &1["id"]) == owned |> Enum.map(& &1.slug) |> Enum.sort()
     assert Enum.find(results, &(&1["id"] == public_graph.slug))["visibility"] == "public"
-    assert Enum.all?(results, &(Map.keys(&1) |> Enum.sort() == ~w(id tags title url visibility)))
+
+    assert Enum.all?(
+             results,
+             &(Map.keys(&1) |> Enum.sort() == ~w(id tags title url visibility visibility_version))
+           )
 
     filtered = read_conn |> get(~p"/api/mcp/grids", %{query: "100%"}) |> json_response(200)
     assert [%{"title" => "A 100% model"}] = filtered["grids"]

@@ -370,6 +370,7 @@ defmodule DialecticWeb.GraphAccessTest do
     {:ok, owner_view, _html} = live(log_in_user(conn, owner), ~p"/g/#{graph.slug}/graph")
 
     render_click(owner_view, "toggle_public_graph")
+    assert %{success: 1} = Oban.drain_queue(queue: :db_write)
 
     assert_redirect(reader, "/")
     assert_redirect(editor, "/")
@@ -388,6 +389,7 @@ defmodule DialecticWeb.GraphAccessTest do
     {:ok, token_reader, _html} = live(conn, ~p"/g/#{graph.slug}?token=#{graph.share_token}")
 
     assert {:ok, _graph} = Graphs.toggle_graph_public(graph, owner)
+    assert %{success: 1} = Oban.drain_queue(queue: :db_write)
 
     assert has_element?(reader, "#outline-layout")
     assert has_element?(token_reader, "#outline-layout")
