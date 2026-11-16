@@ -111,7 +111,7 @@ defmodule DialecticWeb.AboutLive do
               </div>
               <div class="grid gap-1 px-4 py-3 sm:grid-cols-[13rem_1fr]">
                 <dt class="font-semibold">Core offering</dt><dd>
-                  AI workshop with thinking tools, shared grids, and My Learning to organise your work
+                  AI workshop with <.tool_link>thinking tools</.tool_link>, shared grids, and My Learning to organise your work
                 </dd>
               </div>
               <div class="grid gap-1 px-4 py-3 sm:grid-cols-[13rem_1fr]">

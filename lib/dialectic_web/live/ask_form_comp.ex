@@ -250,7 +250,10 @@ defmodule DialecticWeb.AskFormComp do
             <span class="text-xs font-normal text-slate-600">Optional</span>
           </h3>
           <p id={"#{@id}-learning-description"} class="mt-1 text-xs leading-5 text-slate-600">
-            Get key questions to explore next, helping you examine the idea and develop your understanding.
+            Get key questions to explore next, helping you examine the idea and develop your understanding. <.tool_link
+              tool="learning_plan"
+              new_tab
+            >How learning plans help</.tool_link>.
           </p>
           <%= if @current_user do %>
             <.input
@@ -285,6 +288,9 @@ defmodule DialecticWeb.AskFormComp do
           id={"#{@id}-thinking-tools"}
           class="mt-4 border-t border-stone-300 pt-3"
         >
+          <p class="mb-2 text-xs leading-6 text-slate-600">
+            <.tool_link id={"#{@id}-thinking-tools-guide"} new_tab>Choose a thinking tool by what you want to understand</.tool_link>
+          </p>
           <div id={"#{@id}-more-tools-row"}>
             <button
               id={@tools_button_id}

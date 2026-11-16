@@ -80,6 +80,18 @@ defmodule DialecticWeb.SharedComposerTest do
              "#selection-input-form-selection-actions #selection-tools-popover-selection-actions[hidden]"
            )
 
+    assert has_element?(
+             view,
+             "a#thinking-guide-selection-action-explain-selection-actions[href='/features/thinking-tools#explain'][target='_blank'][rel='noopener noreferrer']"
+           )
+
+    refute has_element?(view, "button a[href^='/features/thinking-tools']")
+
+    assert has_element?(
+             view,
+             "#global-chat-form-learning-description a[href='/features/thinking-tools#learning_plan']"
+           )
+
     for action <- ~w(highlight explain) do
       assert has_element?(
                view,

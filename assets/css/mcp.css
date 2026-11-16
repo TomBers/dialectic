@@ -55,4 +55,149 @@
     .mcp-page [id] {
         scroll-margin-top: 4rem;
     }
+
+    .mcp-connection-diagram {
+        @apply min-w-0 border border-teal-900/20 bg-[#edf3ef] p-5 sm:p-7;
+    }
+
+    .mcp-connection-step {
+        position: relative;
+        @apply flex items-start gap-4 border border-stone-300 bg-white p-4;
+    }
+
+    .mcp-connection-step + .mcp-connection-step::before {
+        content: "";
+        position: absolute;
+        inset-block-start: -0.8rem;
+        inset-inline-start: 2.25rem;
+        block-size: 0.8rem;
+        border-inline-start: 1px solid #0f766e;
+    }
+
+    .mcp-feature-item {
+        @apply relative min-w-0 border-t border-stone-300 py-6 pl-10;
+    }
+
+    .mcp-feature-number {
+        @apply absolute left-0 top-6 font-mono text-xs leading-7 text-teal-800;
+    }
+
+    .mcp-feature-item > p {
+        @apply mt-3 text-sm leading-7 text-slate-600;
+    }
+
+    .mcp-branch-root {
+        @apply border border-teal-700 bg-teal-50 p-4 sm:p-5;
+    }
+
+    .mcp-branch-answer {
+        position: relative;
+        @apply mt-6 border border-stone-300 bg-stone-50 p-4;
+    }
+
+    .mcp-branch-answer::before {
+        content: "";
+        position: absolute;
+        inset-block-start: -1.5rem;
+        inset-inline-start: 1.25rem;
+        block-size: 1.5rem;
+        border-inline-start: 1px solid #0f766e;
+    }
+
+    .mcp-branch-options {
+        @apply ml-5 space-y-3 border-l border-stone-400 pl-5;
+    }
+
+    .mcp-branch-options > li {
+        position: relative;
+        @apply border border-stone-300 p-4;
+    }
+
+    .mcp-branch-options > li::before {
+        content: "";
+        position: absolute;
+        inset-block-start: 1.25rem;
+        inset-inline-start: -1.25rem;
+        inline-size: 1.25rem;
+        border-block-start: 1px solid #a8a29e;
+    }
+
+    .mcp-branch-label {
+        @apply block text-xs font-semibold uppercase tracking-wider text-teal-800;
+    }
+
+    .mcp-branch-options p {
+        @apply mt-2 text-sm leading-6 text-slate-700;
+    }
+
+    .mcp-disclosure > summary::marker {
+        color: #115e59;
+    }
+
+    .mcp-disclosure > summary:focus-visible {
+        outline: 2px solid #0f766e;
+        outline-offset: 4px;
+    }
+
+    .mcp-assistant-guide > summary {
+        @apply min-h-12 cursor-pointer py-4 text-base font-semibold;
+    }
+
+    .mcp-reference-summary {
+        @apply min-h-12 cursor-pointer py-5 font-semibold;
+    }
+
+    .mcp-guide-body {
+        @apply min-w-0 space-y-4 pb-6 text-sm leading-7 text-slate-600;
+    }
+
+    .mcp-guide-body ol {
+        @apply list-decimal space-y-3 pl-6;
+    }
+
+    .mcp-guide-body ul {
+        @apply list-disc space-y-3 pl-6;
+    }
+
+    .mcp-guide-body :not(pre) > code {
+        @apply break-words rounded bg-white px-1 py-0.5 text-xs text-slate-800;
+    }
+
+    .mcp-setup-code {
+        @apply max-w-full overflow-x-auto border border-stone-300 bg-white p-4 font-mono text-xs leading-6 text-slate-900;
+    }
+
+    .mcp-setup-code:focus-visible {
+        outline: 2px solid #0f766e;
+        outline-offset: 3px;
+    }
+
+    .thinking-guide-group {
+        @apply border border-stone-300 bg-white;
+    }
+
+    .thinking-guide-summary {
+        @apply flex min-h-11 cursor-pointer items-center gap-4 px-5 py-5 sm:px-6;
+        list-style: none;
+    }
+
+    .thinking-guide-summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .thinking-guide-summary:focus-visible {
+        outline: 2px solid #0f766e;
+        outline-offset: 4px;
+    }
+
+    .thinking-guide-group[open] > summary .thinking-guide-chevron,
+    .thinking-guide-tool-disclosure[open] > summary .thinking-guide-chevron {
+        transform: rotate(180deg);
+    }
+
+    .thinking-guide-tool:target {
+        outline: 2px solid #0f766e;
+        outline-offset: 4px;
+    }
+
 }

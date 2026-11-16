@@ -153,6 +153,17 @@ defmodule DialecticWeb.PageController do
     Dialectic.DbActions.Sharing.can_access?(user, graph_struct, Map.get(params, "token"))
   end
 
+  def thinking_tools(conn, _params) do
+    render(conn, :thinking_tools,
+      page_title: "Thinking tools — Build your understanding with RationalGrid",
+      page_title_suffix: "",
+      page_description:
+        "Choose tools to understand an idea, test a claim, expand your thinking, compare perspectives and connect what you learn. Practical examples for each tool.",
+      og_image: DialecticWeb.Endpoint.url() <> ~p"/images/rationalgrid-social.png",
+      tool_groups: DialecticWeb.ThinkingTools.groups()
+    )
+  end
+
   def guide(conn, _params) do
     render(conn, :how,
       page_title: "Guide to RationalGrid",

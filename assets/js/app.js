@@ -20,6 +20,8 @@ import { LiveSocket } from "phoenix_live_view";
 
 import topbar from "../vendor/topbar";
 import { initAuthReturn } from "./auth_return.js";
+import { initThinkingToolsGuide } from "./thinking_tools_guide.js";
+import { initDisclosureNavigation } from "./disclosure_navigation.js";
 import NewGridDraft from "./new_grid_draft_hook.js";
 import textSelectionHook from "./text_selection_hook.js";
 import SelectionActionsHook from "./selection_actions_hook.js";
@@ -68,6 +70,8 @@ import {
 
 loadGoogleAnalytics();
 initAuthReturn();
+initThinkingToolsGuide();
+initDisclosureNavigation(document.getElementById("ai-assistants-feature"));
 initDelayedAnalytics();
 initAnalyticsEventTracking();
 initProductAnalytics();

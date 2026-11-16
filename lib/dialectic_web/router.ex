@@ -117,6 +117,7 @@ defmodule DialecticWeb.Router do
   scope "/", DialecticWeb do
     pipe_through :browser
     live "/", HomeLive
+    get "/features/thinking-tools", PageController, :thinking_tools
     get "/features/ai-assistants", McpOAuthController, :feature
     live "/ambassadors", AmbassadorLive
     get "/my/ideas", PageController, :my_graphs
