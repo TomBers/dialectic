@@ -70,7 +70,10 @@ defmodule DialecticWeb.McpControllerTest do
     assert first["next_offset"] == 1
     assert first["total_nodes"] == 2
     assert [%{"id" => "1"}] = first["nodes"]
-    assert Map.keys(first["grid"]) |> Enum.sort() == ~w(id tags title url visibility)
+
+    assert Map.keys(first["grid"]) |> Enum.sort() ==
+             ~w(id tags title url visibility visibility_version)
+
     second = api |> get(~p"/api/mcp/grids/#{slug}", offset: 1) |> json_response(200)
     assert second["next_offset"] == nil
 

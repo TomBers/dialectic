@@ -370,6 +370,7 @@ defmodule DialecticWeb.GraphAccessTest do
     {:ok, owner_view, _html} = live(log_in_user(conn, owner), ~p"/g/#{graph.slug}/graph")
 
     render_click(owner_view, "toggle_public_graph")
+    assert %{success: 1} = Oban.drain_queue(queue: :db_write)
 
     assert_redirect(reader, "/")
     assert_redirect(editor, "/")
@@ -388,6 +389,7 @@ defmodule DialecticWeb.GraphAccessTest do
     {:ok, token_reader, _html} = live(conn, ~p"/g/#{graph.slug}?token=#{graph.share_token}")
 
     assert {:ok, _graph} = Graphs.toggle_graph_public(graph, owner)
+    assert %{success: 1} = Oban.drain_queue(queue: :db_write)
 
     assert has_element?(reader, "#outline-layout")
     assert has_element?(token_reader, "#outline-layout")
@@ -397,5 +399,24 @@ defmodule DialecticWeb.GraphAccessTest do
     assert :ok = Sharing.remove_invite(graph, invited.email, owner)
     assert_redirect(reader, "/")
     assert has_element?(token_reader, "#outline-layout")
+  end
+
+  test "private content updates revoke anonymous sessions while notifications are queued",
+       %{conn: conn, owner: owner, graph: graph} do
+    for {path, message} <- [
+          {~p"/g/#{graph.slug}", {:other_user_change, self()}},
+          {~p"/g/#{graph.slug}/graph",
+           {:stream_chunk, %Dialectic.Graph.Vertex{id: "1", content: "private stream"}, :node_id,
+            "1"}},
+          {~p"/g/#{graph.slug}",
+           {:stream_chunk_broadcast, %Dialectic.Graph.Vertex{id: "1", content: "private stream"},
+            :node_id, "1", self()}}
+        ] do
+      {:ok, _} = Graphs.set_graph_public(graph, owner, true)
+      {:ok, reader, _} = live(conn, path)
+      {:ok, _} = Graphs.set_graph_public(graph, owner, false)
+      send(reader.pid, message)
+      assert_redirect(reader, "/")
+    end
   end
 end

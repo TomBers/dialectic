@@ -26,7 +26,13 @@ defmodule Dialectic.Integrations.GridActions do
          %GridAction{graph_title: title} when is_binary(title) <-
            Repo.get_by(GridAction, user_id: user.id, request_id: request_id),
          %Graph{} <- accessible_graph(user, title) do
-      GraphManager.get_mcp_operation(title, user, request_id)
+      case Repo.get_by(GridAction, user_id: user.id, request_id: request_id) do
+        %GridAction{action: "set_grid_visibility"} = receipt ->
+          {:ok, Dialectic.Integrations.GridVisibility.envelope(receipt)}
+
+        _ ->
+          GraphManager.get_mcp_operation(title, user, request_id)
+      end
     else
       _ -> {:error, :not_found}
     end

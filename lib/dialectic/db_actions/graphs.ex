@@ -647,11 +647,11 @@ defmodule Dialectic.DbActions.Graphs do
   end
 
   def toggle_graph_public(graph, user) do
-    update_access_setting(graph, user, :is_public)
+    Dialectic.Integrations.GridVisibility.change(graph, user, :toggle)
   end
 
   def set_graph_public(graph, user, public?) when is_boolean(public?) do
-    update_access_setting(graph, user, :is_public, public?)
+    Dialectic.Integrations.GridVisibility.change(graph, user, public?)
   end
 
   defp update_access_setting(graph, user, field, value \\ :toggle) do

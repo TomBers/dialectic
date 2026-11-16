@@ -70,6 +70,9 @@ defmodule DialecticWeb.WorkspaceSettings do
           params: %{setting: "visibility", visibility: visibility}
         })
 
+      {:error, :generation_in_progress} ->
+        put_flash(socket, :error, "Wait for generation to finish before making this grid public.")
+
       {:error, :forbidden} ->
         put_flash(socket, :error, "Only the grid owner can change access settings.")
 

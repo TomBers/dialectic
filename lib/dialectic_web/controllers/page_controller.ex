@@ -107,6 +107,7 @@ defmodule DialecticWeb.PageController do
   end
 
   def graph_json_extract(conn, %{"graph_name" => graph_id_uri} = params) do
+    conn = put_resp_header(conn, "cache-control", "no-store")
     graph_name = URI.decode(graph_id_uri)
     graph_struct = Dialectic.DbActions.Graphs.get_graph_by_slug_or_title(graph_name)
     current_user = conn.assigns[:current_user]

@@ -84,14 +84,14 @@ afterEach(async () => {
 
 test("discovers focused tools and capacity discovery with public or scoped access", async () => {
   const { tools } = await client.listTools();
-  assert.deepEqual(tools.map(tool => tool.name).sort(), ["explore_question", "search_public_grids", "list_my_grids", "read_grid", "create_grid", "add_grid_idea", "apply_grid_action", "get_operation", "get_server_capabilities", "read_grid_node", "get_exploration_tools", "create_learning_plan"].sort());
+  assert.deepEqual(tools.map(tool => tool.name).sort(), ["explore_question", "search_public_grids", "list_my_grids", "read_grid", "create_grid", "add_grid_idea", "apply_grid_action", "get_operation", "get_server_capabilities", "read_grid_node", "get_exploration_tools", "create_learning_plan", "export_grid", "set_grid_visibility"].sort());
   assert.equal(tools.filter(tool => tool.name.endsWith("_method")).length, 0);
   for (const tool of tools) {
-    assert.equal(tool.annotations?.readOnlyHint, !["explore_question", "create_grid", "apply_grid_action", "add_grid_idea", "create_learning_plan"].includes(tool.name));
-    assert.equal(tool.annotations?.destructiveHint, false);
+    assert.equal(tool.annotations?.readOnlyHint, !["explore_question", "create_grid", "apply_grid_action", "add_grid_idea", "create_learning_plan", "set_grid_visibility"].includes(tool.name));
+    assert.equal(tool.annotations?.destructiveHint, tool.name === "set_grid_visibility");
     assert.ok(tool.inputSchema);
     assert.ok(tool.outputSchema);
-    const scope = ["create_grid", "explore_question"].includes(tool.name) ? "grids:create" : ["read_grid", "read_grid_node", "list_my_grids", "get_operation"].includes(tool.name) ? "grids:read" : ["apply_grid_action", "add_grid_idea", "create_learning_plan"].includes(tool.name) ? "grids:append" : undefined;
+    const scope = tool.name === "set_grid_visibility" ? "grids:visibility" : ["create_grid", "explore_question"].includes(tool.name) ? "grids:create" : ["read_grid", "read_grid_node", "list_my_grids", "get_operation", "export_grid"].includes(tool.name) ? "grids:read" : ["apply_grid_action", "add_grid_idea", "create_learning_plan"].includes(tool.name) ? "grids:append" : undefined;
     const securitySchemes = tool.name === "explore_question" ? [{ type: "oauth2", scopes: ["grids:create", "grids:read"] }] : ["read_grid", "read_grid_node"].includes(tool.name) ? [{ type: "noauth" }, { type: "oauth2", scopes: ["grids:read"] }] : scope ? [{ type: "oauth2", scopes: [scope] }] : [{ type: "noauth" }];
     assert.deepEqual(tool._meta?.securitySchemes, securitySchemes);
   }
@@ -136,7 +136,8 @@ test("published schemas use single-type branches without losing nullability", as
   }
 
   for (const name of ["create_grid", "add_grid_idea", "apply_grid_action", "get_operation"]) {
-    const output = tools.find(tool => tool.name === name)!.outputSchema!;
+    const schema = tools.find(tool => tool.name === name)!.outputSchema!;
+    const output = name === "get_operation" ? (schema.anyOf as typeof schema[])[0] : schema;
     for (const property of ["node", "answer_node"]) {
       const node = output.properties![property] as { properties: Record<string, unknown>; required: string[] };
       assert.deepEqual(node.properties.parent_node_id, { anyOf: [{ type: "string" }, { type: "null" }] });
@@ -589,7 +590,7 @@ test("protected metadata identifies the resource and Phoenix authorization serve
   assert.equal(response.status, 200);
   assert.deepEqual(await response.json(), {
     resource: endpoint.href, authorization_servers: [origin(upstream)],
-    scopes_supported: ["grids:create", "grids:read", "grids:append"], bearer_methods_supported: ["header"],
+    scopes_supported: ["grids:create", "grids:read", "grids:append", "grids:visibility"], bearer_methods_supported: ["header"],
   });
   assert.throws(() => createApp(origin(upstream), { publicUrl: "http://insecure.example/mcp" }));
 });
@@ -747,4 +748,43 @@ test("MCP client credentials are never forwarded to the anonymous Phoenix API", 
   assert.equal(response.status, 200);
   assert.equal(requests[0].authorization, undefined);
   assert.equal(requests[0].cookie, undefined);
+});
+
+test("visibility uses its dedicated authority and non-node receipt is readable", async () => {
+  const request_id = randomUUID();
+  const accepted = {
+    schema_version: "operation_v1", operation_kind: "set_grid_visibility",
+    request_id, state: "completed", result_revision: 42,
+    result: { visibility: "public", visibility_version: 3, committed_content_revision: 42,
+      canonical_url: grid.url, application_state: "applied", anonymous_access_verification: "pending" },
+    error: null, updated_at: "2026-11-16T12:00:00Z", next_poll_after_seconds: 3,
+  };
+  upstreamBody = accepted;
+  const result = await authenticatedCall("set_grid_visibility", {
+    grid_id: grid.id, visibility: "public", expected_revision: 42, request_id,
+  });
+  assert.deepEqual(result.structuredContent, upstreamBody);
+  assert.equal(requests[0].url.pathname, `/api/mcp/grids/${grid.id}/visibility`);
+  assert.deepEqual(JSON.parse(requests[0].body), { visibility: "public", expected_revision: 42, request_id });
+  assert.deepEqual((await authenticatedCall("get_operation", { request_id })).structuredContent, upstreamBody);
+  upstreamBody = {
+    ...accepted,
+    result: { ...accepted.result, anonymous_access_verification: "verified",
+      verification_checked_at: "2026-11-16T12:00:05Z", verification_error: null },
+    next_poll_after_seconds: null,
+  };
+  assert.deepEqual((await authenticatedCall("get_operation", { request_id })).structuredContent, upstreamBody);
+});
+
+test("unknown typed error codes survive without inventing a retry", async () => {
+  upstreamStatus = 409;
+  upstreamBody = { code: "future_visibility_conflict", retryable: false,
+    retry_after_seconds: null, request_accepted: false, request_id: null };
+  const result = await authenticatedCall("set_grid_visibility", {
+    grid_id: grid.id, visibility: "private", request_id: randomUUID(),
+  });
+  assert.equal(result.isError, true);
+  const error = (result.structuredContent as { error: { code: string; retryable: boolean } }).error;
+  assert.equal(error.code, "future_visibility_conflict");
+  assert.equal(error.retryable, false);
 });

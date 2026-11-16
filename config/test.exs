@@ -2,6 +2,9 @@ import Config
 
 config :dialectic, Oban, testing: :manual
 
+config :dialectic, Dialectic.Workers.VisibilityVerificationWorker,
+  req_options: [plug: {Req.Test, Dialectic.Workers.VisibilityVerificationWorker}]
+
 config :dialectic, sync_tasks_for_testing: true
 
 config :dialectic, :sitemap_page_size, 10
