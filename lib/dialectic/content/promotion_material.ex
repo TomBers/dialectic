@@ -4,8 +4,8 @@ defmodule Dialectic.Content.PromotionMaterial do
   alias Dialectic.Content
   alias Dialectic.Highlights
 
-  def list_graphs do
-    graphs = Content.list_public_graphs()
+  def list_graphs(opts \\ []) do
+    graphs = Content.list_public_graphs(opts)
 
     %{
       "count" => length(graphs),
