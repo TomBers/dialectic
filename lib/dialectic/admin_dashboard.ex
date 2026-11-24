@@ -4,7 +4,7 @@ defmodule Dialectic.AdminDashboard do
   require Logger
 
   alias Dialectic.Accounts.{Graph, User}
-  alias Dialectic.GridActivity.Log
+  alias Dialectic.GridActivity.{Actions, Log}
   alias Dialectic.Repo
 
   @active_job_states ["available", "executing", "scheduled", "retryable"]
@@ -28,7 +28,7 @@ defmodule Dialectic.AdminDashboard do
          activity: activity(week, day),
          queues: queues(day),
          recent_users: recent_users(),
-         recent_grids: recent_grids(),
+         recent_grid_activity: recent_grid_activity(week),
          attention_jobs: attention_jobs(day),
          runtime: runtime()
        }}
@@ -80,11 +80,14 @@ defmodule Dialectic.AdminDashboard do
   end
 
   defp activity(week, day) do
+    node_creation_actions = Actions.node_creation_actions()
+
     Repo.one(
       from(l in Log,
         where: l.inserted_at >= ^week,
         select: %{
           contributors_week: count(l.actor_user_id, :distinct),
+          node_creation_actions_week: filter(count(l.id), l.action in ^node_creation_actions),
           events_day: filter(count(l.id), l.inserted_at >= ^day)
         }
       ),
@@ -146,22 +149,24 @@ defmodule Dialectic.AdminDashboard do
     )
   end
 
-  defp recent_grids do
+  defp recent_grid_activity(since) do
     Repo.all(
-      from(g in Graph,
-        left_join: u in User,
-        on: u.id == g.user_id,
-        order_by: [desc: g.updated_at, asc: g.title],
+      from(log in Log,
+        join: g in Graph,
+        on: g.title == log.graph_title,
+        where: log.inserted_at >= ^since,
+        order_by: [desc: log.inserted_at, desc: log.id],
         limit: 6,
         select: %{
-          id: g.title,
+          id: log.id,
           title: g.title,
           slug: g.slug,
-          user_id: g.user_id,
-          username: u.username,
           is_public: g.is_public,
           is_deleted: g.is_deleted,
-          updated_at: g.updated_at
+          action: log.action,
+          actor_name: log.actor_name,
+          node_id: log.node_id,
+          inserted_at: log.inserted_at
         }
       ),
       @query_options
