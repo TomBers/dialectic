@@ -3,6 +3,7 @@ defmodule DialecticWeb.AdminCuratedLive do
 
   alias Dialectic.AdminDashboard
   alias Dialectic.DbActions.Graphs
+  alias Dialectic.GridActivity
 
   @sections ["curated", "featured"]
   @refresh_interval :timer.seconds(30)
@@ -30,7 +31,7 @@ defmodule DialecticWeb.AdminCuratedLive do
         )
         |> stream(:search_results, [])
         |> stream(:recent_users, [])
-        |> stream(:recent_grids, [])
+        |> stream(:recent_grid_activity, [])
         |> stream(:queues, [])
         |> stream(:attention_jobs, [])
         |> refresh_curation()
@@ -57,7 +58,7 @@ defmodule DialecticWeb.AdminCuratedLive do
 
     dashboard =
       data
-      |> Map.drop([:queues, :recent_users, :recent_grids, :attention_jobs])
+      |> Map.drop([:queues, :recent_users, :recent_grid_activity, :attention_jobs])
       |> Map.put(:queue_totals, totals)
 
     {:noreply,
@@ -65,7 +66,7 @@ defmodule DialecticWeb.AdminCuratedLive do
      |> assign(dashboard: dashboard, refreshing: false, dashboard_error: false)
      |> stream(:queues, data.queues, reset: true)
      |> stream(:recent_users, data.recent_users, reset: true)
-     |> stream(:recent_grids, data.recent_grids, reset: true)
+     |> stream(:recent_grid_activity, data.recent_grid_activity, reset: true)
      |> stream(:attention_jobs, data.attention_jobs, reset: true)}
   end
 
@@ -176,8 +177,7 @@ defmodule DialecticWeb.AdminCuratedLive do
   end
 
   defp configure_grid_streams(socket) do
-    Enum.reduce([:search_results, :curated, :featured, :hidden, :recent_grids], socket, fn name,
-                                                                                           acc ->
+    Enum.reduce([:search_results, :curated, :featured, :hidden], socket, fn name, acc ->
       stream_configure(acc, name,
         dom_id: fn item -> "#{name}-" <> Base.url_encode64(to_string(item.id), padding: false) end
       )
@@ -213,6 +213,11 @@ defmodule DialecticWeb.AdminCuratedLive do
 
   defp timestamp(value), do: Calendar.strftime(value, "%d %b · %H:%M UTC")
 
+  defp activity_path(event) do
+    params = if event.node_id, do: [node: event.node_id], else: []
+    ~p"/g/#{event.slug || event.title}?#{params}"
+  end
+
   defp uptime(seconds) when seconds >= 86_400,
     do: "#{div(seconds, 86_400)}d #{div(rem(seconds, 86_400), 3_600)}h"
 
@@ -229,19 +234,18 @@ defmodule DialecticWeb.AdminCuratedLive do
   attr :label, :string, required: true
   attr :value, :string, required: true
   attr :icon, :string, required: true
-  attr :detail, :string, required: true
+  attr :detail, :string, default: nil
 
   defp stat(assigns) do
     ~H"""
     <div id={@id} class="rounded-xl border border-stone-300 bg-white p-5">
-      <div class="flex items-center justify-between gap-2">
-        <h2 class="text-sm font-medium text-slate-600">{@label}</h2><.icon
-          name={@icon}
-          class="h-5 w-5 text-slate-500"
-        />
-      </div>
-      <p class="mt-3 text-4xl font-semibold tracking-tight tabular-nums">{@value}</p>
-      <p class="mt-2 text-xs leading-relaxed text-slate-500">{@detail}</p>
+      <dt class="flex items-center justify-between gap-2 text-sm font-medium text-slate-600">
+        {@label}<.icon name={@icon} class="h-5 w-5 text-slate-500" />
+      </dt>
+      <dd>
+        <p class="mt-3 text-4xl font-semibold tracking-tight tabular-nums">{@value}</p>
+        <p :if={@detail} class="mt-2 text-xs leading-relaxed text-slate-500">{@detail}</p>
+      </dd>
     </div>
     """
   end

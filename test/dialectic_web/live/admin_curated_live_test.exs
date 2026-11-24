@@ -4,6 +4,8 @@ defmodule DialecticWeb.AdminCuratedLiveTest do
   import Phoenix.LiveViewTest
   import Dialectic.AccountsFixtures
 
+  alias Dialectic.DbActions.Graphs
+  alias Dialectic.GridActivity.{Actions, Log}
   alias Dialectic.Repo
 
   defp make_admin(user) do
@@ -88,6 +90,74 @@ defmodule DialecticWeb.AdminCuratedLiveTest do
       assert has_element?(view, "#admin-dashboard")
       assert has_element?(view, "#admin-curation")
     end
+  end
+
+  test "summarizes weekly usage and shows recent actions instead of grid saves", %{conn: conn} do
+    admin = user_fixture() |> make_admin()
+    now = DateTime.utc_now() |> DateTime.truncate(:second)
+    last_week = DateTime.add(now, -8, :day)
+
+    past_contributor =
+      user_fixture()
+      |> Ecto.Changeset.change(inserted_at: last_week)
+      |> Repo.update!()
+
+    active_grid = create_published_graph("Active grid")
+
+    saved_grid =
+      create_published_graph("Snapshot only")
+      |> Ecto.Changeset.change(inserted_at: last_week)
+      |> Repo.update!()
+
+    assert {:ok, :updated} = Graphs.save_graph_if_newer(saved_grid.title, saved_grid.data, 1)
+
+    [comment, deletion, branch, old_action] =
+      for {action, actor, inserted_at} <- [
+            {Actions.node_comment_created(), admin, now},
+            {Actions.node_deleted(), admin, DateTime.add(now, -2, :day)},
+            {Actions.node_branch_created(), admin, now},
+            {Actions.node_follow_up_created(), past_contributor, last_week}
+          ] do
+        Repo.insert!(%Log{
+          graph_title: active_grid.title,
+          actor_user_id: actor.id,
+          actor_name: "Grid contributor",
+          action: action,
+          node_id: "2",
+          inserted_at: inserted_at
+        })
+      end
+
+    {:ok, view, _html} = conn |> log_in_user(admin) |> live(~p"/admin/curated")
+    render_async(view, 5_000)
+
+    assert has_element?(view, "#admin-totals + #admin-usage")
+    assert has_element?(view, "#admin-stat-grids dd p:first-child", "2")
+    assert has_element?(view, "#admin-stat-users dd p:first-child", "2")
+    assert has_element?(view, "#admin-stat-viewers")
+    assert has_element?(view, "#admin-stat-grids-created dd p:first-child", "1")
+    assert has_element?(view, "#admin-stat-node-creation dd p:first-child", "2")
+    assert has_element?(view, "#admin-stat-contributors dd p:first-child", "1")
+    assert has_element?(view, "#admin-stat-accounts-created dd p:first-child", "1")
+
+    assert has_element?(
+             view,
+             "#admin-grid-activity-empty + #recent_grid_activity-#{branch.id} + " <>
+               "#recent_grid_activity-#{comment.id} + #recent_grid_activity-#{deletion.id}"
+           )
+
+    assert has_element?(
+             view,
+             "#recent_grid_activity-#{comment.id} time[datetime='#{DateTime.to_iso8601(now)}']"
+           )
+
+    assert has_element?(
+             view,
+             ~s(#recent_grid_activity-#{comment.id} a[href="/g/#{active_grid.slug}?node=2"])
+           )
+
+    refute has_element?(view, "#recent_grid_activity-#{old_action.id}")
+    refute has_element?(view, ~s(#admin-recent-grid-activity a[href="/g/#{saved_grid.slug}"]))
   end
 
   describe "add and remove curated entries" do

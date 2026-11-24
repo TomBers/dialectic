@@ -13,8 +13,7 @@ defmodule Dialectic.GridActivity.Actions do
   @node_regenerated "node.regenerated"
   @node_deleted "node.deleted"
 
-  @valid_actions [
-    @graph_created,
+  @node_creation_actions [
     @node_comment_created,
     @node_follow_up_created,
     @node_branch_created,
@@ -24,12 +23,13 @@ defmodule Dialectic.GridActivity.Actions do
     @node_selection_question_created,
     @node_deep_dive_created,
     @node_critical_tool_created,
-    @node_starting_point_created,
-    @node_regenerated,
-    @node_deleted
+    @node_starting_point_created
   ]
 
+  @valid_actions [@graph_created | @node_creation_actions] ++ [@node_regenerated, @node_deleted]
+
   def valid_actions, do: @valid_actions
+  def node_creation_actions, do: @node_creation_actions
 
   def graph_created, do: @graph_created
   def node_comment_created, do: @node_comment_created
